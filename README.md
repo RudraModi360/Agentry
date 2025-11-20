@@ -1,4 +1,6 @@
 # Agentry
+A work‑in‑progress AI agent architecture in Python, aiming for live voice‑based task handling and automation.   Features multi‑LLM provider compatibility and a modular tool system for extensibility.
+# Agentry
 
 **A modular AI agent framework built from scratch in Python, designed to evolve into a real-time voice-driven assistant for task automation.**
 
