@@ -57,6 +57,8 @@ export GEMINI_API_KEY="your-api-key-here"
 
 ## Your First Agent
 
+![Agent Workflow Loop](assets/agent_workflow_loop.png)
+
 ### Basic Agent
 
 Create a file `my_first_agent.py`:

@@ -21,6 +21,8 @@ An **AI agent** is a system that can:
 
 Unlike a simple chatbot that only generates text, an agent can **do things** - read files, search the web, execute code, and more.
 
+![Agent Workflow Loop](assets/agent_workflow_loop.png)
+
 ### Example Flow
 
 ```
@@ -38,6 +40,8 @@ Agent responds: "The weather in New York is 72°F and sunny!"
 ## The Agent Loop
 
 Scratchy uses a **ReAct** (Reasoning + Acting) pattern:
+
+![ReAct Pattern Flowchart](assets/react_pattern_flowchart.png)
 
 ```python
 while not done and iterations < max_iterations:
@@ -173,6 +177,8 @@ Providers are adapters that connect Scratchy to different LLM services.
 
 ### Available Providers
 
+![LLM Providers Comparison](assets/llm_providers_comparison.png)
+
 | Provider | Type | Best For |
 |----------|------|----------|
 | **Ollama** | Local/Cloud | Development, privacy, no API costs |
@@ -237,6 +243,8 @@ MCP is a standard protocol for:
 
 ### How It Works
 
+![MCP Integration Diagram](assets/mcp_integration_diagram.png)
+
 ```
 ┌─────────────┐
 │   Scratchy  │
@@ -288,6 +296,8 @@ See [MCP Integration Guide](MCP_AGENT.md) for advanced usage.
 ## Understanding the Flow
 
 ### High-Level View (What happens)
+
+![Agent Interaction Sequence](assets/agent_interaction_sequence.png)
 
 ```
 User Input

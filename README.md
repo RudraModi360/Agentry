@@ -37,6 +37,8 @@ Unlike black-box agent frameworks, Scratchy is built for **transparency and educ
 - ✅ **Learn by example**: Comprehensive docs showing high-level concepts and low-level implementation
 - ✅ **Production-ready**: Not just a learning tool—build real applications
 
+![Scratchy Architecture](docs/assets/scratchy_architecture.png)
+
 ## ✨ Features
 
 - 🤖 **Unified Agent Architecture** - Single `Agent` class supporting internal, MCP, and custom tools

@@ -9,6 +9,8 @@ The **MCPAgent** is an enhanced AI agent implementation that supports **Multi-Co
 - **Session persistence** - Track and manage conversation history per session
 - **Production deployments** - Built-in session timeout and cleanup mechanisms
 
+![MCP Integration Diagram](assets/mcp_integration_diagram.png)
+
 ---
 
 ## Key Features
