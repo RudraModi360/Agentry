@@ -1,103 +1,152 @@
-# 📚 Agentry Documentation
+# Scratchy Documentation
 
-Welcome to the Agentry documentation! This folder contains comprehensive guides for using, deploying, and contributing to the Agentry AI Agent Framework.
+Welcome to the Scratchy documentation! This guide will help you understand and use the Scratchy AI Agent Framework.
+
+## 📚 Table of Contents
+
+### Getting Started
+- [Installation & Setup](getting-started.md) - Get up and running quickly
+- [Your First Agent](getting-started.md#your-first-agent) - Hello World example
+- [Quick Examples](getting-started.md#quick-examples) - Common use cases
+
+### Core Documentation
+- [API Reference](api-reference.md) - Complete API documentation
+  - [Agent Class](api-reference.md#agent-class)
+  - [CopilotAgent Class](api-reference.md#copilotagent-class)
+  - [SessionManager Class](api-reference.md#sessionmanager-class)
+  - [Providers](api-reference.md#providers)
+  - [Built-in Tools](api-reference.md#built-in-tools)
+
+- [Session Management](session-management.md) - Working with sessions
+  - [Basic Usage](session-management.md#basic-usage)
+  - [Interactive Mode](session-management.md#interactive-mode)
+  - [Multi-Session](session-management.md#multi-session-management)
+  - [File Format](session-management.md#session-files)
+
+### Advanced Topics
+- Custom Tools *(coming soon)* - Create your own tools
+- MCP Integration *(coming soon)* - Connect external MCP servers
+- Examples *(coming soon)* - Code examples and recipes
+- Core Concepts *(coming soon)* - Architecture deep dive
+- Troubleshooting *(coming soon)* - Common issues and solutions
+
+## Quick Links
+
+### For Beginners
+- [Installation Guide](getting-started.md#installation)
+- [Your First Agent](getting-started.md#your-first-agent)
+- [Understanding Sessions](session-management.md#overview)
+
+### For Developers
+- [Agent API](api-reference.md#agent-class)
+- [Custom Tool Registration](api-reference.md#register_tool_from_function)
+- [Provider Configuration](api-reference.md#providers)
+
+### For Advanced Users
+- [Session Persistence](session-management.md#session-files)
+- [Multi-Session Management](session-management.md#multi-session-management)
+- [Source Code Exploration](../scratchy/)
+
+## What is Scratchy?
+
+Scratchy is a **one-stop Python-based solution** for understanding how real-world AI agents are built. It's designed for:
+
+- **🌱 Beginners**: Learn by doing with clear, documented examples
+- **🚀 Intermediate**: Build production-ready agents with best practices
+- **🔬 Experts**: Deep dive into internals and extend the framework
+
+### Key Features
+
+- **Unified Agent Architecture**: Single `Agent` class supporting internal, MCP, and custom tools
+- **Session Management**: Persistent chat history with `.toon` format in `scratchy/session_history/`
+- **Custom Tool Support**: Easy function-to-tool conversion via `register_tool_from_function()`
+- **Multiple LLM Providers**: Ollama, Groq, and Gemini support
+- **Specialized Agents**: Pre-configured agents like `CopilotAgent` for coding
+
+## Module Structure
+
+```
+scratchy/                      # Main package
+├── agents/                   # Agent implementations
+│   ├── agent.py             # Core Agent class
+│   ├── copilot.py           # CopilotAgent (coding specialist)
+│   └── agent_mcp.py         # Legacy MCP agent
+├── providers/               # LLM provider implementations
+│   ├── ollama_provider.py   # Ollama integration
+│   ├── groq_provider.py     # Groq integration
+│   └── gemini_provider.py   # Gemini integration
+├── tools/                   # Built-in tools
+│   ├── filesystem.py        # File operations
+│   ├── execution.py         # Code/command execution
+│   ├── web.py              # Web search & fetch
+│   └── registry.py         # Tool registration
+├── config/                  # Configuration
+│   ├── prompts.py          # System prompts
+│   └── settings.py         # API keys & settings
+├── session_history/         # Saved chat sessions (.toon)
+├── session_manager.py       # Session persistence
+└── mcp_client.py           # MCP server integration
+```
+
+## Architecture Overview
+
+```
+┌─────────────────────────────────────────────────┐
+│                   User Code                     │
+│         from scratchy import Agent              │
+└─────────────────────┬───────────────────────────┘
+                      │
+┌─────────────────────▼───────────────────────────┐
+│          scratchy.agents.Agent                  │
+│  ┌──────────────────────────────────────────┐  │
+│  │    Session Management (AgentSession)     │  │
+│  │    • scratchy/session_history/*.toon     │  │
+│  └──────────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────┐  │
+│  │         Tool Management                  │  │
+│  │  • Internal (scratchy/tools/)            │  │
+│  │  • MCP (scratchy/mcp_client.py)          │  │
+│  │  • Custom (register_tool_from_function)  │  │
+│  └──────────────────────────────────────────┘  │
+└─────────────────────┬───────────────────────────┘
+                      │
+┌─────────────────────▼───────────────────────────┐
+│       scratchy.providers.LLMProvider            │
+│    Ollama  │  Groq  │  Gemini                  │
+└─────────────────────────────────────────────────┘
+```
+
+## Quick Start
+
+```python
+from scratchy import Agent
+
+# Initialize
+agent = Agent(llm="ollama", model="llama3.2")
+agent.load_default_tools()
+
+# Chat
+response = await agent.chat("Hello!")
+```
+
+See [Getting Started](getting-started.md) for detailed instructions.
+
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guide](../CONTRIBUTING.md) for details.
+
+## Support
+
+- **Issues**: [GitHub Issues](https://github.com/RudraModi360/Agentry/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/RudraModi360/Agentry/discussions)
+- **Email**: rudramodi9560@gmail.com
+
+## License
+
+MIT License - see [LICENSE](../LICENSE) for details.
 
 ---
 
-## 📖 Documentation Files
+**Built with ❤️ by [Rudra Modi](mailto:rudramodi9560@gmail.com)**
 
-### [API_SETUP.md](API_SETUP.md)
-**Complete provider configuration guide**
-- 🌟 Ollama Cloud models (FREE, recommended!)
-- 🏠 Ollama Local models setup
-- ⚡ Groq API configuration
-- 🧠 Google Gemini API setup
-- Provider comparison & troubleshooting
-
-### [QUICKSTART.md](QUICKSTART.md)
-**Quick reference guide**
-- Common commands & shortcuts
-- Ollama commands (cloud & local)
-- Docker commands
-- Testing & development workflows
-- Troubleshooting tips
-
-### [DOCKER.md](DOCKER.md)
-**Docker deployment guide**
-- Building Docker images
-- Running containers
-- Environment configuration
-- Ollama integration
-- Docker Compose examples
-
-### [CICD.md](CICD.md)
-**CI/CD pipeline setup**
-- GitHub Actions workflows
-- Google Cloud Run deployment
-- AWS ECS deployment
-- Azure Container Instances
-- Security scanning
-- Secrets configuration
-
-### [CONTRIBUTING.md](CONTRIBUTING.md)
-**Contribution guidelines**
-- Development setup
-- Code style guide
-- Adding new tools & providers
-- Testing guidelines
-- Pull request process
-
-### [DOCS.md](DOCS.md)
-**Documentation index**
-- Complete documentation overview
-- Quick navigation
-- Recommended reading order
-
----
-
-## 🚀 Quick Links
-
-**Getting Started:**
-- [Main README](../README.md) - Start here!
-- [API Setup](API_SETUP.md) - Configure providers
-- [Quick Reference](QUICKSTART.md) - Common commands
-
-**Deployment:**
-- [Docker Guide](DOCKER.md) - Containerization
-- [CI/CD Setup](CICD.md) - Automated deployment
-
-**Contributing:**
-- [Contributing Guide](CONTRIBUTING.md) - How to contribute
-- [Documentation Index](DOCS.md) - Full documentation map
-
----
-
-## 🎯 Recommended Reading Order
-
-### For New Users:
-1. [Main README](../README.md) - Understand the project
-2. [API_SETUP.md](API_SETUP.md) - Setup your provider
-3. [QUICKSTART.md](QUICKSTART.md) - Learn commands
-4. Start building! 🚀
-
-### For Developers:
-1. [CONTRIBUTING.md](CONTRIBUTING.md) - Development guidelines
-2. [QUICKSTART.md](QUICKSTART.md) - Dev commands
-3. Start contributing! 💻
-
-### For DevOps:
-1. [DOCKER.md](DOCKER.md) - Containerization
-2. [CICD.md](CICD.md) - Deployment pipelines
-3. Deploy to production! ☁️
-
----
-
-## 🆘 Need Help?
-
-- **GitHub Issues**: [Report bugs](https://github.com/RudraModi360/Agentry/issues)
-- **GitHub Discussions**: [Ask questions](https://github.com/RudraModi360/Agentry/discussions)
-- **Main README**: [Back to main docs](../README.md)
-
----
-
-**Built with ❤️ by [Rudra Modi](https://github.com/RudraModi360)**
+*Evolving towards the future of voice-driven AI assistants*
