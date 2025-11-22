@@ -91,7 +91,7 @@ class Agent:
             
         elif provider_name == "groq":
             from scratchy.providers.groq_provider import GroqProvider
-            return GroqProvider(model=model or "llama-3.3-70b-versatile", api_key=api_key)
+            return GroqProvider(model_name=model or "llama-3.3-70b-versatile", api_key=api_key)
             
         elif provider_name == "gemini":
             from scratchy.providers.gemini_provider import GeminiProvider
