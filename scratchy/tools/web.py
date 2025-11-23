@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 from .base import BaseTool, ToolResult
 from langchain_community.tools import DuckDuckGoSearchRun
 from groq import Groq
-from config.settings import get_api_key
+from scratchy.config.settings import get_api_key
 
 # --- Schemas ---
 
