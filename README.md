@@ -294,6 +294,10 @@ Contributions welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md).
 - **Discussions**: [GitHub Discussions](https://github.com/RudraModi360/Agentry/discussions)
 - **Email**: rudramodi9560@gmail.com
 
+## ❤️ Like & Subscribe
+
+If you like this type of content and find it helpful, please **like and subscribe**! Your support helps us create more educational content about AI agents.
+
 ## ⭐ Star History
 
 If you find this project useful, please consider giving it a star! ⭐
@@ -309,6 +313,9 @@ MIT License - see [LICENSE](LICENSE) for details.
 - [Gemini](https://ai.google.dev/) - Google's AI models
 - [TOON Format](https://github.com/toon-format/toon) - Session persistence format
 - [Model Context Protocol](https://modelcontextprotocol.io/) - Tool integration standard
+
+**Special Thanks:**
+- **Ollama & Groq** for providing generous free tiers and credits to use their cloud-hosted models for testing and development.
 
 ---
 
