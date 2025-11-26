@@ -262,16 +262,48 @@ async def main():
         print(f"\n⚠️  APPROVAL REQUIRED: Tool '{name}' is about to execute.")
         print(f"   Arguments: {json.dumps(args, indent=2)}")
         
-        # Use run_in_executor for blocking input
-        response = await asyncio.get_event_loop().run_in_executor(
-            None, input, "   Allow execution? [y/N]: "
-        )
-        is_approved = response.strip().lower() in ['y', 'yes']
-        if is_approved:
-            print("   ✅ Approved.")
-        else:
-            print("   ❌ Denied.")
-        return is_approved
+        while True:
+            # Use run_in_executor for blocking input
+            response = await asyncio.get_event_loop().run_in_executor(
+                None, input, "   [Y]es / [N]o / [E]dit arguments: "
+            )
+            choice = response.strip().lower()
+            
+            if choice in ['y', 'yes']:
+                print("   ✅ Approved.")
+                return True
+            elif choice in ['n', 'no']:
+                print("   ❌ Denied.")
+                return False
+            elif choice in ['e', 'edit']:
+                # Special handling for run_command to make it easier
+                if name == 'run_command' and 'CommandLine' in args:
+                    print(f"   Current Command: {args['CommandLine']}")
+                    new_cmd = await asyncio.get_event_loop().run_in_executor(
+                        None, input, "   New Command > "
+                    )
+                    if new_cmd.strip():
+                        args['CommandLine'] = new_cmd.strip()
+                        print("   ✅ Command updated and approved.")
+                        return args
+                    else:
+                        print("   ⚠️  Empty input. Keeping original.")
+                        continue
+                
+                # Generic JSON edit
+                print("   📝 Enter new arguments (JSON format):")
+                try:
+                    new_json_str = await asyncio.get_event_loop().run_in_executor(
+                        None, input, "   JSON > "
+                    )
+                    new_args = json.loads(new_json_str)
+                    print("   ✅ Arguments updated and approved.")
+                    return new_args
+                except json.JSONDecodeError:
+                    print("   ❌ Invalid JSON. Please try again.")
+                    continue
+            else:
+                print("   ⚠️  Invalid choice.")
 
     agent.set_callbacks(
         on_tool_start=on_tool_start,

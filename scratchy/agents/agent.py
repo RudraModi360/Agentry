@@ -367,7 +367,15 @@ class Agent:
                 approved = True
                 if self._requires_approval(name):
                     if self.callbacks["on_tool_approval"]:
-                        approved = await self.callbacks["on_tool_approval"](session_id, name, args)
+                        approval_result = await self.callbacks["on_tool_approval"](session_id, name, args)
+                        
+                        if isinstance(approval_result, dict):
+                            # User modified arguments
+                            args = approval_result
+                            approved = True
+                        else:
+                            # Boolean or None
+                            approved = bool(approval_result)
                     else:
                         # If no callback is set but approval is required, we pass (backward compatibility)
                         pass
