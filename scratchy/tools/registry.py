@@ -6,6 +6,7 @@ from .filesystem import (
 )
 from .execution import ExecuteCommandTool, CodeExecuteTool
 from .web import WebSearchTool, UrlFetchTool
+from .git import GitCommandTool
 
 class ToolRegistry:
     def __init__(self):
@@ -29,6 +30,7 @@ class ToolRegistry:
         self.register_tool(CodeExecuteTool())
         self.register_tool(WebSearchTool())
         self.register_tool(UrlFetchTool())
+        self.register_tool(GitCommandTool())
 
     def get_tool(self, name: str) -> BaseTool:
         return self._tools.get(name)
@@ -58,4 +60,4 @@ def execute_tool(tool_name: str, tool_args: Dict[str, Any]) -> ToolResult:
 # Tool categories
 SAFE_TOOLS = ['read_file', 'list_files', 'search_files', 'code_execute', 'url_fetch', 'fast_grep']
 APPROVAL_REQUIRED_TOOLS = ['create_file', 'edit_file']
-DANGEROUS_TOOLS = ['delete_file', 'execute_command']
+DANGEROUS_TOOLS = ['delete_file', 'execute_command', 'git_command']

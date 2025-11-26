@@ -12,9 +12,11 @@ Usage:
 """
 
 import asyncio
+import json
 import sys
 import os
 import argparse
+import uuid
 from scratchy import Agent, CopilotAgent
 from scratchy.config.settings import get_api_key
 from scratchy.session_manager import SessionManager
@@ -200,7 +202,7 @@ async def run_interactive_session(agent: Agent, session_manager: SessionManager,
 
 async def main():
     parser = argparse.ArgumentParser(description="Scratchy Agent with Session Management")
-    parser.add_argument('--session', '-s', default='default', help='Session ID to use or resume')
+    parser.add_argument('--session', '-s', default=None, help='Session ID to use or autospecify with UUID')
     parser.add_argument('--provider', '-p', default='ollama', choices=['ollama', 'groq', 'gemini'], help='LLM provider')
     parser.add_argument('--model', '-m', help='Model name')
     parser.add_argument('--copilot', '-c', action='store_true', help='Use Copilot Agent')
@@ -256,14 +258,36 @@ async def main():
     def on_final_message(session, content):
         print(f"\n[{session}] 🤖 Assistant:\n{content}\n")
 
+    async def on_tool_approval(session, name, args):
+        print(f"\n⚠️  APPROVAL REQUIRED: Tool '{name}' is about to execute.")
+        print(f"   Arguments: {json.dumps(args, indent=2)}")
+        
+        # Use run_in_executor for blocking input
+        response = await asyncio.get_event_loop().run_in_executor(
+            None, input, "   Allow execution? [y/N]: "
+        )
+        is_approved = response.strip().lower() in ['y', 'yes']
+        if is_approved:
+            print("   ✅ Approved.")
+        else:
+            print("   ❌ Denied.")
+        return is_approved
+
     agent.set_callbacks(
         on_tool_start=on_tool_start,
         on_tool_end=on_tool_end,
+        on_tool_approval=on_tool_approval,
         on_final_message=on_final_message
     )
     
     # Run Interactive Session
-    await run_interactive_session(agent, session_manager, args.session)
+    if args.session:
+        session_id = args.session
+    else:
+        session_id = str(uuid.uuid4())
+        print(f"🆔 Generated new session ID: {session_id}")
+
+    await run_interactive_session(agent, session_manager, session_id)
     
     # Cleanup
     await agent.cleanup()

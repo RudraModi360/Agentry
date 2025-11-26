@@ -9,12 +9,13 @@ class SessionManager:
     Stores session history in scratchy/session_history/ folder.
     """
     
-    def __init__(self, history_dir: str = None):
+    def __init__(self, history_dir: str = None, uuid_in_session_ids: bool = False):
         if history_dir is None:
             # Default to scratchy/session_history
             script_dir = os.path.dirname(os.path.abspath(__file__))
             history_dir = os.path.join(script_dir, "session_history")
         self.history_dir = history_dir
+        self.uuid_in_session_ids = uuid_in_session_ids
         os.makedirs(self.history_dir, exist_ok=True)
     
     def _get_session_path(self, session_id: str) -> str:

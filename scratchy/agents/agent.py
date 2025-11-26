@@ -221,20 +221,29 @@ class Agent:
             except Exception as e:
                 # Error handling & Retry logic
                 error_str = str(e).lower()
-                if "empty" in error_str or "tool calls" in error_str or "model output must contain" in error_str:
-                    if self.debug: print("[Agent] Empty response detected, retrying...")
+                # Broaden the check for empty/invalid response errors
+                if (
+                    "empty" in error_str 
+                    or "tool calls" in error_str 
+                    or "model output must contain" in error_str
+                    or "output text or tool calls" in error_str
+                    or "unexpected" in error_str
+                ):
+                    if self.debug: print(f"[Agent] Response error detected: {error_str}. Retrying...")
                     
                     # First retry with tools
                     try:
+                        await asyncio.sleep(1) # Short delay
                         response = await self.provider.chat(session.messages, tools=all_tools)
                     except Exception as retry_error:
                         # Fallback to no tools
-                        if self.debug: print("[Agent] Retry failed, falling back to no tools...")
+                        if self.debug: print(f"[Agent] Retry with tools failed: {retry_error}. Falling back to no tools...")
                         try:
+                            await asyncio.sleep(1)
                             response = await self.provider.chat(session.messages, tools=None)
                         except Exception as fallback_error:
                             # Last resort: return friendly error message
-                            error_msg = "I apologize, but I'm having trouble generating a response. Please try rephrasing your question or try again."
+                            error_msg = f"I encountered an error from the model: {str(fallback_error)}. Please try again."
                             if self.debug: 
                                 print(f"[Agent] All retries failed: {fallback_error}")
                             if self.callbacks["on_final_message"]:
@@ -242,6 +251,7 @@ class Agent:
                             return error_msg
                 else:
                     # Different error, re-raise
+                    if self.debug: print(f"[Agent] Unhandled error: {error_str}")
                     raise e
             
             # If we still don't have a response, skip this iteration
@@ -298,10 +308,13 @@ class Agent:
 
                 # Approval
                 approved = True
-                if name in DANGEROUS_TOOLS or name in APPROVAL_REQUIRED_TOOLS:
+                if self._requires_approval(name):
                     if self.callbacks["on_tool_approval"]:
                         approved = await self.callbacks["on_tool_approval"](session_id, name, args)
-                
+                    else:
+                        # If no callback is set but approval is required, we pass (backward compatibility)
+                        pass
+
                 if not approved:
                     result = {"error": "Denied by user"}
                 else:
@@ -321,6 +334,29 @@ class Agent:
                 session.add_message(tool_msg)
 
         return "Max iterations reached."
+
+    def _requires_approval(self, name: str) -> bool:
+        """Check if a tool requires user approval."""
+        # 1. Check explicit lists
+        if name in DANGEROUS_TOOLS or name in APPROVAL_REQUIRED_TOOLS:
+            return True
+        
+        # 2. Check MCP and Custom tools
+        is_mcp = any(name in m.server_tools_map for m in self.mcp_managers)
+        is_custom = name in self.custom_tool_executors
+        
+        if is_mcp or is_custom:
+            # Heuristic for critical operations
+            # We check if the name implies any state-changing or external side-effect
+            critical_keywords = [
+                'write', 'edit', 'update', 'delete', 'create', 'insert', 'modify', 
+                'set_', 'execute', 'run', 'upload', 'send', 'post', 'put', 'patch',
+                'remove', 'drop', 'alter', 'grant', 'revoke', 'commit'
+            ]
+            if any(k in name.lower() for k in critical_keywords):
+                return True
+                
+        return False
 
     async def _execute_tool(self, name: str, args: Dict) -> Any:
         # 1. Custom Tools

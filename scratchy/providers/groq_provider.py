@@ -24,8 +24,14 @@ class GroqProvider(LLMProvider):
             kwargs["tools"] = tools
             kwargs["tool_choice"] = "auto"
             
-        response = self.client.chat.completions.create(**kwargs)
-        return response.choices[0].message
+        try:
+            response = self.client.chat.completions.create(**kwargs)
+            return response.choices[0].message
+        except Exception as e:
+            error_msg = str(e)
+            if "output text or tool calls" in error_msg.lower():
+                raise ValueError(f"Groq model returned empty response (output text or tool calls cannot both be empty). Original error: {error_msg}")
+            raise e
 
     def get_model_name(self) -> str:
         return self.model_name
