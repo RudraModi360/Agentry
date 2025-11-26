@@ -209,16 +209,24 @@ class Agent:
         session = self.get_session(session_id)
         
         # --- Context Management (Truncation) ---
-        MAX_HISTORY = 20 # Keep last 20 messages + System
-        if len(session.messages) > MAX_HISTORY:
-            # Keep system message (index 0) and the last N messages
-            # Assuming index 0 is always system. If not, we might need to find it.
+        # We use a "High Water Mark" strategy to avoid constant truncation/processing.
+        # We let the history grow to (MIN_HISTORY + BUFFER) before cutting it back to MIN_HISTORY.
+        MIN_HISTORY = 20 
+        BUFFER_SIZE = 10
+        
+        if len(session.messages) > (MIN_HISTORY + BUFFER_SIZE):
+            # Keep system message (index 0) and the last MIN_HISTORY messages
             system_msg = session.messages[0] if session.messages and session.messages[0]['role'] == 'system' else None
             
-            # Slice the last MAX_HISTORY messages
-            recent_messages = session.messages[-MAX_HISTORY:]
+            # The messages to keep
+            recent_messages = session.messages[-MIN_HISTORY:]
             
-            # Reconstruct
+            # The messages to drop (excluding system)
+            # We drop everything between system (index 0) and the start of recent_messages
+            drop_end_index = len(session.messages) - MIN_HISTORY
+            dropped_messages = session.messages[1:drop_end_index]
+            
+            # Reconstruct history
             new_history = []
             if system_msg:
                 new_history.append(system_msg)
@@ -227,15 +235,13 @@ class Agent:
             new_history.extend([m for m in recent_messages if m.get('role') != 'system'])
             
             # --- Memory Consolidation for Dropped Messages ---
-            # We are about to lose 'dropped_messages'. We must process them into long-term memory.
-            dropped_messages = session.messages[1:-MAX_HISTORY] # Skip system (0) and keep last MAX_HISTORY
             if dropped_messages:
-                if self.debug: print(f"[Agent] Consolidating {len(dropped_messages)} dropped messages into memory...")
+                if self.debug: print(f"[Agent] Buffer full. Consolidating {len(dropped_messages)} dropped messages...")
                 asyncio.create_task(self.user_profile_manager.process_conversation_fragment(dropped_messages))
 
             session.messages = new_history
             if self.debug:
-                print(f"[Agent] Context truncated. Keeping last {MAX_HISTORY} messages.")
+                print(f"[Agent] Context truncated to last {MIN_HISTORY} messages.")
 
         # Inject User Profile into System Message
         profile = self.user_profile_manager.get_profile()
