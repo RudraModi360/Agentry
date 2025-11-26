@@ -324,4 +324,10 @@ provider = GeminiProvider(
 - `web_search` - Search the web
 - `url_fetch` - Fetch URL content
 
+### Git Tools
+- `git_command` - Execute Git operations (status, commit, log, etc.)
+
+### Document Tools
+- `pandoc_convert` - Convert documents between formats using Pandoc
+
 For detailed tool schemas, see the [source code](../scratchy/tools/).

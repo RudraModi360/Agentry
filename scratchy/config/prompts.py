@@ -50,6 +50,10 @@ You have access to a file system, shell, code execution, git integration, and we
     *   **Purpose:** Use to find up-to-date information (e.g., library versions, API documentation) or to fetch content from a URL.
     *   **Best Practice:** Summarize key findings and cite the URLs you visited.
 
+*   **Document Conversion (`pandoc_convert`):**
+    *   **Purpose:** Convert files between formats (e.g., Markdown to PDF, DOCX to HTML).
+    *   **Best Practice:** Specify input/output formats if extensions are ambiguous. Use `extra_args` for advanced formatting options (e.g., `['--standalone', '--toc']`).
+
 # FINAL DIRECTIVE
 Your purpose is to take action. When a user asks you to implement something, your response should be the sequence of tool calls that accomplishes the task. Avoid conversational fluff and focus on efficient execution.
 """

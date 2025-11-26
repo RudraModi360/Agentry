@@ -6,13 +6,10 @@ from scratchy.providers.base import LLMProvider
 from scratchy.tools import ALL_TOOL_SCHEMAS, DANGEROUS_TOOLS, APPROVAL_REQUIRED_TOOLS, execute_tool
 from scratchy.config.prompts import get_system_prompt
 
-try:
-    from scratchy.mcp_client import MCPClientManager
-except ImportError:
-    import sys
-    import os
-    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from scratchy.mcp_client import MCPClientManager
+import sys
+import os
+from scratchy.mcp_client import MCPClientManager
+from scratchy.user_profile_manager import UserProfileManager
 
 class AgentSession:
     """Represents a conversation session."""
@@ -80,6 +77,10 @@ class Agent:
             "on_tool_approval": None,
             "on_final_message": None
         }
+
+        # Initialize UserProfileManager
+        profile_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "user_data", "user_profile.md")
+        self.user_profile_manager = UserProfileManager(profile_path, self.provider)
 
     def _create_provider(self, provider_name: str, model: str, api_key: str) -> LLMProvider:
         """Factory method to create providers from strings."""
@@ -206,6 +207,56 @@ class Agent:
     async def chat(self, user_input: str, session_id: str = "default") -> str:
         """Main chat loop."""
         session = self.get_session(session_id)
+        
+        # --- Context Management (Truncation) ---
+        MAX_HISTORY = 20 # Keep last 20 messages + System
+        if len(session.messages) > MAX_HISTORY:
+            # Keep system message (index 0) and the last N messages
+            # Assuming index 0 is always system. If not, we might need to find it.
+            system_msg = session.messages[0] if session.messages and session.messages[0]['role'] == 'system' else None
+            
+            # Slice the last MAX_HISTORY messages
+            recent_messages = session.messages[-MAX_HISTORY:]
+            
+            # Reconstruct
+            new_history = []
+            if system_msg:
+                new_history.append(system_msg)
+            
+            # Filter out any duplicate system messages from recent_messages just in case
+            new_history.extend([m for m in recent_messages if m.get('role') != 'system'])
+            
+            # --- Memory Consolidation for Dropped Messages ---
+            # We are about to lose 'dropped_messages'. We must process them into long-term memory.
+            dropped_messages = session.messages[1:-MAX_HISTORY] # Skip system (0) and keep last MAX_HISTORY
+            if dropped_messages:
+                if self.debug: print(f"[Agent] Consolidating {len(dropped_messages)} dropped messages into memory...")
+                asyncio.create_task(self.user_profile_manager.process_conversation_fragment(dropped_messages))
+
+            session.messages = new_history
+            if self.debug:
+                print(f"[Agent] Context truncated. Keeping last {MAX_HISTORY} messages.")
+
+        # Inject User Profile into System Message
+        profile = self.user_profile_manager.get_profile()
+        if profile:
+            # We construct a temporary system message for THIS turn, 
+            # but we update the session's system message to include it persistently?
+            # Actually, it's better to inject it dynamically each time to keep it fresh.
+            # But we need to be careful not to duplicate it in the history if we persist it.
+            
+            # Strategy: Update the System Message in place
+            base_system = self.default_system_message
+            full_system_msg = f"{base_system}\n\n=== User Profile & Memory ===\n{profile}"
+            
+            if session.messages and session.messages[0]['role'] == 'system':
+                session.messages[0]['content'] = full_system_msg
+            else:
+                session.messages.insert(0, {"role": "system", "content": full_system_msg})
+
+        # Note: We NO LONGER update profile on every turn to reduce latency/overhead.
+        # We only update on truncation (above) or explicit session end.
+
         session.add_message({"role": "user", "content": user_input})
         
         all_tools = await self.get_all_tools()
@@ -373,6 +424,18 @@ class Agent:
 
         # 3. Internal Default Tools
         return execute_tool(name, args)
+
+    async def consolidate_memory(self, session_id: str = "default"):
+        """
+        Manually trigger memory consolidation for the current session history.
+        Useful for end-of-session processing.
+        """
+        session = self.get_session(session_id)
+        # We process all messages except system
+        messages_to_process = [m for m in session.messages if m.get('role') != 'system']
+        if messages_to_process:
+            if self.debug: print(f"[Agent] Consolidating {len(messages_to_process)} messages from session '{session_id}'...")
+            await self.user_profile_manager.process_conversation_fragment(messages_to_process)
 
     async def cleanup(self):
         for manager in self.mcp_managers:

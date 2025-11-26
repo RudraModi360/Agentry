@@ -107,6 +107,20 @@ The LLM:
 3. Decides which tool(s) to call
 4. Generates the arguments in JSON format
 
+### Safety & Permissions
+
+Scratchy includes a built-in safety mechanism for critical operations. Tools can be classified as:
+- **Safe**: Read-only operations (e.g., `read_file`, `list_files`)
+- **Dangerous**: Destructive or critical operations (e.g., `delete_file`, `git_command`)
+
+When a dangerous tool is called, the agent:
+1. Pauses execution
+2. Triggers the `on_tool_approval` callback
+3. Waits for user confirmation (Yes/No)
+4. Executes only if approved
+
+This ensures the agent never performs harmful actions without your consent.
+
 ### Built-in Tool Categories
 
 **Filesystem Tools:**

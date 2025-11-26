@@ -47,6 +47,8 @@ Unlike black-box agent frameworks, Scratchy is built for **transparency and educ
 - 🛠️ **Custom Tool Support** - Easy function-to-tool conversion
 - 🔌 **MCP Integration** - Connect to external MCP servers
 - 🎯 **Multi-Provider** - Ollama, Groq, and Gemini support
+- 🐙 **Git Integration** - Native support for version control operations
+- 📄 **Document Conversion** - Native Pandoc support for file format conversion
 
 ## 🚀 Quick Start
 
@@ -183,6 +185,8 @@ await copilot.general_chat("Tell me a joke")  # Context switch
 - **Filesystem**: read, create, edit, delete, list, search files
 - **Execution**: run shell commands, execute Python code
 - **Web**: search, fetch URLs
+- **Git**: native support for version control operations
+- **Pandoc**: convert documents between formats (md, pdf, docx, etc.)
 
 ## 📂 Project Structure
 
