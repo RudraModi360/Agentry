@@ -16,6 +16,8 @@ dependencies = [
     "langchain-community>=0.4.1",
     "mcp>=1.22.0",
     "ollama>=0.6.1",
+    "py-toon-format>=0.1.0",
     "pydantic>=2.12.4",
     "requests>=2.32.5",
+    "watchdog>=6.0.0",
 ]

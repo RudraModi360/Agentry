@@ -9,7 +9,10 @@ from scratchy.config.prompts import get_system_prompt
 import sys
 import os
 from scratchy.mcp_client import MCPClientManager
-from scratchy.user_profile_manager import UserProfileManager
+# from scratchy.user_profile_manager import UserProfileManager
+from scratchy.memory.storage import PersistentMemoryStore
+from scratchy.memory.middleware import MemoryMiddleware
+from scratchy.memory.vfs import VirtualFileSystem
 
 class AgentSession:
     """Represents a conversation session."""
@@ -19,6 +22,7 @@ class AgentSession:
         self.created_at = datetime.now()
         self.last_activity = datetime.now()
         self.metadata: Dict[str, Any] = {}
+        self.files: Dict[str, str] = {} # VFS: Filename -> Content
     
     def add_message(self, message: Dict[str, Any]):
         self.messages.append(message)
@@ -38,6 +42,7 @@ class Agent:
     - External MCP tools (Excel, etc.)
     - Multi-session management
     - Custom tool registration
+    - Persistent Memory Middleware
     """
     
     def __init__(
@@ -70,6 +75,17 @@ class Agent:
         # Session Management
         self.sessions: Dict[str, AgentSession] = {}
         
+        # Memory Middleware
+        self.memory_store = PersistentMemoryStore() # Default to sqlite in user_data
+        self.memory_middleware = MemoryMiddleware(self.provider, self.memory_store)
+        
+        # Context Middleware (Token Management)
+        from scratchy.memory.context_middleware import ContextMiddleware
+        self.context_middleware = ContextMiddleware(self.provider, token_threshold=100000)
+        
+        # Virtual File System
+        self.vfs = VirtualFileSystem(self.memory_store)
+        
         # Callbacks
         self.callbacks = {
             "on_tool_start": None,
@@ -79,8 +95,9 @@ class Agent:
         }
 
         # Initialize UserProfileManager
-        profile_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "user_data", "user_profile.md")
-        self.user_profile_manager = UserProfileManager(profile_path, self.provider)
+        # Removed in favor of MemoryMiddleware
+        # profile_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "user_data", "user_profile.md")
+        # self.user_profile_manager = UserProfileManager(profile_path, self.provider)
 
     def _create_provider(self, provider_name: str, model: str, api_key: str) -> LLMProvider:
         """Factory method to create providers from strings."""
@@ -107,8 +124,9 @@ class Agent:
     def load_default_tools(self):
         """Load all built-in tools (Filesystem, Web, Execution)."""
         self.internal_tools.extend(ALL_TOOL_SCHEMAS)
+        self.internal_tools.extend(self.vfs.get_tool_schemas())
         if self.debug:
-            print(f"[Agent] Loaded {len(ALL_TOOL_SCHEMAS)} default tools.")
+            print(f"[Agent] Loaded {len(ALL_TOOL_SCHEMAS)} default tools + VFS tools.")
 
     async def add_mcp_server(self, config_path: str = "mcp.json"):
         """Connect to MCP servers defined in a config file and add their tools."""
@@ -192,6 +210,12 @@ class Agent:
         """Get or create a session."""
         if session_id not in self.sessions:
             self.sessions[session_id] = AgentSession(session_id, self.default_system_message)
+            # Ensure session exists in persistent memory store
+            self.memory_store.create_session(session_id)
+            
+            # Load VFS files
+            self.sessions[session_id].files = self.vfs.load_session_files(session_id)
+                
         return self.sessions[session_id]
 
     def clear_session(self, session_id: str = "default"):
@@ -208,57 +232,36 @@ class Agent:
         """Main chat loop."""
         session = self.get_session(session_id)
         
-        # --- Context Management (Truncation) ---
-        # We use a "High Water Mark" strategy to avoid constant truncation/processing.
-        # We let the history grow to (MIN_HISTORY + BUFFER) before cutting it back to MIN_HISTORY.
-        MIN_HISTORY = 20 
-        BUFFER_SIZE = 10
+        # --- Context Management (Middleware) ---
+        # Check token limit and summarize if necessary
+        session.messages = await self.context_middleware.manage_context(session.messages)
+
+        # --- Memory Middleware: Process User Input ---
+        # Extract insights and retrieve relevant memories
+        if self.debug: print(f"[Agent] Middleware: Processing user input for memory...")
+        relevant_memories = await self.memory_middleware.process_user_input(session_id, user_input)
         
-        if len(session.messages) > (MIN_HISTORY + BUFFER_SIZE):
-            # Keep system message (index 0) and the last MIN_HISTORY messages
-            system_msg = session.messages[0] if session.messages and session.messages[0]['role'] == 'system' else None
-            
-            # The messages to keep
-            recent_messages = session.messages[-MIN_HISTORY:]
-            
-            # The messages to drop (excluding system)
-            # We drop everything between system (index 0) and the start of recent_messages
-            drop_end_index = len(session.messages) - MIN_HISTORY
-            dropped_messages = session.messages[1:drop_end_index]
-            
-            # Reconstruct history
-            new_history = []
-            if system_msg:
-                new_history.append(system_msg)
-            
-            # Filter out any duplicate system messages from recent_messages just in case
-            new_history.extend([m for m in recent_messages if m.get('role') != 'system'])
-            
-            # --- Memory Consolidation for Dropped Messages ---
-            if dropped_messages:
-                if self.debug: print(f"[Agent] Buffer full. Consolidating {len(dropped_messages)} dropped messages...")
-                asyncio.create_task(self.user_profile_manager.process_conversation_fragment(dropped_messages))
+        # Format memories for injection
+        memory_context = ""
+        if relevant_memories:
+            memory_context = "\n\n=== Relevant Memories ===\n"
+            for mem in relevant_memories:
+                memory_context += f"- [{mem['type']}] {mem['content']}\n"
 
-            session.messages = new_history
-            if self.debug:
-                print(f"[Agent] Context truncated to last {MIN_HISTORY} messages.")
-
-        # Inject User Profile into System Message
-        profile = self.user_profile_manager.get_profile()
-        if profile:
-            # We construct a temporary system message for THIS turn, 
-            # but we update the session's system message to include it persistently?
-            # Actually, it's better to inject it dynamically each time to keep it fresh.
-            # But we need to be careful not to duplicate it in the history if we persist it.
+        # Inject Memories into System Message
+        
+        # Construct dynamic system message
+        base_system = self.default_system_message
+        full_system_msg = base_system
+        
+        if memory_context:
+            full_system_msg += memory_context
             
-            # Strategy: Update the System Message in place
-            base_system = self.default_system_message
-            full_system_msg = f"{base_system}\n\n=== User Profile & Memory ===\n{profile}"
-            
-            if session.messages and session.messages[0]['role'] == 'system':
-                session.messages[0]['content'] = full_system_msg
-            else:
-                session.messages.insert(0, {"role": "system", "content": full_system_msg})
+        # Update system message in history
+        if session.messages and session.messages[0]['role'] == 'system':
+            session.messages[0]['content'] = full_system_msg
+        else:
+            session.messages.insert(0, {"role": "system", "content": full_system_msg})
 
         # Note: We NO LONGER update profile on every turn to reduce latency/overhead.
         # We only update on truncation (above) or explicit session end.
@@ -288,13 +291,22 @@ class Agent:
                 ):
                     if self.debug: print(f"[Agent] Response error detected: {error_str}. Retrying...")
                     
-                    # First retry with tools
-                    try:
-                        await asyncio.sleep(1) # Short delay
-                        response = await self.provider.chat(session.messages, tools=all_tools)
-                    except Exception as retry_error:
-                        # Fallback to no tools
-                        if self.debug: print(f"[Agent] Retry with tools failed: {retry_error}. Falling back to no tools...")
+                    # Retry loop with tools
+                    retry_success = False
+                    for attempt in range(3):
+                        try:
+                            if self.debug: print(f"[Agent] Retry attempt {attempt+1} with tools...")
+                            await asyncio.sleep(1) # Short delay
+                            response = await self.provider.chat(session.messages, tools=all_tools)
+                            retry_success = True
+                            break
+                        except Exception as retry_error:
+                            if self.debug: print(f"[Agent] Retry {attempt+1} failed: {retry_error}")
+                            last_error = retry_error
+                    
+                    if not retry_success:
+                        # Fallback to no tools as a last resort
+                        if self.debug: print(f"[Agent] All tool retries failed. Falling back to no tools...")
                         try:
                             await asyncio.sleep(1)
                             response = await self.provider.chat(session.messages, tools=None)
@@ -343,6 +355,13 @@ class Agent:
 
             # 3. Handle Final Response
             if not tool_calls:
+                # --- Memory Middleware: Process Agent Output ---
+                if self.debug: print(f"[Agent] Middleware: Processing agent output for memory...")
+                # We use create_task to not block the response, or await if we want to ensure it's saved?
+                # The user wants it "added to memory", implying it's part of the flow.
+                # Awaiting ensures it's saved before the next turn.
+                await self.memory_middleware.process_agent_output(session_id, content)
+
                 if self.callbacks["on_final_message"]:
                     self.callbacks["on_final_message"](session_id, content)
                 return content
@@ -383,7 +402,7 @@ class Agent:
                 if not approved:
                     result = {"error": "Denied by user"}
                 else:
-                    result = await self._execute_tool(name, args)
+                    result = await self._execute_tool(name, args, session_id)
 
                 if self.callbacks["on_tool_end"]:
                     self.callbacks["on_tool_end"](session_id, name, result)
@@ -405,12 +424,20 @@ class Agent:
         # 1. Check explicit lists
         if name in DANGEROUS_TOOLS or name in APPROVAL_REQUIRED_TOOLS:
             return True
+            
+        # VFS tools are internal memory operations, so they are safe
+        if name in ["write_virtual_file", "read_virtual_file", "list_virtual_files"]:
+            return False
         
         # 2. Check MCP and Custom tools
         is_mcp = any(name in m.server_tools_map for m in self.mcp_managers)
         is_custom = name in self.custom_tool_executors
         
         if is_mcp or is_custom:
+            # Exempt 'computer' tool calls from approval
+            if name == 'computer':
+                return False
+
             # Heuristic for critical operations
             # We check if the name implies any state-changing or external side-effect
             critical_keywords = [
@@ -423,7 +450,12 @@ class Agent:
                 
         return False
 
-    async def _execute_tool(self, name: str, args: Dict) -> Any:
+    async def _execute_tool(self, name: str, args: Dict, session_id: str) -> Any:
+        # 0. VFS Tools
+        if name in ["write_virtual_file", "read_virtual_file", "list_virtual_files"]:
+            session = self.get_session(session_id)
+            return self.vfs.execute_tool(session.files, session_id, name, args)
+
         # 1. Custom Tools
         if name in self.custom_tool_executors:
             return self.custom_tool_executors[name](**args)
@@ -439,18 +471,7 @@ class Agent:
         # 3. Internal Default Tools
         return execute_tool(name, args)
 
-    async def consolidate_memory(self, session_id: str = "default"):
-        """
-        Manually trigger memory consolidation for the current session history.
-        Useful for end-of-session processing.
-        """
-        session = self.get_session(session_id)
-        # We process all messages except system
-        messages_to_process = [m for m in session.messages if m.get('role') != 'system']
-        if messages_to_process:
-            if self.debug: print(f"[Agent] Consolidating {len(messages_to_process)} messages from session '{session_id}'...")
-            await self.user_profile_manager.process_conversation_fragment(messages_to_process)
-
     async def cleanup(self):
         for manager in self.mcp_managers:
             await manager.cleanup()
+

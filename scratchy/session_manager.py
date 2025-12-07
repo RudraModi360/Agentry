@@ -2,6 +2,7 @@ import os
 import json
 from datetime import datetime
 from typing import Dict, List, Any, Optional
+from py_toon_format import encode, decode
 
 class SessionManager:
     """
@@ -33,10 +34,11 @@ class SessionManager:
             "messages": messages
         }
         
-        # For now, we'll use JSON format with .toon extension
-        # A full TOON encoder would be more compact, but JSON is readable and compatible
+        # Encode to TOON string
+        toon_content = encode(toon_data)
+        
         with open(session_path, 'w', encoding='utf-8') as f:
-            json.dump(toon_data, f, indent=2)
+            f.write(toon_content)
     
     def load_session(self, session_id: str) -> Optional[List[Dict[str, Any]]]:
         """Load session messages from .toon file."""
@@ -47,7 +49,18 @@ class SessionManager:
         
         try:
             with open(session_path, 'r', encoding='utf-8') as f:
-                toon_data = json.load(f)
+                content = f.read()
+            
+            # Check if it's legacy JSON
+            if content.strip().startswith("{") and '"messages":' in content:
+                 try:
+                    toon_data = json.loads(content)
+                    return toon_data.get("messages", [])
+                 except:
+                    pass # Fallback to TOON decode
+            
+            # Decode TOON
+            toon_data = decode(content)
             return toon_data.get("messages", [])
         except Exception as e:
             print(f"Error loading session {session_id}: {e}")
@@ -64,7 +77,15 @@ class SessionManager:
                 
                 try:
                     with open(session_path, 'r', encoding='utf-8') as f:
-                        data = json.load(f)
+                        content = f.read()
+                    
+                    if content.strip().startswith("{") and '"messages":' in content:
+                         try:
+                            data = json.loads(content)
+                         except:
+                            data = decode(content)
+                    else:
+                        data = decode(content)
                     
                     sessions.append({
                         "id": session_id,

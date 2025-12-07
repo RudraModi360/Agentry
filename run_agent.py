@@ -20,6 +20,7 @@ import uuid
 from scratchy import Agent, CopilotAgent
 from scratchy.config.settings import get_api_key
 from scratchy.session_manager import SessionManager
+from scratchy.reloader import start_reloader
 
 # --- Configuration ---
 MCP_CONFIG_PATH = "mcp.json"
@@ -312,6 +313,12 @@ async def main():
         on_final_message=on_final_message
     )
     
+    # Start Hot Reloader
+    # Watch the 'scratchy' directory for changes
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    watch_dir = os.path.join(base_dir, "scratchy")
+    observer = start_reloader(watch_dir)
+    
     # Run Interactive Session
     if args.session:
         session_id = args.session
@@ -322,21 +329,11 @@ async def main():
     await run_interactive_session(agent, session_manager, session_id)
     
     # Cleanup & Save Memory
-    print("\n💾 Consolidating memory and cleaning up...")
-    # We need to pass the current session ID to consolidate memory for it
-    # But main() doesn't easily expose the last used session ID if it changed in the loop.
-    # However, run_interactive_session returns... wait, it doesn't return the last session ID.
-    # Let's just consolidate the 'default' or initial session for now, 
-    # or better, iterate over all active sessions in agent?
-    # For now, let's assume the user mostly cares about the session they were just in.
-    # Since we can't easily get it back from run_interactive_session without changing signature,
-    # let's modify run_interactive_session to return the last session_id.
+    print("\n💾 Cleaning up...")
+    # Memory is now handled continuously by middleware, so no final consolidation is needed.
     
-    # Actually, simpler: The Agent object holds the sessions. 
-    # We can just iterate through all loaded sessions in the agent and consolidate them.
-    for session_id in agent.sessions:
-        await agent.consolidate_memory(session_id)
-
+    observer.stop()
+    observer.join()
     await agent.cleanup()
 
 if __name__ == "__main__":
