@@ -91,7 +91,8 @@ class Agent:
             "on_tool_start": None,
             "on_tool_end": None,
             "on_tool_approval": None,
-            "on_final_message": None
+            "on_final_message": None,
+            "on_token": None  # For streaming token updates
         }
 
         # Initialize UserProfileManager
@@ -225,21 +226,28 @@ class Agent:
     # --- Execution ---
 
     def set_callbacks(self, **kwargs):
-        """Set callbacks: on_tool_start, on_tool_end, on_tool_approval, on_final_message."""
+        """Set callbacks: on_tool_start, on_tool_end, on_tool_approval, on_final_message, on_token."""
         self.callbacks.update(kwargs)
 
-    async def chat(self, user_input: str, session_id: str = "default") -> str:
+    async def chat(self, user_input: Union[str, List[Dict[str, Any]]], session_id: str = "default") -> str:
         """Main chat loop."""
+        from scratchy.providers.utils import extract_content
+
         session = self.get_session(session_id)
         
         # --- Context Management (Middleware) ---
         # Check token limit and summarize if necessary
         session.messages = await self.context_middleware.manage_context(session.messages)
 
+        # --- Handle Multimodal Input ---
+        text_for_memory = user_input
+        if isinstance(user_input, list):
+            text_for_memory, _ = extract_content(user_input)
+
         # --- Memory Middleware: Process User Input ---
         # Extract insights and retrieve relevant memories
         if self.debug: print(f"[Agent] Middleware: Processing user input for memory...")
-        relevant_memories = await self.memory_middleware.process_user_input(session_id, user_input)
+        relevant_memories = await self.memory_middleware.process_user_input(session_id, text_for_memory)
         
         # Format memories for injection
         memory_context = ""
@@ -277,7 +285,12 @@ class Agent:
             # 1. Get response from LLM
             response = None
             try:
-                response = await self.provider.chat(session.messages, tools=all_tools)
+                # Use streaming if on_token callback is set and provider supports it
+                on_token = self.callbacks.get("on_token")
+                if on_token and hasattr(self.provider, 'chat_stream'):
+                    response = await self.provider.chat_stream(session.messages, tools=all_tools, on_token=on_token)
+                else:
+                    response = await self.provider.chat(session.messages, tools=all_tools)
             except Exception as e:
                 # Error handling & Retry logic
                 error_str = str(e).lower()
@@ -288,6 +301,7 @@ class Agent:
                     or "model output must contain" in error_str
                     or "output text or tool calls" in error_str
                     or "unexpected" in error_str
+                    or "does not support tools" in error_str
                 ):
                     if self.debug: print(f"[Agent] Response error detected: {error_str}. Retrying...")
                     
@@ -301,12 +315,17 @@ class Agent:
                             retry_success = True
                             break
                         except Exception as retry_error:
+                            retry_error_str = str(retry_error).lower()
+                            if "does not support tools" in retry_error_str:
+                                if self.debug: print(f"[Agent] Model doesn't support tools. Aborting tool retries.")
+                                break # Stop retrying with tools immediately
+                            
                             if self.debug: print(f"[Agent] Retry {attempt+1} failed: {retry_error}")
                             last_error = retry_error
                     
                     if not retry_success:
                         # Fallback to no tools as a last resort
-                        if self.debug: print(f"[Agent] All tool retries failed. Falling back to no tools...")
+                        if self.debug: print(f"[Agent] Falling back to no tools...")
                         try:
                             await asyncio.sleep(1)
                             response = await self.provider.chat(session.messages, tools=None)

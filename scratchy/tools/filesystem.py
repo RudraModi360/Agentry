@@ -3,7 +3,7 @@ import re
 import fnmatch
 import difflib
 import shutil
-from typing import List, Optional, Literal, Set
+from typing import List, Optional, Literal, Set, Union
 from pydantic import BaseModel, Field
 from .base import BaseTool, ToolResult
 
@@ -51,9 +51,9 @@ class SearchFilesParams(BaseModel):
     directory: str = Field('.', description='Directory to search in.')
     case_sensitive: bool = Field(False, description='Case-sensitive search.')
     pattern_type: Literal['substring', 'regex', 'exact', 'fuzzy'] = Field('substring', description='Match type.')
-    file_types: Optional[List[str]] = Field(None, description='File extensions to include.')
-    exclude_dirs: Optional[List[str]] = Field(None, description='Directories to skip.')
-    exclude_files: Optional[List[str]] = Field(None, description='File patterns to skip.')
+    file_types: Optional[Union[str, List[str]]] = Field(None, description='File extensions to include (list or comma-separated string).')
+    exclude_dirs: Optional[Union[str, List[str]]] = Field(None, description='Directories to skip (list or comma-separated string).')
+    exclude_files: Optional[Union[str, List[str]]] = Field(None, description='File patterns to skip (list or comma-separated string).')
     max_results: int = Field(100, description='Maximum results to return (1-1000)', ge=1, le=1000)
     context_lines: int = Field(0, description='Lines of context around matches (0-10)', ge=0, le=10)
     group_by_file: bool = Field(False, description='Group results by filename.')
@@ -220,84 +220,171 @@ class SearchFilesTool(BaseTool):
     args_schema = SearchFilesParams
 
     def run(self, pattern: str, file_pattern: str = '*', directory: str = '.', case_sensitive: bool = False,
-            pattern_type: str = 'substring', file_types: Optional[List[str]] = None,
-            exclude_dirs: Optional[List[str]] = None, exclude_files: Optional[List[str]] = None,
+            pattern_type: str = 'substring', file_types: Optional[Union[str, List[str]]] = None,
+            exclude_dirs: Optional[Union[str, List[str]]] = None, exclude_files: Optional[Union[str, List[str]]] = None,
             max_results: int = 100, context_lines: int = 0, group_by_file: bool = False) -> ToolResult:
         try:
-            results = []
             abs_dir = os.path.abspath(directory)
             if not os.path.isdir(abs_dir):
                 return ToolResult(success=False, error="Directory not found.")
-            
+
+            # Compile regex once
             if pattern_type == 'regex':
-                regex = re.compile(pattern, 0 if case_sensitive else re.IGNORECASE)
-            
-            for root, dirs, files in os.walk(abs_dir):
-                if exclude_dirs:
-                    dirs[:] = [d for d in dirs if d not in exclude_dirs]
-                for file in files:
-                    if exclude_files and any(fnmatch.fnmatch(file, pat) for pat in exclude_files):
-                        continue
-                    if not fnmatch.fnmatch(file, file_pattern):
-                        continue
-                    if file_types:
-                        ext = os.path.splitext(file)[1].lstrip('.')
-                        if ext not in file_types:
-                            continue
-                    
-                    file_path = os.path.join(root, file)
-                    try:
-                        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                            lines = f.readlines()
-                    except Exception:
-                        continue
-                    
-                    for idx, line in enumerate(lines, start=1):
-                        matched = False
-                        match_text = None
-                        if pattern_type == 'substring':
-                            if (line.find(pattern) != -1) if case_sensitive else (pattern.lower() in line.lower()):
-                                matched = True
-                                match_text = pattern
-                        elif pattern_type == 'exact':
-                            if (line.strip() == pattern) if case_sensitive else (line.strip().lower() == pattern.lower()):
-                                matched = True
-                                match_text = pattern
-                        elif pattern_type == 'regex':
-                            if regex.search(line):
-                                matched = True
-                                match_text = regex.search(line).group(0)
-                        elif pattern_type == 'fuzzy':
-                            ratio = difflib.SequenceMatcher(None, pattern, line.strip()).ratio()
-                            if ratio > 0.8:
-                                matched = True
-                                match_text = line.strip()
-                        
-                        if matched:
-                            start = max(0, idx - context_lines - 1)
-                            end = min(len(lines), idx + context_lines)
-                            context = ''.join(lines[start:end]).strip()
-                            res = {
-                                'file': file_path,
-                                'line': idx,
-                                'match': match_text,
-                                'context': context
-                            }
-                            results.append(res)
-                            if len(results) >= max_results:
-                                break
-                    if len(results) >= max_results:
-                        break
-                if len(results) >= max_results:
-                    break
-            
-            if group_by_file:
-                grouped = {}
-                for r in results:
-                    grouped.setdefault(r['file'], []).append(r)
-                content = grouped
+                try:
+                    regex = re.compile(pattern, 0 if case_sensitive else re.IGNORECASE)
+                except re.error as e:
+                    return ToolResult(success=False, error=f"Invalid regex: {e}")
             else:
-                content = results
+                regex = None
+            
+            # Prepare fast matchers
+            pattern_lower = pattern.lower() if not case_sensitive else pattern
+            
+            # Helper to normalize inputs
+            def normalize_list(val):
+                if val is None: return []
+                if isinstance(val, str):
+                    if ',' in val: return [x.strip() for x in val.split(',')]
+                    return [val]
+                return val
+
+            exclude_dirs_list = normalize_list(exclude_dirs)
+            exclude_dirs_set = set(exclude_dirs_list)
+            # Always exclude common huge/binary folders
+            exclude_dirs_set.update({'.git', '__pycache__', 'node_modules', 'venv', '.env', '.idea', '.vscode'})
+            
+            exclude_files_list = normalize_list(exclude_files)
+            exclude_files_set = set(exclude_files_list)
+            
+            file_types_list = normalize_list(file_types)
+            file_types_set = set([t.lower().replace('.', '') for t in file_types_list]) if file_types_list else None
+            
+            # Helper to check binary
+            def is_binary(file_path):
+                try:
+                    with open(file_path, 'rb') as f:
+                        chunk = f.read(1024)
+                        return b'\0' in chunk
+                except:
+                    return True
+
+            results: List[Dict[str, Any]] = []
+            grouped: Dict[str, List[Dict[str, Any]]] = {} if group_by_file else None
+            match_count = 0
+            
+            from collections import deque
+            
+            for root, dirs, files in os.walk(abs_dir, topdown=True):
+                # Efficient pruning
+                dirs[:] = [d for d in dirs if d not in exclude_dirs_set]
+                
+                for fname in files:
+                    if match_count >= max_results:
+                        break
+
+                    # 1. Fast Name Filtering
+                    if exclude_files_set and any(fnmatch.fnmatch(fname, pat) for pat in exclude_files_set):
+                        continue
+                    if file_types_set:
+                        ext = fname.split('.')[-1].lower() if '.' in fname else ''
+                        if ext not in file_types_set:
+                            continue
+                    if file_pattern and file_pattern != '*' and not fnmatch.fnmatch(fname, file_pattern):
+                        continue
+
+                    fpath = os.path.join(root, fname)
+                    
+                    # 2. Skip Large or Binary Files
+                    try:
+                        stat = os.stat(fpath)
+                        if stat.st_size > 10 * 1024 * 1024: # Skip > 10MB
+                            continue
+                    except OSError:
+                        continue
+                        
+                    if is_binary(fpath):
+                        continue
+
+                    # 3. Stream File Content (Don't read all lines)
+                    try:
+                        with open(fpath, 'r', encoding='utf-8', errors='ignore') as fp:
+                            # Use deque for previous context
+                            prev_lines = deque(maxlen=context_lines) if context_lines > 0 else None
+                            
+                            # We need to iterate carefully to handle context lines which requires looking ahead
+                            # But simple iteration is faster. For scalability, we might simplify context handling 
+                            # or use a window. Here we iterate and keep history.
+                            
+                            # Simple iteration with line tracking
+                            line_idx = 0
+                            
+                            # If context is required, we might need a more complex iterator or just readlines for small files.
+                            # For scalability, let's use the iterator but only support "previous" context efficiently,
+                            # or read small chunks. 
+                            # Let's fallback to readlines ONLY if file is small (< 1MB) OR context is 0.
+                            # Actually, efficient search is priority.
+                            
+                            is_large_file = stat.st_size > 1 * 1024 * 1024
+                            if is_large_file and context_lines > 0:
+                                # Skip context for large files to remain scalable
+                                context_lines_effective = 0
+                            else:
+                                context_lines_effective = context_lines
+
+                            if context_lines_effective > 0:
+                                # For small files with context, read lines is safer/easier
+                                lines = fp.readlines()
+                                iterator = enumerate(lines, 1)
+                                use_readlines = True
+                            else:
+                                iterator = enumerate(fp, 1)
+                                use_readlines = False
+
+                            for ln_idx, ln in iterator:
+                                txt = ln.rstrip('\n')
+                                matched = False
+                                
+                                # Fast matching logic
+                                if pattern_type == 'substring':
+                                    matched = (pattern in txt) if case_sensitive else (pattern_lower in txt.lower())
+                                elif pattern_type == 'regex':
+                                    matched = bool(regex.search(txt))
+                                elif pattern_type == 'exact':
+                                     matched = (txt.strip() == pattern) if case_sensitive else (txt.strip().lower() == pattern_lower)
+                                
+                                if matched:
+                                    # Collect context
+                                    context_buf = []
+                                    if context_lines_effective > 0 and use_readlines:
+                                         start_ctx = max(ln_idx - 1 - context_lines_effective, 0)
+                                         end_ctx = min(ln_idx + context_lines_effective, len(lines))
+                                         context_buf = [l.strip() for l in lines[start_ctx:end_ctx]]
+                                    else:
+                                         context_buf = [txt.strip()]
+
+                                    rec = {
+                                        'file': fpath,
+                                        'line_number': ln_idx,
+                                        'line': txt.strip()[:200], # Truncate long lines in result
+                                        'context': context_buf
+                                    }
+                                    
+                                    if group_by_file:
+                                        grouped.setdefault(fpath, []).append(rec)
+                                    else:
+                                        results.append(rec)
+                                    
+                                    match_count += 1
+                                    if match_count >= max_results:
+                                        break
+                                
+                    except OSError:
+                        pass
+                
+                if match_count >= max_results:
+                    break
+
+            content = grouped if group_by_file else results
             return ToolResult(success=True, content=content)
         except Exception as e:
             return ToolResult(success=False, error=f"Failed to search files: {e}")
