@@ -19,5 +19,6 @@ dependencies = [
     "py-toon-format>=0.1.0",
     "pydantic>=2.12.4",
     "requests>=2.32.5",
+    "textual>=6.7.1",
     "watchdog>=6.0.0",
 ]

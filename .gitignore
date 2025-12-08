@@ -76,3 +76,6 @@ uv.lock
 mcp.json
 session_history/
 user_data/
+
+test_web_search.py
+tui_app.py
