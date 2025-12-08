@@ -224,11 +224,26 @@ class SearchFilesTool(BaseTool):
             exclude_dirs: Optional[Union[str, List[str]]] = None, exclude_files: Optional[Union[str, List[str]]] = None,
             max_results: int = 100, context_lines: int = 0, group_by_file: bool = False) -> ToolResult:
         try:
-            abs_dir = os.path.abspath(directory)
-            if not os.path.isdir(abs_dir):
+            from pathlib import Path
+            import re, fnmatch, os
+            from collections import deque
+
+            base_dir = Path(directory).resolve()
+            if not base_dir.is_dir():
                 return ToolResult(success=False, error="Directory not found.")
 
-            # Compile regex once
+            # Normalizers
+            def _norm(v):
+                if v is None:
+                    return []
+                if isinstance(v, str):
+                    return [x.strip() for x in v.split(',')]
+                return list(v)
+
+            excludes = set(_norm(exclude_dirs) + ['.git','__pycache__','node_modules','venv','.env','.idea','.vscode'])
+            file_excludes = set(_norm(exclude_files))
+            ftypes = set(v.lower().lstrip('.') for v in _norm(file_types)) if file_types else None
+
             if pattern_type == 'regex':
                 try:
                     regex = re.compile(pattern, 0 if case_sensitive else re.IGNORECASE)
@@ -236,156 +251,66 @@ class SearchFilesTool(BaseTool):
                     return ToolResult(success=False, error=f"Invalid regex: {e}")
             else:
                 regex = None
-            
-            # Prepare fast matchers
-            pattern_lower = pattern.lower() if not case_sensitive else pattern
-            
-            # Helper to normalize inputs
-            def normalize_list(val):
-                if val is None: return []
-                if isinstance(val, str):
-                    if ',' in val: return [x.strip() for x in val.split(',')]
-                    return [val]
-                return val
 
-            exclude_dirs_list = normalize_list(exclude_dirs)
-            exclude_dirs_set = set(exclude_dirs_list)
-            # Always exclude common huge/binary folders
-            exclude_dirs_set.update({'.git', '__pycache__', 'node_modules', 'venv', '.env', '.idea', '.vscode'})
-            
-            exclude_files_list = normalize_list(exclude_files)
-            exclude_files_set = set(exclude_files_list)
-            
-            file_types_list = normalize_list(file_types)
-            file_types_set = set([t.lower().replace('.', '') for t in file_types_list]) if file_types_list else None
-            
-            # Helper to check binary
-            def is_binary(file_path):
-                try:
-                    with open(file_path, 'rb') as f:
-                        chunk = f.read(1024)
-                        return b'\0' in chunk
-                except:
-                    return True
+            pat_cmp = pattern.lower() if not case_sensitive else pattern
+            results, grouped = [], {} if group_by_file else None
+            found = 0
 
-            results: List[Dict[str, Any]] = []
-            grouped: Dict[str, List[Dict[str, Any]]] = {} if group_by_file else None
-            match_count = 0
-            
-            from collections import deque
-            
-            for root, dirs, files in os.walk(abs_dir, topdown=True):
-                # Efficient pruning
-                dirs[:] = [d for d in dirs if d not in exclude_dirs_set]
-                
-                for fname in files:
-                    if match_count >= max_results:
+            for root, dirs, files in os.walk(base_dir, topdown=True):
+                dirs[:] = [d for d in dirs if d not in excludes]
+                for f in files:
+                    if found >= max_results:
                         break
-
-                    # 1. Fast Name Filtering
-                    if exclude_files_set and any(fnmatch.fnmatch(fname, pat) for pat in exclude_files_set):
+                    if file_excludes and any(fnmatch.fnmatch(f, p) for p in file_excludes):
                         continue
-                    if file_types_set:
-                        ext = fname.split('.')[-1].lower() if '.' in fname else ''
-                        if ext not in file_types_set:
-                            continue
-                    if file_pattern and file_pattern != '*' and not fnmatch.fnmatch(fname, file_pattern):
+                    if ftypes and f.rsplit('.',1)[-1].lower() not in ftypes:
+                        continue
+                    if file_pattern != '*' and not fnmatch.fnmatch(f, file_pattern):
                         continue
 
-                    fpath = os.path.join(root, fname)
-                    
-                    # 2. Skip Large or Binary Files
+                    fp = os.path.join(root, f)
                     try:
-                        stat = os.stat(fpath)
-                        if stat.st_size > 10 * 1024 * 1024: # Skip > 10MB
+                        stat = os.stat(fp)
+                        if stat.st_size > 10*1024*1024:
                             continue
-                    except OSError:
-                        continue
-                        
-                    if is_binary(fpath):
-                        continue
-
-                    # 3. Stream File Content (Don't read all lines)
-                    try:
-                        with open(fpath, 'r', encoding='utf-8', errors='ignore') as fp:
-                            # Use deque for previous context
-                            prev_lines = deque(maxlen=context_lines) if context_lines > 0 else None
-                            
-                            # We need to iterate carefully to handle context lines which requires looking ahead
-                            # But simple iteration is faster. For scalability, we might simplify context handling 
-                            # or use a window. Here we iterate and keep history.
-                            
-                            # Simple iteration with line tracking
-                            line_idx = 0
-                            
-                            # If context is required, we might need a more complex iterator or just readlines for small files.
-                            # For scalability, let's use the iterator but only support "previous" context efficiently,
-                            # or read small chunks. 
-                            # Let's fallback to readlines ONLY if file is small (< 1MB) OR context is 0.
-                            # Actually, efficient search is priority.
-                            
-                            is_large_file = stat.st_size > 1 * 1024 * 1024
-                            if is_large_file and context_lines > 0:
-                                # Skip context for large files to remain scalable
-                                context_lines_effective = 0
+                        with open(fp, 'r', encoding='utf-8', errors='ignore') as fh:
+                            if context_lines:
+                                lines = fh.readlines()
+                                iter_lines = enumerate(lines, start=1)
+                                use_buf = True
                             else:
-                                context_lines_effective = context_lines
-
-                            if context_lines_effective > 0:
-                                # For small files with context, read lines is safer/easier
-                                lines = fp.readlines()
-                                iterator = enumerate(lines, 1)
-                                use_readlines = True
-                            else:
-                                iterator = enumerate(fp, 1)
-                                use_readlines = False
-
-                            for ln_idx, ln in iterator:
-                                txt = ln.rstrip('\n')
+                                iter_lines = enumerate(fh, start=1)
+                                use_buf = False
+                            for ln_num, line in iter_lines:
+                                txt = line.rstrip('\n')
                                 matched = False
-                                
-                                # Fast matching logic
                                 if pattern_type == 'substring':
-                                    matched = (pattern in txt) if case_sensitive else (pattern_lower in txt.lower())
+                                    matched = (pattern in txt) if case_sensitive else (pat_cmp in txt.lower())
                                 elif pattern_type == 'regex':
                                     matched = bool(regex.search(txt))
                                 elif pattern_type == 'exact':
-                                     matched = (txt.strip() == pattern) if case_sensitive else (txt.strip().lower() == pattern_lower)
-                                
+                                    matched = (txt.strip() == pattern) if case_sensitive else (txt.strip().lower() == pat_cmp)
                                 if matched:
-                                    # Collect context
-                                    context_buf = []
-                                    if context_lines_effective > 0 and use_readlines:
-                                         start_ctx = max(ln_idx - 1 - context_lines_effective, 0)
-                                         end_ctx = min(ln_idx + context_lines_effective, len(lines))
-                                         context_buf = [l.strip() for l in lines[start_ctx:end_ctx]]
+                                    ctx = []
+                                    if context_lines and use_buf:
+                                        start = max(0, ln_num-context_lines-1)
+                                        end = min(len(lines), ln_num+context_lines)
+                                        ctx = [l.strip() for l in lines[start:end]]
                                     else:
-                                         context_buf = [txt.strip()]
-
-                                    rec = {
-                                        'file': fpath,
-                                        'line_number': ln_idx,
-                                        'line': txt.strip()[:200], # Truncate long lines in result
-                                        'context': context_buf
-                                    }
-                                    
+                                        ctx = [txt.strip()]
+                                    rec = {'file': fp, 'line_number': ln_num, 'line': txt[:200], 'context': ctx}
                                     if group_by_file:
-                                        grouped.setdefault(fpath, []).append(rec)
+                                        grouped.setdefault(fp, []).append(rec)
                                     else:
                                         results.append(rec)
-                                    
-                                    match_count += 1
-                                    if match_count >= max_results:
+                                    found += 1
+                                    if found >= max_results:
                                         break
-                                
-                    except OSError:
-                        pass
-                
-                if match_count >= max_results:
+                    except Exception:
+                        continue
+                if found >= max_results:
                     break
-
-            content = grouped if group_by_file else results
-            return ToolResult(success=True, content=content)
+            return ToolResult(success=True, content=grouped if group_by_file else results)
         except Exception as e:
             return ToolResult(success=False, error=f"Failed to search files: {e}")
 

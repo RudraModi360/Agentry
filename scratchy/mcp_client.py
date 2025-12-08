@@ -73,7 +73,7 @@ class MCPClientManager:
                 await session.initialize()
                 
                 self.sessions[server_name] = session
-                print(f"[MCP Client] Connected to server: {server_name}")
+                # print(f"[MCP Client] Connected to server: {server_name}")
                 
                 # List tools and map them
                 result = await session.list_tools()

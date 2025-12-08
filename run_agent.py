@@ -36,18 +36,27 @@ console = Console()
 def print_startup_screen(version="0.1.0"):
     console.clear()
     
-    # Simple ASCII or styled text
-    title = Text("\n   SCRATCHY   \n", style="bold white on #ff8800")
-    subtitle = Text("Advanced Agentic Framework", style="dim white")
+    logo = """
+   _____                _       _           
+  / ____|              | |     | |          
+ | (___   ___ _ __ __ _| |_ ___| |__  _   _ 
+  \___ \ / __| '__/ _` | __/ __| '_ \| | | |
+  ____) | (__| | | (_| | || (__| | | | |_| |
+ |_____/ \___|_|  \__,_|\__\___|_| |_|\__, |
+                                       __/ |
+                                      |___/ 
+    """
     
-    console.print(Align.center(title))
+    console.print(Align.center(Text(logo, style="bold cyan")))
+    subtitle = Text("Agentic Framework", style="dim white")
+    
     console.print(Align.center(subtitle))
     console.print(Align.center(Text(f"v{version}", style="dim #444444")))
     console.print()
 
 # --- Configuration ---
 MCP_CONFIG_PATH = "mcp.json"
-DEBUG_MODE = True
+DEBUG_MODE = False
 
 # --- Helper Commands ---
 HELP_TEXT = """
@@ -290,11 +299,14 @@ async def main():
     if args.provider in ['groq', 'gemini']:
         api_key = get_api_key(args.provider) or console.input(f"[bold yellow]Enter {args.provider.title()} API Key: [/]")
     
-    # Initialize Agent with Spinner
+    # Initialize Agent & Tools with Spinner
+    observer = None
     agent = None
-    with console.status("[bold green]Initializing Agent & Tools...[/]", spinner="dots"):
+    
+    with console.status("[bold green]Booting Scratchy...[/]", spinner="dots") as status:
+        # 1. Load Agent
+        status.update("[bold green]Initializing Agent...[/]")
         if args.copilot:
-            console.print("[dim]🚀 Loading Copilot Agent...[/]")
             agent = CopilotAgent(
                 llm=args.provider,
                 model=args.model,
@@ -302,7 +314,6 @@ async def main():
                 debug=DEBUG_MODE
             )
         else:
-            console.print("[dim]🤖 Loading General Agent...[/]")
             agent = Agent(
                 llm=args.provider,
                 model=args.model,
@@ -311,15 +322,22 @@ async def main():
             )
             agent.load_default_tools()
         
-        # Connect MCP Servers (Optional)
+        # 2. Connect MCP Servers
         if os.path.exists(MCP_CONFIG_PATH):
-            console.print(f"[dim]🔌 Connecting to MCP servers from {MCP_CONFIG_PATH}...[/]")
+            status.update(f"[bold green]Connecting to MCP servers...[/]")
             try:
                 await agent.add_mcp_server(MCP_CONFIG_PATH)
-                console.print("[bold green]✅ MCP servers connected.[/]")
             except Exception as e:
                 console.print(f"[bold red]⚠️  Failed to connect MCP servers: {e}[/]")
-    
+        
+        # 3. Start Hot Reloader
+        status.update("[bold green]Starting Hot Reloader...[/]")
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        watch_dir = os.path.join(base_dir, "scratchy")
+        observer = start_reloader(watch_dir)
+        
+    console.print("[bold green]✔ All systems operational.[/]")
+
     # Setup Callbacks
     def on_tool_start(session, name, args):
         console.print(Panel(
@@ -351,13 +369,29 @@ async def main():
             border_style="#00ff00"
         ))
 
+    # Stream State
+    stream_active = False
+
+    def on_token(token):
+        nonlocal stream_active
+        if not stream_active:
+            console.print("\n[bold blue]🤖 Assistant:[/]", end=" ")
+            stream_active = True
+        console.print(token, end="", markup=False)
+
     def on_final_message(session, content):
-        from rich.markdown import Markdown
-        console.print(Panel(
-            Markdown(content),
-            title=f"[bold blue]🤖 Assistant ({session})[/]",
-            border_style="blue"
-        ))
+        nonlocal stream_active
+        if stream_active:
+            console.print() # End the stream line
+            stream_active = False
+        else:
+            # Fallback for non-streaming providers (e.g. when tools are used solely or provider limitation)
+            from rich.markdown import Markdown
+            console.print(Panel(
+                Markdown(content),
+                title=f"[bold blue]🤖 Assistant ({session})[/]",
+                border_style="blue"
+            ))
 
     async def on_tool_approval(session, name, args):
         console.print()
@@ -417,14 +451,9 @@ async def main():
         on_tool_start=on_tool_start,
         on_tool_end=on_tool_end,
         on_tool_approval=on_tool_approval,
-        on_final_message=on_final_message
+        on_final_message=on_final_message,
+        on_token=on_token
     )
-    
-    # Start Hot Reloader
-    # Watch the 'scratchy' directory for changes
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    watch_dir = os.path.join(base_dir, "scratchy")
-    observer = start_reloader(watch_dir)
     
     # Run Interactive Session
     if args.session:
@@ -439,8 +468,9 @@ async def main():
     print("\n💾 Cleaning up...")
     # Memory is now handled continuously by middleware, so no final consolidation is needed.
     
-    observer.stop()
-    observer.join()
+    if observer:
+        observer.stop()
+        observer.join()
     await agent.cleanup()
 
 if __name__ == "__main__":

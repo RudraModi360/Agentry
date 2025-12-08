@@ -3,7 +3,7 @@ import asyncio
 from typing import List, Dict, Any, Callable, Awaitable, Optional, Union, get_type_hints
 from datetime import datetime
 from scratchy.providers.base import LLMProvider
-from scratchy.tools import ALL_TOOL_SCHEMAS, DANGEROUS_TOOLS, APPROVAL_REQUIRED_TOOLS, execute_tool
+from scratchy.tools import ALL_TOOL_SCHEMAS, DANGEROUS_TOOLS, APPROVAL_REQUIRED_TOOLS, SAFE_TOOLS, execute_tool
 from scratchy.config.prompts import get_system_prompt
 
 import sys
@@ -440,34 +440,21 @@ class Agent:
 
     def _requires_approval(self, name: str) -> bool:
         """Check if a tool requires user approval."""
-        # 1. Check explicit lists
-        if name in DANGEROUS_TOOLS or name in APPROVAL_REQUIRED_TOOLS:
-            return True
+        # 1. Allow Safe Tools Explicitly
+        if name in SAFE_TOOLS:
+            return False
             
         # VFS tools are internal memory operations, so they are safe
         if name in ["write_virtual_file", "read_virtual_file", "list_virtual_files"]:
             return False
-        
-        # 2. Check MCP and Custom tools
-        is_mcp = any(name in m.server_tools_map for m in self.mcp_managers)
-        is_custom = name in self.custom_tool_executors
-        
-        if is_mcp or is_custom:
-            # Exempt 'computer' tool calls from approval
-            if name == 'computer':
-                return False
+            
+        # Exempt 'computer' tool calls from approval (Claude Computer Use)
+        if name == 'computer':
+            return False
 
-            # Heuristic for critical operations
-            # We check if the name implies any state-changing or external side-effect
-            critical_keywords = [
-                'write', 'edit', 'update', 'delete', 'create', 'insert', 'modify', 
-                'set_', 'execute', 'run', 'upload', 'send', 'post', 'put', 'patch',
-                'remove', 'drop', 'alter', 'grant', 'revoke', 'commit'
-            ]
-            if any(k in name.lower() for k in critical_keywords):
-                return True
-                
-        return False
+        # 2. Everything else requires approval
+        # This covers DANGEROUS_TOOLS, APPROVAL_REQUIRED_TOOLS, and any unknown MCP/Custom tools
+        return True
 
     async def _execute_tool(self, name: str, args: Dict, session_id: str) -> Any:
         # 0. VFS Tools

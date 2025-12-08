@@ -27,11 +27,14 @@ class SessionManager:
         """Save session messages to .toon file."""
         session_path = self._get_session_path(session_id)
         
+        # Sanitize messages to ensure JSON serialization
+        clean_messages = self._sanitize_messages(messages)
+        
         # Convert messages to TOON format
         toon_data = {
             "session_id": session_id,
             "created_at": datetime.now().isoformat(),
-            "messages": messages
+            "messages": clean_messages
         }
         
         # Encode to TOON string
@@ -39,6 +42,28 @@ class SessionManager:
         
         with open(session_path, 'w', encoding='utf-8') as f:
             f.write(toon_content)
+
+    def _sanitize_messages(self, data: Any) -> Any:
+        """Recursively convert objects to dicts/lists for serialization."""
+        if isinstance(data, dict):
+            return {k: self._sanitize_messages(v) for k, v in data.items()}
+        elif isinstance(data, list):
+            return [self._sanitize_messages(item) for item in data]
+        elif hasattr(data, "model_dump"): # Pydantic V2
+            return self._sanitize_messages(data.model_dump())
+        elif hasattr(data, "dict"): # Pydantic V1
+            return self._sanitize_messages(data.dict())
+        elif hasattr(data, "__dict__"): # Generic Object
+            try:
+                # Try to use vars() or __dict__
+                return self._sanitize_messages(vars(data))
+            except:
+                # Fallback to string representation if we can't get vars
+                return str(data)
+        elif hasattr(data, "to_dict"): # Some SDKs
+            return self._sanitize_messages(data.to_dict())
+        else:
+            return data
     
     def load_session(self, session_id: str) -> Optional[List[Dict[str, Any]]]:
         """Load session messages from .toon file."""

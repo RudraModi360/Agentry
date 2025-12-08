@@ -60,6 +60,6 @@ def execute_tool(tool_name: str, tool_args: Dict[str, Any]) -> ToolResult:
     return registry.execute_tool(tool_name, tool_args)
 
 # Tool categories
-SAFE_TOOLS = ['read_file', 'list_files', 'search_files', 'code_execute', 'url_fetch', 'fast_grep']
-APPROVAL_REQUIRED_TOOLS = ['create_file', 'edit_file', 'pandoc_convert']
-DANGEROUS_TOOLS = ['delete_file', 'execute_command', 'git_command']
+SAFE_TOOLS = ['read_file', 'list_files', 'search_files', 'fast_grep']
+APPROVAL_REQUIRED_TOOLS = ['create_file', 'edit_file', 'pandoc_convert', 'web_search', 'url_fetch']
+DANGEROUS_TOOLS = ['delete_file', 'execute_command', 'git_command', 'code_execute']
