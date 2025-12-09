@@ -122,7 +122,36 @@ def process_multimodal_input(user_input: str) -> Union[str, List[Dict[str, Any]]
         clean_token = token.strip('"').strip("'")
         
         if os.path.exists(clean_token) and os.path.isfile(clean_token):
-            # Check mime type
+            # Check for document handler first (PDF, DOCX, PPTX, etc.)
+            from scratchy.document_handlers import get_handler, DocumentHandlerRegistry
+            
+            # Determine if we have a handler for this extension
+            _, ext = os.path.splitext(clean_token)
+            if ext.lower() in DocumentHandlerRegistry._handlers and ext.lower() not in ['.txt', '.md', '.py']: 
+                 # We exclude simple text files from "attachment" logic to let them be read naturally via cats/messages 
+                 # OR we can include them. The user wants "general purpose doc handlers".
+                 # Let's attach them as text content.
+                 try:
+                     handler = get_handler(clean_token)
+                     # Convert to markdown representation
+                     md_content = handler.to_markdown()
+                     
+                     # Append as text content block
+                     content_block = f"\n\n--- Document Attachment: {os.path.basename(clean_token)} ---\n{md_content}\n-----------------------------------\n"
+                     
+                     # For simplicity in this list-based return structure, we'll append to a text buffer 
+                     # or create a text message part.
+                     images.append({
+                         "type": "text",
+                         "text": content_block
+                     })
+                     print(f"   📄 Attached document: {clean_token}")
+                     continue # Skip image check
+                     
+                 except Exception as e:
+                     print(f"   ⚠️  Failed to attach document {clean_token}: {e}")
+
+            # Check mime type for images
             mime_type, _ = mimetypes.guess_type(clean_token)
             if mime_type and mime_type.startswith('image/'):
                 try:
@@ -370,23 +399,40 @@ async def main():
         ))
 
     # Stream State
-    stream_active = False
+    from rich.live import Live
+    from rich.markdown import Markdown
+    
+    current_live: Union[Live, None] = None
+    response_buffer: str = ""
 
     def on_token(token):
-        nonlocal stream_active
-        if not stream_active:
-            console.print("\n[bold blue]🤖 Assistant:[/]", end=" ")
-            stream_active = True
-        console.print(token, end="", markup=False)
+        nonlocal current_live, response_buffer
+        
+        # Initialize Live display on first token
+        if current_live is None:
+            console.print("\n[bold blue]🤖 Assistant:[/]")
+            current_live = Live(
+                Markdown(""), 
+                console=console, 
+                refresh_per_second=10, 
+                vertical_overflow="visible"
+            )
+            current_live.start()
+        
+        # Accumulate and update
+        response_buffer += token
+        current_live.update(Markdown(response_buffer))
 
     def on_final_message(session, content):
-        nonlocal stream_active
-        if stream_active:
-            console.print() # End the stream line
-            stream_active = False
+        nonlocal current_live, response_buffer
+        
+        # Clean up Live display
+        if current_live:
+            current_live.stop()
+            current_live = None
+            response_buffer = ""
         else:
-            # Fallback for non-streaming providers (e.g. when tools are used solely or provider limitation)
-            from rich.markdown import Markdown
+            # Fallback if streaming wasn't used (e.g. cached or short response)
             console.print(Panel(
                 Markdown(content),
                 title=f"[bold blue]🤖 Assistant ({session})[/]",
@@ -394,6 +440,13 @@ async def main():
             ))
 
     async def on_tool_approval(session, name, args):
+        # Pause Live display if active to allow user interaction
+        nonlocal current_live
+        was_live = False
+        if current_live:
+            current_live.stop()
+            was_live = True
+            
         console.print()
         console.rule("[bold red]⚠️  APPROVAL REQUIRED", style="red")
         console.print(f" [bold]Tool:[/bold] [cyan]{name}[/cyan]")
@@ -404,6 +457,7 @@ async def main():
             border_style="yellow"
         ))
         
+        result = False
         while True:
             # Use run_in_executor for blocking input
             response = await asyncio.get_event_loop().run_in_executor(
@@ -413,10 +467,12 @@ async def main():
             
             if choice in ['y', 'yes', '']:
                 console.print("[bold green]✅ Approved.[/]")
-                return True
+                result = True
+                break
             elif choice in ['n', 'no']:
                 console.print("[bold red]❌ Denied.[/]")
-                return False
+                result = False
+                break
             elif choice in ['e', 'edit']:
                 # Special handling for run_command to make it easier
                 if name == 'run_command' and 'CommandLine' in args:
@@ -427,7 +483,8 @@ async def main():
                     if new_cmd.strip():
                         args['CommandLine'] = new_cmd.strip()
                         console.print("   [bold green]✅ Command updated and approved.[/]")
-                        return args
+                        result = args
+                        break
                     else:
                         console.print("   [yellow]⚠️  Empty input. Keeping original.[/]")
                         continue
@@ -440,12 +497,19 @@ async def main():
                     )
                     new_args = json.loads(new_json_str)
                     console.print("   [bold green]✅ Arguments updated and approved.[/]")
-                    return new_args
+                    result = new_args
+                    break
                 except json.JSONDecodeError:
                     console.print("   [bold red]❌ Invalid JSON. Please try again.[/]")
                     continue
             else:
                 console.print("   [red]⚠️  Invalid choice.[/]")
+        
+        # Resume Live display if it was active
+        if was_live and current_live:
+            current_live.start()
+            
+        return result
 
     agent.set_callbacks(
         on_tool_start=on_tool_start,

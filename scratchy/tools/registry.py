@@ -7,7 +7,8 @@ from .filesystem import (
 from .execution import ExecuteCommandTool, CodeExecuteTool
 from .web import WebSearchTool, UrlFetchTool
 from .git import GitCommandTool
-from .pandoc import PandocConvertTool
+from .document import ReadDocumentTool
+from .convert_document import ConvertDocumentTool
 
 class ToolRegistry:
     def __init__(self):
@@ -32,7 +33,8 @@ class ToolRegistry:
         self.register_tool(WebSearchTool())
         self.register_tool(UrlFetchTool())
         self.register_tool(GitCommandTool())
-        self.register_tool(PandocConvertTool())
+        self.register_tool(ReadDocumentTool())
+        self.register_tool(ConvertDocumentTool())
 
     def get_tool(self, name: str) -> BaseTool:
         return self._tools.get(name)
@@ -60,6 +62,6 @@ def execute_tool(tool_name: str, tool_args: Dict[str, Any]) -> ToolResult:
     return registry.execute_tool(tool_name, tool_args)
 
 # Tool categories
-SAFE_TOOLS = ['read_file', 'list_files', 'search_files', 'fast_grep']
-APPROVAL_REQUIRED_TOOLS = ['create_file', 'edit_file', 'pandoc_convert', 'web_search', 'url_fetch']
+SAFE_TOOLS = ['read_file', 'list_files', 'search_files', 'fast_grep', 'read_document']
+APPROVAL_REQUIRED_TOOLS = ['create_file', 'edit_file', 'web_search', 'url_fetch', 'convert_document']
 DANGEROUS_TOOLS = ['delete_file', 'execute_command', 'git_command', 'code_execute']
