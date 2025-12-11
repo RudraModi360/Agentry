@@ -101,8 +101,10 @@ class OllamaProvider(LLMProvider):
         """
         Streaming chat that yields tokens progressively.
         Returns the final complete message dict.
+        Supports both sync and async on_token callbacks.
         """
         import asyncio
+        import inspect
         
         filtered_messages, has_images = self._prepare_messages(messages)
         
@@ -112,6 +114,11 @@ class OllamaProvider(LLMProvider):
         if has_images and not self._supports_vision():
             raise ValueError("Model not support to given data type")
 
+        # Use a queue to pass tokens from sync thread to async handler
+        token_queue = asyncio.Queue()
+        done_event = asyncio.Event()
+        result_holder = {"message": None, "error": None}
+        
         def sync_stream():
             """Run the blocking stream iteration in a thread."""
             full_content = ""
@@ -132,25 +139,55 @@ class OllamaProvider(LLMProvider):
                         if msg.get('content'):
                             token = msg['content']
                             full_content += token
-                            if on_token:
-                                on_token(token)
+                            # Put token in queue for async processing
+                            asyncio.run_coroutine_threadsafe(
+                                token_queue.put(token),
+                                loop
+                            )
                         
                         if msg.get('tool_calls'):
                             tool_calls = msg['tool_calls']
                 
-            except Exception as e:
-                raise e
-            
-            final_message = {"role": "assistant", "content": full_content}
-            if tool_calls:
-                final_message["tool_calls"] = tool_calls
+                final_message = {"role": "assistant", "content": full_content}
+                if tool_calls:
+                    final_message["tool_calls"] = tool_calls
+                    
+                result_holder["message"] = final_message
                 
-            return final_message
+            except Exception as e:
+                result_holder["error"] = e
+            finally:
+                # Signal completion
+                asyncio.run_coroutine_threadsafe(token_queue.put(None), loop)
 
-        # Run the blocking stream in a thread pool
         loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(None, sync_stream)
-        return result
+        
+        # Start the blocking stream in a thread
+        import concurrent.futures
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        future = executor.submit(sync_stream)
+        
+        # Process tokens as they arrive
+        while True:
+            token = await token_queue.get()
+            if token is None:
+                break
+            if on_token:
+                # Handle both sync and async callbacks
+                if inspect.iscoroutinefunction(on_token):
+                    await on_token(token)
+                else:
+                    on_token(token)
+        
+        # Wait for thread to complete
+        await asyncio.get_event_loop().run_in_executor(None, future.result)
+        executor.shutdown(wait=False)
+        
+        if result_holder["error"]:
+            raise result_holder["error"]
+            
+        return result_holder["message"]
+
 
     def _supports_vision(self) -> bool:
         try:

@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Scratchy - Your Intelligent AI Assistant powered by Ollama, Groq, and Gemini">
+    <title>Scratchy - Intelligent AI Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --gradient-start: #667eea;
+            --gradient-end: #764ba2;
+            --accent-cyan: #00d4ff;
+            --accent-pink: #ff6b9d;
+            --dark-bg: #0a0a1a;
+            --dark-card: #12122a;
+            --dark-border: #2a2a4a;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0c0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bg-gradient {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(102, 126, 234, 0.2) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(118, 75, 162, 0.2) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(0, 212, 255, 0.05) 0%, transparent 50%);
+        }
+
+        .floating-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            animation: float 20s ease-in-out infinite;
+        }
+
+        .orb-1 {
+            width: 600px;
+            height: 600px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
+            top: -200px;
+            right: -200px;
+            animation-delay: 0s;
+        }
+
+        .orb-2 {
+            width: 400px;
+            height: 400px;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(102, 126, 234, 0.2));
+            bottom: -100px;
+            left: -100px;
+            animation-delay: -10s;
+        }
+
+        .orb-3 {
+            width: 300px;
+            height: 300px;
+            background: linear-gradient(135deg, rgba(255, 107, 157, 0.15), rgba(118, 75, 162, 0.15));
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: -5s;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            25% {
+                transform: translate(30px, -30px) scale(1.05);
+            }
+
+            50% {
+                transform: translate(-20px, 40px) scale(0.95);
+            }
+
+            75% {
+                transform: translate(-40px, -20px) scale(1.02);
+            }
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            backdrop-filter: blur(20px);
+            background: rgba(10, 10, 26, 0.7);
+            border-bottom: 1px solid rgba(42, 42, 74, 0.5);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .logo-text {
+            font-size: 26px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--text-primary), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 16px;
+        }
+
+        .nav-btn {
+            padding: 10px 24px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .nav-btn-outline {
+            background: transparent;
+            border: 2px solid var(--dark-border);
+            color: var(--text-primary);
+        }
+
+        .nav-btn-outline:hover {
+            border-color: var(--gradient-start);
+            color: var(--accent-cyan);
+        }
+
+        .nav-btn-primary {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            border: none;
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .nav-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 120px 20px 80px;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 20px;
+            background: rgba(102, 126, 234, 0.15);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 50px;
+            font-size: 14px;
+            color: var(--accent-cyan);
+            margin-bottom: 32px;
+        }
+
+        .badge-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-cyan);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .hero-title {
+            font-size: clamp(48px, 8vw, 80px);
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 24px;
+            max-width: 900px;
+        }
+
+        .hero-title .gradient {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--gradient-start), var(--accent-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% 200%;
+            animation: gradientShift 5s ease infinite;
+        }
+
+        @keyframes gradientShift {
+
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        .hero-subtitle {
+            font-size: clamp(18px, 2.5vw, 22px);
+            color: var(--text-secondary);
+            max-width: 650px;
+            line-height: 1.6;
+            margin-bottom: 48px;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .hero-btn {
+            padding: 16px 36px;
+            border-radius: 14px;
+            font-size: 17px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .hero-btn-primary {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            border: none;
+            color: white;
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .hero-btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(102, 126, 234, 0.5);
+        }
+
+        .hero-btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid var(--dark-border);
+            color: var(--text-primary);
+        }
+
+        .hero-btn-secondary:hover {
+            border-color: var(--gradient-start);
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        /* Features Section */
+        .features {
+            padding: 100px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+
+        .section-title {
+            font-size: 42px;
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+
+        .section-subtitle {
+            font-size: 18px;
+            color: var(--text-secondary);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        .feature-card {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 20px;
+            padding: 32px;
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--gradient-start);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+
+        .feature-icon.purple {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+        }
+
+        .feature-icon.cyan {
+            background: linear-gradient(135deg, #00d4ff, #00a8cc);
+        }
+
+        .feature-icon.pink {
+            background: linear-gradient(135deg, var(--accent-pink), #e91e63);
+        }
+
+        .feature-icon.orange {
+            background: linear-gradient(135deg, #ffa726, #ff9800);
+        }
+
+        .feature-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .feature-desc {
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Providers Section */
+        .providers {
+            padding: 100px 20px;
+            background: rgba(18, 18, 42, 0.5);
+            border-top: 1px solid var(--dark-border);
+            border-bottom: 1px solid var(--dark-border);
+        }
+
+        .providers-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .provider-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-top: 48px;
+        }
+
+        .provider-card {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 20px;
+            padding: 32px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .provider-card:hover {
+            transform: scale(1.03);
+            border-color: var(--gradient-start);
+        }
+
+        .provider-logo {
+            width: 72px;
+            height: 72px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            margin: 0 auto 20px;
+        }
+
+        .provider-logo.ollama {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+        }
+
+        .provider-logo.groq {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+
+        .provider-logo.gemini {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+        }
+
+        .provider-name {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .provider-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* CTA Section */
+        .cta {
+            padding: 120px 20px;
+            text-align: center;
+        }
+
+        .cta-title {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 24px;
+        }
+
+        .cta-subtitle {
+            font-size: 18px;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Footer */
+        footer {
+            padding: 32px 20px;
+            text-align: center;
+            border-top: 1px solid var(--dark-border);
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        footer a {
+            color: var(--accent-cyan);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            nav {
+                padding: 16px 20px;
+            }
+
+            .nav-buttons {
+                gap: 10px;
+            }
+
+            .nav-btn {
+                padding: 8px 16px;
+                font-size: 14px;
+            }
+
+            .hero {
+                padding: 100px 20px 60px;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+                width: 100%;
+                max-width: 320px;
+            }
+
+            .hero-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Background Animation -->
+    <div class="bg-animation">
+        <div class="bg-gradient"></div>
+        <div class="floating-orb orb-1"></div>
+        <div class="floating-orb orb-2"></div>
+        <div class="floating-orb orb-3"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="logo">
+            <div class="logo-icon">🐾</div>
+            <span class="logo-text">Scratchy</span>
+        </div>
+        <div class="nav-buttons">
+            <a href="/login" class="nav-btn nav-btn-outline">Sign In</a>
+            <a href="/login?mode=register" class="nav-btn nav-btn-primary">Get Started</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-badge">
+            <span class="badge-dot"></span>
+            Powered by AI
+        </div>
+        <h1 class="hero-title">
+            Your <span class="gradient">Intelligent</span><br>AI Assistant
+        </h1>
+        <p class="hero-subtitle">
+            Experience the power of advanced AI with Scratchy. Choose from Ollama, Groq, or Gemini
+            to power your conversations with cutting-edge language models.
+        </p>
+        <div class="hero-buttons">
+            <a href="/login?mode=register" class="hero-btn hero-btn-primary">
+                Start Chatting →
+            </a>
+            <a href="https://github.com/RudraModi360/Agentry" target="_blank" class="hero-btn hero-btn-secondary">
+                ⭐ View on GitHub
+            </a>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="section-header">
+            <h2 class="section-title">Everything You Need</h2>
+            <p class="section-subtitle">Powerful features to enhance your AI experience</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon purple">🔌</div>
+                <h3 class="feature-title">Multiple Providers</h3>
+                <p class="feature-desc">Switch seamlessly between Ollama, Groq, and Gemini. Use local models or cloud
+                    APIs based on your needs.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon cyan">🛠️</div>
+                <h3 class="feature-title">Built-in Tools</h3>
+                <p class="feature-desc">Access file operations, web search, code execution, and more. Your AI assistant
+                    can actually get things done.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon pink">💬</div>
+                <h3 class="feature-title">Session Memory</h3>
+                <p class="feature-desc">Your conversations are saved and organized. Pick up where you left off with full
+                    context preservation.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon orange">⚡</div>
+                <h3 class="feature-title">Real-time Streaming</h3>
+                <p class="feature-desc">Watch responses appear in real-time. See tool calls as they happen with live
+                    updates.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Providers Section -->
+    <section class="providers">
+        <div class="providers-container">
+            <div class="section-header">
+                <h2 class="section-title">Choose Your Provider</h2>
+                <p class="section-subtitle">Flexibility to use the AI that works best for you</p>
+            </div>
+            <div class="provider-cards">
+                <div class="provider-card">
+                    <div class="provider-logo ollama">🦙</div>
+                    <h3 class="provider-name">Ollama</h3>
+                    <p class="provider-desc">Run models locally on your machine or use free cloud models for learning.
+                        Privacy-first with full control.</p>
+                </div>
+                <div class="provider-card">
+                    <div class="provider-logo groq">⚡</div>
+                    <h3 class="provider-name">Groq</h3>
+                    <p class="provider-desc">Ultra-fast inference powered by LPU technology. Get responses at lightning
+                        speed.</p>
+                </div>
+                <div class="provider-card">
+                    <div class="provider-logo gemini">💎</div>
+                    <h3 class="provider-name">Google Gemini</h3>
+                    <p class="provider-desc">Google's most capable AI models with advanced reasoning and multimodal
+                        capabilities.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <h2 class="cta-title">Ready to Get Started?</h2>
+        <p class="cta-subtitle">Join now and experience the future of AI assistants. It's free to start!</p>
+        <a href="/login?mode=register" class="hero-btn hero-btn-primary">
+            Create Free Account →
+        </a>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>Built with ❤️ by <a href="https://github.com/RudraModi360" target="_blank">Rudra Modi</a> •
+            <a href="https://github.com/RudraModi360/Agentry" target="_blank">GitHub</a>
+        </p>
+    </footer>
+
+    <script>
+        // Check if already logged in
+        const token = localStorage.getItem('scratchy_token');
+        if (token) {
+            fetch('/api/auth/me', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+                .then(r => r.ok ? r.json() : Promise.reject())
+                .then(data => {
+                    if (data.provider_configured) {
+                        window.location.href = '/chat';
+                    } else {
+                        window.location.href = '/setup';
+                    }
+                })
+                .catch(() => {
+                    localStorage.removeItem('scratchy_token');
+                });
+        }
+    </script>
+</body>
+
+</html>

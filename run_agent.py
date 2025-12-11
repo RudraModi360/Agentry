@@ -19,6 +19,13 @@ import argparse
 import uuid
 import base64
 import mimetypes
+import mimetypes
+try:
+    import tkinter as tk
+    from tkinter import filedialog
+    TK_AVAILABLE = True
+except ImportError:
+    TK_AVAILABLE = False
 from typing import Union, List, Dict, Any
 from scratchy import Agent, CopilotAgent
 from scratchy.config.settings import get_api_key
@@ -71,15 +78,42 @@ Special Commands:
   /tools             List all available tools
   /sessions          List all saved sessions
   /new <session_id>  Create a new session with given ID
+  /new <session_id>  Create a new session with given ID
   /resume <id>       Resume a previous session
+  /attach <path>     Attach a file by path
+  /upload            Open system file picker to attach files
+  /previous          Switch to the previous session
   /clear             Clear current session history
   /exit, /quit       Exit the application
 
 Session Management:
-  - Sessions are automatically saved to session_history/
-  - Each session is stored as <session_id>_chat.toon
-  - Use /resume to continue previous conversations
+  - Sessions are automatically saved to persistent storage (SQLite/VFS)
+  - You can switch between sessions freely
+  - Use /resume or /previous to navigate history
+  - Use /resume or /previous to navigate history
+  - Use /upload to easily add images or documents to your chat
 """
+
+def pick_files():
+    """Opens a native file picker dialog."""
+    if not TK_AVAILABLE:
+        return []
+    
+    try:
+        root = tk.Tk()
+        root.withdraw() # Hide main window
+        root.attributes('-topmost', True) # Bring to front
+        
+        file_paths = filedialog.askopenfilenames(
+            title="Select files to upload",
+            filetypes=[("All files", "*.*")]
+        )
+        
+        root.destroy()
+        return list(file_paths)
+    except Exception as e:
+        print(f"Error opening file picker: {e}")
+        return []
 
 async def show_tools(agent: Agent):
     """Display all available tools."""
@@ -107,82 +141,98 @@ def show_sessions(session_manager: SessionManager):
         print(f"    Messages: {session['message_count']}")
         print()
 
-def process_multimodal_input(user_input: str) -> Union[str, List[Dict[str, Any]]]:
+def build_user_message(user_input: str, attachments: List[str] = None) -> Union[str, List[Dict[str, Any]]]:
     """
-    Scans the input for file paths to images. 
-    If found, reads them and returns a multimodal list message.
-    Otherwise returns the original string.
+    Constructs a message payload from user input and optional file attachments.
+    Scans the input for file paths and processes explicit attachments.
+    Supports Images (added as image_url) and Documents (converted to text).
     """
+    attachments = attachments or []
     tokens = user_input.split()
-    images = []
     
-    # Check each token to see if it's a file
+    # Collect all potential file paths (explicit + implicit)
+    potential_paths = list(attachments)
     for token in tokens:
-        # Strip potential quotes
         clean_token = token.strip('"').strip("'")
-        
-        if os.path.exists(clean_token) and os.path.isfile(clean_token):
-            # Check for document handler first (PDF, DOCX, PPTX, etc.)
-            from scratchy.document_handlers import get_handler, DocumentHandlerRegistry
+        if clean_token not in potential_paths:
+            potential_paths.append(clean_token)
             
-            # Determine if we have a handler for this extension
-            _, ext = os.path.splitext(clean_token)
-            if ext.lower() in DocumentHandlerRegistry._handlers and ext.lower() not in ['.txt', '.md', '.py']: 
-                 # We exclude simple text files from "attachment" logic to let them be read naturally via cats/messages 
-                 # OR we can include them. The user wants "general purpose doc handlers".
-                 # Let's attach them as text content.
-                 try:
-                     handler = get_handler(clean_token)
-                     # Convert to markdown representation
-                     md_content = handler.to_markdown()
-                     
-                     # Append as text content block
-                     content_block = f"\n\n--- Document Attachment: {os.path.basename(clean_token)} ---\n{md_content}\n-----------------------------------\n"
-                     
-                     # For simplicity in this list-based return structure, we'll append to a text buffer 
-                     # or create a text message part.
-                     images.append({
-                         "type": "text",
-                         "text": content_block
-                     })
-                     print(f"   📄 Attached document: {clean_token}")
-                     continue # Skip image check
-                     
-                 except Exception as e:
-                     print(f"   ⚠️  Failed to attach document {clean_token}: {e}")
+    processed_content: List[Dict[str, Any]] = []
+    processed_paths = set()
+    
+    # Process files
+    for path in potential_paths:
+        if not os.path.exists(path) or not os.path.isfile(path):
+            continue
+            
+        # Avoid processing the same file twice
+        if path in processed_paths:
+            continue
+            
+        _, ext = os.path.splitext(path)
+        ext = ext.lower()
+        
+        # 1. Document Handling (PDF, DOCX, PPTX, etc.)
+        from scratchy.document_handlers import get_handler, DocumentHandlerRegistry
+        if ext in DocumentHandlerRegistry._handlers and ext not in ['.txt', '.md', '.py']:
+            print(f"   ⏳ Processing document: {os.path.basename(path)}...", end='\r')
+            try:
+                handler = get_handler(path)
+                md_content = handler.to_markdown()
+                
+                content_block = f"\n\n--- Document Attachment: {os.path.basename(path)} ---\n{md_content}\n-----------------------------------\n"
+                processed_content.append({
+                    "type": "text",
+                    "text": content_block
+                })
+                print(f"   📄 Attached document: {path}")
+                processed_paths.add(path)
+                continue
+            except Exception as e:
+                print(f"   ⚠️  Failed to attach document {path}: {e}")
 
-            # Check mime type for images
-            mime_type, _ = mimetypes.guess_type(clean_token)
-            if mime_type and mime_type.startswith('image/'):
-                try:
-                    with open(clean_token, "rb") as f:
-                        data = f.read()
-                        b64_data = base64.b64encode(data).decode('utf-8')
-                        data_uri = f"data:{mime_type};base64,{b64_data}"
-                        
-                        images.append({
-                            "type": "image_url",
-                            "image_url": {
-                                "url": data_uri
-                            }
-                        })
-                        print(f"   🖼️  Attached image: {clean_token}")
-                except Exception as e:
-                    print(f"   ⚠️  Failed to load image {clean_token}: {e}")
+        # 2. Image Handling
+        mime_type, _ = mimetypes.guess_type(path)
+        if mime_type and mime_type.startswith('image/'):
+            try:
+                with open(path, "rb") as f:
+                    data = f.read()
+                    b64_data = base64.b64encode(data).decode('utf-8')
+                    data_uri = f"data:{mime_type};base64,{b64_data}"
+                    
+                    processed_content.append({
+                        "type": "image_url",
+                        "image_url": {
+                            "url": data_uri
+                        }
+                    })
+                    print(f"   🖼️  Attached image: {path}")
+                    processed_paths.add(path)
+            except Exception as e:
+                print(f"   ⚠️  Failed to load image {path}: {e}")
 
-    if not images:
+    # If no attachments processed, just return text (unless it was empty, but usually handle text)
+    if not processed_content:
         return user_input
         
-    # Construct multimodal message
-    content = []
-    content.append({"type": "text", "text": user_input})
-    content.extend(images)
+    # Construct final message
+    # Put text first
+    final_message = []
+    if user_input.strip():
+        final_message.append({"type": "text", "text": user_input})
     
-    return content
+    # Add all processed extra content (images, doc text blocks)
+    final_message.extend(processed_content)
+    
+    return final_message
 
-async def run_interactive_session(agent: Agent, session_manager: SessionManager, initial_session_id: str = "default"):
+async def run_interactive_session(agent: Agent, session_manager: SessionManager, initial_session_id: str = "default", initial_attachments: List[str] = None):
     """Runs an interactive chat loop with session management."""
     current_session_id = initial_session_id
+    pending_attachments = initial_attachments or []
+    
+    if pending_attachments:
+        console.print(f"[bold magenta]📎 {len(pending_attachments)} files ready to attach.[/]")
     
     # Try to load existing session
     if session_manager.session_exists(current_session_id):
@@ -197,15 +247,19 @@ async def run_interactive_session(agent: Agent, session_manager: SessionManager,
     
     console.print(f"\n[dim]💬 Type '/help' for commands or start chatting![/]\n")
     
+    previous_session_id = None
+
     while True:
         try:
             # Use console.input via executor to allow coloring
+            attach_hint = f" [bold magenta](+{len(pending_attachments)} files)[/]" if pending_attachments else ""
             user_input = await asyncio.get_event_loop().run_in_executor(
-                None, lambda: console.input(f"[bold green]You[/] ([dim]{current_session_id}[/]): ")
+                None, lambda: console.input(f"[bold green]You[/]{attach_hint} ([dim]{current_session_id}[/]): ")
             )
             user_input = user_input.strip()
             
-            if not user_input:
+            # Allow empty input if we have attachments we want to send
+            if not user_input and not pending_attachments:
                 continue
             
             # Handle special commands
@@ -233,7 +287,9 @@ async def run_interactive_session(agent: Agent, session_manager: SessionManager,
                         text.append(f"Messages: {len(session.messages)}\n")
                         text.append(f"Created: {session.created_at.strftime('%Y-%m-%d %H:%M:%S')}\n")
                         text.append(f"Last Activity: {session.last_activity.strftime('%Y-%m-%d %H:%M:%S')}\n")
-                        text.append(f"Saved: {'Yes' if session_manager.session_exists(current_session_id) else 'No'}")
+                        text.append(f"Saved: {'Yes' if session_manager.session_exists(current_session_id) else 'No'}\n")
+                        if previous_session_id:
+                             text.append(f"Previous Session: {previous_session_id}\n", style="dim")
                         console.print(Panel(text, title="📊 Current Session Status", border_style="cyan"))
                     except Exception as e:
                         console.print(f"[bold red]❌ Error getting status: {e}[/]")
@@ -256,6 +312,9 @@ async def run_interactive_session(agent: Agent, session_manager: SessionManager,
                     session = agent.get_session(current_session_id)
                     session_manager.save_session(current_session_id, session.messages)
                     
+                    # Update History
+                    previous_session_id = current_session_id
+
                     # Switch to new session
                     current_session_id = args
                     console.print(f"[bold green]✨ Created new session:[/][green] '{current_session_id}'[/]")
@@ -274,6 +333,9 @@ async def run_interactive_session(agent: Agent, session_manager: SessionManager,
                     session = agent.get_session(current_session_id)
                     session_manager.save_session(current_session_id, session.messages)
                     
+                    # Update History
+                    previous_session_id = current_session_id
+
                     # Load and switch to requested session
                     current_session_id = args
                     messages = session_manager.load_session(current_session_id)
@@ -281,20 +343,84 @@ async def run_interactive_session(agent: Agent, session_manager: SessionManager,
                     session.messages = messages
                     console.print(f"[bold cyan]📂 Resumed session:[/][cyan] '{current_session_id}'[/] [dim]({len(messages)} messages)[/]")
                     continue
-                
+
+                elif command == '/previous':
+                    if not previous_session_id:
+                        console.print("[yellow]⚠️  No previous session to switch to.[/]")
+                        continue
+                    
+                    if not session_manager.session_exists(previous_session_id):
+                        console.print(f"[red]⚠️  Previous session '{previous_session_id}' not found (maybe deleted?).[/]")
+                        continue
+
+                    # Save current session
+                    session = agent.get_session(current_session_id)
+                    session_manager.save_session(current_session_id, session.messages)
+
+                    # Swap logic: current becomes prev, prev becomes current
+                    # But usually "previous" just goes back. If I toggle, it's like Alt-Tab.
+                    temp = current_session_id
+                    current_session_id = previous_session_id
+                    previous_session_id = temp
+
+                    # Load
+                    messages = session_manager.load_session(current_session_id)
+                    session = agent.get_session(current_session_id)
+                    session.messages = messages
+                    console.print(f"[bold cyan]📂 Switched to previous session:[/][cyan] '{current_session_id}'[/] [dim]({len(messages)} messages)[/]")
+                    continue
+
                 elif command == '/clear':
                     agent.clear_session(current_session_id)
                     console.print(f"[bold red]🗑️  Cleared session:[/][red] '{current_session_id}'[/]")
                     continue
                 
+                elif command == '/attach':
+                    if not args:
+                        console.print("[yellow]⚠️  Usage: /attach <file_path>[/]")
+                        continue
+                    
+                    file_path = args.strip().strip('"').strip("'")
+                    if os.path.exists(file_path) and os.path.isfile(file_path):
+                        pending_attachments.append(file_path)
+                        console.print(f"[bold green]📎 File queued: {file_path}[/]")
+                    else:
+                        console.print(f"[red]⚠️  File not found: {file_path}[/]")
+                    continue
+
+
+
+                elif command in ['/upload', '/u']:
+                    if not TK_AVAILABLE:
+                        console.print("[red]⚠️  File picker not available (tkinter missing). Use /attach <path> instead.[/]")
+                        continue
+                    
+                    console.print("[cyan]📂 Opening file picker...[/]")
+                    # Run within main thread to ensure Tkinter compatibility
+                    files = pick_files()
+                    
+                    if files:
+                        pending_attachments.extend(files)
+                        console.print(f"[bold green]📎 Queued {len(files)} files:[/]")
+                        for f in files:
+                            console.print(f"  - {os.path.basename(f)}")
+                    else:
+                        console.print("[yellow]⚠️  No files selected.[/]")
+                    continue
+
                 else:
                     console.print(f"[yellow]⚠️  Unknown command: {command}. Type '/help' for available commands.[/]")
                     continue
             
             # Regular chat
             final_input = await asyncio.get_event_loop().run_in_executor(
-                None, process_multimodal_input, user_input
+                None, build_user_message, user_input, pending_attachments
             )
+            
+            # Clear pending attachments after they are sent
+            # Clear pending attachments after they are sent
+            pending_attachments = []
+
             await agent.chat(final_input, session_id=current_session_id)
             
             # Auto-save after each interaction
@@ -316,6 +442,7 @@ async def main():
     parser.add_argument('--provider', '-p', default='ollama', choices=['ollama', 'groq', 'gemini'], help='LLM provider')
     parser.add_argument('--model', '-m', help='Model name')
     parser.add_argument('--copilot', '-c', action='store_true', help='Use Copilot Agent')
+    parser.add_argument('--attach', '-a', action='append', help='Attach file(s) to the session start')
     args = parser.parse_args()
     
     print_startup_screen()
@@ -325,7 +452,7 @@ async def main():
     
     # Get API key if needed
     api_key = None
-    if args.provider in ['groq', 'gemini']:
+    if args.provider in ['groq', 'gemini' , 'ollama']:
         api_key = get_api_key(args.provider) or console.input(f"[bold yellow]Enter {args.provider.title()} API Key: [/]")
     
     # Initialize Agent & Tools with Spinner
@@ -369,11 +496,31 @@ async def main():
 
     # Setup Callbacks
     def on_tool_start(session, name, args):
-        console.print(Panel(
-            JSON.from_data(args),
-            title=f"[bold #ffaa00]🔧 Executing Tool: {name}[/]",
-            border_style="#ffaa00"
-        ))
+        nonlocal current_live, response_buffer
+        
+        # If we were printing tokens manually, print a newline before tool output
+        if response_buffer:
+             print() # Newline to separate stream from tool box
+             response_buffer = "" # Clear buffer
+        
+        # Concise tool logging
+        summary = ""
+        # Heuristics for common arguments to show meaningful summaries
+        if isinstance(args, dict):
+            if "file_path" in args: summary = f"file='{args['file_path']}'"
+            elif "AbsolutePath" in args: summary = f"file='{args['AbsolutePath']}'"
+            elif "TargetFile" in args: summary = f"file='{args['TargetFile']}'"
+            elif "Url" in args: summary = f"url='{args['Url']}'"
+            elif "CommandLine" in args: summary = f"cmd='{args['CommandLine']}'"
+            elif "query" in args: summary = f"query='{args['query']}'"
+            else:
+                # Fallback to truncated JSON
+                summary = json.dumps(args, default=str)
+                if len(summary) > 100: summary = summary[:97] + "..."
+        else:
+             summary = str(args)
+
+        console.print(f"[dim]🔧 Executing: [bold cyan]{name}[/] ({summary})[/]")
 
     def on_tool_end(session, name, result):
         result_content = result
@@ -408,31 +555,31 @@ async def main():
     def on_token(token):
         nonlocal current_live, response_buffer
         
-        # Initialize Live display on first token
-        if current_live is None:
-            console.print("\n[bold blue]🤖 Assistant:[/]")
-            current_live = Live(
-                Markdown(""), 
-                console=console, 
-                refresh_per_second=10, 
-                vertical_overflow="visible"
-            )
-            current_live.start()
+        # We are intentionally NOT using Rich Live for now because it causes overwriting/flickering issues 
+        # in some terminals, as reported by the user.
+        # Instead, we just accumulate the buffer.
+        # We could print tokens directly, but Markdown rendering breaks if printed token-by-token.
+        # So we wait for the final message.
         
-        # Accumulate and update
+        # If the user absolutely wants "streaming" feel, we can just print(token, end='', flush=True) 
+        # but that won't have Markdown formatting. 
+        # Let's try simple print for now to show activity.
+        print(token, end='', flush=True)
         response_buffer += token
-        current_live.update(Markdown(response_buffer))
 
     def on_final_message(session, content):
         nonlocal current_live, response_buffer
+        # Print a newline after usage of print(..., end='')
+        print() 
         
-        # Clean up Live display
+        # Clean up Live display (if any remains)
         if current_live:
             current_live.stop()
             current_live = None
             response_buffer = ""
-        else:
-            # Fallback if streaming wasn't used (e.g. cached or short response)
+            
+        # Always print the final clean Markdown
+        if content and content.strip():
             console.print(Panel(
                 Markdown(content),
                 title=f"[bold blue]🤖 Assistant ({session})[/]",
@@ -526,7 +673,7 @@ async def main():
         session_id = str(uuid.uuid4())
         print(f"🆔 Generated new session ID: {session_id}")
 
-    await run_interactive_session(agent, session_manager, session_id)
+    await run_interactive_session(agent, session_manager, session_id, initial_attachments=args.attach)
     
     # Cleanup & Save Memory
     print("\n💾 Cleaning up...")

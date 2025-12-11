@@ -10,4 +10,6 @@ def get_api_key(provider: str):
         return os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     elif provider == "openai":
         return os.getenv("OPENAI_API_KEY")
+    elif provider == "ollama":
+        return os.getenv("OLLAMA_API_KEY")
     return None

@@ -150,3 +150,35 @@ class PersistentMemoryStore:
             return None
         finally:
             conn.close()
+
+    def list_sessions(self) -> List[Dict[str, Any]]:
+        """List all sessions ordered by last activity."""
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        try:
+            # Join with agent_state to roughly estimate message count if stored there
+            # Since we store messages as a JSON blob in agent_state, we can't easily count them without parsing.
+            # But we can just return the metadata.
+            cursor.execute("SELECT * FROM sessions ORDER BY last_activity DESC")
+            rows = cursor.fetchall()
+            
+            results = []
+            for row in rows:
+                data = dict(row)
+                data['id'] = data['session_id']  # Map session_id to id for compatibility
+                # Try to get message count from agent_state
+                msg_row = cursor.execute("SELECT value FROM agent_state WHERE session_id = ? AND key = 'messages'", (data['session_id'],)).fetchone()
+                msg_count = 0
+                if msg_row:
+                    try:
+                        msgs = json.loads(msg_row[0])
+                        msg_count = len(msgs)
+                    except: pass
+                
+                data['message_count'] = msg_count
+                results.append(data)
+                
+            return results
+        finally:
+            conn.close()

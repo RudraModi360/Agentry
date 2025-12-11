@@ -1,0 +1,2087 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Scratchy - Your AI Assistant">
+    <title>Scratchy - Chat</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --gradient-start: #667eea;
+            --gradient-end: #764ba2;
+            --accent-cyan: #00d4ff;
+            --accent-pink: #ff6b9d;
+            --dark-bg: #0a0a1a;
+            --dark-card: #12122a;
+            --dark-sidebar: #0f0f22;
+            --dark-input: #1a1a35;
+            --dark-border: #2a2a4a;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0c0;
+            --error-color: #ff4757;
+            --success-color: #2ed573;
+            --tool-color: #ffa726;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #050510 0%, #0a0a1a 100%);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Layout */
+        .app-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: var(--dark-sidebar);
+            border-right: 1px solid var(--dark-border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--dark-border);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .logo-img {
+            height: 36px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .logo-text {
+            font-size: 22px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--text-primary), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Assistant avatar with logo */
+        .assistant-avatar-img {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .new-chat-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .new-chat-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Sessions List */
+        .sessions-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        .sessions-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sessions-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .sessions-container::-webkit-scrollbar-thumb {
+            background: var(--dark-border);
+            border-radius: 3px;
+        }
+
+        .session-item {
+            padding: 12px 14px;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-bottom: 6px;
+            transition: all 0.2s;
+        }
+
+        .session-item:hover {
+            background: var(--dark-input);
+        }
+
+        .session-item.active {
+            background: rgba(102, 126, 234, 0.15);
+            border-color: var(--gradient-start);
+        }
+
+        .session-title {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .session-date {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .session-delete {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 28px;
+            height: 28px;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .session-item:hover .session-delete {
+            opacity: 1;
+        }
+
+        .session-delete:hover {
+            background: var(--error-color);
+            color: white;
+        }
+
+        .session-item {
+            position: relative;
+            padding-right: 40px;
+        }
+
+        /* Provider Info */
+        .sidebar-footer {
+            padding: 16px;
+            border-top: 1px solid var(--dark-border);
+        }
+
+        .provider-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: var(--dark-input);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .provider-info:hover {
+            background: var(--dark-border);
+        }
+
+        .provider-icon-small {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .provider-icon-small.ollama {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+        }
+
+        .provider-icon-small.groq {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+
+        .provider-icon-small.gemini {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+        }
+
+        .provider-details {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .provider-name-small {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .model-name-small {
+            font-size: 11px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .change-btn {
+            font-size: 11px;
+            color: var(--accent-cyan);
+            text-decoration: none;
+        }
+
+        /* User Menu */
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            margin-top: 8px;
+            background: var(--dark-input);
+            border-radius: 10px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--gradient-start));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .user-name {
+            flex: 1;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .logout-btn {
+            padding: 6px 12px;
+            background: transparent;
+            border: 1px solid var(--dark-border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .logout-btn:hover {
+            border-color: var(--error-color);
+            color: var(--error-color);
+        }
+
+        /* Main Chat Area */
+        .chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--dark-bg);
+        }
+
+        /* Chat Header */
+        .chat-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--dark-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chat-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-secondary);
+        }
+
+        .status-dot.connected {
+            background: var(--success-color);
+            box-shadow: 0 0 8px var(--success-color);
+        }
+
+        /* Messages Container */
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .messages-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .messages-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .messages-container::-webkit-scrollbar-thumb {
+            background: var(--dark-border);
+            border-radius: 4px;
+        }
+
+        .message {
+            max-width: 800px;
+            margin: 0 auto 24px;
+            display: flex;
+            gap: 16px;
+        }
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .message.user .message-avatar {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--gradient-start));
+        }
+
+        .message.assistant .message-avatar {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+        }
+
+        .message-content {
+            flex: 1;
+            padding-top: 4px;
+        }
+
+        .message-role {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+
+        .message-actions {
+            position: absolute;
+            top: 4px;
+            right: 0;
+            display: flex;
+            gap: 6px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .message:hover .message-actions {
+            opacity: 1;
+        }
+
+        .message-action-btn {
+            width: 28px;
+            height: 28px;
+            background: var(--dark-input);
+            border: 1px solid var(--dark-border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .message-action-btn:hover {
+            background: var(--gradient-start);
+            border-color: var(--gradient-start);
+            color: white;
+        }
+
+        .message-content {
+            position: relative;
+        }
+
+        .message-edit-input {
+            width: 100%;
+            padding: 12px;
+            background: var(--dark-input);
+            border: 2px solid var(--gradient-start);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 15px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .message-edit-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+        }
+
+        .message-edit-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .message-edit-actions .btn-sm {
+            padding: 6px 14px;
+            font-size: 13px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            border: none;
+        }
+
+        .btn-sm.save {
+            background: var(--gradient-start);
+            color: white;
+        }
+
+        .btn-sm.cancel {
+            background: var(--dark-input);
+            color: var(--text-secondary);
+            border: 1px solid var(--dark-border);
+        }
+
+        .message-text {
+            font-size: 15px;
+            line-height: 1.7;
+            color: var(--text-primary);
+        }
+
+        .message-text p {
+            margin-bottom: 12px;
+        }
+
+        .message-text p:last-child {
+            margin-bottom: 0;
+        }
+
+        .message-text code {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--dark-input);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .message-text pre {
+            background: var(--dark-input);
+            border: 1px solid var(--dark-border);
+            border-radius: 8px;
+            padding: 16px;
+            overflow-x: auto;
+            margin: 12px 0;
+        }
+
+        .message-text pre code {
+            background: transparent;
+            padding: 0;
+        }
+
+        /* Text after tool calls */
+        .message-text-after {
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid var(--dark-border);
+        }
+
+        /* Tool Call */
+        .tool-call {
+            background: rgba(255, 167, 38, 0.1);
+            border: 1px solid rgba(255, 167, 38, 0.3);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin: 12px 0;
+        }
+
+        .tool-call.completed {
+            background: rgba(46, 213, 115, 0.1);
+            border-color: rgba(46, 213, 115, 0.3);
+        }
+
+        .tool-call-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--tool-color);
+            cursor: pointer;
+        }
+
+        .tool-call.completed .tool-call-header {
+            color: var(--success-color);
+        }
+
+        .tool-call-toggle {
+            margin-left: auto;
+            font-size: 12px;
+            color: var(--text-secondary);
+            transition: transform 0.2s;
+        }
+
+        .tool-call.collapsed .tool-call-toggle {
+            transform: rotate(-90deg);
+        }
+
+        .tool-call-body {
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .tool-call.collapsed .tool-call-body {
+            max-height: 0 !important;
+            margin-top: 0;
+        }
+
+        .tool-call-args {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--dark-input);
+            padding: 8px 12px;
+            border-radius: 6px;
+            max-height: 100px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .tool-call-result {
+            font-size: 13px;
+            color: var(--text-primary);
+            margin-top: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--dark-input);
+            padding: 12px 16px;
+            border-radius: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            line-height: 1.5;
+            border: 1px solid var(--dark-border);
+        }
+
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 8px 0;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--text-secondary);
+            border-radius: 50%;
+            animation: typing 1.4s ease-in-out infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+
+            0%,
+            60%,
+            100% {
+                transform: translateY(0);
+                opacity: 0.4;
+            }
+
+            30% {
+                transform: translateY(-6px);
+                opacity: 1;
+            }
+        }
+
+        /* Empty State */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 24px;
+            opacity: 0.6;
+        }
+
+        .empty-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .empty-subtitle {
+            color: var(--text-secondary);
+            font-size: 16px;
+            max-width: 400px;
+        }
+
+        .empty-logo {
+            width: 140px;
+            height: auto;
+            margin-bottom: 30px;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .empty-logo:hover {
+            transform: scale(1.05);
+        }
+
+        /* User Initial Avatar */
+        .user-initial {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--gradient-start)) !important;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            text-transform: uppercase;
+            box-shadow: 0 4px 10px rgba(0, 212, 255, 0.3);
+        }
+
+        /* Input Area */
+        .input-area {
+            padding: 20px 24px;
+            border-top: 1px solid var(--dark-border);
+        }
+
+        .input-container {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            background: var(--dark-input);
+            border: 2px solid var(--dark-border);
+            border-radius: 16px;
+            display: flex;
+            align-items: flex-end;
+            transition: all 0.3s;
+        }
+
+        .input-wrapper:focus-within {
+            border-color: var(--gradient-start);
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+        }
+
+        #message-input {
+            flex: 1;
+            padding: 16px 20px;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 15px;
+            font-family: inherit;
+            resize: none;
+            max-height: 150px;
+            line-height: 1.5;
+        }
+
+        #message-input:focus {
+            outline: none;
+        }
+
+        #message-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .send-btn {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .send-btn:hover:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -280px;
+                top: 0;
+                bottom: 0;
+                z-index: 100;
+                transition: left 0.3s;
+            }
+
+            .sidebar.open {
+                left: 0;
+            }
+
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 99;
+            }
+
+            .sidebar-overlay.active {
+                display: block;
+            }
+
+            .mobile-header {
+                display: flex;
+                padding: 16px;
+                border-bottom: 1px solid var(--dark-border);
+            }
+
+            .menu-btn {
+                padding: 8px 12px;
+                background: var(--dark-input);
+                border: 1px solid var(--dark-border);
+                border-radius: 8px;
+                color: var(--text-primary);
+                font-size: 18px;
+                cursor: pointer;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-header {
+                display: none;
+            }
+        }
+
+        /* Tool Approval Modal */
+        .approval-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .approval-modal-overlay.active {
+            display: flex;
+        }
+
+        .approval-modal {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 16px;
+            max-width: 500px;
+            width: 90%;
+            padding: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .approval-modal-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .approval-modal-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(255, 167, 38, 0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .approval-modal-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .approval-modal-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .approval-tool-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--tool-color);
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            background: rgba(255, 167, 38, 0.1);
+            border-radius: 8px;
+            border-left: 3px solid var(--tool-color);
+        }
+
+        .approval-args {
+            background: var(--dark-input);
+            border: 1px solid var(--dark-border);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            color: var(--text-secondary);
+        }
+
+        .approval-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .approval-btn {
+            flex: 1;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .approval-btn.approve {
+            background: linear-gradient(135deg, var(--success-color), #27ae60);
+            color: white;
+        }
+
+        .approval-btn.approve:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(46, 213, 115, 0.4);
+        }
+
+        .approval-btn.deny {
+            background: var(--dark-input);
+            border: 1px solid var(--dark-border);
+            color: var(--text-secondary);
+        }
+
+        .approval-btn.deny:hover {
+            border-color: var(--error-color);
+            color: var(--error-color);
+        }
+
+        .approval-timeout {
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar Overlay (mobile) -->
+        <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <img src="/assets/scratchy_logo.png" alt="Scratchy" class="logo-img">
+                </div>
+                <button class="new-chat-btn" id="new-chat-btn">
+                    <span>+</span> New Chat
+                </button>
+            </div>
+
+            <div class="sessions-container" id="sessions-container">
+                <!-- Sessions will be loaded here -->
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="provider-info" id="provider-info" onclick="window.location.href='/setup'">
+                    <div class="provider-icon-small" id="provider-icon">🤖</div>
+                    <div class="provider-details">
+                        <div class="provider-name-small" id="provider-name">Loading...</div>
+                        <div class="model-name-small" id="model-name">-</div>
+                    </div>
+                    <span class="change-btn">Change</span>
+                </div>
+
+                <div class="user-menu">
+                    <div class="user-avatar" id="user-avatar">?</div>
+                    <span class="user-name" id="user-name">Loading...</span>
+                    <button class="logout-btn" id="logout-btn">Logout</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="chat-main">
+            <!-- Mobile Header -->
+            <div class="mobile-header">
+                <button class="menu-btn" id="menu-btn">☰</button>
+            </div>
+
+            <div class="chat-header">
+                <h1 class="chat-title" id="chat-title">New Chat</h1>
+                <div class="connection-status">
+                    <div class="status-dot" id="status-dot"></div>
+                    <span id="status-text">Connecting...</span>
+                </div>
+            </div>
+
+            <div class="messages-container" id="messages-container">
+                <div class="empty-state" id="empty-state">
+                    <img src="/assets/scratchy_logo.png" alt="Scratchy" class="empty-logo">
+                    <h2 class="empty-title">Welcome to Scratchy</h2>
+                    <p class="empty-subtitle">Start a conversation with your AI assistant. Ask anything!</p>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <div class="input-container">
+                    <div class="input-wrapper">
+                        <textarea id="message-input" placeholder="Type your message..." rows="1"></textarea>
+                    </div>
+                    <button class="send-btn" id="send-btn" disabled>➤</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Tool Approval Modal -->
+    <div class="approval-modal-overlay" id="approval-modal-overlay">
+        <div class="approval-modal">
+            <div class="approval-modal-header">
+                <div class="approval-modal-icon">🔧</div>
+                <div>
+                    <div class="approval-modal-title">Tool Approval Required</div>
+                    <div class="approval-modal-subtitle">The agent wants to run a tool that requires your permission
+                    </div>
+                </div>
+            </div>
+            <div class="approval-tool-name" id="approval-tool-name">Tool Name</div>
+            <div class="approval-args" id="approval-args">{}</div>
+            <div class="approval-buttons">
+                <button class="approval-btn deny" id="approval-deny-btn">✕ Deny</button>
+                <button class="approval-btn approve" id="approval-approve-btn">✓ Approve</button>
+            </div>
+            <div class="approval-timeout" id="approval-timeout">Auto-deny in 120s</div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '';
+        let ws = null;
+        let currentSessionId = null;
+        let isConnected = false;
+        let isProcessing = false;
+        let userInitial = '?';  // Will be set when user info loads
+
+        // Auth check
+        const token = localStorage.getItem('scratchy_token');
+        if (!token) {
+            window.location.href = '/login';
+        }
+
+        // DOM Elements
+        const messagesContainer = document.getElementById('messages-container');
+        const messageInput = document.getElementById('message-input');
+        const sendBtn = document.getElementById('send-btn');
+        const emptyState = document.getElementById('empty-state');
+        const statusDot = document.getElementById('status-dot');
+        const statusText = document.getElementById('status-text');
+
+        // Initialize
+        async function init() {
+            await loadUserInfo();
+            await loadSessions();
+            connectWebSocket();
+        }
+
+        // Load user info
+        async function loadUserInfo() {
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    localStorage.removeItem('scratchy_token');
+                    window.location.href = '/login';
+                    return;
+                }
+
+                const data = await response.json();
+
+                document.getElementById('user-name').textContent = data.user.username;
+                document.getElementById('user-avatar').textContent = data.user.username[0].toUpperCase();
+
+                if (data.provider_config) {
+                    const providerIcon = document.getElementById('provider-icon');
+                    const providerName = document.getElementById('provider-name');
+                    const modelName = document.getElementById('model-name');
+
+                    const provider = data.provider_config.provider;
+                    providerName.textContent = provider.charAt(0).toUpperCase() + provider.slice(1);
+                    modelName.textContent = data.provider_config.model || 'Default';
+
+                    providerIcon.className = `provider-icon-small ${provider}`;
+                    if (provider === 'ollama') providerIcon.textContent = '🦙';
+                    else if (provider === 'groq') providerIcon.textContent = '⚡';
+                    else if (provider === 'gemini') providerIcon.textContent = '💎';
+                }
+            } catch (error) {
+                console.error('Failed to load user info:', error);
+            }
+        }
+
+        // Load sessions
+        async function loadSessions() {
+            try {
+                const response = await fetch(`${API_BASE}/api/sessions`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    renderSessions(data.sessions);
+                }
+            } catch (error) {
+                console.error('Failed to load sessions:', error);
+            }
+        }
+
+        // Render sessions
+        function renderSessions(sessions) {
+            const container = document.getElementById('sessions-container');
+            container.innerHTML = '';
+
+            if (sessions.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-secondary); font-size: 13px; text-align: center; padding: 20px;">No previous chats</p>';
+                return;
+            }
+
+            sessions.forEach(session => {
+                const item = document.createElement('div');
+                item.className = 'session-item';
+                if (session.id === currentSessionId) item.classList.add('active');
+                item.dataset.sessionId = session.id;
+
+                const date = new Date(session.updated_at || session.created_at);
+                const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+                item.innerHTML = `
+                    <div class="session-title">${escapeHtml(session.title || 'Untitled Chat')}</div>
+                    <div class="session-date">${dateStr} · ${session.message_count || 0} messages</div>
+                    <button class="session-delete" title="Delete session" onclick="event.stopPropagation(); deleteSession('${session.id}')">🗑️</button>
+                `;
+
+                item.addEventListener('click', () => loadSession(session.id));
+                container.appendChild(item);
+            });
+        }
+
+        // Delete session
+        async function deleteSession(sessionId) {
+            if (!confirm('Are you sure you want to delete this chat? This cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/sessions/${sessionId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    // If we deleted the current session, clear the chat
+                    if (sessionId === currentSessionId) {
+                        currentSessionId = null;
+                        clearMessages();
+                    }
+                    loadSessions();
+                } else {
+                    console.error('Failed to delete session');
+                }
+            } catch (error) {
+                console.error('Failed to delete session:', error);
+            }
+        }
+
+
+        // Load session
+        async function loadSession(sessionId) {
+            if (isProcessing) return;
+
+            currentSessionId = sessionId;
+
+            // Update active state
+            document.querySelectorAll('.session-item').forEach(item => {
+                item.classList.toggle('active', item.dataset.sessionId === sessionId);
+            });
+
+            // Request session load via WebSocket
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'load_session', session_id: sessionId }));
+            }
+        }
+
+        // Create new session
+        document.getElementById('new-chat-btn').addEventListener('click', async () => {
+            try {
+                const response = await fetch(`${API_BASE}/api/sessions`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    currentSessionId = data.session.id;
+                    clearMessages();
+                    await loadSessions();
+                }
+            } catch (error) {
+                console.error('Failed to create session:', error);
+            }
+        });
+
+        // WebSocket connection
+        function connectWebSocket() {
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws/chat`);
+
+            ws.onopen = () => {
+                // Send authentication
+                ws.send(JSON.stringify({ token }));
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleWebSocketMessage(data);
+            };
+
+            ws.onclose = () => {
+                setConnectionStatus(false);
+                setTimeout(connectWebSocket, 3000);
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+        }
+
+        // Handle WebSocket messages
+        let currentAssistantMessage = null;
+        let currentAssistantText = '';
+
+        function handleWebSocketMessage(data) {
+            switch (data.type) {
+                case 'connected':
+                    setConnectionStatus(true);
+                    sendBtn.disabled = false;
+                    break;
+
+                case 'error':
+                    if (data.message.includes('Provider not configured')) {
+                        window.location.href = '/setup';
+                    } else {
+                        addErrorMessage(data.message);
+                    }
+                    isProcessing = false;
+                    sendBtn.disabled = false;
+                    break;
+
+                case 'token':
+                    if (!currentAssistantMessage) {
+                        currentAssistantMessage = createAssistantMessage();
+                        currentAssistantText = '';
+                    }
+                    currentAssistantText += data.content;
+                    updateAssistantMessageText(currentAssistantMessage, currentAssistantText);
+                    break;
+
+                case 'tool_start':
+                    if (!currentAssistantMessage) {
+                        currentAssistantMessage = createAssistantMessage();
+                        currentAssistantText = '';
+                    }
+                    // First, finalize any text before the tool call
+                    if (currentAssistantText.trim()) {
+                        updateAssistantMessageText(currentAssistantMessage, currentAssistantText);
+                    }
+                    // Remove any typing indicator
+                    removeTypingIndicator(currentAssistantMessage);
+                    // Add the tool call
+                    addToolCall(currentAssistantMessage, data.tool_name, data.args);
+                    // Reset text accumulator for text that might come after
+                    currentAssistantText = '';
+                    break;
+
+                case 'tool_end':
+                    // Update the tool call with result
+                    if (currentAssistantMessage) {
+                        removeTypingIndicator(currentAssistantMessage);
+                        updateToolCallResult(currentAssistantMessage, data.tool_name, data.result);
+                    }
+                    break;
+
+                case 'complete':
+                    // Handle the final response
+                    // IMPORTANT: For non-streaming providers (Groq, Gemini), 
+                    // the full response comes here, not via token events
+                    if (data.content && data.content.trim()) {
+                        // If no assistant message was created yet (no streaming), create one now
+                        if (!currentAssistantMessage) {
+                            currentAssistantMessage = createAssistantMessage();
+                        }
+                        // Remove typing indicator
+                        removeTypingIndicator(currentAssistantMessage);
+                        // Display the full response
+                        updateAssistantMessageText(currentAssistantMessage, data.content);
+                    } else if (currentAssistantMessage) {
+                        // Just cleanup if we already have streaming content
+                        removeTypingIndicator(currentAssistantMessage);
+                    }
+
+                    // Reset state for next interaction
+                    currentAssistantMessage = null;
+                    currentAssistantText = '';
+                    isProcessing = false;
+                    sendBtn.disabled = false;
+                    loadSessions(); // Refresh session list
+                    break;
+
+                case 'session_loaded':
+                    renderSessionMessages(data.messages);
+                    document.getElementById('chat-title').textContent = `Chat Session`;
+                    break;
+
+                case 'tool_approval_request':
+                    // Show approval modal
+                    showApprovalModal(data.tool_name, data.args);
+                    break;
+
+                case 'tool_approval_timeout':
+                    // Hide modal on timeout
+                    hideApprovalModal();
+                    addErrorMessage(`Tool "${data.tool_name}" was denied due to timeout.`);
+                    break;
+
+                case 'pong':
+                    // Keep-alive response
+                    break;
+            }
+        }
+
+        // Connection status
+        function setConnectionStatus(connected) {
+            isConnected = connected;
+            statusDot.classList.toggle('connected', connected);
+            statusText.textContent = connected ? 'Connected' : 'Disconnected';
+        }
+
+        // Message rendering
+        function clearMessages() {
+            messagesContainer.innerHTML = '';
+            emptyState.style.display = 'flex';
+            messagesContainer.appendChild(emptyState);
+            document.getElementById('chat-title').textContent = 'New Chat';
+        }
+
+        function hideEmptyState() {
+            emptyState.style.display = 'none';
+        }
+
+        function addUserMessage(content, messageIndex = null) {
+            hideEmptyState();
+
+            const msg = document.createElement('div');
+            msg.className = 'message user';
+            msg.dataset.originalContent = content;
+            if (messageIndex !== null) {
+                msg.dataset.messageIndex = messageIndex;
+            }
+
+            msg.innerHTML = `
+                <div class="message-avatar user-initial" id="msg-user-avatar"></div>
+                <div class="message-content">
+                    <div class="message-role">You</div>
+                    <div class="message-text">${escapeHtml(content)}</div>
+                    <div class="message-actions">
+                        <button class="message-action-btn edit-btn" title="Edit message">✏️</button>
+                    </div>
+                </div>
+            `;
+
+            // Add edit functionality
+            const editBtn = msg.querySelector('.edit-btn');
+            editBtn.addEventListener('click', () => startEditMessage(msg));
+
+            messagesContainer.appendChild(msg);
+            scrollToBottom();
+            return msg;
+        }
+
+        function startEditMessage(msgElement) {
+            if (isProcessing) return;
+
+            const originalContent = msgElement.dataset.originalContent;
+            const contentDiv = msgElement.querySelector('.message-content');
+            const textDiv = contentDiv.querySelector('.message-text');
+            const actionsDiv = contentDiv.querySelector('.message-actions');
+
+            // Hide actions and text
+            actionsDiv.style.display = 'none';
+            textDiv.style.display = 'none';
+
+            // Create edit UI
+            const editContainer = document.createElement('div');
+            editContainer.className = 'message-edit-container';
+            editContainer.innerHTML = `
+                <textarea class="message-edit-input">${escapeHtml(originalContent)}</textarea>
+                <div class="message-edit-actions">
+                    <button class="btn-sm save">Save & Regenerate</button>
+                    <button class="btn-sm cancel">Cancel</button>
+                </div>
+            `;
+
+            contentDiv.appendChild(editContainer);
+
+            const textarea = editContainer.querySelector('textarea');
+            textarea.focus();
+            textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+
+            // Cancel button
+            editContainer.querySelector('.cancel').addEventListener('click', () => {
+                editContainer.remove();
+                actionsDiv.style.display = '';
+                textDiv.style.display = '';
+            });
+
+            // Save button
+            editContainer.querySelector('.save').addEventListener('click', async () => {
+                const newContent = textarea.value.trim();
+                if (!newContent) return;
+
+                // Remove all messages after this one and regenerate
+                await editAndRegenerate(msgElement, newContent);
+            });
+        }
+
+        async function editAndRegenerate(msgElement, newContent) {
+            // Find all messages after this one and remove them
+            let sibling = msgElement.nextElementSibling;
+            while (sibling) {
+                const next = sibling.nextElementSibling;
+                if (sibling !== emptyState) {
+                    sibling.remove();
+                }
+                sibling = next;
+            }
+
+            // Update this message
+            msgElement.dataset.originalContent = newContent;
+            const textDiv = msgElement.querySelector('.message-text');
+            textDiv.innerHTML = escapeHtml(newContent);
+            textDiv.style.display = '';
+
+            const editContainer = msgElement.querySelector('.message-edit-container');
+            if (editContainer) editContainer.remove();
+
+            const actionsDiv = msgElement.querySelector('.message-actions');
+            if (actionsDiv) actionsDiv.style.display = '';
+
+            // Send the edited message for regeneration
+            if (ws && ws.readyState === WebSocket.OPEN && currentSessionId) {
+                isProcessing = true;
+                sendBtn.disabled = true;
+
+                // Calculate message index (System prompt is index 0 in backend, so add 1)
+                const allMessages = Array.from(messagesContainer.querySelectorAll('.message'));
+                const msgIndex = allMessages.indexOf(msgElement);
+                const backendIndex = msgIndex + 1;
+
+                // Note: We send with a special flag to indicate this is an edit
+                ws.send(JSON.stringify({
+                    type: 'message',
+                    content: newContent,
+                    session_id: currentSessionId,
+                    is_edit: true,
+                    edit_index: backendIndex
+                }));
+            }
+        }
+
+        function createAssistantMessage() {
+            hideEmptyState();
+
+            const msg = document.createElement('div');
+            msg.className = 'message assistant';
+            msg.innerHTML = `
+                <div class="message-avatar">
+                    <img src="/assets/scratchy_logo.png" alt="Scratchy" class="assistant-avatar-img">
+                </div>
+                <div class="message-content">
+                    <div class="message-role">Scratchy</div>
+                    <div class="message-text">
+                        <div class="typing-indicator">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                    </div>
+                    <div class="message-actions">
+                        <button class="message-action-btn copy-btn" title="Copy response">📋</button>
+                    </div>
+                </div>
+            `;
+
+            // Add copy functionality
+            const copyBtn = msg.querySelector('.copy-btn');
+            copyBtn.addEventListener('click', () => {
+                const text = msg.querySelector('.message-text').innerText;
+                copyToClipboard(text, copyBtn);
+            });
+
+            messagesContainer.appendChild(msg);
+            scrollToBottom();
+            return msg;
+        }
+
+        function updateAssistantMessage(msgElement, content) {
+            const textDiv = msgElement.querySelector('.message-text');
+            textDiv.innerHTML = formatMessage(content);
+            scrollToBottom();
+        }
+
+        // Update text - handles adding text after tool calls
+        function updateAssistantMessageText(msgElement, content) {
+            removeTypingIndicator(msgElement);
+
+            if (!content || !content.trim()) return;
+
+            const contentDiv = msgElement.querySelector('.message-content');
+            const toolCalls = contentDiv.querySelectorAll('.tool-call');
+
+            // If there are tool calls, add/update text block after the last one
+            if (toolCalls.length > 0) {
+                const lastToolCall = toolCalls[toolCalls.length - 1];
+                let afterTextDiv = lastToolCall.nextElementSibling;
+
+                // Check if there's already a text div after the tool call
+                if (!afterTextDiv || !afterTextDiv.classList.contains('message-text-after')) {
+                    afterTextDiv = document.createElement('div');
+                    afterTextDiv.className = 'message-text message-text-after';
+                    lastToolCall.parentNode.insertBefore(afterTextDiv, lastToolCall.nextSibling);
+                }
+
+                const newContent = formatMessage(content);
+                if (afterTextDiv.innerHTML !== newContent) {
+                    afterTextDiv.innerHTML = newContent;
+                }
+                // Always ensure visibility, even if content didn't change (it might be hidden)
+                afterTextDiv.style.display = 'block';
+            } else {
+                // No tool calls yet, use the regular message-text div
+                let textDiv = contentDiv.querySelector('.message-text');
+                if (!textDiv) {
+                    textDiv = document.createElement('div');
+                    textDiv.className = 'message-text';
+                    const roleDiv = contentDiv.querySelector('.message-role');
+                    if (roleDiv && roleDiv.nextSibling) {
+                        contentDiv.insertBefore(textDiv, roleDiv.nextSibling);
+                    } else {
+                        contentDiv.appendChild(textDiv);
+                    }
+                }
+
+                const newContent = formatMessage(content);
+                if (textDiv.innerHTML !== newContent) {
+                    textDiv.innerHTML = newContent;
+                }
+                // Always ensure visibility
+                textDiv.style.display = 'block';
+            }
+            scrollToBottom();
+        }
+
+        function removeTypingIndicator(msgElement) {
+            // Find and remove all typing indicators (could be in message-text or message-content)
+            const indicators = msgElement.querySelectorAll('.typing-indicator');
+            indicators.forEach(indicator => indicator.remove());
+
+            // Also hide empty message-text divs that only contained the indicator
+            const textDivs = msgElement.querySelectorAll('.message-text');
+            textDivs.forEach(div => {
+                // If the div is now empty (only had indicator), hide it
+                if (div.innerHTML.trim() === '') {
+                    div.style.display = 'none';
+                }
+            });
+        }
+
+        function addToolCall(msgElement, toolName, args) {
+            const contentDiv = msgElement.querySelector('.message-content');
+            const toolDiv = document.createElement('div');
+            toolDiv.className = 'tool-call';
+            toolDiv.dataset.toolName = toolName;
+
+            let argsHtml = '';
+            if (args && typeof args === 'object' && Object.keys(args).length > 0) {
+                argsHtml = `<div class="tool-call-args">${escapeHtml(JSON.stringify(args, null, 2))}</div>`;
+            }
+
+            toolDiv.innerHTML = `
+                <div class="tool-call-header">
+                    <span>🔧 Running: ${escapeHtml(toolName)}</span>
+                    <span class="tool-call-toggle">▼</span>
+                </div>
+                <div class="tool-call-body">
+                    ${argsHtml}
+                </div>
+            `;
+
+            // Add toggle functionality
+            const header = toolDiv.querySelector('.tool-call-header');
+            header.addEventListener('click', () => {
+                toolDiv.classList.toggle('collapsed');
+            });
+
+            contentDiv.appendChild(toolDiv);
+            scrollToBottom();
+        }
+
+        function updateToolCallResult(msgElement, toolName, result) {
+            const contentDiv = msgElement.querySelector('.message-content');
+            const toolDivs = contentDiv.querySelectorAll('.tool-call');
+
+            // Find the tool call by name (last matching one)
+            let targetToolDiv = null;
+            toolDivs.forEach(div => {
+                if (div.dataset.toolName === toolName && !div.classList.contains('completed')) {
+                    targetToolDiv = div;
+                }
+            });
+
+            if (targetToolDiv) {
+                targetToolDiv.classList.add('completed');
+                // Auto-collapse completed tool calls
+                targetToolDiv.classList.add('collapsed');
+
+                const header = targetToolDiv.querySelector('.tool-call-header');
+                header.innerHTML = `
+                    <span>✅ Completed: ${escapeHtml(toolName)}</span>
+                    <span class="tool-call-toggle">▼</span>
+                `;
+
+                if (result) {
+                    const bodyDiv = targetToolDiv.querySelector('.tool-call-body') || targetToolDiv;
+                    const resultDiv = document.createElement('div');
+                    resultDiv.className = 'tool-call-result';
+                    resultDiv.textContent = typeof result === 'string' ? result : JSON.stringify(result, null, 2);
+                    bodyDiv.appendChild(resultDiv);
+                }
+
+                scrollToBottom();
+            }
+        }
+
+        function addErrorMessage(message) {
+            const msg = document.createElement('div');
+            msg.className = 'message assistant';
+            msg.innerHTML = `
+                <div class="message-avatar" style="background: var(--error-color);">⚠️</div>
+                <div class="message-content">
+                    <div class="message-role">Error</div>
+                    <div class="message-text" style="color: var(--error-color);">${escapeHtml(message)}</div>
+                </div>
+            `;
+            messagesContainer.appendChild(msg);
+            scrollToBottom();
+        }
+
+        function renderSessionMessages(messages) {
+            messagesContainer.innerHTML = '';
+
+            if (!messages || messages.length === 0) {
+                messagesContainer.appendChild(emptyState);
+                emptyState.style.display = 'flex';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+
+            let currentAssistantEl = null;
+
+            messages.forEach((msg, idx) => {
+                if (msg.role === 'user') {
+                    const content = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
+                    addUserMessage(content);
+                    currentAssistantEl = null;
+                } else if (msg.role === 'assistant') {
+                    currentAssistantEl = createAssistantMessage();
+                    const content = typeof msg.content === 'string' ? msg.content : (msg.content || '');
+                    if (content) {
+                        updateAssistantMessage(currentAssistantEl, content);
+                    }
+
+                    // Check for tool_calls in the message
+                    if (msg.tool_calls && Array.isArray(msg.tool_calls)) {
+                        msg.tool_calls.forEach(tc => {
+                            const toolName = tc.function?.name || tc.name || 'unknown';
+                            const toolArgs = tc.function?.arguments || tc.arguments || {};
+                            const parsedArgs = typeof toolArgs === 'string' ? JSON.parse(toolArgs) : toolArgs;
+                            addToolCallToElement(currentAssistantEl, toolName, parsedArgs, null, false);
+                        });
+                    }
+                } else if (msg.role === 'tool') {
+                    // Tool result - update the last tool call
+                    if (currentAssistantEl) {
+                        const toolName = msg.name || msg.tool_call_id || 'tool';
+                        let result = msg.content;
+                        try {
+                            if (typeof result === 'string') {
+                                const parsed = JSON.parse(result);
+                                result = typeof parsed === 'object' ? JSON.stringify(parsed, null, 2) : result;
+                            }
+                        } catch (e) { }
+
+                        // Mark the tool as completed
+                        updateToolCallResultByName(currentAssistantEl, toolName, result);
+                    }
+                }
+            });
+
+            scrollToBottom();
+        }
+
+        // Helper to add tool call to a specific element (for session loading)
+        function addToolCallToElement(msgElement, toolName, args, result, completed) {
+            const contentDiv = msgElement.querySelector('.message-content');
+            const toolDiv = document.createElement('div');
+            toolDiv.className = completed ? 'tool-call completed collapsed' : 'tool-call';
+            toolDiv.dataset.toolName = toolName;
+
+            let argsHtml = '';
+            if (args && typeof args === 'object' && Object.keys(args).length > 0) {
+                argsHtml = `<div class="tool-call-args">${escapeHtml(JSON.stringify(args, null, 2))}</div>`;
+            }
+
+            const icon = completed ? '✅' : '🔧';
+            const status = completed ? 'Completed' : 'Running';
+
+            let resultHtml = '';
+            if (result && completed) {
+                const resultText = typeof result === 'string' ? result : JSON.stringify(result, null, 2);
+                resultHtml = `<div class="tool-call-result">${escapeHtml(resultText)}</div>`;
+            }
+
+            toolDiv.innerHTML = `
+                <div class="tool-call-header">
+                    <span>${icon} ${status}: ${escapeHtml(toolName)}</span>
+                    <span class="tool-call-toggle">▼</span>
+                </div>
+                <div class="tool-call-body">
+                    ${argsHtml}
+                    ${resultHtml}
+                </div>
+            `;
+
+            // Add toggle functionality
+            const header = toolDiv.querySelector('.tool-call-header');
+            header.addEventListener('click', () => {
+                toolDiv.classList.toggle('collapsed');
+            });
+
+            contentDiv.appendChild(toolDiv);
+        }
+
+        function updateToolCallResultByName(msgElement, toolName, result) {
+            const contentDiv = msgElement.querySelector('.message-content');
+            const toolDivs = contentDiv.querySelectorAll('.tool-call:not(.completed)');
+
+            // Find first uncompleted tool call
+            if (toolDivs.length > 0) {
+                const targetToolDiv = toolDivs[0];
+                targetToolDiv.classList.add('completed');
+                const header = targetToolDiv.querySelector('.tool-call-header');
+                const name = targetToolDiv.dataset.toolName || toolName;
+                header.innerHTML = `✅ Completed: ${escapeHtml(name)}`;
+
+                if (result) {
+                    const resultDiv = document.createElement('div');
+                    resultDiv.className = 'tool-call-result';
+                    resultDiv.textContent = typeof result === 'string' ? result.substring(0, 500) : JSON.stringify(result, null, 2).substring(0, 500);
+                    targetToolDiv.appendChild(resultDiv);
+                }
+            }
+        }
+
+        // Helpers
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatMessage(text) {
+            if (!text) return '';
+
+            // Better markdown parsing
+            let html = text;
+
+            // Escape HTML first but preserve our markdown
+            html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+            // Code blocks with syntax highlighting placeholder
+            html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
+                return `<pre class="code-block"><code class="language-${lang || 'text'}">${code.trim()}</code></pre>`;
+            });
+
+            // Inline code
+            html = html.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
+
+            // Headers
+            html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+            html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+            html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+            // Bold and italic
+            html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+            html = html.replace(/_(.+?)_/g, '<em>$1</em>');
+
+            // Lists
+            html = html.replace(/^\s*[-*]\s+(.+)$/gm, '<li>$1</li>');
+            html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+
+            // Numbered lists
+            html = html.replace(/^\s*\d+\.\s+(.+)$/gm, '<li>$1</li>');
+
+            // Links
+            html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+
+            // Blockquotes
+            html = html.replace(/^&gt;\s*(.+)$/gm, '<blockquote>$1</blockquote>');
+
+            // Horizontal rules
+            html = html.replace(/^---$/gm, '<hr>');
+
+            // Paragraphs - split by double newlines
+            const blocks = html.split(/\n\n+/);
+            html = blocks.map(block => {
+                block = block.trim();
+                if (!block) return '';
+                // Don't wrap if already has block element
+                if (block.startsWith('<h') || block.startsWith('<pre') ||
+                    block.startsWith('<ul') || block.startsWith('<ol') ||
+                    block.startsWith('<blockquote') || block.startsWith('<hr')) {
+                    return block;
+                }
+                return `<p>${block}</p>`;
+            }).join('\n');
+
+            // Single line breaks to <br>
+            html = html.replace(/([^>])\n([^<])/g, '$1<br>$2');
+
+            return html;
+        }
+
+        function scrollToBottom() {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Send message
+        function sendMessage() {
+            const content = messageInput.value.trim();
+            if (!content || !isConnected || isProcessing) return;
+
+            isProcessing = true;
+            sendBtn.disabled = true;
+
+            addUserMessage(content);
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+
+            // If no session, create one first
+            if (!currentSessionId) {
+                fetch(`${API_BASE}/api/sessions`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+                    .then(r => r.json())
+                    .then(data => {
+                        currentSessionId = data.session.id;
+                        sendToWebSocket(content);
+                    });
+            } else {
+                sendToWebSocket(content);
+            }
+        }
+
+        function sendToWebSocket(content) {
+            ws.send(JSON.stringify({
+                type: 'message',
+                content: content,
+                session_id: currentSessionId
+            }));
+        }
+
+        // Event listeners
+        sendBtn.addEventListener('click', sendMessage);
+
+        messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        messageInput.addEventListener('input', () => {
+            messageInput.style.height = 'auto';
+            messageInput.style.height = Math.min(messageInput.scrollHeight, 150) + 'px';
+        });
+
+        // Logout
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            try {
+                await fetch(`${API_BASE}/api/auth/logout`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+            } catch (e) { }
+
+            localStorage.removeItem('scratchy_token');
+            window.location.href = '/login';
+        });
+
+        // Mobile menu
+        document.getElementById('menu-btn')?.addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('sidebar-overlay').classList.toggle('active');
+        });
+
+        document.getElementById('sidebar-overlay')?.addEventListener('click', () => {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebar-overlay').classList.remove('active');
+        });
+
+        // Keep-alive ping
+        setInterval(() => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'ping' }));
+            }
+        }, 30000);
+
+        // ============== Tool Approval Modal Functions ==============
+        let approvalTimeoutId = null;
+        let approvalCountdown = 120;
+
+        function showApprovalModal(toolName, args) {
+            const overlay = document.getElementById('approval-modal-overlay');
+            const toolNameEl = document.getElementById('approval-tool-name');
+            const argsEl = document.getElementById('approval-args');
+            const timeoutEl = document.getElementById('approval-timeout');
+            const approveBtn = document.getElementById('approval-approve-btn');
+            const denyBtn = document.getElementById('approval-deny-btn');
+
+            // Set content
+            toolNameEl.textContent = `🔧 ${toolName}`;
+            argsEl.textContent = JSON.stringify(args, null, 2);
+
+            // Show modal
+            overlay.classList.add('active');
+
+            // Start countdown
+            approvalCountdown = 120;
+            updateCountdown();
+
+            approvalTimeoutId = setInterval(() => {
+                approvalCountdown--;
+                updateCountdown();
+                if (approvalCountdown <= 0) {
+                    clearInterval(approvalTimeoutId);
+                    sendApprovalResponse(false);
+                }
+            }, 1000);
+
+            // Button handlers (remove old handlers first)
+            const newApproveBtn = approveBtn.cloneNode(true);
+            approveBtn.parentNode.replaceChild(newApproveBtn, approveBtn);
+            newApproveBtn.addEventListener('click', () => {
+                sendApprovalResponse(true);
+            });
+
+            const newDenyBtn = denyBtn.cloneNode(true);
+            denyBtn.parentNode.replaceChild(newDenyBtn, denyBtn);
+            newDenyBtn.addEventListener('click', () => {
+                sendApprovalResponse(false);
+            });
+
+            function updateCountdown() {
+                timeoutEl.textContent = `Auto-deny in ${approvalCountdown}s`;
+            }
+        }
+
+        function hideApprovalModal() {
+            const overlay = document.getElementById('approval-modal-overlay');
+            overlay.classList.remove('active');
+            if (approvalTimeoutId) {
+                clearInterval(approvalTimeoutId);
+                approvalTimeoutId = null;
+            }
+        }
+
+        function sendApprovalResponse(approved) {
+            hideApprovalModal();
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'tool_approval_response',
+                    approved: approved
+                }));
+            }
+        }
+
+        // Initialize
+        init();
+        async function copyToClipboard(text, btnElement) {
+            try {
+                await navigator.clipboard.writeText(text);
+
+                // Visual feedback
+                const originalIcon = btnElement.textContent;
+                btnElement.textContent = '✅';
+                btnElement.classList.add('copied');
+
+                setTimeout(() => {
+                    btnElement.textContent = originalIcon;
+                    btnElement.classList.remove('copied');
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy:', err);
+            }
+        }
+    </script>
+</body>
+
+</html>

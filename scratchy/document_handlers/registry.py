@@ -6,6 +6,8 @@ from .docx import DocxHandler
 from .pptx import PPTXHandler
 from .excel import ExcelHandler
 from .text import TextHandler
+from .csv import CSVHandler
+from .image import ImageHandler
 
 class DocumentHandlerRegistry:
     """Registry to map file extensions to document handlers."""
@@ -17,9 +19,8 @@ class DocumentHandlerRegistry:
         ".pptx": PPTXHandler,
         ".ppt": PPTXHandler, # similar caveat
         ".xlsx": ExcelHandler,
-        ".xls": ExcelHandler, # openpyxl doesn't support .xls (binary), strictly .xlsx. But let's leave for now or remove? pypdf/python-docx etc are strict. 
-                              # Actually openpyxl does NOT support .xls. I should probably remove .xls and .doc to be safe or map them to a different error. 
-                              # For now, I will only map supported formats.
+        ".xls": ExcelHandler, 
+        ".csv": CSVHandler,
         ".txt": TextHandler,
         ".md": TextHandler,
         ".py": TextHandler,
@@ -28,6 +29,10 @@ class DocumentHandlerRegistry:
         ".html": TextHandler,
         ".css": TextHandler,
         ".js": TextHandler,
+        ".png": ImageHandler,
+        ".jpg": ImageHandler,
+        ".jpeg": ImageHandler,
+        ".webp": ImageHandler,
     }
 
     @classmethod

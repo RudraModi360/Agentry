@@ -9,6 +9,12 @@ from .web import WebSearchTool, UrlFetchTool
 from .git import GitCommandTool
 from .document import ReadDocumentTool
 from .convert_document import ConvertDocumentTool
+from .office_tools import (
+    EditPPTXTool, CreatePPTXTool, AppendSlideTool,
+    EditDOCXTool, CreateDOCXTool,
+    EditExcelTool, CreateExcelTool
+)
+from .pdf_tools import MergePDFTool, SplitPDFTool
 
 class ToolRegistry:
     def __init__(self):
@@ -35,6 +41,19 @@ class ToolRegistry:
         self.register_tool(GitCommandTool())
         self.register_tool(ReadDocumentTool())
         self.register_tool(ConvertDocumentTool())
+        
+        # New Office Tools
+        self.register_tool(EditPPTXTool())
+        self.register_tool(CreatePPTXTool())
+        self.register_tool(AppendSlideTool())
+        self.register_tool(EditDOCXTool())
+        self.register_tool(CreateDOCXTool())
+        self.register_tool(EditExcelTool())
+        self.register_tool(CreateExcelTool())
+        
+        # New PDF Tools
+        self.register_tool(MergePDFTool())
+        self.register_tool(SplitPDFTool())
 
     def get_tool(self, name: str) -> BaseTool:
         return self._tools.get(name)
@@ -63,5 +82,11 @@ def execute_tool(tool_name: str, tool_args: Dict[str, Any]) -> ToolResult:
 
 # Tool categories
 SAFE_TOOLS = ['read_file', 'list_files', 'search_files', 'fast_grep', 'read_document']
-APPROVAL_REQUIRED_TOOLS = ['create_file', 'edit_file', 'web_search', 'url_fetch', 'convert_document']
+APPROVAL_REQUIRED_TOOLS = [
+    'create_file', 'edit_file', 'web_search', 'url_fetch', 'convert_document',
+    'edit_pptx', 'create_pptx', 'append_slide',
+    'edit_docx', 'create_docx',
+    'edit_excel', 'create_excel',
+    'merge_pdfs', 'split_pdf'
+]
 DANGEROUS_TOOLS = ['delete_file', 'execute_command', 'git_command', 'code_execute']

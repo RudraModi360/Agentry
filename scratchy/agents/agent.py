@@ -1,4 +1,5 @@
 import json
+import inspect
 import asyncio
 from typing import List, Dict, Any, Callable, Awaitable, Optional, Union, get_type_hints
 from datetime import datetime
@@ -53,7 +54,7 @@ class Agent:
         system_message: str = None,
         role: str = "general",
         debug: bool = False,
-        max_iterations: int = 20
+        max_iterations: int = 40
     ):
         # Initialize Provider
         if isinstance(llm, str):
@@ -277,6 +278,13 @@ class Agent:
         session.add_message({"role": "user", "content": user_input})
         
         all_tools = await self.get_all_tools()
+        # Ensure we have a robust error handling strategy around provider calls
+        # This will catch JSON serialization errors and internal server errors
+        # and allow the chat session to continue.
+        # We’ll wrap the main iteration loop in a try/except block.
+        # The errors are logged via simple print statements for visibility.
+        # If an error occurs, we’ll return an informative message instead of crashing.
+
         
         for i in range(self.max_iterations):
             if self.debug:
@@ -294,7 +302,8 @@ class Agent:
             except Exception as e:
                 # Error handling & Retry logic
                 error_str = str(e).lower()
-                # Broaden the check for empty/invalid response errors
+                
+                # Broaden the check for empty/invalid response errors and now Internal Server Errors
                 if (
                     "empty" in error_str 
                     or "tool calls" in error_str 
@@ -302,8 +311,12 @@ class Agent:
                     or "output text or tool calls" in error_str
                     or "unexpected" in error_str
                     or "does not support tools" in error_str
+                    or "internal server error" in error_str
+                    or "status code: -1" in error_str
+                    or "status code: 500" in error_str
                 ):
-                    if self.debug: print(f"[Agent] Response error detected: {error_str}. Retrying...")
+                    if self.debug or "internal server error" in error_str: 
+                        print(f"[Agent] ⚠️  Response/Provider error: {error_str}. Retrying...")
                     
                     # Retry loop with tools
                     retry_success = False
@@ -321,7 +334,6 @@ class Agent:
                                 break # Stop retrying with tools immediately
                             
                             if self.debug: print(f"[Agent] Retry {attempt+1} failed: {retry_error}")
-                            last_error = retry_error
                     
                     if not retry_success:
                         # Fallback to no tools as a last resort
@@ -338,39 +350,69 @@ class Agent:
                                 self.callbacks["on_final_message"](session_id, error_msg)
                             return error_msg
                 else:
-                    # Different error, re-raise
-                    if self.debug: print(f"[Agent] Unhandled error: {error_str}")
-                    raise e
+                    # Different error
+                    print(f"\n[Agent] ⚠️  Runtime Error: {e}")
+                    # Don't crash, just break or continue?
+                    # User asked to continue session chat.
+                    # We will return the error as a message to the user so they know something happened.
+                    return f"Error during execution: {str(e)}"
             
             # If we still don't have a response, skip this iteration
             if response is None:
                 continue
 
             # 2. Parse Response
-            content = None
-            tool_calls = None
-            
-            if isinstance(response, dict): # Ollama
-                content = response.get('content')
-                tool_calls = response.get('tool_calls')
-                session.add_message(response)
-            else: # Object (Groq/Gemini)
-                content = response.content
-                tool_calls = response.tool_calls
-                # Convert to dict for history
-                msg_dict = {"role": "assistant", "content": content}
-                if tool_calls:
-                    msg_dict["tool_calls"] = [
-                        {
-                            "id": getattr(tc, 'id', None),
-                            "type": "function",
-                            "function": {
-                                "name": tc.function.name,
-                                "arguments": tc.function.arguments
-                            }
-                        } for tc in tool_calls
-                    ]
-                session.add_message(msg_dict)
+            try:
+                content = None
+                tool_calls = None
+                
+                if isinstance(response, dict): # Ollama
+                    content = response.get('content')
+                    tool_calls = response.get('tool_calls')
+                    
+                    # Sanitize Ollama tool calls to ensure they are dicts
+                    if tool_calls:
+                         serialized_tool_calls = []
+                         for tc in tool_calls:
+                             if hasattr(tc, 'dict'): serialized_tool_calls.append(tc.dict())
+                             elif hasattr(tc, 'model_dump'): serialized_tool_calls.append(tc.model_dump())
+                             elif isinstance(tc, dict): serialized_tool_calls.append(tc)
+                             else: 
+                                 # Fallback: Try to force serialization or skip
+                                 try:
+                                     json.dumps(tc)
+                                     serialized_tool_calls.append(tc)
+                                 except:
+                                     if self.debug: print(f"[Agent] ⚠️ Skipping non-serializable tool call: {tc}")
+                                     pass
+                         response['tool_calls'] = serialized_tool_calls
+                         
+                    session.add_message(response)
+                else: # Object (Groq/Gemini)
+                    content = response.content
+                    tool_calls = response.tool_calls
+                    # Convert to dict for history
+                    msg_dict = {"role": "assistant", "content": content}
+                    if tool_calls:
+                        msg_dict["tool_calls"] = [
+                            {
+                                "id": getattr(tc, 'id', None),
+                                "type": "function",
+                                "function": {
+                                    "name": tc.function.name,
+                                    "arguments": tc.function.arguments 
+                                }
+                            } for tc in tool_calls
+                        ]
+                    session.add_message(msg_dict)
+            except Exception as parse_error:
+                print(f"[Agent] ⚠️  Response Parsing Error (Ignored): {parse_error}")
+                # We can try to recover by adding a text message only
+                try:
+                     content_safe = getattr(response, 'content', str(response))
+                     session.add_message({"role": "assistant", "content": f"(Recovered) {content_safe}"})
+                except: pass
+                continue
 
             # 3. Handle Final Response
             if not tool_calls:
@@ -399,7 +441,11 @@ class Agent:
                     tc_id = getattr(tc, 'id', None)
 
                 if self.callbacks["on_tool_start"]:
-                    self.callbacks["on_tool_start"](session_id, name, args)
+                    callback = self.callbacks["on_tool_start"]
+                    if inspect.iscoroutinefunction(callback):
+                        await callback(session_id, name, args)
+                    else:
+                        callback(session_id, name, args)
 
                 # Approval
                 approved = True
@@ -424,7 +470,12 @@ class Agent:
                     result = await self._execute_tool(name, args, session_id)
 
                 if self.callbacks["on_tool_end"]:
-                    self.callbacks["on_tool_end"](session_id, name, result)
+                    callback = self.callbacks["on_tool_end"]
+                    if inspect.iscoroutinefunction(callback):
+                        await callback(session_id, name, result)
+                    else:
+                        callback(session_id, name, result)
+
 
                 # Add result to history
                 tool_msg = {
