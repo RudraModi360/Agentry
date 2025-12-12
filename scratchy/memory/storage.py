@@ -70,6 +70,28 @@ class PersistentMemoryStore:
         finally:
             conn.close()
 
+    def update_session_metadata(self, session_id: str, updates: Dict[str, Any]):
+        """Update specific fields in session metadata."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        try:
+            # First get current metadata
+            cursor.execute("SELECT metadata FROM sessions WHERE session_id = ?", (session_id,))
+            row = cursor.fetchone()
+            if not row:
+                return
+            
+            current_metadata = json.loads(row[0] or '{}')
+            current_metadata.update(updates)
+            
+            cursor.execute(
+                "UPDATE sessions SET metadata = ? WHERE session_id = ?",
+                (json.dumps(current_metadata), session_id)
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
     def update_session_activity(self, session_id: str):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()

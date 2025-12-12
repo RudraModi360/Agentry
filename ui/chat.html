@@ -13,20 +13,35 @@
         rel="stylesheet">
     <style>
         :root {
-            --gradient-start: #667eea;
-            --gradient-end: #764ba2;
-            --accent-cyan: #00d4ff;
-            --accent-pink: #ff6b9d;
-            --dark-bg: #0a0a1a;
-            --dark-card: #12122a;
-            --dark-sidebar: #0f0f22;
-            --dark-input: #1a1a35;
-            --dark-border: #2a2a4a;
-            --text-primary: #ffffff;
-            --text-secondary: #a0a0c0;
-            --error-color: #ff4757;
-            --success-color: #2ed573;
-            --tool-color: #ffa726;
+            /* Retro 1950s Jazz Palette */
+            --gradient-start: #2c241b;
+            /* Dark Coffee */
+            --gradient-end: #1a1515;
+            /* Warm Black */
+            --accent-cyan: #d4af37;
+            /* Retro Gold/Brass (replaces cyan) */
+            --accent-pink: #d45d55;
+            /* Vintage Red */
+            --dark-bg: #1a1515;
+            /* Warm Black Background */
+            --dark-card: #241e1e;
+            /* Dark Espresso */
+            --dark-sidebar: #2c241b;
+            /* Coffee Brown */
+            --dark-input: #3e3228;
+            /* Lighter Brown */
+            --dark-border: #594a3c;
+            /* Taupe Border */
+            --text-primary: #e6dfd5;
+            /* Parchment / Off-white */
+            --text-secondary: #a89f91;
+            /* Warm Grey */
+            --error-color: #d45d55;
+            /* Vintage Red */
+            --success-color: #7b9e63;
+            /* Muted Green */
+            --tool-color: #e6b800;
+            /* Muted Gold */
         }
 
         * {
@@ -52,11 +67,114 @@
         /* Sidebar */
         .sidebar {
             width: 280px;
+            min-width: 240px;
+            /* Minimum width constraints */
+            max-width: 500px;
             background: var(--dark-sidebar);
             border-right: 1px solid var(--dark-border);
             display: flex;
             flex-direction: column;
             flex-shrink: 0;
+            position: relative;
+            /* For resizer positioning */
+            transition: width 0.1s ease;
+            /* Smooth resize only when not dragging, handled in JS */
+        }
+
+        .sidebar.collapsed {
+            width: 0px;
+            min-width: 0;
+            overflow: hidden;
+            border-right: none;
+        }
+
+        /* Resizer Handle */
+        .sidebar-resizer {
+            position: absolute;
+            right: -4px;
+            top: 0;
+            bottom: 0;
+            width: 8px;
+            cursor: col-resize;
+            z-index: 10;
+            opacity: 0;
+            /* Default hidden */
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Visible grip on hover or when resizing */
+        .sidebar:hover .sidebar-resizer,
+        .sidebar-resizer:hover {
+            opacity: 1;
+        }
+
+        .sidebar-resizer::after {
+            content: "";
+            width: 4px;
+            height: 40px;
+            background: var(--tool-color);
+            border-radius: 2px;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+        }
+
+        /* Expander/Collapse Button Container */
+        .sidebar-toggle-area {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            /* Positioned in chat main when sidebar is closed */
+            z-index: 20;
+            display: none;
+        }
+
+        .sidebar.collapsed+.chat-main .sidebar-toggle-area {
+            display: block;
+        }
+
+        .sidebar-toggle-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 18px;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-toggle-btn:hover {
+            background: var(--dark-input);
+            color: var(--accent-cyan);
+        }
+
+        /* Sidebar Header Toggle */
+        .sidebar-header-toggle {
+            margin-left: auto;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--dark-border);
+            color: var(--text-secondary);
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+
+        .sidebar-header-toggle:hover {
+            background: var(--dark-input);
+            color: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
         }
 
         .sidebar-header {
@@ -295,13 +413,14 @@
         .user-avatar {
             width: 32px;
             height: 32px;
-            background: linear-gradient(135deg, var(--accent-cyan), var(--gradient-start));
+            /* background: linear-gradient(135deg, var(--accent-cyan), var(--gradient-start)); */
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 600;
-            font-size: 14px;
+            /* font-weight: 600; */
+            /* font-size: 14px; */
+            object-fit: cover;
         }
 
         .user-name {
@@ -408,7 +527,8 @@
         }
 
         .message.user .message-avatar {
-            background: linear-gradient(135deg, var(--accent-cyan), var(--gradient-start));
+            /* background: linear-gradient(135deg, var(--accent-cyan), var(--gradient-start)); */
+            background: transparent;
         }
 
         .message.assistant .message-avatar {
@@ -1003,13 +1123,22 @@
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <div class="logo">
-                    <img src="/assets/scratchy_logo.png" alt="Scratchy" class="logo-img">
+                <div style="display: flex; align-items: center; width: 100%; margin-bottom: 16px;">
+                    <div class="logo" style="margin-bottom: 0;">
+                        <img src="/assets/scratchy_assistant_retro.png" alt="Scratchy" class="logo-img"
+                            style="border-radius: 50%;">
+                    </div>
+                    <button class="sidebar-header-toggle" id="sidebar-collapse-btn" title="Collapse Sidebar">
+                        ←
+                    </button>
                 </div>
                 <button class="new-chat-btn" id="new-chat-btn">
                     <span>+</span> New Chat
                 </button>
             </div>
+
+            <!-- Resizer -->
+            <div class="sidebar-resizer" id="sidebar-resizer"></div>
 
             <div class="sessions-container" id="sessions-container">
                 <!-- Sessions will be loaded here -->
@@ -1026,7 +1155,7 @@
                 </div>
 
                 <div class="user-menu">
-                    <div class="user-avatar" id="user-avatar">?</div>
+                    <img src="/assets/user_avatar_retro.png" alt="User" class="user-avatar" id="user-avatar">
                     <span class="user-name" id="user-name">Loading...</span>
                     <button class="logout-btn" id="logout-btn">Logout</button>
                 </div>
@@ -1040,6 +1169,13 @@
                 <button class="menu-btn" id="menu-btn">☰</button>
             </div>
 
+            <!-- Sidebar Toggle (Visible when collapsed) -->
+            <div class="sidebar-toggle-area">
+                <button class="sidebar-toggle-btn" id="sidebar-expand-btn" title="Expand Sidebar">
+                    ➜
+                </button>
+            </div>
+
             <div class="chat-header">
                 <h1 class="chat-title" id="chat-title">New Chat</h1>
                 <div class="connection-status">
@@ -1050,7 +1186,8 @@
 
             <div class="messages-container" id="messages-container">
                 <div class="empty-state" id="empty-state">
-                    <img src="/assets/scratchy_logo.png" alt="Scratchy" class="empty-logo">
+                    <img src="/assets/scratchy_assistant_retro.png" alt="Scratchy" class="empty-logo"
+                        style="border-radius: 50%;">
                     <h2 class="empty-title">Welcome to Scratchy</h2>
                     <p class="empty-subtitle">Start a conversation with your AI assistant. Ask anything!</p>
                 </div>
@@ -1115,6 +1252,58 @@
             await loadUserInfo();
             await loadSessions();
             connectWebSocket();
+            initSidebarControls();
+        }
+
+        // Sidebar Controls (Resize & Toggle)
+        function initSidebarControls() {
+            const sidebar = document.getElementById('sidebar');
+            const resizer = document.getElementById('sidebar-resizer');
+            const collapseBtn = document.getElementById('sidebar-collapse-btn');
+            const expandBtn = document.getElementById('sidebar-expand-btn');
+
+            // Toggle Logic
+            function toggleSidebar(collapsed) {
+                if (collapsed) {
+                    sidebar.classList.add('collapsed');
+                } else {
+                    sidebar.classList.remove('collapsed');
+                }
+            }
+
+            collapseBtn.addEventListener('click', () => toggleSidebar(true));
+            expandBtn.addEventListener('click', () => toggleSidebar(false));
+
+            // Resizing Logic
+            let isResizing = false;
+
+            resizer.addEventListener('mousedown', (e) => {
+                isResizing = true;
+                document.body.style.cursor = 'col-resize';
+                sidebar.style.transition = 'none'; // Disable transition for smooth dragging
+                e.preventDefault(); // Prevent text selection
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isResizing) return;
+
+                // Calculate new width
+                // Constraint between 240px and 500px handled by CSS min/max-width mostly, 
+                // but we clamp here for dragging UX
+                let newWidth = e.clientX;
+                if (newWidth < 240) newWidth = 240;
+                if (newWidth > 600) newWidth = 600;
+
+                sidebar.style.width = `${newWidth}px`;
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isResizing) {
+                    isResizing = false;
+                    document.body.style.cursor = '';
+                    sidebar.style.transition = ''; // Re-enable transition
+                }
+            });
         }
 
         // Load user info
@@ -1133,7 +1322,8 @@
                 const data = await response.json();
 
                 document.getElementById('user-name').textContent = data.user.username;
-                document.getElementById('user-avatar').textContent = data.user.username[0].toUpperCase();
+                document.getElementById('user-name').textContent = data.user.username;
+                // document.getElementById('user-avatar').textContent = data.user.username[0].toUpperCase(); // Removed to use image
 
                 if (data.provider_config) {
                     const providerIcon = document.getElementById('provider-icon');
@@ -1301,6 +1491,10 @@
                     break;
 
                 case 'error':
+                    if (currentAssistantMessage) {
+                        removeTypingIndicator(currentAssistantMessage);
+                        currentAssistantMessage = null;
+                    }
                     if (data.message.includes('Provider not configured')) {
                         window.location.href = '/setup';
                     } else {
@@ -1422,7 +1616,9 @@
             }
 
             msg.innerHTML = `
-                <div class="message-avatar user-initial" id="msg-user-avatar"></div>
+                <div class="message-avatar">
+                    <img src="/assets/user_avatar_retro.png" alt="You" class="assistant-avatar-img" style="border-radius: 50%;">
+                </div>
                 <div class="message-content">
                     <div class="message-role">You</div>
                     <div class="message-text">${escapeHtml(content)}</div>
@@ -1538,7 +1734,7 @@
             msg.className = 'message assistant';
             msg.innerHTML = `
                 <div class="message-avatar">
-                    <img src="/assets/scratchy_logo.png" alt="Scratchy" class="assistant-avatar-img">
+                    <img src="/assets/scratchy_assistant_retro.png" alt="Scratchy" class="assistant-avatar-img" style="border-radius: 50%;">
                 </div>
                 <div class="message-content">
                     <div class="message-role">Scratchy</div>

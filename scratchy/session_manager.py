@@ -44,8 +44,22 @@ class SessionManager:
     def list_sessions(self) -> List[Dict[str, Any]]:
         """List all available sessions from the DB."""
         sessions = self.storage.list_sessions()
+        
+        # Parse metadata to extract title
+        for s in sessions:
+            if s.get('metadata'):
+                try:
+                    meta = json.loads(s['metadata'])
+                    s['title'] = meta.get('title')
+                except:
+                    pass
+        
         # Filter out sessions with no messages
         return [s for s in sessions if s.get('message_count', 0) > 0]
+
+    def update_session_title(self, session_id: str, title: str):
+        """Update the title of a session."""
+        self.storage.update_session_metadata(session_id, {"title": title})
     
     def delete_session(self, session_id: str) -> bool:
         """Delete a session."""

@@ -136,12 +136,13 @@
         .logo-icon {
             width: 56px;
             height: 56px;
-            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            /* background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end)); Remove bg for img */
             border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
+            /* display: flex;  Not needed for img */
+            /* align-items: center; */
+            /* justify-content: center; */
+            /* font-size: 28px; */
+            object-fit: contain;
             box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
         }
 
@@ -339,7 +340,8 @@
     <div class="login-container">
         <div class="login-card">
             <div class="logo">
-                <div class="logo-icon">🐾</div>
+                <img src="/assets/scratchy_assistant_premium.png" alt="Scratchy" class="logo-icon"
+                    style="background: transparent; box-shadow: none;">
                 <span class="logo-text">Scratchy</span>
             </div>
 
