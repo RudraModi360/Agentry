@@ -726,11 +726,13 @@ async def delete_session(session_id: str, user: Dict = Depends(get_current_user)
     
     return {"message": "Session deleted"}
 
-async def generate_title(session_id: str, messages: List[Dict], provider: Any, session_manager: SessionManager):
+async def generate_title(session_id: str, messages: List[Dict], provider: Any, session_manager: SessionManager, websocket: WebSocket = None):
     """Generate and save 3-5 word title for the session."""
+    print(f"[Server] Generatng title for session {session_id}...")
     try:
         # User message is usually at index 1 (0 is system)
         if len(messages) < 2: 
+            print("[Server] Not enough messages for title generation.")
             return
             
         # Get first user message content
@@ -741,14 +743,14 @@ async def generate_title(session_id: str, messages: List[Dict], provider: Any, s
                      user_msg = part.get("text", "")
                      break
         
+        print(f"[Server] generating title from user msg: {str(user_msg)[:50]}...")
+
         prompt = [
             {"role": "system", "content": "You are a helpful assistant. Generate a short, concise title (3-5 words) for the following conversation. Do not use quotes."},
             {"role": "user", "content": f"Summarize this query into a title:\n\n{user_msg}"}
         ]
         
         # Call provider directly
-        # Note: Provider interfaces differ. Agent usually wraps this. 
-        # But we pass simple text messages which all providers support.
         response = await provider.chat(prompt)
         
         title = "Untitled Chat"
@@ -757,11 +759,25 @@ async def generate_title(session_id: str, messages: List[Dict], provider: Any, s
         else: # Object with content attribute (Groq/Gemini sometimes)
             title = getattr(response, "content", str(response)).strip('" ')
             
+        print(f"[Server] Generated title: {title}")
+
         if title:
              session_manager.update_session_title(session_id, title)
+             if websocket:
+                 try:
+                     print(f"[Server] Sending session_updated to client for {session_id}")
+                     await websocket.send_json({
+                         "type": "session_updated",
+                         "session_id": session_id,
+                         "title": title
+                     })
+                 except Exception as wse:
+                     print(f"[Server] Warning: Could not trigger client update: {wse}")
              
     except Exception as e:
         print(f"[Server] Title generation failed: {e}")
+        import traceback
+        traceback.print_exc()
 
 # --- WebSocket Chat ---
 @app.websocket("/ws/chat")
@@ -943,7 +959,7 @@ async def websocket_chat(websocket: WebSocket):
 
                     # Check for Auto-Title Generation (in background)
                     if len(session.messages) >= 2 and len(session.messages) <= 5: 
-                         asyncio.create_task(generate_title(session_id, session.messages, agent.provider, session_manager))
+                         asyncio.create_task(generate_title(session_id, session.messages, agent.provider, session_manager, websocket))
 
 
                     

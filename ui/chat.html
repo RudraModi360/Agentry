@@ -11,7 +11,79 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
         rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <style>
+        /* Marked/Highlight.js Overrides for Message Content */
+        .message-text {
+            line-height: 1.6;
+        }
+
+        .message-text h1,
+        .message-text h2,
+        .message-text h3 {
+            margin-top: 16px;
+            margin-bottom: 8px;
+            color: var(--accent-cyan);
+            font-weight: 700;
+        }
+
+        .message-text h1 {
+            font-size: 1.4em;
+        }
+
+        .message-text h2 {
+            font-size: 1.25em;
+        }
+
+        .message-text h3 {
+            font-size: 1.1em;
+        }
+
+        .message-text p {
+            margin-bottom: 12px;
+        }
+
+        .message-text pre {
+            background: #282c34 !important;
+            /* One Dark bg */
+            border-radius: 8px;
+            margin: 12px 0;
+            padding: 12px;
+            overflow-x: auto;
+            border: 1px solid var(--dark-border);
+        }
+
+        .message-text code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+        }
+
+        .message-text p code,
+        .message-text li code {
+            background: rgba(212, 175, 55, 0.15);
+            /* Gold tint */
+            padding: 2px 5px;
+            border-radius: 4px;
+            color: var(--accent-cyan);
+        }
+
+        .message-text ul,
+        .message-text ol {
+            margin-left: 20px;
+            margin-bottom: 12px;
+        }
+
+        .message-text blockquote {
+            border-left: 4px solid var(--accent-cyan);
+            margin: 12px 0;
+            padding-left: 12px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
         :root {
             /* Retro 1950s Jazz Palette */
             --gradient-start: #2c241b;
@@ -121,13 +193,36 @@
         }
 
         /* Expander/Collapse Button Container */
+        /* Expander/Collapse Button Container */
         .sidebar-toggle-area {
             position: absolute;
-            top: 16px;
-            left: 16px;
-            /* Positioned in chat main when sidebar is closed */
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
             z-index: 20;
             display: none;
+        }
+
+        /* .sidebar.collapsed + .chat-main .chat-header {
+            padding-left: 60px; 
+            transition: padding-left 0.2s;
+        } Removed padding hack */
+
+        .sidebar-toggle-btn {
+            background: var(--dark-sidebar);
+            border: 1px solid var(--dark-border);
+            border-left: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 18px;
+            padding: 16px 4px;
+            border-top-right-radius: 8px;
+            border-bottom-right-radius: 8px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 4px 0 12px rgba(0, 0, 0, 0.2);
         }
 
         .sidebar.collapsed+.chat-main .sidebar-toggle-area {
@@ -1068,6 +1163,55 @@
             color: var(--text-secondary);
         }
 
+        /* Markdown Tables */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 16px 0;
+            font-size: 14px;
+            border: 1px solid var(--dark-border);
+            border-radius: 8px;
+            display: block;
+            /* Start: Key fix for scrolling */
+            overflow-x: auto;
+            white-space: nowrap;
+            /* End: Key fix for scrolling */
+        }
+
+        th,
+        td {
+            border: 1px solid var(--dark-border);
+            padding: 10px 14px;
+            text-align: left;
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.05);
+            font-weight: 600;
+            color: var(--accent-cyan);
+        }
+
+        tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .message-content {
+            flex: 1;
+            overflow-x: auto;
+            /* Allow scrolling for wide tables */
+        }
+
+        .code-block {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 12px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            margin: 10px 0;
+            border: 1px solid var(--dark-border);
+        }
+
         .approval-buttons {
             display: flex;
             gap: 12px;
@@ -1583,6 +1727,15 @@
                 case 'pong':
                     // Keep-alive response
                     break;
+
+                case 'session_updated':
+                    // Refresh sidebar list
+                    loadSessions();
+                    // If current session, update header
+                    if (currentSessionId === data.session_id) {
+                        document.getElementById('chat-title').textContent = data.title;
+                    }
+                    break;
             }
         }
 
@@ -2042,65 +2195,29 @@
         function formatMessage(text) {
             if (!text) return '';
 
-            // Better markdown parsing
-            let html = text;
-
-            // Escape HTML first but preserve our markdown
-            html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-            // Code blocks with syntax highlighting placeholder
-            html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
-                return `<pre class="code-block"><code class="language-${lang || 'text'}">${code.trim()}</code></pre>`;
+            // Configure marked options
+            marked.setOptions({
+                renderer: new marked.Renderer(),
+                highlight: function (code, lang) {
+                    const language = highlight.getLanguage(lang) ? lang : 'plaintext';
+                    return highlight.highlight(code, { language }).value;
+                },
+                langPrefix: 'hljs language-',
+                pedantic: false,
+                gfm: true,
+                breaks: true,
+                sanitize: false,
+                smartLists: true,
+                smartypants: false,
+                xhtml: false
             });
 
-            // Inline code
-            html = html.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
-
-            // Headers
-            html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-            html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-            html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
-
-            // Bold and italic
-            html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
-            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-            html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-            html = html.replace(/_(.+?)_/g, '<em>$1</em>');
-
-            // Lists
-            html = html.replace(/^\s*[-*]\s+(.+)$/gm, '<li>$1</li>');
-            html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
-
-            // Numbered lists
-            html = html.replace(/^\s*\d+\.\s+(.+)$/gm, '<li>$1</li>');
-
-            // Links
-            html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
-
-            // Blockquotes
-            html = html.replace(/^&gt;\s*(.+)$/gm, '<blockquote>$1</blockquote>');
-
-            // Horizontal rules
-            html = html.replace(/^---$/gm, '<hr>');
-
-            // Paragraphs - split by double newlines
-            const blocks = html.split(/\n\n+/);
-            html = blocks.map(block => {
-                block = block.trim();
-                if (!block) return '';
-                // Don't wrap if already has block element
-                if (block.startsWith('<h') || block.startsWith('<pre') ||
-                    block.startsWith('<ul') || block.startsWith('<ol') ||
-                    block.startsWith('<blockquote') || block.startsWith('<hr')) {
-                    return block;
-                }
-                return `<p>${block}</p>`;
-            }).join('\n');
-
-            // Single line breaks to <br>
-            html = html.replace(/([^>])\n([^<])/g, '$1<br>$2');
-
-            return html;
+            try {
+                return marked.parse(text);
+            } catch (e) {
+                console.error('Markdown parsing error:', e);
+                return text;
+            }
         }
 
         function scrollToBottom() {
@@ -2259,7 +2376,75 @@
         }
 
         // Initialize
-        init();
+        async function init() {
+            // Initialize UI controls first so they work immediately
+            initSidebarControls();
+
+            await loadUserInfo();
+            await loadSessions();
+            connectWebSocket();
+        }
+
+        function initSidebarControls() {
+            const sidebar = document.getElementById('sidebar');
+            const resizer = document.getElementById('sidebar-resizer');
+            const collapseBtn = document.getElementById('sidebar-collapse-btn');
+            const expandBtn = document.getElementById('sidebar-expand-btn');
+
+            // Toggle Logic
+            function toggleSidebar(collapsed) {
+                if (collapsed) {
+                    sidebar.classList.add('collapsed');
+                } else {
+                    sidebar.classList.remove('collapsed');
+                }
+            }
+
+            if (collapseBtn) {
+                collapseBtn.onclick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleSidebar(true);
+                }
+            }
+
+            if (expandBtn) {
+                expandBtn.onclick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleSidebar(false);
+                }
+            }
+
+            // Resizing Logic
+            if (resizer) {
+                let isResizing = false;
+
+                resizer.addEventListener('mousedown', (e) => {
+                    isResizing = true;
+                    document.body.style.cursor = 'col-resize';
+                    sidebar.style.transition = 'none';
+                    e.preventDefault();
+                });
+
+                document.addEventListener('mousemove', (e) => {
+                    if (!isResizing) return;
+                    let newWidth = e.clientX;
+                    if (newWidth < 240) newWidth = 240;
+                    if (newWidth > 600) newWidth = 600;
+                    sidebar.style.width = `${newWidth}px`;
+                });
+
+                document.addEventListener('mouseup', () => {
+                    if (isResizing) {
+                        isResizing = false;
+                        document.body.style.cursor = '';
+                        sidebar.style.transition = '';
+                    }
+                });
+            }
+        }
+
         async function copyToClipboard(text, btnElement) {
             try {
                 await navigator.clipboard.writeText(text);
@@ -2277,6 +2462,9 @@
                 console.error('Failed to copy:', err);
             }
         }
+
+        // Start the application
+        init();
     </script>
 </body>
 
