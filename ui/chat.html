@@ -84,6 +84,151 @@
             font-style: italic;
         }
 
+        /* ===== Copyable Content Block Styles ===== */
+
+        /* Code Block Container with Header */
+        .code-block-container {
+            position: relative;
+            margin: 12px 0;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--dark-border);
+            background: #282c34;
+        }
+
+        .code-block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid var(--dark-border);
+        }
+
+        .code-block-language {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: lowercase;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .copy-block-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            background: transparent;
+            border: 1px solid var(--dark-border);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .copy-block-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            border-color: var(--accent-cyan);
+        }
+
+        .copy-block-btn.copied {
+            background: rgba(123, 158, 99, 0.2);
+            color: var(--success-color);
+            border-color: var(--success-color);
+        }
+
+        .copy-block-btn svg {
+            width: 14px;
+            height: 14px;
+            fill: currentColor;
+        }
+
+        .code-block-container pre {
+            margin: 0 !important;
+            border: none !important;
+            border-radius: 0 !important;
+        }
+
+        /* Table Container with Header Bar (like code blocks) */
+        .table-container {
+            position: relative;
+            margin: 16px 0;
+            display: inline-block;
+            border: 1px solid var(--dark-border);
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--dark-card);
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid var(--dark-border);
+        }
+
+        .table-header-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: lowercase;
+        }
+
+        .table-header .copy-block-btn {
+            margin-left: auto;
+            opacity: 1;
+        }
+
+        .table-container .copy-block-btn {
+            opacity: 1;
+        }
+
+        .table-container table {
+            margin: 0;
+            border: none;
+            border-radius: 0;
+        }
+
+        .table-container th:first-child,
+        .table-container td:first-child {
+            border-left: none;
+        }
+
+        .table-container th:last-child,
+        .table-container td:last-child {
+            border-right: none;
+        }
+
+        .table-container tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Blockquote Container with Copy Button */
+        .blockquote-container {
+            position: relative;
+        }
+
+        .blockquote-container .copy-block-btn {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            padding: 3px 8px;
+            font-size: 11px;
+        }
+
+        .blockquote-container:hover .copy-block-btn {
+            opacity: 1;
+        }
+
         :root {
             /* Retro 1950s Jazz Palette */
             --gradient-start: #2c241b;
@@ -643,17 +788,24 @@
         }
 
         .message-actions {
-            position: absolute;
-            top: 4px;
-            right: 0;
             display: flex;
             gap: 6px;
+            margin-top: 12px;
+            padding-top: 8px;
+            border-top: 1px solid var(--dark-border);
             opacity: 0;
             transition: opacity 0.2s;
         }
 
         .message:hover .message-actions {
             opacity: 1;
+        }
+
+        /* Hide actions for user messages (only show edit btn) */
+        .message.user .message-actions {
+            border-top: none;
+            padding-top: 0;
+            margin-top: 8px;
         }
 
         .message-action-btn {
@@ -1166,23 +1318,23 @@
         /* Markdown Tables */
         table {
             border-collapse: collapse;
-            width: 100%;
+            width: auto;
+            min-width: 200px;
+            max-width: 100%;
             margin: 16px 0;
             font-size: 14px;
             border: 1px solid var(--dark-border);
             border-radius: 8px;
-            display: block;
-            /* Start: Key fix for scrolling */
-            overflow-x: auto;
-            white-space: nowrap;
-            /* End: Key fix for scrolling */
+            /* Use table display for proper auto-sizing */
+            display: table;
         }
 
         th,
         td {
             border: 1px solid var(--dark-border);
-            padding: 10px 14px;
+            padding: 10px 16px;
             text-align: left;
+            white-space: nowrap;
         }
 
         th {
@@ -1193,6 +1345,12 @@
 
         tr:nth-child(even) {
             background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Table container scrolling for wide tables */
+        .table-container {
+            overflow-x: auto;
+            max-width: 100%;
         }
 
         .message-content {
@@ -2195,13 +2353,106 @@
         function formatMessage(text) {
             if (!text) return '';
 
+            // Create custom renderer to wrap code blocks and tables with copy buttons
+            const renderer = new marked.Renderer();
+
+            // Custom code block renderer - handles both marked v4+ (object) and legacy (separate params)
+            renderer.code = function (codeOrToken, language, escaped) {
+                // Handle marked.js v4+ where first param is a token object
+                let code, lang;
+                if (typeof codeOrToken === 'object' && codeOrToken !== null) {
+                    code = codeOrToken.text || codeOrToken.raw || '';
+                    lang = codeOrToken.lang || 'plaintext';
+                } else {
+                    code = codeOrToken || '';
+                    lang = language || 'plaintext';
+                }
+
+                const displayLang = lang === 'plaintext' ? 'text' : lang;
+
+                let highlightedCode;
+                try {
+                    const validLang = highlight.getLanguage(lang) ? lang : 'plaintext';
+                    highlightedCode = highlight.highlight(code, { language: validLang }).value;
+                } catch (e) {
+                    highlightedCode = escapeHtml(code);
+                }
+
+                // Create unique ID for this code block
+                const blockId = 'code-' + Math.random().toString(36).substr(2, 9);
+
+                return `
+                    <div class="code-block-container" data-block-id="${blockId}">
+                        <div class="code-block-header">
+                            <span class="code-block-language">${escapeHtml(displayLang)}</span>
+                            <button class="copy-block-btn" onclick="copyCodeBlock(this, '${blockId}')" title="Copy code">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                </svg>
+                                <span>Copy</span>
+                            </button>
+                        </div>
+                        <pre><code class="hljs language-${lang}" data-code="${btoa(unescape(encodeURIComponent(code)))}">${highlightedCode}</code></pre>
+                    </div>
+                `;
+            };
+
+            // Custom table renderer - handles both marked v4+ (object) and legacy (separate params)
+            renderer.table = function (headerOrToken, body) {
+                let header, tableBody;
+                // Handle marked.js v4+ where first param is a token object
+                if (typeof headerOrToken === 'object' && headerOrToken !== null && headerOrToken.header) {
+                    // v4+ format: token object with header and rows arrays
+                    const token = headerOrToken;
+
+                    // Build header HTML - use parseInline for markdown rendering
+                    header = '<tr>' + token.header.map(cell => {
+                        const rawText = cell.text || (cell.tokens ? cell.tokens.map(t => t.raw || t.text || '').join('') : '');
+                        // Parse inline markdown (bold, italic, code, etc.)
+                        const parsedText = marked.parseInline ? marked.parseInline(rawText) : rawText;
+                        return `<th>${parsedText}</th>`;
+                    }).join('') + '</tr>';
+
+                    // Build body HTML - use parseInline for markdown rendering
+                    tableBody = token.rows.map(row => {
+                        return '<tr>' + row.map(cell => {
+                            const rawText = cell.text || (cell.tokens ? cell.tokens.map(t => t.raw || t.text || '').join('') : '');
+                            // Parse inline markdown (bold, italic, code, etc.)
+                            const parsedText = marked.parseInline ? marked.parseInline(rawText) : rawText;
+                            return `<td>${parsedText}</td>`;
+                        }).join('') + '</tr>';
+                    }).join('');
+                } else {
+                    // Legacy format: separate header and body strings
+                    header = headerOrToken || '';
+                    tableBody = body || '';
+                }
+
+                const blockId = 'table-' + Math.random().toString(36).substr(2, 9);
+                return `
+                    <div class="table-container" data-block-id="${blockId}">
+                        <div class="table-header">
+                            <span class="table-header-label">table</span>
+                            <button class="copy-block-btn" onclick="copyTableBlock(this, '${blockId}')" title="Copy table">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                </svg>
+                                <span>Copy</span>
+                            </button>
+                        </div>
+                        <table>
+                            <thead>${header}</thead>
+                            <tbody>${tableBody}</tbody>
+                        </table>
+                    </div>
+                `;
+            };
+
             // Configure marked options
             marked.setOptions({
-                renderer: new marked.Renderer(),
-                highlight: function (code, lang) {
-                    const language = highlight.getLanguage(lang) ? lang : 'plaintext';
-                    return highlight.highlight(code, { language }).value;
-                },
+                renderer: renderer,
                 langPrefix: 'hljs language-',
                 pedantic: false,
                 gfm: true,
@@ -2217,6 +2468,79 @@
             } catch (e) {
                 console.error('Markdown parsing error:', e);
                 return text;
+            }
+        }
+
+        // Copy code block content
+        async function copyCodeBlock(btn, blockId) {
+            try {
+                const container = btn.closest('.code-block-container');
+                const codeEl = container.querySelector('code');
+
+                // Decode the original code from base64
+                const encodedCode = codeEl.dataset.code;
+                const code = decodeURIComponent(escape(atob(encodedCode)));
+
+                await navigator.clipboard.writeText(code);
+
+                // Visual feedback
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = `
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <span>Copied!</span>
+                `;
+                btn.classList.add('copied');
+
+                setTimeout(() => {
+                    btn.innerHTML = originalHtml;
+                    btn.classList.remove('copied');
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy code:', err);
+            }
+        }
+
+        // Copy table content as markdown
+        async function copyTableBlock(btn, blockId) {
+            try {
+                const container = btn.closest('.table-container');
+                const table = container.querySelector('table');
+
+                // Convert table to markdown format
+                let markdown = '';
+                const rows = table.querySelectorAll('tr');
+
+                rows.forEach((row, rowIndex) => {
+                    const cells = row.querySelectorAll('th, td');
+                    const cellTexts = Array.from(cells).map(cell => cell.textContent.trim());
+                    markdown += '| ' + cellTexts.join(' | ') + ' |\n';
+
+                    // Add separator after header
+                    if (rowIndex === 0 && row.querySelector('th')) {
+                        markdown += '|' + cellTexts.map(() => '---').join('|') + '|\n';
+                    }
+                });
+
+                await navigator.clipboard.writeText(markdown.trim());
+
+                // Visual feedback
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = `
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <span>Copied!</span>
+                `;
+                btn.classList.add('copied');
+
+                setTimeout(() => {
+                    btn.innerHTML = originalHtml;
+                    btn.classList.remove('copied');
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy table:', err);
             }
         }
 
