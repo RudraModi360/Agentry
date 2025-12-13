@@ -157,7 +157,8 @@
         .table-container {
             position: relative;
             margin: 16px 0;
-            display: inline-block;
+            display: block;
+            max-width: 100%;
             border: 1px solid var(--dark-border);
             border-radius: 8px;
             overflow: hidden;
@@ -171,29 +172,42 @@
             padding: 8px 12px;
             background: rgba(0, 0, 0, 0.3);
             border-bottom: 1px solid var(--dark-border);
+            min-height: 36px;
+            position: sticky;
+            top: 0;
+            z-index: 5;
         }
 
         .table-header-label {
             font-size: 12px;
             font-weight: 500;
-            color: var(--text-secondary);
+            color: var(--text-secondary) !important;
             font-family: 'JetBrains Mono', monospace;
             text-transform: lowercase;
+            display: inline-block !important;
+            flex-shrink: 0;
         }
 
         .table-header .copy-block-btn {
             margin-left: auto;
             opacity: 1;
+            flex-shrink: 0;
         }
 
         .table-container .copy-block-btn {
             opacity: 1;
         }
 
+        .table-scroll-wrapper {
+            overflow-x: auto;
+            max-width: 100%;
+        }
+
         .table-container table {
             margin: 0;
             border: none;
             border-radius: 0;
+            min-width: 100%;
         }
 
         .table-container th:first-child,
@@ -1414,6 +1428,190 @@
             color: var(--text-secondary);
             margin-top: 12px;
         }
+
+        /* ========== RESPONSIVE DESIGN ========== */
+
+        /* Tablet: 768px to 1024px */
+        @media screen and (max-width: 1024px) {
+            .sidebar {
+                width: 240px;
+                min-width: 200px;
+            }
+
+            .chat-header {
+                padding: 12px 16px;
+            }
+
+            .input-area {
+                padding: 12px;
+            }
+        }
+
+        /* Mobile: up to 768px */
+        @media screen and (max-width: 768px) {
+            .app-container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                width: 280px;
+                max-width: 85vw;
+                z-index: 100;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+
+            .sidebar.collapsed {
+                transform: translateX(-100%);
+            }
+
+            .sidebar-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 99;
+                display: none;
+            }
+
+            .sidebar-overlay.active {
+                display: block;
+            }
+
+            .chat-main {
+                width: 100%;
+                height: 100vh;
+            }
+
+            .chat-header {
+                padding: 10px 12px;
+            }
+
+            #chat-title {
+                font-size: 16px;
+            }
+
+            .mobile-menu-btn {
+                display: flex !important;
+            }
+
+            .messages-container {
+                padding: 12px;
+            }
+
+            .message {
+                max-width: 98%;
+                gap: 8px;
+            }
+
+            .message-avatar {
+                width: 32px;
+                height: 32px;
+                font-size: 14px;
+            }
+
+            .assistant-avatar-img {
+                width: 32px;
+                height: 32px;
+            }
+
+            .input-area {
+                padding: 8px 12px;
+            }
+
+            .input-container {
+                gap: 8px;
+            }
+
+            #message-input {
+                font-size: 14px;
+                padding: 10px 12px;
+                min-height: 40px;
+            }
+
+            #send-btn {
+                width: 40px;
+                height: 40px;
+            }
+
+            .code-block-header {
+                padding: 6px 10px;
+            }
+
+            .table-header {
+                padding: 6px 10px;
+            }
+
+            .table-container table {
+                font-size: 12px;
+            }
+
+            th,
+            td {
+                padding: 6px 10px;
+            }
+
+            .tool-call {
+                margin: 8px 0;
+            }
+
+            .approval-modal {
+                width: 95%;
+                padding: 16px;
+            }
+        }
+
+        /* Extra small mobile: up to 480px */
+        @media screen and (max-width: 480px) {
+            .sidebar {
+                width: 100%;
+                max-width: 100%;
+            }
+
+            .message-content {
+                max-width: calc(100vw - 70px);
+            }
+
+            .empty-state h2 {
+                font-size: 20px;
+            }
+
+            .empty-state p {
+                font-size: 13px;
+            }
+
+            .logo-img {
+                height: 60px;
+            }
+        }
+
+        /* Mobile menu button - hidden by default, shown on mobile */
+        .mobile-menu-btn {
+            display: none;
+            background: transparent;
+            border: 1px solid var(--dark-border);
+            color: var(--text-secondary);
+            padding: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            margin-right: 8px;
+        }
+
+        .mobile-menu-btn:hover {
+            background: var(--dark-input);
+            color: var(--accent-cyan);
+        }
     </style>
 </head>
 
@@ -1479,6 +1677,7 @@
             </div>
 
             <div class="chat-header">
+                <button class="mobile-menu-btn" id="mobile-menu-btn" title="Open Menu">☰</button>
                 <h1 class="chat-title" id="chat-title">New Chat</h1>
                 <div class="connection-status">
                     <div class="status-dot" id="status-dot"></div>
@@ -1563,18 +1762,49 @@
             const resizer = document.getElementById('sidebar-resizer');
             const collapseBtn = document.getElementById('sidebar-collapse-btn');
             const expandBtn = document.getElementById('sidebar-expand-btn');
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const sidebarOverlay = document.getElementById('sidebar-overlay');
 
             // Toggle Logic
             function toggleSidebar(collapsed) {
                 if (collapsed) {
                     sidebar.classList.add('collapsed');
+                    sidebar.classList.remove('mobile-open');
+                    sidebarOverlay.classList.remove('active');
                 } else {
                     sidebar.classList.remove('collapsed');
                 }
             }
 
+            // Mobile menu toggle
+            function toggleMobileSidebar(open) {
+                if (open) {
+                    sidebar.classList.add('mobile-open');
+                    sidebar.classList.remove('collapsed');
+                    sidebarOverlay.classList.add('active');
+                } else {
+                    sidebar.classList.remove('mobile-open');
+                    sidebarOverlay.classList.remove('active');
+                }
+            }
+
             collapseBtn.addEventListener('click', () => toggleSidebar(true));
             expandBtn.addEventListener('click', () => toggleSidebar(false));
+
+            // Mobile menu button
+            if (mobileMenuBtn) {
+                mobileMenuBtn.addEventListener('click', () => {
+                    const isOpen = sidebar.classList.contains('mobile-open');
+                    toggleMobileSidebar(!isOpen);
+                });
+            }
+
+            // Close sidebar when clicking overlay
+            if (sidebarOverlay) {
+                sidebarOverlay.addEventListener('click', () => {
+                    toggleMobileSidebar(false);
+                });
+            }
 
             // Resizing Logic
             let isResizing = false;
@@ -1683,7 +1913,7 @@
 
                 item.innerHTML = `
                     <div class="session-title">${escapeHtml(session.title || 'Untitled Chat')}</div>
-                    <div class="session-date">${dateStr} · ${session.message_count || 0} messages</div>
+                    <div class="session-date">${dateStr} · ${session.message_count || 0} turns</div>
                     <button class="session-delete" title="Delete session" onclick="event.stopPropagation(); deleteSession('${session.id}')">🗑️</button>
                 `;
 
@@ -2132,15 +2362,21 @@
         }
 
         function removeTypingIndicator(msgElement) {
+            if (!msgElement) return;
+
             // Find and remove all typing indicators (could be in message-text or message-content)
             const indicators = msgElement.querySelectorAll('.typing-indicator');
-            indicators.forEach(indicator => indicator.remove());
+            indicators.forEach(indicator => {
+                indicator.remove();
+            });
 
-            // Also hide empty message-text divs that only contained the indicator
+            // Hide or remove empty message-text divs that only contained the indicator
             const textDivs = msgElement.querySelectorAll('.message-text');
             textDivs.forEach(div => {
                 // If the div is now empty (only had indicator), hide it
-                if (div.innerHTML.trim() === '') {
+                const content = div.textContent.trim();
+                const hasRealContent = div.querySelector('p, h1, h2, h3, h4, h5, h6, ul, ol, pre, table, blockquote');
+                if (content === '' && !hasRealContent) {
                     div.style.display = 'none';
                 }
             });
@@ -2149,7 +2385,7 @@
         function addToolCall(msgElement, toolName, args) {
             const contentDiv = msgElement.querySelector('.message-content');
             const toolDiv = document.createElement('div');
-            toolDiv.className = 'tool-call';
+            toolDiv.className = 'tool-call collapsed'; // Start collapsed by default
             toolDiv.dataset.toolName = toolName;
 
             let argsHtml = '';
@@ -2160,7 +2396,7 @@
             toolDiv.innerHTML = `
                 <div class="tool-call-header">
                     <span>🔧 Running: ${escapeHtml(toolName)}</span>
-                    <span class="tool-call-toggle">▼</span>
+                    <span class="tool-call-toggle">▶</span>
                 </div>
                 <div class="tool-call-body">
                     ${argsHtml}
@@ -2171,6 +2407,9 @@
             const header = toolDiv.querySelector('.tool-call-header');
             header.addEventListener('click', () => {
                 toolDiv.classList.toggle('collapsed');
+                // Update toggle icon
+                const toggle = toolDiv.querySelector('.tool-call-toggle');
+                toggle.textContent = toolDiv.classList.contains('collapsed') ? '▶' : '▼';
             });
 
             contentDiv.appendChild(toolDiv);
@@ -2197,7 +2436,7 @@
                 const header = targetToolDiv.querySelector('.tool-call-header');
                 header.innerHTML = `
                     <span>✅ Completed: ${escapeHtml(toolName)}</span>
-                    <span class="tool-call-toggle">▼</span>
+                    <span class="tool-call-toggle">▶</span>
                 `;
 
                 if (result) {
@@ -2246,9 +2485,14 @@
                     currentAssistantEl = null;
                 } else if (msg.role === 'assistant') {
                     currentAssistantEl = createAssistantMessage();
+
+                    // IMPORTANT: Remove typing indicator first - this is a loaded session, not live
+                    removeTypingIndicator(currentAssistantEl);
+
                     const content = typeof msg.content === 'string' ? msg.content : (msg.content || '');
                     if (content) {
-                        updateAssistantMessage(currentAssistantEl, content);
+                        // Fixed: was calling non-existent 'updateAssistantMessage', now using correct function
+                        updateAssistantMessageText(currentAssistantEl, content);
                     }
 
                     // Check for tool_calls in the message
@@ -2260,6 +2504,9 @@
                             addToolCallToElement(currentAssistantEl, toolName, parsedArgs, null, false);
                         });
                     }
+
+                    // Ensure typing indicator is removed after all content is added
+                    removeTypingIndicator(currentAssistantEl);
                 } else if (msg.role === 'tool') {
                     // Tool result - update the last tool call
                     if (currentAssistantEl) {
@@ -2274,6 +2521,9 @@
 
                         // Mark the tool as completed
                         updateToolCallResultByName(currentAssistantEl, toolName, result);
+
+                        // Remove any lingering typing indicator
+                        removeTypingIndicator(currentAssistantEl);
                     }
                 }
             });
@@ -2285,7 +2535,8 @@
         function addToolCallToElement(msgElement, toolName, args, result, completed) {
             const contentDiv = msgElement.querySelector('.message-content');
             const toolDiv = document.createElement('div');
-            toolDiv.className = completed ? 'tool-call completed collapsed' : 'tool-call';
+            // Always start collapsed for loaded sessions
+            toolDiv.className = 'tool-call collapsed' + (completed ? ' completed' : '');
             toolDiv.dataset.toolName = toolName;
 
             let argsHtml = '';
@@ -2305,7 +2556,7 @@
             toolDiv.innerHTML = `
                 <div class="tool-call-header">
                     <span>${icon} ${status}: ${escapeHtml(toolName)}</span>
-                    <span class="tool-call-toggle">▼</span>
+                    <span class="tool-call-toggle">▶</span>
                 </div>
                 <div class="tool-call-body">
                     ${argsHtml}
@@ -2317,6 +2568,9 @@
             const header = toolDiv.querySelector('.tool-call-header');
             header.addEventListener('click', () => {
                 toolDiv.classList.toggle('collapsed');
+                // Update toggle icon
+                const toggle = toolDiv.querySelector('.tool-call-toggle');
+                toggle.textContent = toolDiv.classList.contains('collapsed') ? '▶' : '▼';
             });
 
             contentDiv.appendChild(toolDiv);
@@ -2442,10 +2696,12 @@
                                 <span>Copy</span>
                             </button>
                         </div>
-                        <table>
-                            <thead>${header}</thead>
-                            <tbody>${tableBody}</tbody>
-                        </table>
+                        <div class="table-scroll-wrapper">
+                            <table>
+                                <thead>${header}</thead>
+                                <tbody>${tableBody}</tbody>
+                            </table>
+                        </div>
                     </div>
                 `;
             };

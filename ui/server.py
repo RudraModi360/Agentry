@@ -958,8 +958,19 @@ async def websocket_chat(websocket: WebSocket):
                         })
 
                     # Check for Auto-Title Generation (in background)
-                    if len(session.messages) >= 2 and len(session.messages) <= 5: 
-                         asyncio.create_task(generate_title(session_id, session.messages, agent.provider, session_manager, websocket))
+                    # Only generate if session doesn't have a proper title yet
+                    current_title = None
+                    try:
+                        session_data = session_manager.storage.load_state(session_id, "metadata")
+                        if session_data:
+                            current_title = session_data.get("title")
+                    except:
+                        pass
+                    
+                    # Generate title if: has at least 2 messages, doesn't have a real title yet
+                    needs_title = (not current_title or current_title in ["New Chat", "Untitled Chat", ""])
+                    if len(session.messages) >= 2 and len(session.messages) <= 10 and needs_title:
+                        asyncio.create_task(generate_title(session_id, session.messages, agent.provider, session_manager, websocket))
 
 
                     

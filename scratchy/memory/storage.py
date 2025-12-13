@@ -195,7 +195,9 @@ class PersistentMemoryStore:
                 if msg_row:
                     try:
                         msgs = json.loads(msg_row[0])
-                        msg_count = len(msgs)
+                        # Count conversation turns: only count user messages
+                        # This gives a more accurate "conversation count"
+                        msg_count = sum(1 for m in msgs if m.get('role') == 'user')
                     except: pass
                 
                 data['message_count'] = msg_count
