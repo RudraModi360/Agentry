@@ -815,11 +815,25 @@
             opacity: 1;
         }
 
-        /* Hide actions for user messages (only show edit btn) */
+        /* Hide actions for user messages - show inline at end */
         .message.user .message-actions {
+            display: inline-flex;
             border-top: none;
             padding-top: 0;
-            margin-top: 8px;
+            margin-top: 0;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+        /* Make user message text container inline-friendly */
+        .message.user .message-text {
+            display: inline;
+        }
+
+        .message.user .message-action-btn {
+            width: 22px;
+            height: 22px;
+            font-size: 10px;
         }
 
         .message-action-btn {
@@ -1910,10 +1924,11 @@
 
                 const date = new Date(session.updated_at || session.created_at);
                 const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 
                 item.innerHTML = `
                     <div class="session-title">${escapeHtml(session.title || 'Untitled Chat')}</div>
-                    <div class="session-date">${dateStr} · ${session.message_count || 0} turns</div>
+                    <div class="session-date">${dateStr}, ${timeStr} · ${session.message_count || 0} turns</div>
                     <button class="session-delete" title="Delete session" onclick="event.stopPropagation(); deleteSession('${session.id}')">🗑️</button>
                 `;
 
@@ -2086,6 +2101,11 @@
                     } else if (currentAssistantMessage) {
                         // Just cleanup if we already have streaming content
                         removeTypingIndicator(currentAssistantMessage);
+                    }
+
+                    // Add copy button at the end of the message
+                    if (currentAssistantMessage) {
+                        addMessageActions(currentAssistantMessage);
                     }
 
                     // Reset state for next interaction
@@ -2286,18 +2306,10 @@
                             <div class="typing-dot"></div>
                         </div>
                     </div>
-                    <div class="message-actions">
-                        <button class="message-action-btn copy-btn" title="Copy response">📋</button>
-                    </div>
                 </div>
             `;
 
-            // Add copy functionality
-            const copyBtn = msg.querySelector('.copy-btn');
-            copyBtn.addEventListener('click', () => {
-                const text = msg.querySelector('.message-text').innerText;
-                copyToClipboard(text, copyBtn);
-            });
+            // Note: message-actions (copy button) will be added when message is complete
 
             messagesContainer.appendChild(msg);
             scrollToBottom();
@@ -2308,6 +2320,37 @@
             const textDiv = msgElement.querySelector('.message-text');
             textDiv.innerHTML = formatMessage(content);
             scrollToBottom();
+        }
+
+        // Add message actions (copy button) at the end of the message
+        function addMessageActions(msgElement) {
+            const contentDiv = msgElement.querySelector('.message-content');
+
+            // Check if already exists
+            if (contentDiv.querySelector('.message-actions')) {
+                return;
+            }
+
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'message-actions';
+            actionsDiv.innerHTML = `
+                <button class="message-action-btn copy-btn" title="Copy response">📋</button>
+            `;
+
+            // Add to the END of message-content
+            contentDiv.appendChild(actionsDiv);
+
+            // Add copy functionality
+            const copyBtn = actionsDiv.querySelector('.copy-btn');
+            copyBtn.addEventListener('click', () => {
+                // Get all text content from message (excluding tool calls details)
+                const textDivs = msgElement.querySelectorAll('.message-text, .message-text-after');
+                let text = '';
+                textDivs.forEach(div => {
+                    text += div.innerText + '\n';
+                });
+                copyToClipboard(text.trim(), copyBtn);
+            });
         }
 
         // Update text - handles adding text after tool calls
@@ -2439,8 +2482,22 @@
                     <span class="tool-call-toggle">▶</span>
                 `;
 
+                // Re-add click handler for toggle (since we replaced innerHTML)
+                header.addEventListener('click', () => {
+                    targetToolDiv.classList.toggle('collapsed');
+                    const toggle = targetToolDiv.querySelector('.tool-call-toggle');
+                    toggle.textContent = targetToolDiv.classList.contains('collapsed') ? '▶' : '▼';
+                });
+
                 if (result) {
-                    const bodyDiv = targetToolDiv.querySelector('.tool-call-body') || targetToolDiv;
+                    // IMPORTANT: Always add result inside .tool-call-body so it collapses properly
+                    let bodyDiv = targetToolDiv.querySelector('.tool-call-body');
+                    if (!bodyDiv) {
+                        // Create body div if it doesn't exist
+                        bodyDiv = document.createElement('div');
+                        bodyDiv.className = 'tool-call-body';
+                        targetToolDiv.appendChild(bodyDiv);
+                    }
                     const resultDiv = document.createElement('div');
                     resultDiv.className = 'tool-call-result';
                     resultDiv.textContent = typeof result === 'string' ? result : JSON.stringify(result, null, 2);
@@ -2477,21 +2534,31 @@
             emptyState.style.display = 'none';
 
             let currentAssistantEl = null;
+            let lastRole = null;
 
             messages.forEach((msg, idx) => {
                 if (msg.role === 'user') {
+                    // Add copy button to previous assistant before moving to user message
+                    if (currentAssistantEl) {
+                        addMessageActions(currentAssistantEl);
+                    }
+
                     const content = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
                     addUserMessage(content);
                     currentAssistantEl = null;
+                    lastRole = 'user';
                 } else if (msg.role === 'assistant') {
-                    currentAssistantEl = createAssistantMessage();
-
-                    // IMPORTANT: Remove typing indicator first - this is a loaded session, not live
-                    removeTypingIndicator(currentAssistantEl);
+                    // Only create a new assistant message block if:
+                    // 1. There's no current one, OR
+                    // 2. The previous message was a user message (new turn)
+                    // If previous was 'tool', we're continuing the same response
+                    if (!currentAssistantEl || lastRole === 'user') {
+                        currentAssistantEl = createAssistantMessage();
+                        removeTypingIndicator(currentAssistantEl);
+                    }
 
                     const content = typeof msg.content === 'string' ? msg.content : (msg.content || '');
                     if (content) {
-                        // Fixed: was calling non-existent 'updateAssistantMessage', now using correct function
                         updateAssistantMessageText(currentAssistantEl, content);
                     }
 
@@ -2507,6 +2574,7 @@
 
                     // Ensure typing indicator is removed after all content is added
                     removeTypingIndicator(currentAssistantEl);
+                    lastRole = 'assistant';
                 } else if (msg.role === 'tool') {
                     // Tool result - update the last tool call
                     if (currentAssistantEl) {
@@ -2525,8 +2593,14 @@
                         // Remove any lingering typing indicator
                         removeTypingIndicator(currentAssistantEl);
                     }
+                    lastRole = 'tool';
                 }
             });
+
+            // Add copy button to the last assistant message
+            if (currentAssistantEl) {
+                addMessageActions(currentAssistantEl);
+            }
 
             scrollToBottom();
         }
@@ -2584,15 +2658,34 @@
             if (toolDivs.length > 0) {
                 const targetToolDiv = toolDivs[0];
                 targetToolDiv.classList.add('completed');
+                targetToolDiv.classList.add('collapsed'); // Auto-collapse
+
                 const header = targetToolDiv.querySelector('.tool-call-header');
                 const name = targetToolDiv.dataset.toolName || toolName;
-                header.innerHTML = `✅ Completed: ${escapeHtml(name)}`;
+                header.innerHTML = `
+                    <span>✅ Completed: ${escapeHtml(name)}</span>
+                    <span class="tool-call-toggle">▶</span>
+                `;
+
+                // Re-add click handler
+                header.addEventListener('click', () => {
+                    targetToolDiv.classList.toggle('collapsed');
+                    const toggle = targetToolDiv.querySelector('.tool-call-toggle');
+                    toggle.textContent = targetToolDiv.classList.contains('collapsed') ? '▶' : '▼';
+                });
 
                 if (result) {
+                    // Add result inside body div so it collapses properly
+                    let bodyDiv = targetToolDiv.querySelector('.tool-call-body');
+                    if (!bodyDiv) {
+                        bodyDiv = document.createElement('div');
+                        bodyDiv.className = 'tool-call-body';
+                        targetToolDiv.appendChild(bodyDiv);
+                    }
                     const resultDiv = document.createElement('div');
                     resultDiv.className = 'tool-call-result';
                     resultDiv.textContent = typeof result === 'string' ? result.substring(0, 500) : JSON.stringify(result, null, 2).substring(0, 500);
-                    targetToolDiv.appendChild(resultDiv);
+                    bodyDiv.appendChild(resultDiv);
                 }
             }
         }
