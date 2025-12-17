@@ -1,6 +1,6 @@
-# Scratchy Agent UI
+# Agentry Agent UI
 
-A clean, modern, and eye-catching web interface for the Scratchy Agent chatbot.
+A clean, modern, and eye-catching web interface for the Agentry Agent chatbot.
 
 ![UI Preview](preview.png)
 
@@ -158,4 +158,4 @@ The UI communicates with the backend via WebSocket. Message types:
 
 ## License
 
-MIT License - Part of the Scratchy Agent project.
+MIT License - Part of the Agentry Agent project.

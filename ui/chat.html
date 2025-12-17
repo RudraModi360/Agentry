@@ -1260,14 +1260,15 @@
         .user-avatar {
             width: 32px;
             height: 32px;
-            /* background: linear-gradient(135deg, var(--accent-cyan), var(--gradient-start)); */
+            background: #7c3aed;
+            /* Solid violet color */
+            color: #ffffff;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            /* font-weight: 600; */
-            /* font-size: 14px; */
-            object-fit: cover;
+            font-weight: 600;
+            font-size: 14px;
         }
 
         .user-name {
@@ -2623,7 +2624,7 @@
                 </div>
 
                 <div class="user-menu">
-                    <img src="/assets/user_avatar_retro.png" alt="User" class="user-avatar" id="user-avatar">
+                    <div class="user-avatar" id="user-avatar"></div>
                     <span class="user-name" id="user-name">Loading...</span>
                     <button class="logout-btn" id="logout-btn">Logout</button>
                 </div>
@@ -2761,7 +2762,8 @@
         let userInitial = '?';  // Will be set when user info loads
 
         // Auth check
-        const token = localStorage.getItem('agentry_token');
+        // Auth check
+        const token = localStorage.getItem('scratchy_token');
         if (!token) {
             window.location.href = '/login';
         }
@@ -2904,7 +2906,7 @@
                 });
 
                 if (!response.ok) {
-                    localStorage.removeItem('agentry_token');
+                    localStorage.removeItem('scratchy_token');
                     window.location.href = '/login';
                     return;
                 }
@@ -2912,8 +2914,8 @@
                 const data = await response.json();
 
                 document.getElementById('user-name').textContent = data.user.username;
-                document.getElementById('user-name').textContent = data.user.username;
-                // document.getElementById('user-avatar').textContent = data.user.username[0].toUpperCase(); // Removed to use image
+                const initial = data.user.username.charAt(0).toUpperCase();
+                document.getElementById('user-avatar').textContent = initial;
 
                 if (data.provider_config) {
                     const providerIcon = document.getElementById('provider-icon');
