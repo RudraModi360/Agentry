@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Scratchy - Your AI Assistant">
-    <title>Scratchy - Chat</title>
+    <meta name="description" content="Agentry - Your AI Assistant">
+    <title>Agentry</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -54,6 +54,8 @@
             padding: 12px;
             overflow-x: auto;
             border: 1px solid var(--dark-border);
+            white-space: pre;
+            word-wrap: normal;
         }
 
         .message-text code {
@@ -153,6 +155,50 @@
             border-radius: 0 !important;
         }
 
+        /* Custom Horizontal Scrollbar for Code, Tables, and Tool Calls */
+        .code-block-container pre::-webkit-scrollbar,
+        .message-text pre::-webkit-scrollbar,
+        .table-scroll-wrapper::-webkit-scrollbar,
+        .tool-call-args::-webkit-scrollbar,
+        .tool-call-result::-webkit-scrollbar,
+        .approval-args::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+            /* For vertical scrollbar */
+        }
+
+        .code-block-container pre::-webkit-scrollbar-track,
+        .message-text pre::-webkit-scrollbar-track,
+        .table-scroll-wrapper::-webkit-scrollbar-track,
+        .tool-call-args::-webkit-scrollbar-track,
+        .tool-call-result::-webkit-scrollbar-track,
+        .approval-args::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .code-block-container pre::-webkit-scrollbar-thumb,
+        .message-text pre::-webkit-scrollbar-thumb,
+        .table-scroll-wrapper::-webkit-scrollbar-thumb,
+        .tool-call-args::-webkit-scrollbar-thumb,
+        .tool-call-result::-webkit-scrollbar-thumb,
+        .approval-args::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 4px;
+            border: 2px solid transparent;
+            background-clip: content-box;
+        }
+
+        .code-block-container pre::-webkit-scrollbar-thumb:hover,
+        .message-text pre::-webkit-scrollbar-thumb:hover,
+        .table-scroll-wrapper::-webkit-scrollbar-thumb:hover,
+        .tool-call-args::-webkit-scrollbar-thumb:hover,
+        .tool-call-result::-webkit-scrollbar-thumb:hover,
+        .approval-args::-webkit-scrollbar-thumb:hover {
+            background: #777;
+            border: 2px solid transparent;
+            background-clip: content-box;
+        }
+
         /* Table Container with Header Bar (like code blocks) */
         .table-container {
             position: relative;
@@ -244,35 +290,78 @@
         }
 
         :root {
-            /* Retro 1950s Jazz Palette */
-            --gradient-start: #2c241b;
-            /* Dark Coffee */
-            --gradient-end: #1a1515;
-            /* Warm Black */
-            --accent-cyan: #d4af37;
-            /* Retro Gold/Brass (replaces cyan) */
-            --accent-pink: #d45d55;
-            /* Vintage Red */
-            --dark-bg: #1a1515;
-            /* Warm Black Background */
-            --dark-card: #241e1e;
-            /* Dark Espresso */
-            --dark-sidebar: #2c241b;
-            /* Coffee Brown */
-            --dark-input: #3e3228;
-            /* Lighter Brown */
-            --dark-border: #594a3c;
-            /* Taupe Border */
-            --text-primary: #e6dfd5;
-            /* Parchment / Off-white */
-            --text-secondary: #a89f91;
-            /* Warm Grey */
-            --error-color: #d45d55;
-            /* Vintage Red */
-            --success-color: #7b9e63;
-            /* Muted Green */
-            --tool-color: #e6b800;
-            /* Muted Gold */
+            /* Modern Minimal Theme - Light (default to match landing page) */
+            /* Colors - Using common.css naming conventions */
+            --bg-primary: #fafafa;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f4f4f5;
+            --text-primary: #0a0a0a;
+            --text-secondary: #525252;
+            --text-muted: #a3a3a3;
+
+            /* Cards & Components */
+            --card-bg: rgba(255, 255, 255, 0.7);
+            --card-border: rgba(0, 0, 0, 0.08);
+            --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+
+            /* Accent */
+            --accent: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.4);
+            --accent-light: rgba(99, 102, 241, 0.1);
+
+            /* Status */
+            --success: #22c55e;
+            --error: #ef4444;
+            --warning: #f59e0b;
+
+            /* Input */
+            --input-bg: #ffffff;
+            --input-border: rgba(0, 0, 0, 0.12);
+            --input-focus: var(--accent);
+
+            /* Backwards compatibility aliases */
+            --gradient-start: var(--accent);
+            --gradient-end: #8b5cf6;
+            --accent-cyan: var(--accent);
+            --accent-pink: #ec4899;
+            --dark-bg: var(--bg-primary);
+            --dark-card: var(--bg-secondary);
+            --dark-sidebar: var(--bg-tertiary);
+            --dark-input: var(--input-bg);
+            --dark-border: var(--card-border);
+            --error-color: var(--error);
+            --success-color: var(--success);
+            --tool-color: var(--accent);
+        }
+
+        [data-theme="dark"] {
+            /* Dark Theme */
+            --bg-primary: #09090b;
+            --bg-secondary: #18181b;
+            --bg-tertiary: #27272a;
+            --text-primary: #fafafa;
+            --text-secondary: #a1a1aa;
+            --text-muted: #52525b;
+
+            --card-bg: rgba(24, 24, 27, 0.7);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+
+            --accent: #818cf8;
+            --accent-glow: rgba(129, 140, 248, 0.5);
+            --accent-light: rgba(129, 140, 248, 0.15);
+
+            --input-bg: #18181b;
+            --input-border: rgba(255, 255, 255, 0.1);
+
+            /* Backwards compatibility aliases */
+            --gradient-start: var(--accent);
+            --dark-bg: var(--bg-primary);
+            --dark-card: var(--bg-secondary);
+            --dark-sidebar: #0f0f11;
+            --dark-input: #1f1f23;
+            --dark-border: var(--card-border);
+            --tool-color: var(--accent);
         }
 
         * {
@@ -283,11 +372,273 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #050510 0%, #0a0a1a 100%);
+            background: var(--dark-bg);
             color: var(--text-primary);
             height: 100vh;
             overflow: hidden;
         }
+
+        /* Global Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--text-muted);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        /* Firefox scrollbar styling for all scrollable containers */
+        .messages-container,
+        .sessions-container,
+        .code-block-container pre,
+        .message-text pre,
+        .table-scroll-wrapper {
+            scrollbar-width: auto;
+            scrollbar-color: #555 #2a2a2a;
+        }
+
+        /* --- Premium Loaders --- */
+
+        /* Option 1: Quantum Ring (Sleek, Sci-Fi) */
+        .spinner-quantum {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            border-top-color: #3b82f6;
+            /* Blue-500 */
+            animation: spin-quantum 1s linear infinite;
+            position: relative;
+            margin: 10px;
+        }
+
+        .spinner-quantum::before {
+            content: "";
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            right: 2px;
+            bottom: 2px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            border-top-color: #8b5cf6;
+            /* Violet-500 */
+            animation: spin-quantum 2s linear infinite reverse;
+        }
+
+        .spinner-quantum::after {
+            content: "";
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            right: 6px;
+            bottom: 6px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            border-top-color: #10b981;
+            /* Emerald-500 */
+            animation: spin-quantum 1.5s linear infinite;
+        }
+
+        @keyframes spin-quantum {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Option 2: Neon Wave (Voice/Data) */
+        .spinner-wave {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+            height: 24px;
+            margin: 10px 0 10px 10px;
+        }
+
+        .spinner-wave div {
+            width: 3px;
+            height: 100%;
+            background: linear-gradient(to top, #3b82f6, #60a5fa);
+            animation: wave 1s ease-in-out infinite;
+            border-radius: 2px;
+        }
+
+        .spinner-wave div:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        .spinner-wave div:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+
+        .spinner-wave div:nth-child(4) {
+            animation-delay: 0.3s;
+        }
+
+        .spinner-wave div:nth-child(5) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes wave {
+
+            0%,
+            100% {
+                height: 30%;
+                opacity: 0.5;
+            }
+
+            50% {
+                height: 100%;
+                opacity: 1;
+                box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
+            }
+        }
+
+        /* Option 3: Retro Terminal (Glitch) */
+        .spinner-retro {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            color: #10b981;
+            margin: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .spinner-retro-cursor {
+            width: 8px;
+            height: 16px;
+            background-color: #10b981;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        /* Option 4: Orbital Dots (Playful, Modern) */
+        .spinner-orbital {
+            width: 32px;
+            height: 32px;
+            position: relative;
+            animation: spin-orbital 2s infinite linear;
+            margin: 10px;
+        }
+
+        .spinner-orbital .dot {
+            width: 60%;
+            height: 60%;
+            display: inline-block;
+            position: absolute;
+            top: 0;
+            background-color: #3b82f6;
+            border-radius: 100%;
+            animation: spin-orbital-bounce 2s infinite ease-in-out;
+        }
+
+        .spinner-orbital .dot:nth-child(2) {
+            top: auto;
+            bottom: 0;
+            animation-delay: -1.0s;
+            background-color: #8b5cf6;
+        }
+
+        @keyframes spin-orbital {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes spin-orbital-bounce {
+
+            0%,
+            100% {
+                transform: scale(0.0);
+            }
+
+            50% {
+                transform: scale(1.0);
+            }
+        }
+
+        /* Option 5: Pulse Echo (Minimalist) */
+        .spinner-pulse {
+            width: 32px;
+            height: 32px;
+            margin: 10px;
+            background-color: #3b82f6;
+            border-radius: 100%;
+            animation: scaleout 1.0s infinite ease-in-out;
+        }
+
+        @keyframes scaleout {
+            0% {
+                transform: scale(0);
+            }
+
+            100% {
+                transform: scale(1.0);
+                opacity: 0;
+            }
+        }
+
+        /* Option 6: Bars Shuffle (Classic Digital) */
+        .spinner-bars {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px;
+        }
+
+        .spinner-bars div {
+            width: 6px;
+            height: 32px;
+            background-color: #10b981;
+            animation: bars-shuffle 1.2s infinite ease-in-out;
+            border-radius: 2px;
+        }
+
+        .spinner-bars div:nth-child(2) {
+            animation-delay: -1.1s;
+        }
+
+        .spinner-bars div:nth-child(3) {
+            animation-delay: -1.0s;
+        }
+
+        @keyframes bars-shuffle {
+
+            0%,
+            40%,
+            100% {
+                transform: scaleY(0.4);
+            }
+
+            20% {
+                transform: scaleY(1.0);
+            }
+        }
+
+
 
         /* Layout */
         .app-container {
@@ -450,22 +801,25 @@
         }
 
         .logo-icon {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
-            border-radius: 12px;
+            width: 32px;
+            height: 32px;
+            background: transparent;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+        }
+
+        .logo-icon svg {
+            width: 32px;
+            height: 32px;
+            fill: var(--text-primary);
         }
 
         .logo-text {
-            font-size: 22px;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--text-primary), var(--accent-cyan));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
         }
 
         /* Assistant avatar with logo */
@@ -478,11 +832,11 @@
 
         .new-chat-btn {
             width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            padding: 12px 24px;
+            background: var(--text-primary);
+            color: var(--bg-primary);
             border: none;
-            border-radius: 10px;
-            color: white;
+            border-radius: 12px;
             font-size: 14px;
             font-weight: 600;
             font-family: inherit;
@@ -491,12 +845,15 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            transition: all 0.3s;
+            transition: all 0.2s ease;
         }
 
         .new-chat-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            opacity: 0.9;
+        }
+
+        .new-chat-btn:active {
+            transform: scale(0.98);
         }
 
         /* Sessions List */
@@ -589,22 +946,23 @@
         /* Provider Info */
         .sidebar-footer {
             padding: 16px;
-            border-top: 1px solid var(--dark-border);
+            border-top: 1px solid var(--card-border);
         }
 
         .provider-info {
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 10px;
-            background: var(--dark-input);
-            border-radius: 10px;
+            padding: 12px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.2s ease;
         }
 
         .provider-info:hover {
-            background: var(--dark-border);
+            background: var(--bg-secondary);
         }
 
         .provider-icon-small {
@@ -648,9 +1006,15 @@
         }
 
         .change-btn {
-            font-size: 11px;
-            color: var(--accent-cyan);
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
             text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .change-btn:hover {
+            color: var(--text-primary);
         }
 
         /* User Menu */
@@ -684,20 +1048,21 @@
         }
 
         .logout-btn {
-            padding: 6px 12px;
+            padding: 8px 16px;
             background: transparent;
-            border: 1px solid var(--dark-border);
-            border-radius: 6px;
+            border: 1.5px solid var(--card-border);
+            border-radius: 12px;
             color: var(--text-secondary);
-            font-size: 12px;
+            font-size: 13px;
             font-family: inherit;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.2s ease;
         }
 
         .logout-btn:hover {
-            border-color: var(--error-color);
-            color: var(--error-color);
+            background: var(--card-bg);
+            border-color: var(--error);
+            color: var(--error);
         }
 
         /* Main Chat Area */
@@ -746,6 +1111,7 @@
         .messages-container {
             flex: 1;
             overflow-y: auto;
+            overflow-x: hidden;
             padding: 24px;
         }
 
@@ -767,26 +1133,13 @@
             margin: 0 auto 24px;
             display: flex;
             gap: 16px;
+            width: 100%;
+            /* Ensure full width for alignment */
         }
 
+        /* Avatar removed via JS, but hide in CSS just in case */
         .message-avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            flex-shrink: 0;
-        }
-
-        .message.user .message-avatar {
-            /* background: linear-gradient(135deg, var(--accent-cyan), var(--gradient-start)); */
-            background: transparent;
-        }
-
-        .message.assistant .message-avatar {
-            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            display: none;
         }
 
         .message-content {
@@ -794,40 +1147,72 @@
             padding-top: 4px;
         }
 
-        .message-role {
-            font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: var(--text-secondary);
+        /* User Message Styling */
+        .message.user {
+            justify-content: flex-end;
+            /* Align right */
         }
 
-        .message-actions {
+        .message.user .message-content {
+            align-items: flex-end;
+            /* Align items inside right */
+        }
+
+        .message.user .message-role {
+            display: none;
+            /* Hide role for user */
+        }
+
+        .message.user .message-text {
+            background-color: #2f2f2f;
+            /* Dark bubble */
+            color: #ececec;
+            padding: 10px 16px;
+            border-radius: 20px;
+            border-bottom-right-radius: 4px;
+            /* Slight indicator */
+            display: inline-block;
+            max-width: 85%;
+        }
+
+        /* User Actions (Copy/Edit) */
+        .message.user .message-actions {
             display: flex;
-            gap: 6px;
-            margin-top: 12px;
-            padding-top: 8px;
-            border-top: 1px solid var(--dark-border);
+            justify-content: flex-end;
+            margin-top: 4px;
             opacity: 0;
+            /* Hidden by default */
             transition: opacity 0.2s;
+            border-top: none;
+            padding-top: 0;
+            margin-left: 0;
         }
 
-        .message:hover .message-actions {
+        .message.user:hover .message-actions {
             opacity: 1;
         }
 
-        /* Hide actions for user messages - show inline at end */
-        .message.user .message-actions {
-            display: inline-flex;
-            border-top: none;
-            padding-top: 0;
-            margin-top: 0;
-            margin-left: 8px;
-            vertical-align: middle;
+        /* Assistant Message Styling */
+        .message.assistant {
+            justify-content: flex-start;
+            /* Align left */
         }
 
-        /* Make user message text container inline-friendly */
-        .message.user .message-text {
-            display: inline;
+        .message.assistant .message-content {
+            align-items: flex-start;
+            /* Align items inside left */
+        }
+
+        .message.assistant .message-role {
+            display: none;
+            /* Hide role for assistant too, looks cleaner */
+        }
+
+        .message.assistant .message-text {
+            background: transparent;
+            padding: 0;
+            color: var(--text-primary);
+            max-width: 100%;
         }
 
         .message.user .message-action-btn {
@@ -859,14 +1244,15 @@
 
         .message-content {
             position: relative;
+            min-width: 0;
         }
 
         .message-edit-input {
             width: 100%;
             padding: 12px;
-            background: var(--dark-input);
-            border: 2px solid var(--gradient-start);
-            border-radius: 8px;
+            background: var(--card-bg);
+            border: 2px solid var(--card-border);
+            border-radius: 12px;
             color: var(--text-primary);
             font-size: 15px;
             font-family: inherit;
@@ -876,7 +1262,8 @@
 
         .message-edit-input:focus {
             outline: none;
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+            border-color: var(--text-muted);
+            box-shadow: 0 0 0 4px rgba(128, 128, 128, 0.1);
         }
 
         .message-edit-actions {
@@ -886,29 +1273,42 @@
         }
 
         .message-edit-actions .btn-sm {
-            padding: 6px 14px;
+            padding: 8px 16px;
             font-size: 13px;
-            border-radius: 6px;
+            font-weight: 600;
+            border-radius: 12px;
             cursor: pointer;
             font-family: inherit;
             border: none;
+            transition: all 0.2s ease;
         }
 
         .btn-sm.save {
-            background: var(--gradient-start);
-            color: white;
+            background: var(--text-primary);
+            color: var(--bg-primary);
+        }
+
+        .btn-sm.save:hover {
+            opacity: 0.9;
         }
 
         .btn-sm.cancel {
-            background: var(--dark-input);
+            background: var(--card-bg);
             color: var(--text-secondary);
-            border: 1px solid var(--dark-border);
+            border: 1px solid var(--card-border);
+        }
+
+        .btn-sm.cancel:hover {
+            background: var(--bg-secondary);
         }
 
         .message-text {
             font-size: 15px;
             line-height: 1.7;
             color: var(--text-primary);
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            min-width: 0;
         }
 
         .message-text p {
@@ -934,6 +1334,8 @@
             padding: 16px;
             overflow-x: auto;
             margin: 12px 0;
+            white-space: pre;
+            word-wrap: normal;
         }
 
         .message-text pre code {
@@ -948,53 +1350,91 @@
             border-top: 1px solid var(--dark-border);
         }
 
-        /* Tool Call */
+        /* Tool Call - ChatGPT-style compact chips */
         .tool-call {
-            background: rgba(255, 167, 38, 0.1);
-            border: 1px solid rgba(255, 167, 38, 0.3);
-            border-radius: 8px;
-            padding: 12px 16px;
-            margin: 12px 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--dark-input);
+            border: 1.5px solid #f59e0b;
+            /* Yellow/orange for running */
+            border-radius: 20px;
+            padding: 6px 12px;
+            margin: 4px 4px 4px 0;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            max-width: 100%;
         }
 
+        .tool-call:hover {
+            background: var(--dark-card);
+        }
+
+        /* Completed - Green */
         .tool-call.completed {
-            background: rgba(46, 213, 115, 0.1);
-            border-color: rgba(46, 213, 115, 0.3);
+            border-color: var(--success-color);
+        }
+
+        /* Failed - Red */
+        .tool-call.failed {
+            border-color: var(--error-color);
         }
 
         .tool-call-header {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             font-size: 13px;
-            font-weight: 600;
-            color: var(--tool-color);
-            cursor: pointer;
+            font-weight: 500;
+            color: var(--text-secondary);
+            white-space: nowrap;
         }
 
-        .tool-call.completed .tool-call-header {
-            color: var(--success-color);
+
+
+        .tool-call-name {
+            color: var(--text-primary);
+            font-weight: 500;
         }
 
         .tool-call-toggle {
-            margin-left: auto;
-            font-size: 12px;
-            color: var(--text-secondary);
+            font-size: 10px;
+            color: var(--text-muted);
             transition: transform 0.2s;
+            margin-left: 2px;
         }
 
-        .tool-call.collapsed .tool-call-toggle {
-            transform: rotate(-90deg);
+        .tool-call:not(.collapsed) .tool-call-toggle {
+            transform: rotate(90deg);
         }
 
+        /* Tool call is now a container for relative positioning */
+        .tool-call {
+            position: relative;
+        }
+
+        /* Expanded tool call body - dropdown style */
         .tool-call-body {
-            overflow: hidden;
-            transition: max-height 0.3s ease;
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            margin-top: 4px;
+            z-index: 100;
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            width: max-content;
+            max-width: min(600px, 85vw);
+            max-height: 400px;
+            overflow: auto;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
         }
 
-        .tool-call.collapsed .tool-call-body {
-            max-height: 0 !important;
-            margin-top: 0;
+        .tool-call:not(.collapsed) .tool-call-body {
+            display: block;
         }
 
         .tool-call-args {
@@ -1011,6 +1451,15 @@
             word-break: break-all;
         }
 
+        .tool-call-section-title {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
         .tool-call-result {
             font-size: 13px;
             color: var(--text-primary);
@@ -1025,6 +1474,105 @@
             word-break: break-word;
             line-height: 1.5;
             border: 1px solid var(--dark-border);
+        }
+
+        .tool-call-section {
+            margin-bottom: 10px;
+        }
+
+        .tool-call-section:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Spinner for running tools */
+        .tool-spinner {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            position: relative;
+            margin-left: 6px;
+            color: #f59e0b;
+            /* Match the yellow running border */
+        }
+
+        .tool-spinner-leaf {
+            position: absolute;
+            width: 3px;
+            height: 6px;
+            background: currentColor;
+            border-radius: 2px;
+            left: 50%;
+            top: 50%;
+            transform-origin: center 0;
+            opacity: 0.25;
+            animation: tool-spinner-fade 0.8s linear infinite;
+        }
+
+        .tool-spinner-leaf:nth-child(1) {
+            transform: translateX(-50%) rotate(0deg) translateY(-2px);
+            animation-delay: 0s;
+        }
+
+        .tool-spinner-leaf:nth-child(2) {
+            transform: translateX(-50%) rotate(45deg) translateY(-2px);
+            animation-delay: 0.1s;
+        }
+
+        .tool-spinner-leaf:nth-child(3) {
+            transform: translateX(-50%) rotate(90deg) translateY(-2px);
+            animation-delay: 0.2s;
+        }
+
+        .tool-spinner-leaf:nth-child(4) {
+            transform: translateX(-50%) rotate(135deg) translateY(-2px);
+            animation-delay: 0.3s;
+        }
+
+        .tool-spinner-leaf:nth-child(5) {
+            transform: translateX(-50%) rotate(180deg) translateY(-2px);
+            animation-delay: 0.4s;
+        }
+
+        .tool-spinner-leaf:nth-child(6) {
+            transform: translateX(-50%) rotate(225deg) translateY(-2px);
+            animation-delay: 0.5s;
+        }
+
+        .tool-spinner-leaf:nth-child(7) {
+            transform: translateX(-50%) rotate(270deg) translateY(-2px);
+            animation-delay: 0.6s;
+        }
+
+        .tool-spinner-leaf:nth-child(8) {
+            transform: translateX(-50%) rotate(315deg) translateY(-2px);
+            animation-delay: 0.7s;
+        }
+
+        @keyframes tool-spinner-fade {
+
+            0%,
+            100% {
+                opacity: 0.2;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .tool-call.completed .tool-spinner,
+        .tool-call.failed .tool-spinner {
+            display: none;
+        }
+
+        /* Container for multiple tool calls */
+        .tool-calls-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin: 8px 0;
         }
 
 
@@ -1171,21 +1719,24 @@
         .send-btn {
             width: 48px;
             height: 48px;
-            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            background: var(--text-primary);
             border: none;
             border-radius: 12px;
-            color: white;
+            color: var(--bg-primary);
             font-size: 20px;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
         .send-btn:hover:not(:disabled) {
-            transform: scale(1.05);
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            opacity: 0.9;
+        }
+
+        .send-btn:active:not(:disabled) {
+            transform: scale(0.98);
         }
 
         .send-btn:disabled {
@@ -1416,24 +1967,28 @@
         }
 
         .approval-btn.approve {
-            background: linear-gradient(135deg, var(--success-color), #27ae60);
+            background: var(--success);
             color: white;
         }
 
         .approval-btn.approve:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(46, 213, 115, 0.4);
+            opacity: 0.9;
+        }
+
+        .approval-btn.approve:active {
+            transform: scale(0.98);
         }
 
         .approval-btn.deny {
-            background: var(--dark-input);
-            border: 1px solid var(--dark-border);
-            color: var(--text-secondary);
+            background: transparent;
+            border: 1.5px solid var(--card-border);
+            color: var(--text-primary);
         }
 
         .approval-btn.deny:hover {
-            border-color: var(--error-color);
-            color: var(--error-color);
+            background: var(--card-bg);
+            border-color: var(--error);
+            color: var(--error);
         }
 
         .approval-timeout {
@@ -1626,6 +2181,130 @@
             background: var(--dark-input);
             color: var(--accent-cyan);
         }
+
+        /* Theme Toggle Button - matching common.css/landing.css */
+        .theme-toggle-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: var(--card-bg);
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--card-border);
+        }
+
+        .theme-toggle-btn:hover {
+            background: var(--bg-secondary);
+        }
+
+        .theme-toggle-btn svg {
+            color: var(--text-primary);
+            fill: var(--text-primary);
+        }
+
+        .theme-toggle-btn .sun-icon {
+            display: block;
+        }
+
+        .theme-toggle-btn .moon-icon {
+            display: none;
+        }
+
+        [data-theme="dark"] .theme-toggle-btn .sun-icon {
+            display: none;
+        }
+
+        [data-theme="dark"] .theme-toggle-btn .moon-icon {
+            display: block !important;
+        }
+
+        /* Empty State Logo */
+        .empty-logo-icon {
+            width: 80px;
+            height: 80px;
+            fill: var(--text-primary);
+            opacity: 0.1;
+            margin-bottom: 24px;
+        }
+
+        /* Clock Widget */
+        .clock-widget {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 24px;
+        }
+
+        .clock-greeting {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .clock-row {
+            display: flex;
+            gap: 48px;
+            align-items: center;
+        }
+
+        .clock-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 32px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            min-width: 160px;
+        }
+
+        .clock-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .clock-time {
+            font-size: 40px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .clock-date {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        @media (max-width: 640px) {
+            .clock-row {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .clock-card {
+                min-width: 140px;
+                padding: 16px 24px;
+            }
+
+            .clock-time {
+                font-size: 32px;
+            }
+        }
     </style>
 </head>
 
@@ -1639,11 +2318,19 @@
             <div class="sidebar-header">
                 <div style="display: flex; align-items: center; width: 100%; margin-bottom: 16px;">
                     <div class="logo" style="margin-bottom: 0;">
-                        <img src="/assets/scratchy_assistant_retro.png" alt="Scratchy" class="logo-img"
-                            style="border-radius: 50%;">
+                        <div class="logo-icon">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                            </svg>
+                        </div>
+                        <span class="logo-text">Agentry</span>
                     </div>
                     <button class="sidebar-header-toggle" id="sidebar-collapse-btn" title="Collapse Sidebar">
-                        ←
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M11 17l-5-5 5-5" />
+                            <path d="M18 17l-5-5 5-5" />
+                        </svg>
                     </button>
                 </div>
                 <button class="new-chat-btn" id="new-chat-btn">
@@ -1660,7 +2347,20 @@
 
             <div class="sidebar-footer">
                 <div class="provider-info" id="provider-info" onclick="window.location.href='/setup'">
-                    <div class="provider-icon-small" id="provider-icon">🤖</div>
+                    <div class="provider-icon-small" id="provider-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" width="18" height="18">
+                            <rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect>
+                            <rect x="9" y="9" width="6" height="6"></rect>
+                            <line x1="9" y1="1" x2="9" y2="4"></line>
+                            <line x1="15" y1="1" x2="15" y2="4"></line>
+                            <line x1="9" y1="20" x2="9" y2="23"></line>
+                            <line x1="15" y1="20" x2="15" y2="23"></line>
+                            <line x1="20" y1="9" x2="23" y2="9"></line>
+                            <line x1="20" y1="14" x2="23" y2="14"></line>
+                            <line x1="1" y1="9" x2="4" y2="9"></line>
+                            <line x1="1" y1="14" x2="4" y2="14"></line>
+                        </svg>
+                    </div>
                     <div class="provider-details">
                         <div class="provider-name-small" id="provider-name">Loading...</div>
                         <div class="model-name-small" id="model-name">-</div>
@@ -1686,25 +2386,53 @@
             <!-- Sidebar Toggle (Visible when collapsed) -->
             <div class="sidebar-toggle-area">
                 <button class="sidebar-toggle-btn" id="sidebar-expand-btn" title="Expand Sidebar">
-                    ➜
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M13 17l5-5-5-5" />
+                        <path d="M6 17l5-5-5-5" />
+                    </svg>
                 </button>
             </div>
 
             <div class="chat-header">
                 <button class="mobile-menu-btn" id="mobile-menu-btn" title="Open Menu">☰</button>
                 <h1 class="chat-title" id="chat-title">New Chat</h1>
-                <div class="connection-status">
-                    <div class="status-dot" id="status-dot"></div>
-                    <span id="status-text">Connecting...</span>
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <!-- Theme Toggle -->
+                    <button id="theme-toggle" class="theme-toggle-btn" title="Toggle theme">
+                        <svg class="sun-icon" viewBox="0 0 24 24" width="18" height="18">
+                            <circle cx="12" cy="12" r="5" fill="currentColor" />
+                            <path
+                                d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+                                stroke="currentColor" stroke-width="2" fill="none" />
+                        </svg>
+                        <svg class="moon-icon" viewBox="0 0 24 24" width="18" height="18" style="display:none;">
+                            <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="currentColor" />
+                        </svg>
+                    </button>
+                    <div class="connection-status">
+                        <div class="status-dot" id="status-dot"></div>
+                        <span id="status-text">Connecting...</span>
+                    </div>
                 </div>
             </div>
 
             <div class="messages-container" id="messages-container">
                 <div class="empty-state" id="empty-state">
-                    <img src="/assets/scratchy_assistant_retro.png" alt="Scratchy" class="empty-logo"
-                        style="border-radius: 50%;">
-                    <h2 class="empty-title">Welcome to Scratchy</h2>
-                    <p class="empty-subtitle">Start a conversation with your AI assistant. Ask anything!</p>
+                    <div class="clock-widget" id="clock-widget">
+                        <div class="clock-greeting" id="clock-greeting">Good Evening</div>
+                        <div class="clock-row">
+                            <div class="clock-card">
+                                <div class="clock-label">India (IST)</div>
+                                <div class="clock-time" id="clock-time-india">00:00</div>
+                            </div>
+                            <div class="clock-card">
+                                <div class="clock-label">California (PST)</div>
+                                <div class="clock-time" id="clock-time-usa">00:00</div>
+                            </div>
+                        </div>
+                        <div class="clock-date" id="clock-date">Wednesday, December 17</div>
+                    </div>
                 </div>
             </div>
 
@@ -1741,6 +2469,14 @@
     </div>
 
     <script>
+        // Apply theme immediately to prevent flash
+        (function () {
+            const savedTheme = localStorage.getItem('agentry-theme');
+            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            const theme = savedTheme || systemTheme;
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+
         const API_BASE = '';
         let ws = null;
         let currentSessionId = null;
@@ -1764,10 +2500,99 @@
 
         // Initialize
         async function init() {
+            initTheme();
+            initClock();
             await loadUserInfo();
             await loadSessions();
             connectWebSocket();
             initSidebarControls();
+        }
+
+        // Clock Widget - Start immediately
+        function initClock() {
+            console.log('initClock called');
+            updateClock();
+            setInterval(updateClock, 1000);
+        }
+
+        // Call clock immediately (before auth check)
+        document.addEventListener('DOMContentLoaded', initClock);
+
+        function updateClock() {
+            const now = new Date();
+            const localHours = now.getHours();
+
+            // India Time (IST - Asia/Kolkata)
+            const indiaTime = now.toLocaleTimeString('en-US', {
+                timeZone: 'Asia/Kolkata',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+
+            // California Time (PST/PDT - America/Los_Angeles)
+            const usaTime = now.toLocaleTimeString('en-US', {
+                timeZone: 'America/Los_Angeles',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+
+            console.log('Clock update:', indiaTime, usaTime);
+
+            // Greeting based on local time
+            let greeting;
+            if (localHours >= 5 && localHours < 12) {
+                greeting = 'Good Morning';
+            } else if (localHours >= 12 && localHours < 17) {
+                greeting = 'Good Afternoon';
+            } else if (localHours >= 17 && localHours < 21) {
+                greeting = 'Good Evening';
+            } else {
+                greeting = 'Good Night';
+            }
+
+            // Format date (local)
+            const options = { weekday: 'long', month: 'long', day: 'numeric' };
+            const dateStr = now.toLocaleDateString('en-US', options);
+
+            // Update DOM
+            const clockGreeting = document.getElementById('clock-greeting');
+            const clockTimeIndia = document.getElementById('clock-time-india');
+            const clockTimeUSA = document.getElementById('clock-time-usa');
+            const clockDate = document.getElementById('clock-date');
+
+            console.log('Elements found:', !!clockGreeting, !!clockTimeIndia, !!clockTimeUSA, !!clockDate);
+
+            if (clockGreeting) clockGreeting.textContent = greeting;
+            if (clockTimeIndia) clockTimeIndia.textContent = indiaTime;
+            if (clockTimeUSA) clockTimeUSA.textContent = usaTime;
+            if (clockDate) clockDate.textContent = dateStr;
+        }
+
+        // Theme Toggle
+        function initTheme() {
+            const toggle = document.getElementById('theme-toggle');
+            const savedTheme = localStorage.getItem('agentry-theme');
+            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            const theme = savedTheme || systemTheme;
+            document.documentElement.setAttribute('data-theme', theme);
+            console.log('Theme initialized:', theme);
+
+            if (toggle) {
+                console.log('Theme toggle button found');
+                toggle.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const current = document.documentElement.getAttribute('data-theme');
+                    const next = current === 'dark' ? 'light' : 'dark';
+                    console.log('Switching theme from', current, 'to', next);
+                    document.documentElement.setAttribute('data-theme', next);
+                    localStorage.setItem('agentry-theme', next);
+                });
+            } else {
+                console.warn('Theme toggle button not found!');
+            }
         }
 
         // Sidebar Controls (Resize & Toggle)
@@ -1881,9 +2706,19 @@
                     modelName.textContent = data.provider_config.model || 'Default';
 
                     providerIcon.className = `provider-icon-small ${provider}`;
-                    if (provider === 'ollama') providerIcon.textContent = '🦙';
-                    else if (provider === 'groq') providerIcon.textContent = '⚡';
-                    else if (provider === 'gemini') providerIcon.textContent = '💎';
+                    if (provider === 'ollama') {
+                        // Server/Llama Icon
+                        providerIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" width="18" height="18"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>`;
+                    } else if (provider === 'groq') {
+                        // Lightning Icon
+                        providerIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" width="18" height="18"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>`;
+                    } else if (provider === 'gemini') {
+                        // Sparkle Icon
+                        providerIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" width="18" height="18"><path d="M12 2L9.15 8.55L2 12L9.15 15.45L12 22L14.85 15.45L22 12L14.85 8.55L12 2Z"></path></svg>`;
+                    } else {
+                        // Default Chip
+                        providerIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" width="18" height="18"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>`;
+                    }
                 }
             } catch (error) {
                 console.error('Failed to load user info:', error);
@@ -1929,7 +2764,14 @@
                 item.innerHTML = `
                     <div class="session-title">${escapeHtml(session.title || 'Untitled Chat')}</div>
                     <div class="session-date">${dateStr}, ${timeStr} · ${session.message_count || 0} turns</div>
-                    <button class="session-delete" title="Delete session" onclick="event.stopPropagation(); deleteSession('${session.id}')">🗑️</button>
+                    <button class="session-delete" title="Delete session" onclick="event.stopPropagation(); deleteSession('${session.id}')">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                            <line x1="10" y1="11" x2="10" y2="17"/>
+                            <line x1="14" y1="11" x2="14" y2="17"/>
+                        </svg>
+                    </button>
                 `;
 
                 item.addEventListener('click', () => loadSession(session.id));
@@ -1963,7 +2805,8 @@
                 console.error('Failed to delete session:', error);
             }
         }
-
+        // Expose to global scope for inline onclick handlers
+        window.deleteSession = deleteSession;
 
         // Load session
         async function loadSession(sessionId) {
@@ -2037,6 +2880,13 @@
                     sendBtn.disabled = false;
                     break;
 
+                case 'message_deleted':
+                    if (data.session_id === currentSessionId) {
+                        // Reload session to keep indices and UI in sync
+                        loadSession(currentSessionId);
+                    }
+                    break;
+
                 case 'error':
                     if (currentAssistantMessage) {
                         removeTypingIndicator(currentAssistantMessage);
@@ -2056,6 +2906,9 @@
                         currentAssistantMessage = createAssistantMessage();
                         currentAssistantText = '';
                     }
+                    if (!currentAssistantText && data.content) {
+                        removeLoadingIndicators(currentAssistantMessage);
+                    }
                     currentAssistantText += data.content;
                     updateAssistantMessageText(currentAssistantMessage, currentAssistantText);
                     break;
@@ -2070,7 +2923,7 @@
                         updateAssistantMessageText(currentAssistantMessage, currentAssistantText);
                     }
                     // Remove any typing indicator
-                    removeTypingIndicator(currentAssistantMessage);
+                    removeLoadingIndicators(currentAssistantMessage);
                     // Add the tool call
                     addToolCall(currentAssistantMessage, data.tool_name, data.args);
                     // Reset text accumulator for text that might come after
@@ -2080,8 +2933,8 @@
                 case 'tool_end':
                     // Update the tool call with result
                     if (currentAssistantMessage) {
-                        removeTypingIndicator(currentAssistantMessage);
                         updateToolCallResult(currentAssistantMessage, data.tool_name, data.result);
+                        showSpinner(currentAssistantMessage);
                     }
                     break;
 
@@ -2095,12 +2948,12 @@
                             currentAssistantMessage = createAssistantMessage();
                         }
                         // Remove typing indicator
-                        removeTypingIndicator(currentAssistantMessage);
+                        removeLoadingIndicators(currentAssistantMessage);
                         // Display the full response
                         updateAssistantMessageText(currentAssistantMessage, data.content);
                     } else if (currentAssistantMessage) {
                         // Just cleanup if we already have streaming content
-                        removeTypingIndicator(currentAssistantMessage);
+                        removeLoadingIndicators(currentAssistantMessage);
                     }
 
                     // Add copy button at the end of the message
@@ -2176,15 +3029,23 @@
                 msg.dataset.messageIndex = messageIndex;
             }
 
+            // Simplified User Message Structure (No Avatar)
             msg.innerHTML = `
-                <div class="message-avatar">
-                    <img src="/assets/user_avatar_retro.png" alt="You" class="assistant-avatar-img" style="border-radius: 50%;">
-                </div>
                 <div class="message-content">
-                    <div class="message-role">You</div>
-                    <div class="message-text">${escapeHtml(content)}</div>
-                    <div class="message-actions">
-                        <button class="message-action-btn edit-btn" title="Edit message">✏️</button>
+                    <div class="message-text">${formatMessage(content)}</div>
+                     <div class="message-actions">
+                        <button class="message-action-btn edit-btn" title="Edit message">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                        </button>
+                        <button class="message-action-btn delete-btn" title="Delete message">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
                     </div>
                 </div>
             `;
@@ -2192,6 +3053,10 @@
             // Add edit functionality
             const editBtn = msg.querySelector('.edit-btn');
             editBtn.addEventListener('click', () => startEditMessage(msg));
+
+            // Add delete functionality
+            const deleteBtn = msg.querySelector('.delete-btn');
+            deleteBtn.addEventListener('click', () => deleteMessage(msg));
 
             messagesContainer.appendChild(msg);
             scrollToBottom();
@@ -2278,6 +3143,10 @@
                 const backendIndex = msgIndex + 1;
 
                 // Note: We send with a special flag to indicate this is an edit
+                // Show thinking spinner immediately
+                currentAssistantMessage = createAssistantMessage();
+                currentAssistantText = '';
+
                 ws.send(JSON.stringify({
                     type: 'message',
                     content: newContent,
@@ -2288,23 +3157,41 @@
             }
         }
 
+        async function deleteMessage(msgElement) {
+            if (!confirm('Are you sure you want to delete this message?')) return;
+
+            // Calculate index: Find index in DOM
+            const allMessages = Array.from(messagesContainer.querySelectorAll('.message'));
+            const domIndex = allMessages.indexOf(msgElement);
+
+            if (domIndex === -1) return;
+
+            // Backend Index: 0 is System. So Backend Index = DOM Index + 1.
+            const backendIndex = domIndex + 1;
+
+            if (ws && ws.readyState === WebSocket.OPEN && currentSessionId) {
+                // Optimistic visual feedback
+                msgElement.style.opacity = '0.5';
+                msgElement.style.pointerEvents = 'none';
+
+                ws.send(JSON.stringify({
+                    type: 'delete_message',
+                    session_id: currentSessionId,
+                    index: backendIndex
+                }));
+            }
+        }
+
         function createAssistantMessage() {
             hideEmptyState();
 
             const msg = document.createElement('div');
             msg.className = 'message assistant';
             msg.innerHTML = `
-                <div class="message-avatar">
-                    <img src="/assets/scratchy_assistant_retro.png" alt="Scratchy" class="assistant-avatar-img" style="border-radius: 50%;">
-                </div>
                 <div class="message-content">
-                    <div class="message-role">Scratchy</div>
-                    <div class="message-text">
-                        <div class="typing-indicator">
-                            <div class="typing-dot"></div>
-                            <div class="typing-dot"></div>
-                            <div class="typing-dot"></div>
-                        </div>
+                    <div class="message-text" style="display:none;"></div>
+                    <div class="spinner-container">
+                        ${getSpinnerHTML()}
                     </div>
                 </div>
             `;
@@ -2333,12 +3220,29 @@
 
             const actionsDiv = document.createElement('div');
             actionsDiv.className = 'message-actions';
+            actionsDiv.style.display = 'flex';
+            actionsDiv.style.gap = '6px';
             actionsDiv.innerHTML = `
-                <button class="message-action-btn copy-btn" title="Copy response">📋</button>
+                <button class="message-action-btn copy-btn" title="Copy response">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                    </svg>
+                </button>
+                <button class="message-action-btn delete-btn" title="Delete message">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                </button>
             `;
 
             // Add to the END of message-content
             contentDiv.appendChild(actionsDiv);
+
+            // Add delete functionality
+            const deleteBtn = actionsDiv.querySelector('.delete-btn');
+            deleteBtn.addEventListener('click', () => deleteMessage(msgElement));
 
             // Add copy functionality
             const copyBtn = actionsDiv.querySelector('.copy-btn');
@@ -2355,7 +3259,11 @@
 
         // Update text - handles adding text after tool calls
         function updateAssistantMessageText(msgElement, content) {
-            removeTypingIndicator(msgElement);
+            // We do NOT inherently remove the spinner here because 'token' events might stream 
+            // while spinner should be gone. We handle removal explicitly in 'token' event or here if content exists.
+            if (content && content.length > 0) {
+                removeLoadingIndicators(msgElement);
+            }
 
             if (!content || !content.trim()) return;
 
@@ -2404,10 +3312,66 @@
             scrollToBottom();
         }
 
-        function removeTypingIndicator(msgElement) {
+        function getSpinnerHTML() {
+            // Uncomment the one you want to use:
+
+            // Option 1: Quantum Ring (Sleek)
+            // return '<div class="spinner-quantum"></div>';
+
+            // Option 2: Neon Wave (Voice/Data)
+            /*
+            return `
+            <div class="spinner-wave">
+                <div></div><div></div><div></div><div></div><div></div>
+            </div>`;
+            */
+
+            // Option 3: Retro Terminal (Glitch) - ACTIVE
+            return `
+            <div class="spinner-retro">
+                <span>PROCESSING</span><div class="spinner-retro-cursor"></div>
+            </div>`;
+
+            // Option 4: Orbital Dots (Playful)
+            /*
+            return `
+            <div class="spinner-orbital">
+                <div class="dot"></div><div class="dot"></div>
+            </div>`;
+            */
+
+            // Option 5: Pulse Echo (Minimalist)
+            // return '<div class="spinner-pulse"></div>';
+
+            // Option 6: Bars Shuffle (Digital)
+            /*
+            return `
+            <div class="spinner-bars">
+                <div></div><div></div><div></div>
+            </div>`;
+            */
+        }
+
+        function showSpinner(msgElement) {
+            if (!msgElement) return;
+            const contentDiv = msgElement.querySelector('.message-content');
+            if (contentDiv.querySelector('.spinner-container') || contentDiv.querySelector('[class^="spinner-"]')) return;
+
+            const container = document.createElement('div');
+            container.className = 'spinner-container';
+            container.innerHTML = getSpinnerHTML();
+            contentDiv.appendChild(container);
+            scrollToBottom();
+        }
+
+        function removeLoadingIndicators(msgElement) {
             if (!msgElement) return;
 
-            // Find and remove all typing indicators (could be in message-text or message-content)
+            // Remove spinners
+            const spinners = msgElement.querySelectorAll('.spinner, .spinner-quantum, .spinner-wave, .spinner-retro, .spinner-orbital, .spinner-pulse, .spinner-bars, .spinner-container');
+            spinners.forEach(s => s.remove());
+
+            // Remove old typing indicators if any exist
             const indicators = msgElement.querySelectorAll('.typing-indicator');
             indicators.forEach(indicator => {
                 indicator.remove();
@@ -2427,18 +3391,58 @@
 
         function addToolCall(msgElement, toolName, args) {
             const contentDiv = msgElement.querySelector('.message-content');
-            const toolDiv = document.createElement('div');
-            toolDiv.className = 'tool-call collapsed'; // Start collapsed by default
-            toolDiv.dataset.toolName = toolName;
 
-            let argsHtml = '';
-            if (args && typeof args === 'object' && Object.keys(args).length > 0) {
-                argsHtml = `<div class="tool-call-args">${escapeHtml(JSON.stringify(args, null, 2))}</div>`;
+            // Get or create tool calls container
+            let toolsContainer = contentDiv.querySelector('.tool-calls-container');
+            if (!toolsContainer) {
+                toolsContainer = document.createElement('div');
+                toolsContainer.className = 'tool-calls-container';
+                // Insert after message-role but before any message-text
+                const roleDiv = contentDiv.querySelector('.message-role');
+                const textDiv = contentDiv.querySelector('.message-text');
+                if (textDiv) {
+                    contentDiv.insertBefore(toolsContainer, textDiv);
+                } else if (roleDiv) {
+                    contentDiv.insertBefore(toolsContainer, roleDiv.nextSibling);
+                } else {
+                    contentDiv.appendChild(toolsContainer);
+                }
             }
 
+            const toolDiv = document.createElement('div');
+            toolDiv.className = 'tool-call collapsed';
+            toolDiv.dataset.toolName = toolName;
+
+            // Build args HTML if present with section title
+            let argsHtml = '';
+            if (args && typeof args === 'object' && Object.keys(args).length > 0) {
+                argsHtml = `
+                    <div class="tool-call-section">
+                        <div class="tool-call-section-title">Tool Params</div>
+                        <div class="tool-call-args">${escapeHtml(JSON.stringify(args, null, 2))}</div>
+                    </div>
+                `;
+            }
+
+            // Spinner HTML
+            const spinnerHtml = `
+                <span class="tool-spinner">
+                    <span class="tool-spinner-leaf"></span>
+                    <span class="tool-spinner-leaf"></span>
+                    <span class="tool-spinner-leaf"></span>
+                    <span class="tool-spinner-leaf"></span>
+                    <span class="tool-spinner-leaf"></span>
+                    <span class="tool-spinner-leaf"></span>
+                    <span class="tool-spinner-leaf"></span>
+                    <span class="tool-spinner-leaf"></span>
+                </span>
+            `;
+
+            // Create compact chip HTML with expandable body and spinner
             toolDiv.innerHTML = `
                 <div class="tool-call-header">
-                    <span>🔧 Running: ${escapeHtml(toolName)}</span>
+                    <span class="tool-call-name">${escapeHtml(toolName)}</span>
+                    ${spinnerHtml}
                     <span class="tool-call-toggle">▶</span>
                 </div>
                 <div class="tool-call-body">
@@ -2446,24 +3450,44 @@
                 </div>
             `;
 
-            // Add toggle functionality
+            // Add click to toggle expanded/collapsed state
             const header = toolDiv.querySelector('.tool-call-header');
-            header.addEventListener('click', () => {
+            header.addEventListener('click', function (e) {
+                e.stopPropagation();
+
+                // Close all other open tool calls first
+                document.querySelectorAll('.tool-call:not(.collapsed)').forEach(tc => {
+                    if (tc !== toolDiv) {
+                        tc.classList.add('collapsed');
+                        const toggle = tc.querySelector('.tool-call-toggle');
+                        if (toggle) toggle.textContent = '▶';
+                    }
+                });
+
+                // Toggle this one
                 toolDiv.classList.toggle('collapsed');
-                // Update toggle icon
                 const toggle = toolDiv.querySelector('.tool-call-toggle');
                 toggle.textContent = toolDiv.classList.contains('collapsed') ? '▶' : '▼';
             });
 
-            contentDiv.appendChild(toolDiv);
+            toolsContainer.appendChild(toolDiv);
             scrollToBottom();
         }
+
+        // Close tool call dropdowns when clicking outside
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.tool-call')) {
+                document.querySelectorAll('.tool-call:not(.collapsed)').forEach(tc => {
+                    tc.classList.add('collapsed');
+                });
+            }
+        });
 
         function updateToolCallResult(msgElement, toolName, result) {
             const contentDiv = msgElement.querySelector('.message-content');
             const toolDivs = contentDiv.querySelectorAll('.tool-call');
 
-            // Find the tool call by name (last matching one)
+            // Find the tool call by name (last matching one that's not completed)
             let targetToolDiv = null;
             toolDivs.forEach(div => {
                 if (div.dataset.toolName === toolName && !div.classList.contains('completed')) {
@@ -2472,38 +3496,54 @@
             });
 
             if (targetToolDiv) {
+                let isSuccess = true;
+
+                // Try to detect failure
+                if (result && typeof result === 'object') {
+                    if (result.success === false) isSuccess = false;
+                    if (result.error) isSuccess = false;
+                } else if (typeof result === 'string') {
+                    if (result.toLowerCase().includes('error') || result.includes('STDERR')) isSuccess = false;
+                }
+
+                // Mark as completed or failed
                 targetToolDiv.classList.add('completed');
-                // Auto-collapse completed tool calls
-                targetToolDiv.classList.add('collapsed');
+                if (!isSuccess) {
+                    targetToolDiv.classList.add('failed');
+                }
 
-                const header = targetToolDiv.querySelector('.tool-call-header');
-                header.innerHTML = `
-                    <span>✅ Completed: ${escapeHtml(toolName)}</span>
-                    <span class="tool-call-toggle">▶</span>
-                `;
-
-                // Re-add click handler for toggle (since we replaced innerHTML)
-                header.addEventListener('click', () => {
-                    targetToolDiv.classList.toggle('collapsed');
-                    const toggle = targetToolDiv.querySelector('.tool-call-toggle');
-                    toggle.textContent = targetToolDiv.classList.contains('collapsed') ? '▶' : '▼';
-                });
-
+                // Add result to the body with section title
                 if (result) {
-                    // IMPORTANT: Always add result inside .tool-call-body so it collapses properly
                     let bodyDiv = targetToolDiv.querySelector('.tool-call-body');
                     if (!bodyDiv) {
-                        // Create body div if it doesn't exist
                         bodyDiv = document.createElement('div');
                         bodyDiv.className = 'tool-call-body';
                         targetToolDiv.appendChild(bodyDiv);
                     }
-                    const resultDiv = document.createElement('div');
-                    resultDiv.className = 'tool-call-result';
-                    resultDiv.textContent = typeof result === 'string' ? result : JSON.stringify(result, null, 2);
-                    bodyDiv.appendChild(resultDiv);
+
+                    // Add result section if not already present
+                    if (!bodyDiv.querySelector('.tool-call-result')) {
+                        const sectionDiv = document.createElement('div');
+                        sectionDiv.className = 'tool-call-section';
+
+                        const titleDiv = document.createElement('div');
+                        titleDiv.className = 'tool-call-section-title';
+                        titleDiv.textContent = 'Tool Result';
+                        sectionDiv.appendChild(titleDiv);
+
+                        const resultDiv = document.createElement('div');
+                        resultDiv.className = 'tool-call-result';
+                        const resultText = typeof result === 'string' ? result : JSON.stringify(result, null, 2);
+                        resultDiv.textContent = resultText.substring(0, 1000);
+                        if (resultText.length > 1000) {
+                            resultDiv.textContent += '\n... (truncated)';
+                        }
+                        sectionDiv.appendChild(resultDiv);
+                        bodyDiv.appendChild(sectionDiv);
+                    }
                 }
 
+                targetToolDiv.classList.add('collapsed');
                 scrollToBottom();
             }
         }
@@ -2554,7 +3594,7 @@
                     // If previous was 'tool', we're continuing the same response
                     if (!currentAssistantEl || lastRole === 'user') {
                         currentAssistantEl = createAssistantMessage();
-                        removeTypingIndicator(currentAssistantEl);
+                        removeLoadingIndicators(currentAssistantEl);
                     }
 
                     const content = typeof msg.content === 'string' ? msg.content : (msg.content || '');
@@ -2573,7 +3613,7 @@
                     }
 
                     // Ensure typing indicator is removed after all content is added
-                    removeTypingIndicator(currentAssistantEl);
+                    removeLoadingIndicators(currentAssistantEl);
                     lastRole = 'assistant';
                 } else if (msg.role === 'tool') {
                     // Tool result - update the last tool call
@@ -2591,7 +3631,7 @@
                         updateToolCallResultByName(currentAssistantEl, toolName, result);
 
                         // Remove any lingering typing indicator
-                        removeTypingIndicator(currentAssistantEl);
+                        removeLoadingIndicators(currentAssistantEl);
                     }
                     lastRole = 'tool';
                 }
@@ -2608,28 +3648,70 @@
         // Helper to add tool call to a specific element (for session loading)
         function addToolCallToElement(msgElement, toolName, args, result, completed) {
             const contentDiv = msgElement.querySelector('.message-content');
+
+            // Get or create tool calls container
+            let toolsContainer = contentDiv.querySelector('.tool-calls-container');
+            if (!toolsContainer) {
+                toolsContainer = document.createElement('div');
+                toolsContainer.className = 'tool-calls-container';
+                const roleDiv = contentDiv.querySelector('.message-role');
+                const textDiv = contentDiv.querySelector('.message-text');
+                if (textDiv) {
+                    contentDiv.insertBefore(toolsContainer, textDiv);
+                } else if (roleDiv) {
+                    contentDiv.insertBefore(toolsContainer, roleDiv.nextSibling);
+                } else {
+                    contentDiv.appendChild(toolsContainer);
+                }
+            }
+
             const toolDiv = document.createElement('div');
-            // Always start collapsed for loaded sessions
+            // Minimal chip design - border color indicates status
             toolDiv.className = 'tool-call collapsed' + (completed ? ' completed' : '');
             toolDiv.dataset.toolName = toolName;
 
+            // Build args HTML if present with section title
             let argsHtml = '';
             if (args && typeof args === 'object' && Object.keys(args).length > 0) {
-                argsHtml = `<div class="tool-call-args">${escapeHtml(JSON.stringify(args, null, 2))}</div>`;
+                argsHtml = `
+                    <div class="tool-call-section">
+                        <div class="tool-call-section-title">Tool Params</div>
+                        <div class="tool-call-args">${escapeHtml(JSON.stringify(args, null, 2))}</div>
+                    </div>
+                `;
             }
 
-            const icon = completed ? '✅' : '🔧';
-            const status = completed ? 'Completed' : 'Running';
-
+            // Build result HTML if present with section title
             let resultHtml = '';
             if (result && completed) {
-                const resultText = typeof result === 'string' ? result : JSON.stringify(result, null, 2);
-                resultHtml = `<div class="tool-call-result">${escapeHtml(resultText)}</div>`;
+                const resultText = typeof result === 'string' ? result.substring(0, 1000) : JSON.stringify(result, null, 2).substring(0, 1000);
+                resultHtml = `
+                    <div class="tool-call-section">
+                        <div class="tool-call-section-title">Tool Result</div>
+                        <div class="tool-call-result">${escapeHtml(resultText)}</div>
+                    </div>
+                `;
             }
 
+            // Spinner HTML (only shown if not completed)
+            const spinnerHtml = !completed ? `
+                <span class="tool-spinner">
+                    <span class="tool-spinner-leaf"></span>
+                    <span class="tool-spinner-leaf"></span>
+                    <span class="tool-spinner-leaf"></span>
+                    <span class="tool-spinner-leaf"></span>
+                    <span class="tool-spinner-leaf"></span>
+                    <span class="tool-spinner-leaf"></span>
+                    <span class="tool-spinner-leaf"></span>
+                    <span class="tool-spinner-leaf"></span>
+                </span>
+            ` : '';
+
+            // Chip with expandable body
             toolDiv.innerHTML = `
                 <div class="tool-call-header">
-                    <span>${icon} ${status}: ${escapeHtml(toolName)}</span>
+                    <span class="tool-call-name">${escapeHtml(toolName)}</span>
+                    ${spinnerHtml}
                     <span class="tool-call-toggle">▶</span>
                 </div>
                 <div class="tool-call-body">
@@ -2640,14 +3722,21 @@
 
             // Add toggle functionality
             const header = toolDiv.querySelector('.tool-call-header');
-            header.addEventListener('click', () => {
+            header.addEventListener('click', function (e) {
+                e.stopPropagation();
+                document.querySelectorAll('.tool-call:not(.collapsed)').forEach(tc => {
+                    if (tc !== toolDiv) {
+                        tc.classList.add('collapsed');
+                        const toggle = tc.querySelector('.tool-call-toggle');
+                        if (toggle) toggle.textContent = '▶';
+                    }
+                });
                 toolDiv.classList.toggle('collapsed');
-                // Update toggle icon
                 const toggle = toolDiv.querySelector('.tool-call-toggle');
                 toggle.textContent = toolDiv.classList.contains('collapsed') ? '▶' : '▼';
             });
 
-            contentDiv.appendChild(toolDiv);
+            toolsContainer.appendChild(toolDiv);
         }
 
         function updateToolCallResultByName(msgElement, toolName, result) {
@@ -2657,36 +3746,53 @@
             // Find first uncompleted tool call
             if (toolDivs.length > 0) {
                 const targetToolDiv = toolDivs[0];
+
+                // Check for failure
+                let isSuccess = true;
+                if (result && typeof result === 'string') {
+                    if (result.toLowerCase().includes('error') || result.includes('STDERR')) {
+                        isSuccess = false;
+                    }
+                }
+
+                // Mark as completed or failed - CSS handles the border color
                 targetToolDiv.classList.add('completed');
-                targetToolDiv.classList.add('collapsed'); // Auto-collapse
+                if (!isSuccess) {
+                    targetToolDiv.classList.add('failed');
+                }
 
-                const header = targetToolDiv.querySelector('.tool-call-header');
-                const name = targetToolDiv.dataset.toolName || toolName;
-                header.innerHTML = `
-                    <span>✅ Completed: ${escapeHtml(name)}</span>
-                    <span class="tool-call-toggle">▶</span>
-                `;
-
-                // Re-add click handler
-                header.addEventListener('click', () => {
-                    targetToolDiv.classList.toggle('collapsed');
-                    const toggle = targetToolDiv.querySelector('.tool-call-toggle');
-                    toggle.textContent = targetToolDiv.classList.contains('collapsed') ? '▶' : '▼';
-                });
-
+                // Add result to the body with section title
                 if (result) {
-                    // Add result inside body div so it collapses properly
                     let bodyDiv = targetToolDiv.querySelector('.tool-call-body');
                     if (!bodyDiv) {
                         bodyDiv = document.createElement('div');
                         bodyDiv.className = 'tool-call-body';
                         targetToolDiv.appendChild(bodyDiv);
                     }
-                    const resultDiv = document.createElement('div');
-                    resultDiv.className = 'tool-call-result';
-                    resultDiv.textContent = typeof result === 'string' ? result.substring(0, 500) : JSON.stringify(result, null, 2).substring(0, 500);
-                    bodyDiv.appendChild(resultDiv);
+
+                    // Add result section if not already present
+                    if (!bodyDiv.querySelector('.tool-call-result')) {
+                        const sectionDiv = document.createElement('div');
+                        sectionDiv.className = 'tool-call-section';
+
+                        const titleDiv = document.createElement('div');
+                        titleDiv.className = 'tool-call-section-title';
+                        titleDiv.textContent = 'Tool Result';
+                        sectionDiv.appendChild(titleDiv);
+
+                        const resultDiv = document.createElement('div');
+                        resultDiv.className = 'tool-call-result';
+                        const resultText = typeof result === 'string' ? result : JSON.stringify(result, null, 2);
+                        resultDiv.textContent = resultText.substring(0, 1000);
+                        if (resultText.length > 1000) {
+                            resultDiv.textContent += '\n... (truncated)';
+                        }
+                        sectionDiv.appendChild(resultDiv);
+                        bodyDiv.appendChild(sectionDiv);
+                    }
                 }
+
+                targetToolDiv.classList.add('collapsed');
             }
         }
 
@@ -2909,6 +4015,10 @@
             messageInput.value = '';
             messageInput.style.height = 'auto';
 
+            // Show thinking spinner immediately
+            currentAssistantMessage = createAssistantMessage();
+            currentAssistantText = '';
+
             // If no session, create one first
             if (!currentSessionId) {
                 fetch(`${API_BASE}/api/sessions`, {
@@ -3050,6 +4160,7 @@
 
         // Initialize
         async function init() {
+            initTheme();
             // Initialize UI controls first so they work immediately
             initSidebarControls();
 
@@ -3122,13 +4233,17 @@
             try {
                 await navigator.clipboard.writeText(text);
 
-                // Visual feedback
-                const originalIcon = btnElement.textContent;
-                btnElement.textContent = '✅';
+                // Visual feedback - show checkmark SVG
+                const originalHtml = btnElement.innerHTML;
+                btnElement.innerHTML = `
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                `;
                 btnElement.classList.add('copied');
 
                 setTimeout(() => {
-                    btnElement.textContent = originalIcon;
+                    btnElement.innerHTML = originalHtml;
                     btnElement.classList.remove('copied');
                 }, 2000);
             } catch (err) {

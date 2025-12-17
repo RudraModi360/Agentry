@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 
 <head>
     <meta charset="UTF-8">
@@ -11,20 +11,39 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
     <style>
-        :root {
-            --gradient-start: #667eea;
-            --gradient-end: #764ba2;
-            --accent-cyan: #00d4ff;
-            --accent-pink: #ff6b9d;
-            --accent-orange: #ffa726;
-            --dark-bg: #0a0a1a;
-            --dark-card: #12122a;
-            --dark-input: #1a1a35;
-            --dark-border: #2a2a4a;
-            --text-primary: #ffffff;
-            --text-secondary: #a0a0c0;
-            --error-color: #ff4757;
-            --success-color: #2ed573;
+        :root,
+        [data-theme="dark"] {
+            /* Modern Minimal Theme - Dark */
+            --gradient-start: #6366f1;
+            --gradient-end: #8b5cf6;
+            --accent-cyan: #6366f1;
+            --accent-pink: #ec4899;
+            --accent-orange: #f59e0b;
+            --dark-bg: #09090b;
+            --dark-card: #18181b;
+            --dark-input: #1f1f23;
+            --dark-border: rgba(255, 255, 255, 0.08);
+            --text-primary: #fafafa;
+            --text-secondary: #a1a1aa;
+            --error-color: #ef4444;
+            --success-color: #22c55e;
+        }
+
+        [data-theme="light"] {
+            /* Modern Minimal Theme - Light */
+            --gradient-start: #6366f1;
+            --gradient-end: #8b5cf6;
+            --accent-cyan: #6366f1;
+            --accent-pink: #ec4899;
+            --accent-orange: #f59e0b;
+            --dark-bg: #fafafa;
+            --dark-card: #ffffff;
+            --dark-input: #f4f4f5;
+            --dark-border: rgba(0, 0, 0, 0.08);
+            --text-primary: #0a0a0a;
+            --text-secondary: #525252;
+            --error-color: #ef4444;
+            --success-color: #22c55e;
         }
 
         * {
@@ -509,10 +528,70 @@
             color: var(--text-secondary);
             font-size: 16px;
         }
+
+        /* Theme Toggle */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: var(--dark-card);
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+            border: 1px solid var(--dark-border);
+            z-index: 100;
+        }
+
+        .theme-toggle:hover {
+            background: var(--dark-input);
+            color: var(--accent-cyan);
+        }
+
+        .theme-toggle svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+        }
+
+        .theme-toggle .sun-icon {
+            display: block;
+        }
+
+        .theme-toggle .moon-icon {
+            display: none;
+        }
+
+        [data-theme="dark"] .theme-toggle .sun-icon {
+            display: none;
+        }
+
+        [data-theme="dark"] .theme-toggle .moon-icon {
+            display: block;
+        }
     </style>
 </head>
 
 <body>
+    <!-- Theme Toggle -->
+    <button id="theme-toggle" class="theme-toggle" title="Toggle theme">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5" />
+            <path
+                d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+                stroke="currentColor" stroke-width="2" fill="none" />
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+        </svg>
+    </button>
+
     <div class="bg-gradient"></div>
 
     <div class="loading-overlay" id="loading">
@@ -622,6 +701,22 @@
         let existingConfig = null;
         let storedApiKeys = {}; // Cache API keys by provider
         let hasStoredKeys = {}; // Track which providers have keys stored on server
+
+        // Theme Toggle
+        (function initTheme() {
+            const toggle = document.getElementById('theme-toggle');
+            const savedTheme = localStorage.getItem('agentry-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+
+            if (toggle) {
+                toggle.addEventListener('click', () => {
+                    const current = document.documentElement.getAttribute('data-theme');
+                    const next = current === 'dark' ? 'light' : 'dark';
+                    document.documentElement.setAttribute('data-theme', next);
+                    localStorage.setItem('agentry-theme', next);
+                });
+            }
+        })();
 
         // Check auth
         const token = localStorage.getItem('scratchy_token');

@@ -1,6 +1,6 @@
-# Scratchy Documentation
+# Agentry Documentation
 
-Welcome to the Scratchy documentation! This guide will help you understand and use the Scratchy AI Agent Framework.
+Welcome to the Agentry documentation! This guide will help you understand and use the Agentry AI Agent Framework.
 
 ## 📚 Table of Contents
 
@@ -45,11 +45,11 @@ Welcome to the Scratchy documentation! This guide will help you understand and u
 ### For Advanced Users
 - [Session Persistence](session-management.md#session-files)
 - [Multi-Session Management](session-management.md#multi-session-management)
-- [Source Code Exploration](../scratchy/)
+- [Source Code Exploration](../Agentry/)
 
-## What is Scratchy?
+## What is Agentry?
 
-Scratchy is a **one-stop Python-based solution** for understanding how real-world AI agents are built. It's designed for:
+Agentry is a **one-stop Python-based solution** for understanding how real-world AI agents are built. It's designed for:
 
 - **🌱 Beginners**: Learn by doing with clear, documented examples
 - **🚀 Intermediate**: Build production-ready agents with best practices
@@ -58,7 +58,7 @@ Scratchy is a **one-stop Python-based solution** for understanding how real-worl
 ### Key Features
 
 - **Unified Agent Architecture**: Single `Agent` class supporting internal, MCP, and custom tools
-- **Session Management**: Persistent chat history with `.toon` format in `scratchy/session_history/`
+- **Session Management**: Persistent chat history with `.toon` format in `Agentry/session_history/`
 - **Custom Tool Support**: Easy function-to-tool conversion via `register_tool_from_function()`
 - **Multiple LLM Providers**: Ollama, Groq, and Gemini support
 - **Specialized Agents**: Pre-configured agents like `CopilotAgent` for coding
@@ -66,7 +66,7 @@ Scratchy is a **one-stop Python-based solution** for understanding how real-worl
 ## Module Structure
 
 ```
-scratchy/                      # Main package
+Agentry/                      # Main package
 ├── agents/                   # Agent implementations
 │   ├── agent.py             # Core Agent class
 │   ├── copilot.py           # CopilotAgent (coding specialist)
@@ -93,25 +93,25 @@ scratchy/                      # Main package
 ```
 ┌─────────────────────────────────────────────────┐
 │                   User Code                     │
-│         from scratchy import Agent              │
+│         from Agentry import Agent              │
 └─────────────────────┬───────────────────────────┘
                       │
 ┌─────────────────────▼───────────────────────────┐
-│          scratchy.agents.Agent                  │
+│          Agentry.agents.Agent                  │
 │  ┌──────────────────────────────────────────┐  │
 │  │    Session Management (AgentSession)     │  │
-│  │    • scratchy/session_history/*.toon     │  │
+│  │    • Agentry/session_history/*.toon     │  │
 │  └──────────────────────────────────────────┘  │
 │  ┌──────────────────────────────────────────┐  │
 │  │         Tool Management                  │  │
-│  │  • Internal (scratchy/tools/)            │  │
-│  │  • MCP (scratchy/mcp_client.py)          │  │
+│  │  • Internal (Agentry/tools/)            │  │
+│  │  • MCP (Agentry/mcp_client.py)          │  │
 │  │  • Custom (register_tool_from_function)  │  │
 │  └──────────────────────────────────────────┘  │
 └─────────────────────┬───────────────────────────┘
                       │
 ┌─────────────────────▼───────────────────────────┐
-│       scratchy.providers.LLMProvider            │
+│       Agentry.providers.LLMProvider            │
 │    Ollama  │  Groq  │  Gemini                  │
 └─────────────────────────────────────────────────┘
 ```
@@ -119,7 +119,7 @@ scratchy/                      # Main package
 ## Quick Start
 
 ```python
-from scratchy import Agent
+from Agentry import Agent
 
 # Initialize
 agent = Agent(llm="ollama", model="llama3.2")

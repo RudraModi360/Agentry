@@ -312,6 +312,10 @@ async def chat_page():
 async def setup_page():
     return safe_file_response("setup.html")
 
+@app.get("/orb")
+async def orb_page():
+    return safe_file_response("orb.html")
+
 # --- Authentication ---
 @app.post("/api/auth/register")
 async def register(credentials: UserCredentials):
@@ -874,6 +878,15 @@ async def websocket_chat(websocket: WebSocket):
                 if not session_id.startswith(f"user_{user_id}_"):
                     session_id = f"user_{user_id}_{session_id}"
 
+                # Ensure session is loaded in Agent
+                if session_id not in agent.sessions:
+                    loaded_msgs = session_manager.load_session(session_id)
+                    if loaded_msgs:
+                        print(f"[Server] Restoring session {session_id} from DB ({len(loaded_msgs)} msgs)")
+                        # Utilize agent.get_session to create the object properly
+                        session_obj = agent.get_session(session_id)
+                        session_obj.messages = loaded_msgs
+
                 # Handle Editing Logic
                 if is_edit and edit_index is not None:
                     session = agent.get_session(session_id)
@@ -996,6 +1009,42 @@ async def websocket_chat(websocket: WebSocket):
                         "messages": messages or []
                     })
             
+            elif msg_type == "delete_message":
+                session_id = data.get("session_id")
+                msg_index = data.get("index")
+                
+                if session_id and msg_index is not None and agent:
+                    # Ensure session_id has user prefix
+                    if not session_id.startswith(f"user_{user_id}_"):
+                         session_id = f"user_{user_id}_{session_id}"
+
+                    # Ensure session is loaded in Agent
+                    if session_id not in agent.sessions:
+                        loaded_msgs = session_manager.load_session(session_id)
+                        if loaded_msgs:
+                            print(f"[Server] Restoring session {session_id} from DB for deletion")
+                            # Utilize agent.get_session to create the object properly
+                            session_obj = agent.get_session(session_id)
+                            session_obj.messages = loaded_msgs
+                    
+                    try:
+                        session = agent.get_session(session_id)
+                        if session and 0 <= msg_index < len(session.messages):
+                            # Remove message
+                            deleted_msg = session.messages.pop(msg_index)
+                            print(f"[Server] Deleting message at index {msg_index} from session {session_id}")
+                            
+                            # Save updated session
+                            session_manager.save_session(session_id, session.messages)
+                            
+                            await websocket.send_json({
+                                "type": "message_deleted",
+                                "session_id": session_id,
+                                "index": msg_index
+                            })
+                    except Exception as e:
+                        print(f"Error deleting message: {e}")
+
             elif msg_type == "ping":
                 await websocket.send_json({"type": "pong"})
     
