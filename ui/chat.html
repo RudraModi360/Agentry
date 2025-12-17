@@ -831,14 +831,14 @@
         }
 
         .new-chat-btn {
-            width: 100%;
-            padding: 12px 24px;
-            background: var(--text-primary);
-            color: var(--bg-primary);
-            border: none;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 600;
+            flex: 1;
+            padding: 10px 16px;
+            background: var(--dark-input);
+            color: var(--text-primary);
+            border: 1px solid var(--dark-border);
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
             font-family: inherit;
             cursor: pointer;
             display: flex;
@@ -849,11 +849,53 @@
         }
 
         .new-chat-btn:hover {
-            opacity: 0.9;
+            background: var(--bg-secondary);
+            border-color: var(--accent);
         }
 
         .new-chat-btn:active {
             transform: scale(0.98);
+        }
+
+        /* Sidebar Action Buttons Row */
+        .sidebar-actions-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 0;
+        }
+
+        .sidebar-action-btn {
+            flex: 1;
+            padding: 10px 12px;
+            background: var(--dark-input);
+            color: var(--text-primary);
+            border: 1px solid var(--dark-border);
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-action-btn:hover {
+            background: var(--bg-secondary);
+            border-color: var(--accent);
+        }
+
+        .sidebar-action-btn.active {
+            border-color: var(--accent);
+            background: var(--accent-light);
+        }
+
+        .sidebar-action-btn svg {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
         }
 
         /* Sessions List */
@@ -941,6 +983,194 @@
         .session-item {
             position: relative;
             padding-right: 40px;
+        }
+
+        /* Search Modal Styles */
+        .search-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 8vh;
+            z-index: 10000;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .search-modal-overlay.active {
+            display: flex;
+        }
+
+        .search-modal {
+            background: var(--bg-primary);
+            width: 680px;
+            max-width: 95vw;
+            max-height: 80vh;
+            border-radius: 16px;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .search-modal-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--card-border);
+            background: var(--bg-secondary);
+        }
+
+        .modal-search-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--dark-input);
+            border: 1px solid var(--dark-border);
+            border-radius: 12px;
+            padding: 12px 18px;
+            transition: all 0.2s;
+        }
+
+        .modal-search-wrapper:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--accent-light);
+        }
+
+        .modal-search-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 16px;
+            font-family: inherit;
+            outline: none;
+        }
+
+        .search-modal-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            background: var(--bg-primary);
+        }
+
+        .modal-sessions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .modal-session-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .modal-session-item:hover {
+            background: var(--bg-secondary);
+            border-color: var(--card-border);
+        }
+
+        .modal-session-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: var(--dark-input);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+
+        .modal-session-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .modal-session-title {
+            font-weight: 500;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 2px;
+        }
+
+        .modal-session-meta {
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modal-session-snippet {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            font-style: italic;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .modal-match-badge {
+            font-size: 10px;
+            padding: 1px 6px;
+            border-radius: 4px;
+            background: var(--accent-light);
+            color: var(--accent);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .modal-no-results {
+            padding: 40px;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        /* Sessions Header */
+        .sessions-header {
+            padding: 8px 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         /* Provider Info */
@@ -1154,6 +1384,8 @@
         }
 
         .message.user .message-content {
+            display: flex;
+            flex-direction: column;
             align-items: flex-end;
             /* Align items inside right */
         }
@@ -1173,6 +1405,8 @@
             /* Slight indicator */
             display: inline-block;
             max-width: 85%;
+            margin-left: auto;
+            text-align: left;
         }
 
         /* User Actions (Copy/Edit) */
@@ -2316,7 +2550,7 @@
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <div style="display: flex; align-items: center; width: 100%; margin-bottom: 16px;">
+                <div style="display: flex; align-items: center; width: 100%; margin-bottom: 12px;">
                     <div class="logo" style="margin-bottom: 0;">
                         <div class="logo-icon">
                             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -2333,13 +2567,33 @@
                         </svg>
                     </button>
                 </div>
-                <button class="new-chat-btn" id="new-chat-btn">
-                    <span>+</span> New Chat
-                </button>
+                <!-- Action Buttons: New Chat & Search -->
+                <div class="sidebar-actions-row">
+                    <button class="sidebar-action-btn" id="new-chat-btn" title="New Chat">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                            <path d="M12 5v14M5 12h14" />
+                        </svg>
+                        <span>New chat</span>
+                    </button>
+                    <button class="sidebar-action-btn" id="search-toggle-btn" title="Search chats">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <span>Search</span>
+                    </button>
+                </div>
             </div>
 
             <!-- Resizer -->
             <div class="sidebar-resizer" id="sidebar-resizer"></div>
+
+            <!-- Your chats section header -->
+            <div class="sessions-header">
+                <span>Your chats</span>
+            </div>
 
             <div class="sessions-container" id="sessions-container">
                 <!-- Sessions will be loaded here -->
@@ -2468,6 +2722,28 @@
         </div>
     </div>
 
+    <!-- Search Modal -->
+    <div class="search-modal-overlay" id="search-modal-overlay">
+        <div class="search-modal">
+            <div class="search-modal-header">
+                <div class="modal-search-wrapper">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="modal-search-input" class="modal-search-input"
+                        placeholder="Search your chats..." autocomplete="off">
+                </div>
+            </div>
+            <div class="search-modal-content">
+                <div class="modal-sessions-list" id="modal-sessions-list">
+                    <!-- Results will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Apply theme immediately to prevent flash
         (function () {
@@ -2498,14 +2774,34 @@
         const statusDot = document.getElementById('status-dot');
         const statusText = document.getElementById('status-text');
 
+        // New Chat Button Logic
+        function initNewChatButton() {
+            const btn = document.getElementById('new-chat-btn');
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    currentSessionId = null;
+                    clearMessages();
+                    // Update URL
+                    window.history.pushState({}, '', '/chat');
+                    // Deactivate sidebar items
+                    document.querySelectorAll('.session-item.active').forEach(item => item.classList.remove('active'));
+                });
+            }
+        }
+
+        // Initialize
         // Initialize
         async function init() {
             initTheme();
             initClock();
+            // Initialize UI controls first so they work immediately
+            initSidebarControls();
+            initChatSearch();
+            initNewChatButton();
+
             await loadUserInfo();
             await loadSessions();
             connectWebSocket();
-            initSidebarControls();
         }
 
         // Clock Widget - Start immediately
@@ -2527,6 +2823,7 @@
                 timeZone: 'Asia/Kolkata',
                 hour: '2-digit',
                 minute: '2-digit',
+                second: '2-digit',
                 hour12: false
             });
 
@@ -2535,6 +2832,7 @@
                 timeZone: 'America/Los_Angeles',
                 hour: '2-digit',
                 minute: '2-digit',
+                second: '2-digit',
                 hour12: false
             });
 
@@ -2596,86 +2894,7 @@
         }
 
         // Sidebar Controls (Resize & Toggle)
-        function initSidebarControls() {
-            const sidebar = document.getElementById('sidebar');
-            const resizer = document.getElementById('sidebar-resizer');
-            const collapseBtn = document.getElementById('sidebar-collapse-btn');
-            const expandBtn = document.getElementById('sidebar-expand-btn');
-            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-            const sidebarOverlay = document.getElementById('sidebar-overlay');
 
-            // Toggle Logic
-            function toggleSidebar(collapsed) {
-                if (collapsed) {
-                    sidebar.classList.add('collapsed');
-                    sidebar.classList.remove('mobile-open');
-                    sidebarOverlay.classList.remove('active');
-                } else {
-                    sidebar.classList.remove('collapsed');
-                }
-            }
-
-            // Mobile menu toggle
-            function toggleMobileSidebar(open) {
-                if (open) {
-                    sidebar.classList.add('mobile-open');
-                    sidebar.classList.remove('collapsed');
-                    sidebarOverlay.classList.add('active');
-                } else {
-                    sidebar.classList.remove('mobile-open');
-                    sidebarOverlay.classList.remove('active');
-                }
-            }
-
-            collapseBtn.addEventListener('click', () => toggleSidebar(true));
-            expandBtn.addEventListener('click', () => toggleSidebar(false));
-
-            // Mobile menu button
-            if (mobileMenuBtn) {
-                mobileMenuBtn.addEventListener('click', () => {
-                    const isOpen = sidebar.classList.contains('mobile-open');
-                    toggleMobileSidebar(!isOpen);
-                });
-            }
-
-            // Close sidebar when clicking overlay
-            if (sidebarOverlay) {
-                sidebarOverlay.addEventListener('click', () => {
-                    toggleMobileSidebar(false);
-                });
-            }
-
-            // Resizing Logic
-            let isResizing = false;
-
-            resizer.addEventListener('mousedown', (e) => {
-                isResizing = true;
-                document.body.style.cursor = 'col-resize';
-                sidebar.style.transition = 'none'; // Disable transition for smooth dragging
-                e.preventDefault(); // Prevent text selection
-            });
-
-            document.addEventListener('mousemove', (e) => {
-                if (!isResizing) return;
-
-                // Calculate new width
-                // Constraint between 240px and 500px handled by CSS min/max-width mostly, 
-                // but we clamp here for dragging UX
-                let newWidth = e.clientX;
-                if (newWidth < 240) newWidth = 240;
-                if (newWidth > 600) newWidth = 600;
-
-                sidebar.style.width = `${newWidth}px`;
-            });
-
-            document.addEventListener('mouseup', () => {
-                if (isResizing) {
-                    isResizing = false;
-                    document.body.style.cursor = '';
-                    sidebar.style.transition = ''; // Re-enable transition
-                }
-            });
-        }
 
         // Load user info
         async function loadUserInfo() {
@@ -2725,6 +2944,9 @@
             }
         }
 
+        // Store sessions for search filtering
+        let allSessions = [];
+
         // Load sessions
         async function loadSessions() {
             try {
@@ -2734,7 +2956,18 @@
 
                 if (response.ok) {
                     const data = await response.json();
-                    renderSessions(data.sessions);
+                    allSessions = data.sessions;
+                    // Get current search query and filter if needed
+                    const searchInput = document.getElementById('search-chats-input');
+                    const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+                    if (query) {
+                        const filtered = allSessions.filter(s =>
+                            (s.title || 'Untitled Chat').toLowerCase().includes(query)
+                        );
+                        renderSessions(filtered);
+                    } else {
+                        renderSessions(allSessions);
+                    }
                 }
             } catch (error) {
                 console.error('Failed to load sessions:', error);
@@ -2747,7 +2980,11 @@
             container.innerHTML = '';
 
             if (sessions.length === 0) {
-                container.innerHTML = '<p style="color: var(--text-secondary); font-size: 13px; text-align: center; padding: 20px;">No previous chats</p>';
+                // Check if we're searching
+                const searchInput = document.getElementById('search-chats-input');
+                const isSearching = searchInput && searchInput.value.trim().length > 0;
+                const emptyMessage = isSearching ? 'No matching chats found' : 'No previous chats';
+                container.innerHTML = `<p style="color: var(--text-secondary); font-size: 13px; text-align: center; padding: 20px;">${emptyMessage}</p>`;
                 return;
             }
 
@@ -2807,6 +3044,129 @@
         }
         // Expose to global scope for inline onclick handlers
         window.deleteSession = deleteSession;
+
+        // Initialize Chat Search Modal
+        function initChatSearch() {
+            const searchModalOverlay = document.getElementById('search-modal-overlay');
+            const searchToggleBtn = document.getElementById('search-toggle-btn');
+            const searchInput = document.getElementById('modal-search-input');
+            const resultsList = document.getElementById('modal-sessions-list');
+
+            if (!searchModalOverlay || !searchToggleBtn || !searchInput) return;
+
+            const openSearch = () => {
+                searchModalOverlay.classList.add('active');
+                setTimeout(() => searchInput.focus(), 50);
+                renderModalResults(allSessions); // Show recent by default
+            };
+
+            const closeSearch = () => {
+                searchModalOverlay.classList.remove('active');
+                searchInput.value = '';
+            };
+
+            // Toggle search modal
+            searchToggleBtn.addEventListener('click', openSearch);
+
+            // Close modal on overlay click
+            searchModalOverlay.addEventListener('click', (e) => {
+                if (e.target === searchModalOverlay) closeSearch();
+            });
+
+            // Close modal on Escape
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeSearch();
+                if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                    e.preventDefault();
+                    if (searchModalOverlay.classList.contains('active')) closeSearch();
+                    else openSearch();
+                }
+            });
+
+            // Debounced search function
+            let searchTimeout;
+            const performSearch = async () => {
+                const query = searchInput.value.trim();
+
+                if (!query) {
+                    renderModalResults(allSessions);
+                    return;
+                }
+
+                // Call backend API for search
+                try {
+                    const response = await fetch(`${API_BASE}/api/sessions/search?q=${encodeURIComponent(query)}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        renderModalResults(data.sessions, true);
+                    } else {
+                        // Fallback to local search on API error
+                        const filtered = allSessions.filter(s =>
+                            (s.title || 'Untitled Chat').toLowerCase().includes(query.toLowerCase())
+                        );
+                        renderModalResults(filtered);
+                    }
+                } catch (error) {
+                    console.error('Search failed:', error);
+                    const filtered = allSessions.filter(s =>
+                        (s.title || 'Untitled Chat').toLowerCase().includes(query.toLowerCase())
+                    );
+                    renderModalResults(filtered);
+                }
+            };
+
+            // Search input handler with debounce
+            searchInput.addEventListener('input', () => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(performSearch, 300);
+            });
+
+            // Helper to render results in the modal
+            function renderModalResults(sessions, isSearch = false) {
+                resultsList.innerHTML = '';
+
+                if (sessions.length === 0) {
+                    resultsList.innerHTML = `<div class="modal-no-results">
+                        <p>${isSearch ? 'No matching chats found' : 'No recent chats'}</p>
+                    </div>`;
+                    return;
+                }
+
+                sessions.forEach(session => {
+                    const date = new Date(session.updated_at || session.created_at);
+                    const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+                    const item = document.createElement('div');
+                    item.className = 'modal-session-item';
+                    item.innerHTML = `
+                        <div class="modal-session-icon">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                            </svg>
+                        </div>
+                        <div class="modal-session-info">
+                            <div class="modal-session-title">${escapeHtml(session.title || 'Untitled Chat')}</div>
+                            <div class="modal-session-meta">
+                                <span>${dateStr}</span>
+                                <span>·</span>
+                                <span>${session.message_count || 0} turns</span>
+                                ${isSearch && session.score > 200 ? '<span class="modal-match-badge">High Match</span>' : ''}
+                            </div>
+                            ${session.snippet ? `<div class="modal-session-snippet">${escapeHtml(session.snippet)}</div>` : ''}
+                        </div>
+                    `;
+
+                    item.addEventListener('click', () => {
+                        loadSession(session.id);
+                        closeSearch();
+                    });
+                    resultsList.appendChild(item);
+                });
+            }
+        }
 
         // Load session
         async function loadSession(sessionId) {
@@ -4158,16 +4518,7 @@
             }
         }
 
-        // Initialize
-        async function init() {
-            initTheme();
-            // Initialize UI controls first so they work immediately
-            initSidebarControls();
 
-            await loadUserInfo();
-            await loadSessions();
-            connectWebSocket();
-        }
 
         function initSidebarControls() {
             const sidebar = document.getElementById('sidebar');
@@ -4251,9 +4602,11 @@
             }
         }
 
-        // Start the application
+
+        // Initialize
         init();
     </script>
+
 </body>
 
 </html>

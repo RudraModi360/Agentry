@@ -700,6 +700,109 @@ async def create_session(user: Dict = Depends(get_current_user)):
         }
     }
 
+@app.get("/api/sessions/search")
+async def search_sessions(q: str, user: Dict = Depends(get_current_user)):
+    """Search chat sessions by title and message content."""
+    if not q or len(q.strip()) < 1:
+        return {"sessions": [], "query": q}
+    
+    query = q.strip().lower()
+    query_words = query.split()
+    
+    session_manager = SessionManager()
+    all_sessions = session_manager.list_sessions()
+    
+    # Filter sessions by user
+    user_prefix = f"user_{user['id']}_"
+    user_sessions = [s for s in all_sessions if s["session_id"].startswith(user_prefix)]
+    
+    # Sort user sessions by recency first for tie-breaking
+    user_sessions.sort(key=lambda x: x.get("last_activity") or x.get("created_at") or "", reverse=True)
+    
+    results = []
+    
+    for session in user_sessions[0:100]: # Limit processing to relevant recent sessions
+        session_id = session["session_id"]
+        title = (session.get("title") or "New Chat").lower()
+        score = 0
+        match_source = []
+        snippet = ""
+        
+        # Title matching - high priority
+        if query in title:
+            score += 150  # Exact match in title is very important
+            match_source.append("title")
+        else:
+            # Check individual words in title
+            for word in query_words:
+                if len(word) > 2 and word in title:
+                    score += 40
+                    if "title" not in match_source:
+                        match_source.append("title")
+        
+        # Message content matching
+        try:
+            messages = session_manager.load_session(session_id)
+            if messages:
+                # Search reverse to find the most recent matches first
+                for msg in reversed(messages):
+                    content = msg.get("content", "")
+                    if isinstance(content, list):  # Multimodal content
+                        content = " ".join([
+                            p.get("text", "") for p in content 
+                            if isinstance(p, dict) and p.get("type") == "text"
+                        ])
+                    content_lower = content.lower() if content else ""
+                    
+                    if not content_lower: continue
+
+                    # Exact query match in content
+                    if query in content_lower:
+                        score += 80
+                        if "messages" not in match_source:
+                            match_source.append("messages")
+                        
+                        # Extract snippet
+                        idx = content_lower.find(query)
+                        start = max(0, idx - 40)
+                        end = min(len(content), idx + len(query) + 40)
+                        snippet = content[start:end].strip()
+                        if start > 0: snippet = "..." + snippet
+                        if end < len(content): snippet = snippet + "..."
+                        break # Found a good snippet, stop looking in this session
+                    else:
+                        # Individual word matching
+                        found_words = 0
+                        for word in query_words:
+                            if len(word) > 2 and word in content_lower:
+                                found_words += 1
+                                score += 15
+                                if "messages" not in match_source:
+                                    match_source.append("messages")
+                        
+                        if found_words > 0 and not snippet:
+                            # Use this message as a snippet if no better match found yet
+                            snippet = content[:80] + "..." if len(content) > 80 else content
+        except Exception as e:
+            print(f"[Search] Error loading session {session_id}: {e}")
+        
+        if score > 0:
+            results.append({
+                "id": session_id,
+                "title": session.get("title") or "New Chat",
+                "created_at": session.get("created_at"),
+                "updated_at": session.get("last_activity") or session.get("created_at"),
+                "message_count": session.get("message_count", 0),
+                "score": score,
+                "match_source": match_source,
+                "snippet": snippet
+            })
+    
+    # Sort by score descending, then by updated_at descending
+    results.sort(key=lambda x: (x["score"], x["updated_at"]), reverse=True)
+    
+    return {"sessions": results[:25], "query": q}
+
 @app.get("/api/sessions/{session_id}")
 async def get_session(session_id: str, user: Dict = Depends(get_current_user)):
     """Get a specific session with messages."""
@@ -729,6 +832,8 @@ async def delete_session(session_id: str, user: Dict = Depends(get_current_user)
     session_manager.delete_session(session_id)
     
     return {"message": "Session deleted"}
+
+
 
 async def generate_title(session_id: str, messages: List[Dict], provider: Any, session_manager: SessionManager, websocket: WebSocket = None):
     """Generate and save 3-5 word title for the session."""
