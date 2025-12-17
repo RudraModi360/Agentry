@@ -783,7 +783,7 @@
         }
 
         .sidebar-header {
-            padding: 20px;
+            padding: 12px 16px;
             border-bottom: 1px solid var(--dark-border);
         }
 
@@ -791,7 +791,8 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            margin-bottom: 16px;
+            margin-bottom: 4px;
+            /* Reduced from 16px */
         }
 
         .logo-img {
@@ -858,43 +859,44 @@
         }
 
         /* Sidebar Action Buttons Row */
+        /* Sidebar Action Buttons Row */
+        /* Sidebar Action Buttons Row */
         .sidebar-actions-row {
             display: flex;
-            gap: 8px;
+            flex-direction: column;
+            gap: 2px;
+            margin-top: 0;
             margin-bottom: 0;
+            padding: 0;
         }
 
         .sidebar-action-btn {
-            flex: 1;
+            width: 100%;
             padding: 10px 12px;
-            background: var(--dark-input);
-            color: var(--text-primary);
-            border: 1px solid var(--dark-border);
-            border-radius: 10px;
-            font-size: 13px;
+            border-radius: 8px;
+            font-size: 14px;
             font-weight: 500;
             font-family: inherit;
             cursor: pointer;
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 6px;
+            justify-content: flex-start;
+            gap: 12px;
             transition: all 0.2s ease;
+            color: var(--text-primary);
+            background-color: transparent;
+            /* Transparent default */
+            border: 1px solid transparent;
         }
 
         .sidebar-action-btn:hover {
-            background: var(--bg-secondary);
-            border-color: var(--accent);
-        }
-
-        .sidebar-action-btn.active {
-            border-color: var(--accent);
-            background: var(--accent-light);
+            background-color: rgba(255, 255, 255, 0.05);
         }
 
         .sidebar-action-btn svg {
             width: 16px;
             height: 16px;
+            opacity: 0.9;
             flex-shrink: 0;
         }
 
@@ -2572,7 +2574,8 @@
                     <button class="sidebar-action-btn" id="new-chat-btn" title="New Chat">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                             stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
-                            <path d="M12 5v14M5 12h14" />
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                         </svg>
                         <span>New chat</span>
                     </button>
@@ -2582,7 +2585,7 @@
                             <circle cx="11" cy="11" r="8"></circle>
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
-                        <span>Search</span>
+                        <span>Search chats</span>
                     </button>
                 </div>
             </div>
@@ -3520,14 +3523,26 @@
         async function deleteMessage(msgElement) {
             if (!confirm('Are you sure you want to delete this message?')) return;
 
-            // Calculate index: Find index in DOM
-            const allMessages = Array.from(messagesContainer.querySelectorAll('.message'));
-            const domIndex = allMessages.indexOf(msgElement);
+            let backendIndex;
 
-            if (domIndex === -1) return;
+            // Prefer explicit index if available (from session load)
+            if (msgElement.dataset.messageIndex) {
+                backendIndex = parseInt(msgElement.dataset.messageIndex, 10);
+            } else {
+                // Fallback for new messages created before reload (assume at the end or calculate)
+                // However, newly created messages might not have index set properly yet unless synced.
+                // But typically user sends -> we reload list on next turn? 
+                // Actually, "addUserMessage" without index means it's a new message.
+                // The backend index is likely (len - 1) or similar.
 
-            // Backend Index: 0 is System. So Backend Index = DOM Index + 1.
-            const backendIndex = domIndex + 1;
+                // For now, rely on DOM index offset logic as fallback, but the dataset is preferred.
+                const allMessages = Array.from(messagesContainer.querySelectorAll('.message'));
+                const domIndex = allMessages.indexOf(msgElement);
+                if (domIndex === -1) return;
+
+                // Fallback estimation (User might have system prompt at 0)
+                backendIndex = domIndex + 1;
+            }
 
             if (ws && ws.readyState === WebSocket.OPEN && currentSessionId) {
                 // Optimistic visual feedback
@@ -3542,11 +3557,15 @@
             }
         }
 
-        function createAssistantMessage() {
+        function createAssistantMessage(messageIndex = null) {
             hideEmptyState();
 
             const msg = document.createElement('div');
             msg.className = 'message assistant';
+            if (messageIndex !== null) {
+                msg.dataset.messageIndex = messageIndex;
+            }
+
             msg.innerHTML = `
                 <div class="message-content">
                     <div class="message-text" style="display:none;"></div>
@@ -3944,7 +3963,7 @@
                     }
 
                     const content = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
-                    addUserMessage(content);
+                    addUserMessage(content, idx);
                     currentAssistantEl = null;
                     lastRole = 'user';
                 } else if (msg.role === 'assistant') {
@@ -3953,7 +3972,7 @@
                     // 2. The previous message was a user message (new turn)
                     // If previous was 'tool', we're continuing the same response
                     if (!currentAssistantEl || lastRole === 'user') {
-                        currentAssistantEl = createAssistantMessage();
+                        currentAssistantEl = createAssistantMessage(idx);
                         removeLoadingIndicators(currentAssistantEl);
                     }
 

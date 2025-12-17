@@ -1135,9 +1135,43 @@ async def websocket_chat(websocket: WebSocket):
                     try:
                         session = agent.get_session(session_id)
                         if session and 0 <= msg_index < len(session.messages):
-                            # Remove message
-                            deleted_msg = session.messages.pop(msg_index)
-                            print(f"[Server] Deleting message at index {msg_index} from session {session_id}")
+                            # Identify indices to delete
+                            target_role = session.messages[msg_index].role
+                            indices_to_delete = [msg_index]
+                            
+                            print(f"[Server] Request to delete message {msg_index} ({target_role})")
+                            
+                            next_idx = msg_index + 1
+                            while next_idx < len(session.messages):
+                                next_msg = session.messages[next_idx]
+                                
+                                if target_role == 'user':
+                                    # Delete everything until the next user message (i.e. the full response turn)
+                                    if next_msg.role == 'user':
+                                        break
+                                    indices_to_delete.append(next_idx)
+                                
+                                elif target_role == 'assistant':
+                                    # Delete tool calls associated with this assistant message
+                                    if next_msg.role == 'tool':
+                                        indices_to_delete.append(next_idx)
+                                    else:
+                                        # Stop at next User or next Assistant or System
+                                        break 
+                                
+                                else:
+                                    # If target is Tool or System, just delete itself (or maybe tool outputs too?)
+                                    # For now, simplistic approach for others.
+                                    break
+                                
+                                next_idx += 1
+                                
+                            # Delete in reverse order to preserve indices
+                            indices_to_delete.sort(reverse=True)
+                            
+                            for idx in indices_to_delete:
+                                removed = session.messages.pop(idx)
+                                print(f"[Server] Deleted message at index {idx} ({removed.role})")
                             
                             # Save updated session
                             session_manager.save_session(session_id, session.messages)
@@ -1145,10 +1179,13 @@ async def websocket_chat(websocket: WebSocket):
                             await websocket.send_json({
                                 "type": "message_deleted",
                                 "session_id": session_id,
-                                "index": msg_index
+                                "index": msg_index,
+                                "deleted_count": len(indices_to_delete)
                             })
                     except Exception as e:
                         print(f"Error deleting message: {e}")
+                        import traceback
+                        traceback.print_exc()
 
             elif msg_type == "ping":
                 await websocket.send_json({"type": "pong"})

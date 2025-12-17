@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Scratchy - Configure your AI provider">
-    <title>Scratchy - Setup</title>
+    <meta name="description" content="Agentry - Configure your AI provider">
+    <title>Agentry - Setup</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
@@ -76,41 +76,100 @@
         .setup-container {
             max-width: 900px;
             margin: 0 auto;
-            padding: 40px 20px;
+            padding: 100px 20px 40px;
         }
 
         /* Header */
-        .setup-header {
-            text-align: center;
-            margin-bottom: 48px;
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 20px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
         .logo {
-            display: inline-flex;
+            display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 24px;
+            gap: 14px;
+            font-weight: 700;
+            font-size: 24px;
+            letter-spacing: -0.02em;
+            text-decoration: none;
+            color: var(--text-primary);
         }
 
-        .logo-icon {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
-            border-radius: 14px;
+        .logo-mark {
+            position: relative;
+            width: 36px;
+            height: 36px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
-            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
         }
 
-        .logo-text {
-            font-size: 28px;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--text-primary), var(--accent-cyan));
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
+        .logo-icon {
+            width: 28px;
+            height: 28px;
+            fill: var(--text-primary);
+            transition: fill 0.3s;
+        }
+
+        /* Sparkle particles */
+        .sparkle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: var(--gradient-start);
+            border-radius: 50%;
+            animation: sparkle 2.5s ease-in-out infinite;
+            box-shadow: 0 0 8px rgba(99, 102, 241, 0.4);
+        }
+
+        .sparkle:nth-child(1) {
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            animation-delay: 0s;
+        }
+
+        .sparkle:nth-child(2) {
+            top: 50%;
+            right: 0;
+            transform: translateY(-50%);
+            animation-delay: 0.4s;
+        }
+
+        .sparkle:nth-child(3) {
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            animation-delay: 0.8s;
+        }
+
+        .sparkle:nth-child(4) {
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            animation-delay: 1.2s;
+        }
+
+        @keyframes sparkle {
+
+            0%,
+            100% {
+                opacity: 0;
+                transform: scale(0);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
 
         .setup-title {
@@ -226,16 +285,11 @@
             margin-bottom: 16px;
         }
 
-        .provider-icon.ollama {
-            background: linear-gradient(135deg, #2ecc71, #27ae60);
-        }
-
-        .provider-icon.groq {
-            background: linear-gradient(135deg, #e74c3c, #c0392b);
-        }
-
-        .provider-icon.gemini {
-            background: linear-gradient(135deg, #3498db, #2980b9);
+        .provider-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 12px;
         }
 
         .provider-name {
@@ -531,9 +585,6 @@
 
         /* Theme Toggle */
         .theme-toggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
             width: 40px;
             height: 40px;
             border: none;
@@ -546,7 +597,6 @@
             color: var(--text-secondary);
             transition: all 0.2s ease;
             border: 1px solid var(--dark-border);
-            z-index: 100;
         }
 
         .theme-toggle:hover {
@@ -579,18 +629,36 @@
 </head>
 
 <body>
-    <!-- Theme Toggle -->
-    <button id="theme-toggle" class="theme-toggle" title="Toggle theme">
-        <svg class="sun-icon" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="5" />
-            <path
-                d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
-                stroke="currentColor" stroke-width="2" fill="none" />
-        </svg>
-        <svg class="moon-icon" viewBox="0 0 24 24">
-            <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
-        </svg>
-    </button>
+    <!-- Header -->
+    <header class="header">
+        <a href="/" class="logo">
+            <div class="logo-mark">
+                <!-- Simple geometric logo icon -->
+                <svg class="logo-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                </svg>
+                <!-- Sparkle particles -->
+                <span class="sparkle"></span>
+                <span class="sparkle"></span>
+                <span class="sparkle"></span>
+                <span class="sparkle"></span>
+            </div>
+            <span>Agentry</span>
+        </a>
+
+        <!-- Theme Toggle -->
+        <button id="theme-toggle" class="theme-toggle" title="Toggle theme">
+            <svg class="sun-icon" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="5" />
+                <path
+                    d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+                    stroke="currentColor" stroke-width="2" fill="none" />
+            </svg>
+            <svg class="moon-icon" viewBox="0 0 24 24">
+                <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+            </svg>
+        </button>
+    </header>
 
     <div class="bg-gradient"></div>
 
@@ -601,10 +669,6 @@
 
     <div class="setup-container">
         <div class="setup-header">
-            <div class="logo">
-                <div class="logo-icon">🐾</div>
-                <span class="logo-text">Scratchy</span>
-            </div>
             <h1 class="setup-title">Configure Your AI Provider</h1>
             <p class="setup-subtitle">Choose how you want to power your AI assistant</p>
         </div>
@@ -621,20 +685,27 @@
         <div class="step-section active" id="step-1">
             <div class="provider-grid">
                 <div class="provider-card" data-provider="ollama">
-                    <div class="provider-icon ollama">🦙</div>
+                    <div class="provider-icon ollama">
+                        <img src="https://github.com/ollama.png" alt="Ollama">
+                    </div>
                     <div class="provider-name">Ollama</div>
                     <div class="provider-desc">Run models locally on your machine or use free cloud models for learning.
                     </div>
                     <div class="provider-badge">Local + Cloud</div>
                 </div>
                 <div class="provider-card" data-provider="groq">
-                    <div class="provider-icon groq">⚡</div>
+                    <div class="provider-icon groq">
+                        <img src="https://github.com/groq.png" alt="Groq">
+                    </div>
                     <div class="provider-name">Groq</div>
                     <div class="provider-desc">Ultra-fast inference powered by LPU technology. Requires API key.</div>
                     <div class="provider-badge">Cloud API</div>
                 </div>
                 <div class="provider-card" data-provider="gemini">
-                    <div class="provider-icon gemini">💎</div>
+                    <div class="provider-icon gemini">
+                        <img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg"
+                            alt="Gemini">
+                    </div>
                     <div class="provider-name">Google Gemini</div>
                     <div class="provider-desc">Google's most capable AI models with advanced reasoning.</div>
                     <div class="provider-badge">Cloud API</div>
