@@ -790,7 +790,7 @@
         })();
 
         // Check auth
-        const token = localStorage.getItem('scratchy_token');
+        const token = localStorage.getItem('agentry_token');
         if (!token) {
             window.location.href = '/login';
         }
@@ -805,7 +805,7 @@
                 });
 
                 if (!response.ok) {
-                    localStorage.removeItem('scratchy_token');
+                    localStorage.removeItem('agentry_token');
                     window.location.href = '/login';
                     return;
                 }

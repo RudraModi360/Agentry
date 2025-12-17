@@ -33,7 +33,7 @@ from scratchy.memory.storage import PersistentMemoryStore
 
 # ============== FastAPI App ==============
 app = FastAPI(
-    title="Scratchy AI Agent",
+    title="Agentry AI Agent",
     description="A powerful AI agent with tool capabilities",
     version="1.0.0"
 )
@@ -964,7 +964,7 @@ async def websocket_chat(websocket: WebSocket):
                 await websocket.close()
                 return
         
-        await websocket.send_json({"type": "connected", "message": "Connected to Scratchy"})
+        await websocket.send_json({"type": "connected", "message": "Connected to Agentry"})
         
         session_manager = SessionManager()
         
@@ -1209,7 +1209,7 @@ if __name__ == "__main__":
     
     print("""
 ╔══════════════════════════════════════════════════════════════╗
-║                    Scratchy AI Agent                         ║
+║                    Agentry AI Agent                         ║
 ╠══════════════════════════════════════════════════════════════╣
 ║  Server running at: http://localhost:8000                    ║
 ║  API Docs: http://localhost:8000/docs                        ║

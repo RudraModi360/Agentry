@@ -450,7 +450,7 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    localStorage.setItem('scratchy_token', data.token);
+                    localStorage.setItem('agentry_token', data.token);
                     showMessage('Login successful! Redirecting...', 'success');
 
                     setTimeout(() => {
@@ -507,7 +507,7 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    localStorage.setItem('scratchy_token', data.token);
+                    localStorage.setItem('agentry_token', data.token);
                     showMessage('Account created! Redirecting...', 'success');
 
                     setTimeout(() => {
@@ -524,7 +524,7 @@
         });
 
         // Check if already logged in
-        const token = localStorage.getItem('scratchy_token');
+        const token = localStorage.getItem('agentry_token');
         if (token) {
             fetch(`${API_BASE}/api/auth/me`, {
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -538,7 +538,7 @@
                     }
                 })
                 .catch(() => {
-                    localStorage.removeItem('scratchy_token');
+                    localStorage.removeItem('agentry_token');
                 });
         }
     </script>
