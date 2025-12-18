@@ -1234,13 +1234,18 @@
         .change-btn {
             font-size: 11px;
             font-weight: 500;
-            color: var(--text-muted);
+            color: var(--text-secondary);
+            background: var(--dark-input);
+            padding: 4px 8px;
+            border-radius: 4px;
             text-decoration: none;
-            transition: color 0.15s ease;
+            cursor: pointer;
+            transition: all 0.15s ease;
         }
 
         .change-btn:hover {
             color: var(--text-primary);
+            background: var(--dark-card);
         }
 
         /* User Menu */
@@ -1276,10 +1281,10 @@
 
         .logout-btn {
             padding: 5px 10px;
-            background: transparent;
-            border: 1px solid var(--card-border);
+            background: var(--dark-input);
+            border: 1px solid var(--dark-border);
             border-radius: 6px;
-            color: var(--text-muted);
+            color: var(--text-secondary);
             font-size: 11px;
             font-family: inherit;
             cursor: pointer;
@@ -1287,9 +1292,9 @@
         }
 
         .logout-btn:hover {
-            background: var(--card-bg);
-            border-color: var(--error);
-            color: var(--error);
+            background: var(--dark-card);
+            border-color: var(--text-muted);
+            color: var(--text-primary);
         }
 
         /* Main Chat Area */
@@ -1356,8 +1361,8 @@
         }
 
         .message {
-            max-width: 800px;
-            margin: 0 auto 24px;
+            max-width: 900px;
+            margin: 0 auto 16px;
             display: flex;
             gap: 16px;
             width: 100%;
@@ -1417,16 +1422,22 @@
             border-top: none;
             padding-top: 0;
             margin-left: 0;
+            pointer-events: none;
+            /* Prevent clicks when invisible */
         }
 
         .message.user:hover .message-actions {
             opacity: 1;
+            pointer-events: auto;
+            /* Allow clicks when visible */
         }
 
         /* Assistant Message Styling */
         .message.assistant {
             justify-content: flex-start;
             /* Align left */
+            min-height: 40px;
+            /* Prevent collapse when loading */
         }
 
         .message.assistant .message-content {
@@ -1444,6 +1455,15 @@
             padding: 0;
             color: var(--text-primary);
             max-width: 100%;
+        }
+
+        /* Assistant Message Actions - always visible */
+        .message.assistant .message-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+            opacity: 1;
+            pointer-events: auto;
         }
 
         .message.user .message-action-btn {
@@ -1465,6 +1485,9 @@
             justify-content: center;
             font-size: 12px;
             transition: all 0.2s;
+            z-index: 10;
+            /* Ensure buttons are above content */
+            position: relative;
         }
 
         .message-action-btn:hover {
@@ -1574,32 +1597,45 @@
             padding: 0;
         }
 
-        /* Text after tool calls */
-        .message-text-after {
-            margin-top: 16px;
-            padding-top: 12px;
-            border-top: 1px solid var(--dark-border);
+        /* Tool Calls Container - Inline horizontal layout for concurrent tools */
+        .tool-calls-container {
+            display: inline-flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            align-items: center;
+            margin: 2px 0;
+            vertical-align: middle;
         }
 
-        /* Tool Call - ChatGPT-style compact chips */
+        /* Text after tool calls - flows naturally */
+        .message-text-after {
+            display: block;
+            width: 100%;
+            margin-top: 6px;
+            padding-top: 0;
+            border-top: none;
+        }
+
+        /* Tool Call - Visible inline chips */
         .tool-call {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            background: var(--dark-input);
-            border: 1.5px solid #f59e0b;
-            /* Yellow/orange for running */
-            border-radius: 20px;
-            padding: 6px 12px;
-            margin: 4px 4px 4px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #f59e0b;
+            border-radius: 16px;
+            padding: 6px 14px;
+            margin: 2px;
             font-size: 13px;
             cursor: pointer;
-            transition: all 0.2s ease;
-            max-width: 100%;
+            transition: all 0.15s ease;
+            max-width: fit-content;
+            white-space: nowrap;
         }
 
         .tool-call:hover {
-            background: var(--dark-card);
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #fbbf24;
         }
 
         /* Completed - Green */
@@ -1618,7 +1654,7 @@
             gap: 6px;
             font-size: 13px;
             font-weight: 500;
-            color: var(--text-secondary);
+            color: var(--text-primary);
             white-space: nowrap;
         }
 
@@ -1630,9 +1666,9 @@
         }
 
         .tool-call-toggle {
-            font-size: 10px;
+            font-size: 8px;
             color: var(--text-muted);
-            transition: transform 0.2s;
+            transition: transform 0.15s;
             margin-left: 2px;
         }
 
@@ -1715,25 +1751,24 @@
             margin-bottom: 0;
         }
 
-        /* Spinner for running tools */
+        /* Spinner for running tools - compact */
         .tool-spinner {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 16px;
-            height: 16px;
+            width: 12px;
+            height: 12px;
             position: relative;
-            margin-left: 6px;
+            margin-left: 4px;
             color: #f59e0b;
-            /* Match the yellow running border */
         }
 
         .tool-spinner-leaf {
             position: absolute;
-            width: 3px;
-            height: 6px;
+            width: 2px;
+            height: 4px;
             background: currentColor;
-            border-radius: 2px;
+            border-radius: 1px;
             left: 50%;
             top: 50%;
             transform-origin: center 0;
@@ -1803,6 +1838,234 @@
             display: flex;
             flex-wrap: wrap;
             gap: 4px;
+            margin: 8px 0;
+        }
+
+        /* ===== Processing Indicator (Simple) ===== */
+        .processing-indicator {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 0;
+            margin: 4px 0;
+        }
+
+        /* ===== Thinking Indicator (Gemini-style minimal) ===== */
+        .thinking-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 0;
+            margin: 8px 0;
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+        }
+
+        .thinking-indicator:hover {
+            opacity: 0.8;
+        }
+
+        /* Sparkle/Star Icon */
+        .thinking-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .thinking-icon-sparkle {
+            width: 20px;
+            height: 20px;
+            background: var(--accent);
+            -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='currentColor'%3E%3Cpath d='M12 2L14.09 8.26L20 9.27L15.5 14.14L16.18 20.02L12 17.27L7.82 20.02L8.5 14.14L4 9.27L9.91 8.26L12 2Z'/%3E%3C/svg%3E") center/contain no-repeat;
+            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='currentColor'%3E%3Cpath d='M12 2L14.09 8.26L20 9.27L15.5 14.14L16.18 20.02L12 17.27L7.82 20.02L8.5 14.14L4 9.27L9.91 8.26L12 2Z'/%3E%3C/svg%3E") center/contain no-repeat;
+            animation: thinking-sparkle-rotate 3s linear infinite;
+        }
+
+        @keyframes thinking-sparkle-rotate {
+            0% {
+                transform: rotate(0deg) scale(1);
+            }
+
+            25% {
+                transform: rotate(15deg) scale(1.1);
+            }
+
+            50% {
+                transform: rotate(0deg) scale(1);
+            }
+
+            75% {
+                transform: rotate(-15deg) scale(1.1);
+            }
+
+            100% {
+                transform: rotate(0deg) scale(1);
+            }
+        }
+
+        /* Processing text - simple theme-colored text */
+        .processing-text {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Processing dots animation */
+        .processing-dots {
+            display: inline-flex;
+            gap: 3px;
+        }
+
+        .processing-dot {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--text-primary);
+            animation: processing-dot-pulse 1.4s ease-in-out infinite;
+        }
+
+        .processing-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .processing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .processing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes processing-dot-pulse {
+
+            0%,
+            80%,
+            100% {
+                opacity: 0.3;
+                transform: scale(0.8);
+            }
+
+            40% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Thinking text - shimmer effect for actual thinking/reasoning mode */
+        .thinking-text {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            background: linear-gradient(90deg,
+                    var(--text-primary) 0%,
+                    var(--accent) 50%,
+                    var(--text-primary) 100%);
+            background-size: 200% 100%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: thinking-shimmer 2s ease-in-out infinite;
+        }
+
+        @keyframes thinking-shimmer {
+            0% {
+                background-position: 100% 0;
+            }
+
+            100% {
+                background-position: -100% 0;
+            }
+        }
+
+        /* Bouncing dots before text (LoaderFive style) */
+        .thinking-dots {
+            display: flex;
+            gap: 3px;
+            margin-right: 4px;
+        }
+
+        .thinking-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--accent);
+            animation: thinking-dot-bounce 1.4s ease-in-out infinite;
+        }
+
+        .thinking-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .thinking-dot:nth-child(2) {
+            animation-delay: 0.16s;
+        }
+
+        .thinking-dot:nth-child(3) {
+            animation-delay: 0.32s;
+        }
+
+        @keyframes thinking-dot-bounce {
+
+            0%,
+            80%,
+            100% {
+                transform: scale(0.6);
+                opacity: 0.5;
+            }
+
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Toggle Arrow */
+        .thinking-toggle {
+            font-size: 12px;
+            color: var(--text-primary);
+            transition: transform 0.2s ease;
+        }
+
+        .thinking-indicator:not(.collapsed) .thinking-toggle {
+            transform: rotate(180deg);
+        }
+
+        /* Completed state - uses muted colors instead of green */
+        .thinking-indicator.collapsed .thinking-icon-sparkle {
+            animation: none;
+        }
+
+        .thinking-indicator.completed .thinking-icon {
+            display: none;
+        }
+
+        .thinking-indicator.completed .thinking-toggle {
+            display: none;
+        }
+
+        .thinking-indicator.completed .thinking-dots {
+            display: none;
+        }
+
+        .thinking-indicator.completed .thinking-icon-sparkle {
+            background: var(--text-muted);
+            animation: none;
+        }
+
+        .thinking-indicator.completed .thinking-text {
+            color: var(--text-muted);
+            background: none;
+            -webkit-text-fill-color: var(--text-muted);
+            animation: none;
+        }
+
+        /* Legacy spinner container styles (for compatibility) */
+        .spinner-container {
+            display: block;
             margin: 8px 0;
         }
 
@@ -3240,10 +3503,34 @@
                     break;
 
                 case 'message_deleted':
+                    console.log('[Delete] Message deleted successfully:', data);
                     if (data.session_id === currentSessionId) {
-                        // Reload session to keep indices and UI in sync
+                        // Remove all faded messages immediately for snappy UI
+                        document.querySelectorAll('.message[style*="opacity: 0.5"]').forEach(el => el.remove());
+
+                        // Reload session to get fresh data and proper indices
+                        console.log(`[Delete] Reloading session, ${data.deleted_count || 1} message(s) were deleted`);
                         loadSession(currentSessionId);
                     }
+                    // Also refresh sidebar to update message counts
+                    loadSessions();
+                    break;
+
+                case 'session_deleted':
+                    console.log('[Delete] Session deleted:', data);
+                    if (data.session_id === currentSessionId) {
+                        // Session was deleted (all messages removed)
+                        // Clear immediately
+                        messagesContainer.innerHTML = '';
+                        emptyState.style.display = 'flex';
+                        messagesContainer.appendChild(emptyState);
+                        document.getElementById('chat-title').textContent = '';
+
+                        currentSessionId = null;
+                        console.log('[Delete] Session cleared, showing new chat state');
+                    }
+                    // Always refresh sidebar when a session is deleted
+                    loadSessions();
                     break;
 
                 case 'error':
@@ -3411,11 +3698,20 @@
 
             // Add edit functionality
             const editBtn = msg.querySelector('.edit-btn');
-            editBtn.addEventListener('click', () => startEditMessage(msg));
+            editBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                startEditMessage(msg);
+            });
 
             // Add delete functionality
             const deleteBtn = msg.querySelector('.delete-btn');
-            deleteBtn.addEventListener('click', () => deleteMessage(msg));
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                console.log('[Delete] User message delete button clicked');
+                deleteMessage(msg);
+            });
 
             messagesContainer.appendChild(msg);
             scrollToBottom();
@@ -3517,7 +3813,19 @@
         }
 
         async function deleteMessage(msgElement) {
-            if (!confirm('Are you sure you want to delete this message?')) return;
+            // Determine the message type for better confirmation message
+            const isUserMessage = msgElement.classList.contains('user');
+            const isAssistantMessage = msgElement.classList.contains('assistant');
+
+            // Custom confirmation based on message type
+            let confirmMessage = 'Are you sure you want to delete this message?';
+            if (isUserMessage) {
+                confirmMessage = 'Delete this message and its response? This cannot be undone.';
+            } else if (isAssistantMessage) {
+                confirmMessage = 'Delete this response? The original question will remain.';
+            }
+
+            if (!confirm(confirmMessage)) return;
 
             let backendIndex;
 
@@ -3525,31 +3833,46 @@
             if (msgElement.dataset.messageIndex) {
                 backendIndex = parseInt(msgElement.dataset.messageIndex, 10);
             } else {
-                // Fallback for new messages created before reload (assume at the end or calculate)
-                // However, newly created messages might not have index set properly yet unless synced.
-                // But typically user sends -> we reload list on next turn? 
-                // Actually, "addUserMessage" without index means it's a new message.
-                // The backend index is likely (len - 1) or similar.
-
-                // For now, rely on DOM index offset logic as fallback, but the dataset is preferred.
+                // Fallback for new messages created before reload
                 const allMessages = Array.from(messagesContainer.querySelectorAll('.message'));
                 const domIndex = allMessages.indexOf(msgElement);
-                if (domIndex === -1) return;
+                if (domIndex === -1) {
+                    console.error('[Delete] Could not find message in DOM');
+                    return;
+                }
 
-                // Fallback estimation (User might have system prompt at 0)
+                // Fallback estimation (System prompt is at index 0 in backend)
                 backendIndex = domIndex + 1;
             }
 
+            console.log(`[Delete] Deleting ${isUserMessage ? 'user' : 'assistant'} message at backend index ${backendIndex}`);
+
             if (ws && ws.readyState === WebSocket.OPEN && currentSessionId) {
-                // Optimistic visual feedback
+                // Optimistic visual feedback - fade out the message being deleted
                 msgElement.style.opacity = '0.5';
                 msgElement.style.pointerEvents = 'none';
+                msgElement.style.transition = 'opacity 0.3s ease';
+
+                // If deleting a user message, also fade the following response(s)
+                if (isUserMessage) {
+                    let sibling = msgElement.nextElementSibling;
+                    while (sibling && !sibling.classList.contains('user') && sibling !== emptyState) {
+                        sibling.style.opacity = '0.5';
+                        sibling.style.pointerEvents = 'none';
+                        sibling.style.transition = 'opacity 0.3s ease';
+                        sibling = sibling.nextElementSibling;
+                    }
+                }
 
                 ws.send(JSON.stringify({
                     type: 'delete_message',
                     session_id: currentSessionId,
                     index: backendIndex
                 }));
+            } else {
+                console.error('[Delete] WebSocket not connected or no session');
+                msgElement.style.opacity = '1';
+                msgElement.style.pointerEvents = 'auto';
             }
         }
 
@@ -3562,18 +3885,23 @@
                 msg.dataset.messageIndex = messageIndex;
             }
 
+            // Thinking expander comes FIRST (at top), then message-text after
             msg.innerHTML = `
                 <div class="message-content">
-                    <div class="message-text" style="display:none;"></div>
                     <div class="spinner-container">
                         ${getSpinnerHTML()}
                     </div>
+                    <div class="message-text" style="display:none;"></div>
                 </div>
             `;
 
             // Note: message-actions (copy button) will be added when message is complete
 
             messagesContainer.appendChild(msg);
+
+            // Initialize thinking expander click handlers
+            initThinkingExpanderHandlers(msg);
+
             scrollToBottom();
             return msg;
         }
@@ -3617,11 +3945,18 @@
 
             // Add delete functionality
             const deleteBtn = actionsDiv.querySelector('.delete-btn');
-            deleteBtn.addEventListener('click', () => deleteMessage(msgElement));
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                console.log('[Delete] Assistant message delete button clicked');
+                deleteMessage(msgElement);
+            });
 
             // Add copy functionality
             const copyBtn = actionsDiv.querySelector('.copy-btn');
-            copyBtn.addEventListener('click', () => {
+            copyBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
                 // Get all text content from message (excluding tool calls details)
                 const textDivs = msgElement.querySelectorAll('.message-text, .message-text-after');
                 let text = '';
@@ -3643,18 +3978,18 @@
             if (!content || !content.trim()) return;
 
             const contentDiv = msgElement.querySelector('.message-content');
-            const toolCalls = contentDiv.querySelectorAll('.tool-call');
+            const toolsContainer = contentDiv.querySelector('.tool-calls-container');
+            const spinnerContainer = contentDiv.querySelector('.spinner-container');
 
-            // If there are tool calls, add/update text block after the last one
-            if (toolCalls.length > 0) {
-                const lastToolCall = toolCalls[toolCalls.length - 1];
-                let afterTextDiv = lastToolCall.nextElementSibling;
+            // If there's a tool calls container, add/update text block after it
+            if (toolsContainer) {
+                let afterTextDiv = toolsContainer.nextElementSibling;
 
-                // Check if there's already a text div after the tool call
+                // Check if there's already a text div after the container
                 if (!afterTextDiv || !afterTextDiv.classList.contains('message-text-after')) {
                     afterTextDiv = document.createElement('div');
                     afterTextDiv.className = 'message-text message-text-after';
-                    lastToolCall.parentNode.insertBefore(afterTextDiv, lastToolCall.nextSibling);
+                    toolsContainer.parentNode.insertBefore(afterTextDiv, toolsContainer.nextSibling);
                 }
 
                 const newContent = formatMessage(content);
@@ -3669,9 +4004,9 @@
                 if (!textDiv) {
                     textDiv = document.createElement('div');
                     textDiv.className = 'message-text';
-                    const roleDiv = contentDiv.querySelector('.message-role');
-                    if (roleDiv && roleDiv.nextSibling) {
-                        contentDiv.insertBefore(textDiv, roleDiv.nextSibling);
+                    // Insert after spinner-container (thinking expander) if it exists
+                    if (spinnerContainer) {
+                        spinnerContainer.parentNode.insertBefore(textDiv, spinnerContainer.nextSibling);
                     } else {
                         contentDiv.appendChild(textDiv);
                     }
@@ -3687,64 +4022,145 @@
             scrollToBottom();
         }
 
+
+        // Track thinking start time for duration display
+        let thinkingStartTime = null;
+
+        // Processing indicator for normal response generation
+        function getProcessingIndicatorHTML() {
+            return `
+            <div class="processing-indicator" data-start-time="${Date.now()}">
+                <span class="processing-text">
+                    Processing
+                    <span class="processing-dots">
+                        <span class="processing-dot"></span>
+                        <span class="processing-dot"></span>
+                        <span class="processing-dot"></span>
+                    </span>
+                </span>
+            </div>`;
+        }
+
+        // Thinking indicator - for actual reasoning/planning mode (future use)
+        function getThinkingIndicatorHTML() {
+            return `
+            <div class="thinking-indicator" data-start-time="${Date.now()}">
+                <span class="thinking-text">Thinking</span>
+            </div>`;
+        }
+
+        // Default spinner uses processing indicator
         function getSpinnerHTML() {
-            // Uncomment the one you want to use:
+            return getProcessingIndicatorHTML();
+        }
 
-            // Option 1: Quantum Ring (Sleek)
-            // return '<div class="spinner-quantum"></div>';
+        // Alias for old function name
+        function getThinkingExpanderHTML() {
+            return getProcessingIndicatorHTML();
+        }
 
-            // Option 2: Neon Wave (Voice/Data)
-            /*
-            return `
-            <div class="spinner-wave">
-                <div></div><div></div><div></div><div></div><div></div>
-            </div>`;
-            */
+        // Complete the thinking indicator and collapse it
+        function completeThinkingExpander(msgElement) {
+            if (!msgElement) return;
 
-            // Option 3: Retro Terminal (Glitch) - ACTIVE
-            return `
-            <div class="spinner-retro">
-                <span>PROCESSING</span><div class="spinner-retro-cursor"></div>
-            </div>`;
+            const indicator = msgElement.querySelector('.thinking-indicator');
+            if (!indicator) return;
 
-            // Option 4: Orbital Dots (Playful)
-            /*
-            return `
-            <div class="spinner-orbital">
-                <div class="dot"></div><div class="dot"></div>
-            </div>`;
-            */
+            // Calculate duration
+            const startTime = parseInt(indicator.dataset.startTime || Date.now());
+            const duration = Math.round((Date.now() - startTime) / 1000);
 
-            // Option 5: Pulse Echo (Minimalist)
-            // return '<div class="spinner-pulse"></div>';
+            // If duration is 0, hide the indicator entirely
+            if (duration <= 0) {
+                indicator.style.display = 'none';
+                return;
+            }
 
-            // Option 6: Bars Shuffle (Digital)
-            /*
-            return `
-            <div class="spinner-bars">
-                <div></div><div></div><div></div>
-            </div>`;
-            */
+            const durationText = duration < 60 ? `${duration}s` : `${Math.floor(duration / 60)}m ${duration % 60}s`;
+
+            // Mark as completed
+            indicator.classList.add('completed');
+            indicator.classList.add('collapsed');
+
+            // Update the text to show completion
+            const textEl = indicator.querySelector('.thinking-text');
+            if (textEl) {
+                textEl.textContent = 'Thought for ' + durationText;
+            }
+
+            // Update toggle arrow
+            const toggle = indicator.querySelector('.thinking-toggle');
+            if (toggle) toggle.textContent = '▶';
+        }
+
+        // Initialize thinking indicator click handlers (called after creation)
+        function initThinkingExpanderHandlers(msgElement) {
+            if (!msgElement) return;
+
+            const indicator = msgElement.querySelector('.thinking-indicator');
+            if (!indicator) return;
+
+            indicator.addEventListener('click', function (e) {
+                e.stopPropagation();
+                indicator.classList.toggle('collapsed');
+                const toggle = indicator.querySelector('.thinking-toggle');
+                if (toggle) {
+                    toggle.textContent = indicator.classList.contains('collapsed') ? '▶' : '▼';
+                }
+            });
         }
 
         function showSpinner(msgElement) {
             if (!msgElement) return;
             const contentDiv = msgElement.querySelector('.message-content');
-            if (contentDiv.querySelector('.spinner-container') || contentDiv.querySelector('[class^="spinner-"]')) return;
+            // Check for existing indicators or spinners
+            if (contentDiv.querySelector('.processing-indicator') ||
+                contentDiv.querySelector('.thinking-indicator') ||
+                contentDiv.querySelector('.thinking-expander') ||
+                contentDiv.querySelector('.spinner-container') ||
+                contentDiv.querySelector('[class^="spinner-"]')) return;
 
             const container = document.createElement('div');
             container.className = 'spinner-container';
             container.innerHTML = getSpinnerHTML();
             contentDiv.appendChild(container);
+
             scrollToBottom();
         }
 
         function removeLoadingIndicators(msgElement) {
             if (!msgElement) return;
 
-            // Remove spinners
-            const spinners = msgElement.querySelectorAll('.spinner, .spinner-quantum, .spinner-wave, .spinner-retro, .spinner-orbital, .spinner-pulse, .spinner-bars, .spinner-container');
+            // Remove processing indicator (simple removal, no completion state)
+            const processingIndicator = msgElement.querySelector('.processing-indicator');
+            if (processingIndicator) {
+                processingIndicator.remove();
+            }
+
+            // Complete thinking indicator (Gemini-style - keeps reference)
+            const thinkingIndicator = msgElement.querySelector('.thinking-indicator:not(.completed)');
+            if (thinkingIndicator) {
+                completeThinkingExpander(msgElement);
+                // Don't remove, it stays collapsed for reference
+            }
+
+            // Complete thinking expander (legacy style) 
+            const thinkingExpander = msgElement.querySelector('.thinking-expander:not(.completed)');
+            if (thinkingExpander) {
+                completeThinkingExpander(msgElement);
+            }
+
+            // Remove legacy spinners
+            const spinners = msgElement.querySelectorAll('.spinner, .spinner-quantum, .spinner-wave, .spinner-retro, .spinner-orbital, .spinner-pulse, .spinner-bars');
             spinners.forEach(s => s.remove());
+
+            // Remove spinner-container only if it doesn't contain thinking indicator/expander
+            const spinnerContainers = msgElement.querySelectorAll('.spinner-container');
+            spinnerContainers.forEach(container => {
+                if (!container.querySelector('.thinking-indicator') && !container.querySelector('.thinking-expander')) {
+                    container.remove();
+                }
+            });
 
             // Remove old typing indicators if any exist
             const indicators = msgElement.querySelectorAll('.typing-indicator');
@@ -3772,13 +4188,14 @@
             if (!toolsContainer) {
                 toolsContainer = document.createElement('div');
                 toolsContainer.className = 'tool-calls-container';
-                // Insert after message-role but before any message-text
-                const roleDiv = contentDiv.querySelector('.message-role');
+                // Insert after spinner-container (thinking expander), but before message-text
+                const spinnerContainer = contentDiv.querySelector('.spinner-container');
                 const textDiv = contentDiv.querySelector('.message-text');
-                if (textDiv) {
+                if (spinnerContainer) {
+                    // Insert right after the thinking expander
+                    spinnerContainer.parentNode.insertBefore(toolsContainer, spinnerContainer.nextSibling);
+                } else if (textDiv) {
                     contentDiv.insertBefore(toolsContainer, textDiv);
-                } else if (roleDiv) {
-                    contentDiv.insertBefore(toolsContainer, roleDiv.nextSibling);
                 } else {
                     contentDiv.appendChild(toolsContainer);
                 }

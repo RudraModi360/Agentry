@@ -1118,74 +1118,144 @@ async def websocket_chat(websocket: WebSocket):
                 session_id = data.get("session_id")
                 msg_index = data.get("index")
                 
-                if session_id and msg_index is not None and agent:
-                    # Ensure session_id has user prefix
-                    if not session_id.startswith(f"user_{user_id}_"):
-                         session_id = f"user_{user_id}_{session_id}"
-
-                    # Ensure session is loaded in Agent
-                    if session_id not in agent.sessions:
-                        loaded_msgs = session_manager.load_session(session_id)
-                        if loaded_msgs:
-                            print(f"[Server] Restoring session {session_id} from DB for deletion")
-                            # Utilize agent.get_session to create the object properly
-                            session_obj = agent.get_session(session_id)
-                            session_obj.messages = loaded_msgs
+                print(f"[Server] Delete request received: session_id={session_id}, index={msg_index}")
+                
+                if not session_id or msg_index is None:
+                    await websocket.send_json({
+                        "type": "error",
+                        "message": "Missing session_id or index for delete"
+                    })
+                    continue
                     
-                    try:
-                        session = agent.get_session(session_id)
-                        if session and 0 <= msg_index < len(session.messages):
-                            # Identify indices to delete
-                            target_role = session.messages[msg_index].role
-                            indices_to_delete = [msg_index]
+                if not agent:
+                    await websocket.send_json({
+                        "type": "error",
+                        "message": "Agent not initialized"
+                    })
+                    continue
+                
+                # Ensure session_id has user prefix
+                if not session_id.startswith(f"user_{user_id}_"):
+                     session_id = f"user_{user_id}_{session_id}"
+
+                # Ensure session is loaded in Agent
+                if session_id not in agent.sessions:
+                    loaded_msgs = session_manager.load_session(session_id)
+                    if loaded_msgs:
+                        print(f"[Server] Restoring session {session_id} from DB for deletion ({len(loaded_msgs)} msgs)")
+                        session_obj = agent.get_session(session_id)
+                        session_obj.messages = loaded_msgs
+                    else:
+                        await websocket.send_json({
+                            "type": "error",
+                            "message": f"Session {session_id} not found"
+                        })
+                        continue
+                
+                try:
+                    session = agent.get_session(session_id)
+                    
+                    if not session or not session.messages:
+                        await websocket.send_json({
+                            "type": "error",
+                            "message": "Session has no messages"
+                        })
+                        continue
+                    
+                    if msg_index < 0 or msg_index >= len(session.messages):
+                        print(f"[Server] Invalid index {msg_index}, session has {len(session.messages)} messages")
+                        await websocket.send_json({
+                            "type": "error",
+                            "message": f"Invalid message index {msg_index}"
+                        })
+                        continue
+                    
+                    # Helper to get role from either dict or object
+                    def get_role(msg):
+                        if isinstance(msg, dict):
+                            return msg.get('role', 'unknown')
+                        return getattr(msg, 'role', 'unknown')
+                    
+                    # Identify indices to delete
+                    target_role = get_role(session.messages[msg_index])
+                    indices_to_delete = [msg_index]
+                    
+                    print(f"[Server] Request to delete message {msg_index} ({target_role})")
+                    
+                    next_idx = msg_index + 1
+                    while next_idx < len(session.messages):
+                        next_msg = session.messages[next_idx]
+                        next_role = get_role(next_msg)
+                        
+                        if target_role == 'user':
+                            # Delete everything until the next user message (i.e. the full response turn)
+                            if next_role == 'user':
+                                break
+                            indices_to_delete.append(next_idx)
+                        
+                        elif target_role == 'assistant':
+                            # Delete tool calls associated with this assistant message
+                            if next_role == 'tool':
+                                indices_to_delete.append(next_idx)
+                            else:
+                                # Stop at next User or next Assistant or System
+                                break 
+                        
+                        else:
+                            # If target is Tool or System, just delete itself
+                            break
+                        
+                        next_idx += 1
                             
-                            print(f"[Server] Request to delete message {msg_index} ({target_role})")
-                            
-                            next_idx = msg_index + 1
-                            while next_idx < len(session.messages):
-                                next_msg = session.messages[next_idx]
-                                
-                                if target_role == 'user':
-                                    # Delete everything until the next user message (i.e. the full response turn)
-                                    if next_msg.role == 'user':
-                                        break
-                                    indices_to_delete.append(next_idx)
-                                
-                                elif target_role == 'assistant':
-                                    # Delete tool calls associated with this assistant message
-                                    if next_msg.role == 'tool':
-                                        indices_to_delete.append(next_idx)
-                                    else:
-                                        # Stop at next User or next Assistant or System
-                                        break 
-                                
-                                else:
-                                    # If target is Tool or System, just delete itself (or maybe tool outputs too?)
-                                    # For now, simplistic approach for others.
-                                    break
-                                
-                                next_idx += 1
-                                
-                            # Delete in reverse order to preserve indices
-                            indices_to_delete.sort(reverse=True)
-                            
-                            for idx in indices_to_delete:
-                                removed = session.messages.pop(idx)
-                                print(f"[Server] Deleted message at index {idx} ({removed.role})")
-                            
-                            # Save updated session
-                            session_manager.save_session(session_id, session.messages)
-                            
-                            await websocket.send_json({
-                                "type": "message_deleted",
-                                "session_id": session_id,
-                                "index": msg_index,
-                                "deleted_count": len(indices_to_delete)
-                            })
-                    except Exception as e:
-                        print(f"Error deleting message: {e}")
-                        import traceback
-                        traceback.print_exc()
+                    # Delete in reverse order to preserve indices
+                    indices_to_delete.sort(reverse=True)
+                    
+                    deleted_roles = []
+                    for idx in indices_to_delete:
+                        removed = session.messages.pop(idx)
+                        removed_role = get_role(removed)
+                        deleted_roles.append(removed_role)
+                        print(f"[Server] Deleted message at index {idx} ({removed_role})")
+                    
+                    # Check if session is now empty (only system message or no messages)
+                    remaining_user_msgs = sum(1 for m in session.messages if get_role(m) == 'user')
+                    
+                    if remaining_user_msgs == 0:
+                        # No user messages left - delete the entire session
+                        print(f"[Server] No user messages left, deleting session {session_id}")
+                        session_manager.delete_session(session_id)
+                        
+                        # Remove from agent's sessions
+                        if session_id in agent.sessions:
+                            del agent.sessions[session_id]
+                        
+                        await websocket.send_json({
+                            "type": "session_deleted",
+                            "session_id": session_id,
+                            "reason": "all_messages_deleted"
+                        })
+                        print(f"[Server] Session {session_id} deleted (no messages remaining)")
+                    else:
+                        # Save updated session
+                        session_manager.save_session(session_id, session.messages)
+                        
+                        await websocket.send_json({
+                            "type": "message_deleted",
+                            "session_id": session_id,
+                            "index": msg_index,
+                            "deleted_count": len(indices_to_delete),
+                            "deleted_roles": deleted_roles
+                        })
+                        print(f"[Server] Successfully deleted {len(indices_to_delete)} message(s)")
+                    
+                except Exception as e:
+                    print(f"Error deleting message: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    await websocket.send_json({
+                        "type": "error",
+                        "message": f"Failed to delete message: {str(e)}"
+                    })
 
             elif msg_type == "ping":
                 await websocket.send_json({"type": "pong"})
