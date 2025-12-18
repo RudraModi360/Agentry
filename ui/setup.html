@@ -813,7 +813,9 @@
                 const data = await response.json();
 
                 if (data.stored_keys) {
-                    hasStoredKeys = data.stored_keys;
+                    hasStoredKeys = data.stored_keys; // Contains actual keys now
+                    // transfer to storedApiKeys for consistent usage
+                    Object.assign(storedApiKeys, data.stored_keys);
                 }
 
                 if (data.provider_config) {

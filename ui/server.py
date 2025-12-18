@@ -410,7 +410,7 @@ async def get_current_user_info(user: Dict = Depends(get_current_user)):
     for prov in ["groq", "gemini", "ollama"]:
         key = get_api_key(user["id"], prov)
         if key:
-            stored_keys[prov] = True
+            stored_keys[prov] = key
             
     # Get active key if config exists
     active_key = None
