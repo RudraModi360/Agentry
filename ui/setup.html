@@ -74,7 +74,8 @@
 
         /* Main Container */
         .setup-container {
-            max-width: 900px;
+            width: 100%;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 100px 20px 40px;
         }
@@ -624,6 +625,83 @@
 
         [data-theme="dark"] .theme-toggle .moon-icon {
             display: block;
+        }
+
+
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .setup-container {
+                padding: 80px 16px 30px;
+            }
+
+            .header {
+                padding: 16px 20px;
+            }
+
+            .setup-title {
+                font-size: 24px;
+            }
+
+            .setup-subtitle {
+                font-size: 14px;
+            }
+
+            .provider-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .provider-card {
+                padding: 24px;
+            }
+
+            .button-row {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .btn {
+                width: 100%;
+                padding: 16px;
+            }
+
+            .mode-options {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (min-width: 1440px) {
+            .setup-container {
+                max-width: 1400px;
+                padding-top: 120px;
+            }
+
+            .setup-title {
+                font-size: 36px;
+            }
+
+            .setup-subtitle {
+                font-size: 18px;
+            }
+
+            .provider-card {
+                padding: 40px;
+            }
+
+            .provider-icon {
+                width: 72px;
+                height: 72px;
+                font-size: 36px;
+            }
+
+            .provider-name {
+                font-size: 24px;
+            }
+
+            .provider-desc {
+                font-size: 16px;
+            }
         }
     </style>
 </head>
