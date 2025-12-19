@@ -87,6 +87,10 @@ class Agent:
         # Virtual File System
         self.vfs = VirtualFileSystem(self.memory_store)
         
+        # Tool support flag - set when load_default_tools is called
+        self.supports_tools = False
+        self.tools_disabled_reason = None  # Optional message explaining why tools are disabled
+        
         # Callbacks
         self.callbacks = {
             "on_tool_start": None,
@@ -127,8 +131,17 @@ class Agent:
         """Load all built-in tools (Filesystem, Web, Execution)."""
         self.internal_tools.extend(ALL_TOOL_SCHEMAS)
         self.internal_tools.extend(self.vfs.get_tool_schemas())
+        self.supports_tools = True  # Mark that tools are loaded and supported
         if self.debug:
             print(f"[Agent] Loaded {len(ALL_TOOL_SCHEMAS)} default tools + VFS tools.")
+    
+    def disable_tools(self, reason: str = None):
+        """Disable tool support for this agent."""
+        self.supports_tools = False
+        self.internal_tools = []
+        self.tools_disabled_reason = reason or "Tools disabled"
+        if self.debug:
+            print(f"[Agent] Tools disabled: {self.tools_disabled_reason}")
 
     async def add_mcp_server(self, config_path: str = "mcp.json"):
         """Connect to MCP servers defined in a config file and add their tools."""
@@ -277,7 +290,15 @@ class Agent:
 
         session.add_message({"role": "user", "content": user_input})
         
-        all_tools = await self.get_all_tools()
+        # Only get tools if they're supported
+        all_tools = None
+        if self.supports_tools:
+            all_tools = await self.get_all_tools()
+            if self.debug and all_tools:
+                print(f"[Agent] Using {len(all_tools)} tools")
+        else:
+            if self.debug:
+                print(f"[Agent] Tool-free mode: {self.tools_disabled_reason or 'Model does not support tools'}")
         # Ensure we have a robust error handling strategy around provider calls
         # This will catch JSON serialization errors and internal server errors
         # and allow the chat session to continue.

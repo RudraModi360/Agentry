@@ -117,7 +117,7 @@ class GeminiProvider(LLMProvider):
             error_msg = str(e)
             # Check for unsupported media type or model errors related to vision
             if "image" in error_msg.lower() and ("support" in error_msg.lower() or "type" in error_msg.lower() or "argument" in error_msg.lower()):
-                 raise ValueError("Model not support to given data type") from e
+                 raise ValueError(f"Gemini model '{self.model_name}' does not support this image/data type.") from e
             
             # Re-raise with more context
             if "empty" in error_msg.lower() or "must contain" in error_msg.lower():

@@ -891,6 +891,11 @@
             background-color: rgba(255, 255, 255, 0.05);
         }
 
+        .sidebar-action-btn.active {
+            background-color: rgba(147, 51, 234, 0.1);
+            color: var(--accent-purple);
+        }
+
         .sidebar-action-btn svg {
             width: 16px;
             height: 16px;
@@ -2191,7 +2196,7 @@
 
         #message-input {
             flex: 1;
-            padding: 16px 20px;
+            padding: 16px 20px 16px 10px; /* Reduced left padding to accommodate attach button */
             background: transparent;
             border: none;
             color: var(--text-primary);
@@ -2236,6 +2241,168 @@
         .send-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
+        }
+
+        /* Image Upload Button - Now integrated into input bar */
+        .attach-btn {
+            width: 40px;
+            height: 40px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-bottom: 6px; /* Align with bottom of textarea */
+            margin-left: 10px;
+        }
+
+        .attach-btn:hover {
+            color: var(--accent-purple);
+        }
+
+        .attach-btn.has-image {
+            color: var(--success-color);
+        }
+
+        /* Image Preview Container */
+        .image-preview-container {
+            max-width: 800px;
+            margin: 0 auto 12px auto;
+            padding: 0 4px;
+        }
+
+        .image-preview-wrapper {
+            position: relative;
+            display: inline-block;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid var(--dark-border);
+            background: var(--dark-input);
+        }
+
+        .image-preview-wrapper img {
+            max-width: 200px;
+            max-height: 150px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .image-preview-remove {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(255, 71, 87, 0.9);
+            border: none;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .image-preview-remove:hover {
+            background: #ff4757;
+            transform: scale(1.1);
+        }
+
+        /* Media Library styles */
+        .media-header {
+            margin-top: 24px;
+        }
+
+        .media-container {
+            margin-bottom: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 8px 12px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .media-item {
+            position: relative;
+            background: var(--dark-item);
+            border: 1px solid var(--dark-border);
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s;
+            aspect-ratio: 1;
+        }
+
+        .media-item:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-purple);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .media-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .media-info-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+            padding: 8px 6px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .media-item:hover .media-info-overlay {
+            opacity: 1;
+        }
+
+        .media-time {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.8);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .no-media-text {
+            grid-column: span 2;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 11px;
+            padding: 10px 0;
+            opacity: 0.6;
+        }
+
+        .message-image {
+            margin-top: 10px;
+            max-width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--dark-border);
+            display: inline-block;
+        }
+
+        .message-image img {
+            display: block;
+            max-width: 300px;
+            max-height: 400px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .message-image img:hover {
+            opacity: 0.9;
         }
 
         /* Mobile Responsive */
@@ -2970,7 +3137,21 @@
                         </svg>
                         <span>Search chats</span>
                     </button>
+                    <button class="sidebar-action-btn" id="media-library-toggle" title="Media Library">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                        <span>Media</span>
+                    </button>
                 </div>
+            </div>
+
+            <div class="media-container" id="media-container" style="display: none; border-bottom: 1px solid var(--dark-border); max-height: 300px;">
+                <!-- Media files will be loaded here -->
+                <div class="no-media-text">No media uploaded yet</div>
             </div>
 
             <!-- Resizer -->
@@ -2984,6 +3165,8 @@
             <div class="sessions-container" id="sessions-container">
                 <!-- Sessions will be loaded here -->
             </div>
+
+            <!-- End of Sessions -->
 
             <div class="sidebar-footer">
                 <div class="provider-info" id="provider-info" onclick="window.location.href='/setup'">
@@ -3084,8 +3267,24 @@
             </div>
 
             <div class="input-area">
+                <!-- Image Preview Area (hidden by default) -->
+                <div class="image-preview-container" id="image-preview-container" style="display: none;">
+                    <div class="image-preview-wrapper">
+                        <img id="image-preview" src="" alt="Preview">
+                        <button class="image-preview-remove" id="remove-image-btn" title="Remove image">×</button>
+                    </div>
+                </div>
                 <div class="input-container">
+                    <input type="file" id="image-input" accept="image/*" style="display: none;">
                     <div class="input-wrapper">
+                        <!-- Image Upload Button (hidden by default, shown when vision is supported) -->
+                        <button class="attach-btn" id="attach-image-btn" title="Attach image" style="display: none;">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                <polyline points="21 15 16 10 5 21"></polyline>
+                            </svg>
+                        </button>
                         <textarea id="message-input" placeholder="Type your message..." rows="1"></textarea>
                     </div>
                     <button class="send-btn" id="send-btn" disabled>➤</button>
@@ -3167,6 +3366,16 @@
         const emptyState = document.getElementById('empty-state');
         const statusDot = document.getElementById('status-dot');
         const statusText = document.getElementById('status-text');
+        
+        // Image upload elements
+        const attachImageBtn = document.getElementById('attach-image-btn');
+        const imageInput = document.getElementById('image-input');
+        const imagePreviewContainer = document.getElementById('image-preview-container');
+        const imagePreview = document.getElementById('image-preview');
+        const removeImageBtn = document.getElementById('remove-image-btn');
+        
+        // Image state
+        let selectedImageData = null;  // Base64 encoded image data
 
         // New Chat Button Logic
         function initNewChatButton() {
@@ -3192,9 +3401,11 @@
             initSidebarControls();
             initChatSearch();
             initNewChatButton();
+            initImageUpload();  // Initialize image upload handlers
 
             await loadUserInfo();
             await loadSessions();
+            await loadMedia();
             connectWebSocket();
         }
 
@@ -3632,6 +3843,11 @@
                 case 'connected':
                     setConnectionStatus(true);
                     sendBtn.disabled = false;
+                    // Store model capabilities for UI adaptation
+                    if (data.capabilities) {
+                        window.modelCapabilities = data.capabilities;
+                        updateCapabilityStatus(data.capabilities);
+                    }
                     break;
 
                 case 'message_deleted':
@@ -3646,6 +3862,19 @@
                     }
                     // Also refresh sidebar to update message counts
                     loadSessions();
+                    break;
+
+                case 'media_saved':
+                    if (data.media) {
+                        addMediaItem(data.media, true);
+                        // Auto-open media container if it was closed
+                        const mContainer = document.getElementById('media-container');
+                        const mToggle = document.getElementById('media-library-toggle');
+                        if (mContainer && mContainer.style.display === 'none') {
+                            mContainer.style.display = 'grid';
+                            if (mToggle) mToggle.classList.add('active');
+                        }
+                    }
                     break;
 
                 case 'session_deleted':
@@ -3785,6 +4014,137 @@
             statusText.textContent = connected ? 'Connected' : 'Disconnected';
         }
 
+        // Update capability status display
+        function updateCapabilityStatus(capabilities) {
+            if (!capabilities) return;
+            
+            // Update status text to include capability info
+            const supportsTools = capabilities.supports_tools;
+            const supportsVision = capabilities.supports_vision;
+            
+            let modeText = [];
+            if (supportsTools) {
+                modeText.push('🔧 Tools');
+            } else {
+                modeText.push('💬 Chat Only');
+            }
+            if (supportsVision) {
+                modeText.push('👁️ Vision');
+            }
+            
+            // Update the model name display to show capabilities
+            const modelNameEl = document.getElementById('model-name');
+            if (modelNameEl) {
+                const currentModel = modelNameEl.textContent;
+                // Check if we haven't already added capability info
+                if (!currentModel.includes('•')) {
+                    modelNameEl.innerHTML = `${currentModel} <span style="opacity: 0.7; font-size: 11px;">• ${modeText.join(' ')}</span>`;
+                }
+            }
+            
+            // Show/hide image upload button based on vision support
+            if (attachImageBtn) {
+                if (supportsVision) {
+                    attachImageBtn.style.display = 'flex';
+                    messageInput.placeholder = 'Type your message or attach an image...';
+                } else {
+                    attachImageBtn.style.display = 'none';
+                    messageInput.placeholder = 'Type your message...';
+                    // Clear any pending image if vision is not supported
+                    clearSelectedImage();
+                }
+            }
+            
+            // Log for debugging
+            console.log('[Capabilities]', capabilities);
+        }
+        
+        // Image upload handlers
+        function initImageUpload() {
+            if (!attachImageBtn || !imageInput) return;
+            
+            // Click attach button to trigger file input
+            attachImageBtn.addEventListener('click', () => {
+                imageInput.click();
+            });
+            
+            // Handle file selection
+            imageInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    handleImageSelect(file);
+                }
+            });
+            
+            // Handle remove image
+            if (removeImageBtn) {
+                removeImageBtn.addEventListener('click', () => {
+                    clearSelectedImage();
+                });
+            }
+            
+            // Handle drag and drop (optional enhancement)
+            const inputWrapper = document.querySelector('.input-wrapper');
+            if (inputWrapper) {
+                inputWrapper.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    if (window.modelCapabilities?.supports_vision) {
+                        inputWrapper.style.borderColor = 'var(--accent-purple)';
+                    }
+                });
+                
+                inputWrapper.addEventListener('dragleave', () => {
+                    inputWrapper.style.borderColor = '';
+                });
+                
+                inputWrapper.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    inputWrapper.style.borderColor = '';
+                    
+                    if (!window.modelCapabilities?.supports_vision) return;
+                    
+                    const file = e.dataTransfer.files[0];
+                    if (file && file.type.startsWith('image/')) {
+                        handleImageSelect(file);
+                    }
+                });
+            }
+        }
+        
+        function handleImageSelect(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const dataUrl = e.target.result;
+                selectedImageData = dataUrl;
+                
+                // Show preview
+                imagePreview.src = dataUrl;
+                imagePreviewContainer.style.display = 'block';
+                attachImageBtn.classList.add('has-image');
+                
+                // Enable send button if we have an image (even without text)
+                updateSendButtonState();
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function clearSelectedImage() {
+            selectedImageData = null;
+            imageInput.value = '';
+            imagePreviewContainer.style.display = 'none';
+            imagePreview.src = '';
+            if (attachImageBtn) {
+                attachImageBtn.classList.remove('has-image');
+            }
+            updateSendButtonState();
+        }
+        
+        function updateSendButtonState() {
+            const hasText = messageInput.value.trim().length > 0;
+            const hasImage = !!selectedImageData;
+            sendBtn.disabled = !(hasText || hasImage) || !isConnected;
+        }
+
         // Message rendering
         function clearMessages() {
             messagesContainer.innerHTML = '';
@@ -3797,12 +4157,12 @@
             emptyState.style.display = 'none';
         }
 
-        function addUserMessage(content, messageIndex = null) {
+        function addUserMessage(content, messageIndex = null, imageData = null) {
             hideEmptyState();
 
             const msg = document.createElement('div');
             msg.className = 'message user';
-            msg.dataset.originalContent = content;
+            msg.dataset.originalContent = typeof content === 'string' ? content : JSON.stringify(content);
             if (messageIndex !== null) {
                 msg.dataset.messageIndex = messageIndex;
             }
@@ -3811,6 +4171,7 @@
             msg.innerHTML = `
                 <div class="message-content">
                     <div class="message-text">${formatMessage(content)}</div>
+                    ${imageData ? `<div class="message-image"><img src="${imageData}" onclick="window.open(this.src)" title="Click to view full image" /></div>` : ''}
                      <div class="message-actions">
                         <button class="message-action-btn edit-btn" title="Edit message">
                             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -4507,7 +4868,7 @@
                         addMessageActions(currentAssistantEl);
                     }
 
-                    const content = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
+                    const content = msg.content;
                     addUserMessage(content, idx);
                     currentAssistantEl = null;
                     lastRole = 'user';
@@ -4727,8 +5088,27 @@
             return div.innerHTML;
         }
 
-        function formatMessage(text) {
-            if (!text) return '';
+        function formatMessage(content) {
+            if (!content) return '';
+
+            // Handle multimodal content (array)
+            if (Array.isArray(content)) {
+                return content.map(part => {
+                    if (part.type === 'text') return formatMessage(part.text);
+                    if (part.type === 'image') {
+                        // Handle both raw base64 and data URLs
+                        let src = part.data || part.url;
+                        if (src && !src.startsWith('data:') && !src.startsWith('http') && !src.startsWith('/')) {
+                            src = `data:image/png;base64,${src}`;
+                        }
+                        return `<div class="message-image"><img src="${src}" onclick="window.open(this.src)" title="Click to view full image" /></div>`;
+                    }
+                    return '';
+                }).join('');
+            }
+
+            const text = content;
+            if (typeof text !== 'string') return '';
 
             // Create custom renderer to wrap code blocks and tables with copy buttons
             const renderer = new marked.Renderer();
@@ -4930,18 +5310,33 @@
         // Send message
         function sendMessage() {
             const content = messageInput.value.trim();
-            if (!content || !isConnected || isProcessing) return;
+            const hasImage = !!selectedImageData;
+            
+            if ((!content && !hasImage) || !isConnected || isProcessing) return;
 
             isProcessing = true;
             sendBtn.disabled = true;
 
-            addUserMessage(content);
+            // Display user message (with image indicator if present)
+            const displayContent = content; // Just show text, image is handled separately now
+            const imageDataToSend = selectedImageData;
+            addUserMessage(displayContent, null, imageDataToSend);
+            
             messageInput.value = '';
             messageInput.style.height = 'auto';
 
             // Show thinking spinner immediately
             currentAssistantMessage = createAssistantMessage();
             currentAssistantText = '';
+            
+            // Prepare message content with image if present
+            const messagePayload = {
+                text: content,
+                image: imageDataToSend  // Base64 image data (or null)
+            };
+            
+            // Clear the selected image after sending
+            clearSelectedImage();
 
             // If no session, create one first
             if (!currentSessionId) {
@@ -4952,19 +5347,26 @@
                     .then(r => r.json())
                     .then(data => {
                         currentSessionId = data.session.id;
-                        sendToWebSocket(content);
+                        sendToWebSocket(content, imageDataToSend);
                     });
             } else {
-                sendToWebSocket(content);
+                sendToWebSocket(content, imageDataToSend);
             }
         }
 
-        function sendToWebSocket(content) {
-            ws.send(JSON.stringify({
+        function sendToWebSocket(content, imageData = null) {
+            const payload = {
                 type: 'message',
                 content: content,
                 session_id: currentSessionId
-            }));
+            };
+            
+            // Add image data if present
+            if (imageData) {
+                payload.image = imageData;
+            }
+            
+            ws.send(JSON.stringify(payload));
         }
 
         // Event listeners
@@ -4980,6 +5382,7 @@
         messageInput.addEventListener('input', () => {
             messageInput.style.height = 'auto';
             messageInput.style.height = Math.min(messageInput.scrollHeight, 150) + 'px';
+            updateSendButtonState();  // Update send button based on content
         });
 
         // Logout
@@ -5057,9 +5460,78 @@
             newDenyBtn.addEventListener('click', () => {
                 sendApprovalResponse(false);
             });
-
             function updateCountdown() {
                 timeoutEl.textContent = `Auto-deny in ${approvalCountdown}s`;
+            }
+        }
+
+        // Media Library functions
+        async function loadMedia() {
+            try {
+                const response = await fetch(`${API_BASE}/api/media`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    renderMedia(data.media);
+                }
+            } catch (error) {
+                console.error('Failed to load media:', error);
+            }
+        }
+
+        function renderMedia(mediaList) {
+            const container = document.getElementById('media-container');
+            if (!container) return;
+
+            container.innerHTML = '';
+            if (!mediaList || mediaList.length === 0) {
+                container.innerHTML = '<div class="no-media-text">No media uploaded yet</div>';
+                return;
+            }
+
+            mediaList.forEach(item => {
+                addMediaItem(item, false);
+            });
+        }
+
+        function addMediaItem(item, prepend = true) {
+            const container = document.getElementById('media-container');
+            if (!container) return;
+
+            // Remove empty state if exists
+            const emptyState = container.querySelector('.no-media-text');
+            if (emptyState) emptyState.remove();
+
+            const mediaEl = document.createElement('div');
+            mediaEl.className = 'media-item';
+            mediaEl.id = `media-${item.id}`;
+            
+            // Format time
+            const date = new Date(item.created_at + (item.created_at.includes('Z') ? '' : 'Z'));
+            const timeStr = date.toLocaleString([], { 
+                month: 'short', 
+                day: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+
+            mediaEl.innerHTML = `
+                <img src="${item.url}" alt="${item.filename}" />
+                <div class="media-info-overlay">
+                    <div class="media-time">${timeStr}</div>
+                </div>
+            `;
+
+            mediaEl.onclick = () => {
+                window.open(item.url, '_blank');
+            };
+
+            if (prepend) {
+                container.prepend(mediaEl);
+            } else {
+                container.appendChild(mediaEl);
             }
         }
 
@@ -5141,6 +5613,18 @@
                         sidebar.style.transition = '';
                     }
                 });
+            }
+
+            // Media Library Toggle
+            const mediaToggle = document.getElementById('media-library-toggle');
+            const mediaContainer = document.getElementById('media-container');
+            if (mediaToggle && mediaContainer) {
+                mediaToggle.onclick = (e) => {
+                    e.preventDefault();
+                    const isVisible = mediaContainer.style.display !== 'none';
+                    mediaContainer.style.display = isVisible ? 'none' : 'grid';
+                    mediaToggle.classList.toggle('active', !isVisible);
+                };
             }
         }
 

@@ -65,13 +65,17 @@ class OllamaProvider(LLMProvider):
             raise ValueError("No valid messages to send to Ollama")
             
         if has_images and not self._supports_vision():
-            raise ValueError("Model not support to given data type")
+            raise ValueError(f"Ollama model '{self.model_name}' does not support vision capabilities.")
+
+        # Simplify tools for Ollama compatibility
+        from .utils import simplify_tool_schema
+        simplified_tools = [simplify_tool_schema(t) for t in tools] if tools else None
 
         try:
             response = self.client.chat(
                 model=self.model_name,
                 messages=filtered_messages,
-                tools=tools,
+                tools=simplified_tools,
             )
             
             if not response or 'message' not in response:
@@ -112,7 +116,7 @@ class OllamaProvider(LLMProvider):
             raise ValueError("No valid messages to send to Ollama")
             
         if has_images and not self._supports_vision():
-            raise ValueError("Model not support to given data type")
+            raise ValueError(f"Ollama model '{self.model_name}' does not support vision capabilities.")
 
         # Use a queue to pass tokens from sync thread to async handler
         token_queue = asyncio.Queue()
@@ -124,11 +128,15 @@ class OllamaProvider(LLMProvider):
             full_content = ""
             tool_calls = None
             
+            # Simplify tools for Ollama compatibility
+            from .utils import simplify_tool_schema
+            simplified_tools = [simplify_tool_schema(t) for t in tools] if tools else None
+
             try:
                 stream = self.client.chat(
                     model=self.model_name,
                     messages=filtered_messages,
-                    tools=tools,
+                    tools=simplified_tools,
                     stream=True
                 )
                 
@@ -197,12 +205,17 @@ class OllamaProvider(LLMProvider):
             if details.get('family'):
                 families.append(details.get('family'))
             
+            # Check families
+            vision_families = ['clip', 'vision', 'momo', 'llava', 'multimodal', 'mllama']
             for f in families:
-                if f in ['clip', 'vision', 'momo', 'gemma']:
+                f_lower = f.lower()
+                if any(v in f_lower for v in vision_families):
                     return True
             
+            # Check model name for vision keywords
             name = self.model_name.lower()
-            if 'llava' in name or 'vision' in name or 'minicpm' in name or 'gemma' in name:
+            vision_keywords = ['llava', 'vision', 'minicpm', 'vl', 'pixtral', 'moondream', 'bakllava']
+            if any(k in name for k in vision_keywords):
                 return True
                 
             return False

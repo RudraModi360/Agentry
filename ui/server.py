@@ -29,6 +29,7 @@ from scratchy.session_manager import SessionManager
 from scratchy.providers.ollama_provider import OllamaProvider
 from scratchy.providers.groq_provider import GroqProvider
 from scratchy.providers.gemini_provider import GeminiProvider
+from scratchy.providers.capability_detector import detect_model_capabilities, get_known_capability, ModelCapabilities
 from scratchy.memory.storage import PersistentMemoryStore
 
 # ============== FastAPI App ==============
@@ -47,10 +48,115 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ============== Helper Functions ==============
+def format_multimodal_content(text: str, image_data: str) -> list:
+    """
+    Format text and image into multimodal content for vision models.
+    Returns a list format that providers can process.
+    
+    Args:
+        text: The text content
+        image_data: Base64 encoded image data (may include data:image/... prefix)
+    
+    Returns:
+        List of content parts compatible with vision providers
+    """
+    import base64
+    
+    # Extract base64 data if it has a data URL prefix
+    if image_data.startswith('data:'):
+        # Format: data:image/png;base64,<data>
+        parts = image_data.split(',', 1)
+        if len(parts) == 2:
+            image_data = parts[1]
+    
+    # Build multimodal content structure
+    content = []
+    
+    if text:
+        content.append({
+            "type": "text",
+            "text": text
+        })
+    
+    content.append({
+        "type": "image",
+        "data": image_data  # Base64 encoded
+    })
+    
+    return content
+
+    return content
+
+def save_media_to_disk(user_id: int, image_data: str, filename: str = None) -> dict:
+    """
+    Saves base64 image data to the local media directory and records it in the DB.
+    """
+    import uuid
+    import time
+    from datetime import datetime
+    import base64
+    import sqlite3
+    
+    # Extract extension and base64 data
+    ext = "png"
+    mime_type = "image/png"
+    
+    raw_data = image_data
+    if image_data.startswith('data:'):
+        # Format: data:image/png;base64,<data>
+        try:
+            header, data = image_data.split(',', 1)
+            mime_type = header.split(':', 1)[1].split(';', 1)[0]
+            ext = mime_type.split('/', 1)[1]
+            raw_data = data
+        except:
+            pass
+
+    # Generate unique filename if not provided
+    if not filename:
+        timestamp = int(time.time() * 1000)
+        filename = f"media_{user_id}_{timestamp}.{ext}"
+    
+    filepath = os.path.join(current_dir, "media", filename)
+    
+    # Decode and save
+    try:
+        with open(filepath, "wb") as f:
+            f.write(base64.b64decode(raw_data))
+    except Exception as e:
+        print(f"[Server] Error saving media to disk: {e}")
+        return None
+    
+    # Save to database
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO user_media (user_id, filename, filepath, content_type)
+            VALUES (?, ?, ?, ?)
+        """, (user_id, filename, f"/media/{filename}", mime_type))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"[Server] Error saving media record to DB: {e}")
+    
+    return {
+        "filename": filename,
+        "url": f"/media/{filename}",
+        "mime_type": mime_type,
+        "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+
 # Serve static files
 assets_dir = os.path.join(current_dir, "assets")
 if os.path.exists(assets_dir):
     app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+media_dir = os.path.join(current_dir, "media")
+if not os.path.exists(media_dir):
+    os.makedirs(media_dir)
+app.mount("/media", StaticFiles(directory=media_dir), name="media")
 
 # ============== Database Setup ==============
 DB_PATH = os.path.join(current_dir, "scratchy_users.db")
@@ -102,6 +208,19 @@ def init_users_db():
             mode TEXT,
             model TEXT,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        )
+    """)
+
+    # User Media
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_media (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            filename TEXT NOT NULL,
+            filepath TEXT NOT NULL,
+            content_type TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(user_id) REFERENCES users(id)
         )
     """)
@@ -228,6 +347,34 @@ async def get_current_user(authorization: Optional[str] = Header(None)) -> Dict:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
     
     return user
+
+# --- Media Library ---
+@app.get("/api/media")
+async def get_user_media(user: Dict = Depends(get_current_user)):
+    """Retrieve all media files uploaded by the user."""
+    import sqlite3
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id, filename, filepath, content_type, created_at 
+        FROM user_media 
+        WHERE user_id = ? 
+        ORDER BY created_at DESC
+    """, (user["id"],))
+    rows = cursor.fetchall()
+    conn.close()
+    
+    media = []
+    for row in rows:
+        media.append({
+            "id": row[0],
+            "filename": row[1],
+            "url": row[2],
+            "content_type": row[3],
+            "created_at": row[4]
+        })
+    
+    return {"media": media}
 
 # ============== Ollama Models ==============
 OLLAMA_CLOUD_MODELS = [
@@ -593,6 +740,7 @@ async def configure_provider(config: ProviderConfig, user: Dict = Depends(get_cu
         os.environ["OLLAMA_API_KEY"] = final_api_key
     
     # Validate by creating a provider instance
+    provider = None
     try:
         if config.provider == "ollama":
             # Check requirements
@@ -614,6 +762,28 @@ async def configure_provider(config: ProviderConfig, user: Dict = Depends(get_cu
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to initialize provider: {str(e)}")
     
+    # 2. Detect model capabilities
+    capabilities = None
+    try:
+        print(f"[Server] Detecting capabilities for {config.provider}/{config.model}...")
+        capabilities = await detect_model_capabilities(
+            provider_name=config.provider,
+            model_name=config.model,
+            provider_instance=provider
+        )
+        print(f"[Server] Capabilities detected: tools={capabilities.supports_tools}, vision={capabilities.supports_vision}, method={capabilities.detection_method}")
+    except Exception as e:
+        print(f"[Server] Capability detection failed: {e}")
+        # Fallback to conservative defaults
+        capabilities = ModelCapabilities(
+            supports_tools=False,
+            supports_vision=False,
+            provider=config.provider,
+            model_name=config.model,
+            detection_method="error",
+            error_message=str(e)
+        )
+    
     # Save configuration to database (Active settings + Key)
     save_active_settings(user_id, config)
     
@@ -625,31 +795,109 @@ async def configure_provider(config: ProviderConfig, user: Dict = Depends(get_cu
     # Create agent and cache it
     try:
         agent = Agent(llm=provider, debug=True)
-        agent.load_default_tools()
+        
+        # Only load tools if the model supports them
+        if capabilities.supports_tools:
+            agent.load_default_tools()
+            print(f"[Server] Loaded default tools for {config.model}")
+        else:
+            print(f"[Server] Skipping tool loading - model {config.model} does not support tools")
         
         agent_cache[user_id] = {
             "agent": agent,
             "config": config.dict(),
-            "provider": provider
+            "provider": provider,
+            "capabilities": capabilities.to_dict()  # Store capabilities in cache
         }
         print(f"[Server] Agent cached for user {user_id} with model {config.model}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to initialize agent: {str(e)}")
     
-    return {"message": "Provider configured successfully", "model": config.model}
+    return {
+        "message": "Provider configured successfully", 
+        "model": config.model,
+        "capabilities": capabilities.to_dict()
+    }
 
 @app.get("/api/provider/current")
 async def get_current_provider(user: Dict = Depends(get_current_user)):
-    """Get current provider configuration."""
-    config = get_user_provider_config(user["id"])
+    """Get current provider configuration with capabilities."""
+    user_id = user["id"]
+    config = get_current_active_settings(user_id)
     if not config:
-        return {"config": None}
+        return {"config": None, "capabilities": None}
+    
+    # Get capabilities from cache if available
+    capabilities = None
+    if user_id in agent_cache:
+        capabilities = agent_cache[user_id].get("capabilities")
     
     return {
         "config": {
             "provider": config["provider"],
-            "mode": config["mode"],
+            "mode": config.get("mode"),
             "model": config["model"]
+        },
+        "capabilities": capabilities
+    }
+
+@app.get("/api/model/capabilities/{provider}/{model:path}")
+async def get_model_capabilities(provider: str, model: str, user: Dict = Depends(get_current_user)):
+    """
+    Get capabilities for a specific model.
+    This endpoint allows checking capabilities before configuring a model.
+    """
+    # First try quick hardcoded lookup
+    known = get_known_capability(model)
+    if known:
+        return {
+            "model": model,
+            "provider": provider,
+            "capabilities": {
+                "supports_tools": known.get("supports_tools", False),
+                "supports_vision": known.get("supports_vision", False),
+                "supports_streaming": True,
+                "detection_method": "hardcoded"
+            }
+        }
+    
+    # For unknown models, try to detect dynamically
+    # This requires creating a temporary provider instance
+    try:
+        user_id = user["id"]
+        api_key = get_api_key(user_id, provider)
+        
+        temp_provider = None
+        if provider == "ollama":
+            temp_provider = OllamaProvider(model_name=model)
+        elif provider == "groq" and api_key:
+            temp_provider = GroqProvider(model_name=model, api_key=api_key)
+        elif provider == "gemini" and api_key:
+            temp_provider = GeminiProvider(model_name=model, api_key=api_key)
+        
+        if temp_provider:
+            capabilities = await detect_model_capabilities(
+                provider_name=provider,
+                model_name=model,
+                provider_instance=temp_provider
+            )
+            return {
+                "model": model,
+                "provider": provider,
+                "capabilities": capabilities.to_dict()
+            }
+    except Exception as e:
+        print(f"[Server] Dynamic capability detection failed: {e}")
+    
+    # Fallback to conservative defaults
+    return {
+        "model": model,
+        "provider": provider,
+        "capabilities": {
+            "supports_tools": provider in ["groq", "gemini"],  # Most cloud providers support tools
+            "supports_vision": provider == "gemini",
+            "supports_streaming": True,
+            "detection_method": "default"
         }
     }
 
@@ -950,13 +1198,27 @@ async def websocket_chat(websocket: WebSocket):
                 else:
                     raise ValueError(f"Unknown provider: {provider_name}")
                 
+                # Detect capabilities for this model
+                capabilities = await detect_model_capabilities(
+                    provider_name=provider_name,
+                    model_name=config["model"],
+                    provider_instance=provider
+                )
+                
                 agent = Agent(llm=provider, debug=True)
-                agent.load_default_tools()
+                
+                # Only load tools if model supports them
+                if capabilities.supports_tools:
+                    agent.load_default_tools()
+                    print(f"[Server WS] Loaded tools for {config['model']}")
+                else:
+                    print(f"[Server WS] Skipping tools - {config['model']} does not support tools")
                 
                 agent_cache[user_id] = {
                     "agent": agent,
                     "config": config,
-                    "provider": provider
+                    "provider": provider,
+                    "capabilities": capabilities.to_dict()
                 }
             
             except Exception as e:
@@ -964,7 +1226,13 @@ async def websocket_chat(websocket: WebSocket):
                 await websocket.close()
                 return
         
-        await websocket.send_json({"type": "connected", "message": "Connected to Agentry"})
+        # Send capabilities to client on connection
+        cached_capabilities = agent_cache.get(user_id, {}).get("capabilities", {})
+        await websocket.send_json({
+            "type": "connected", 
+            "message": "Connected to Agentry",
+            "capabilities": cached_capabilities
+        })
         
         session_manager = SessionManager()
         
@@ -975,9 +1243,30 @@ async def websocket_chat(websocket: WebSocket):
             
             if msg_type == "message":
                 content = data.get("content", "")
+                image_data = data.get("image")  # Base64 image data from client
                 session_id = data.get("session_id", f"user_{user_id}_default")
                 is_edit = data.get("is_edit", False)
                 edit_index = data.get("edit_index") # 0-based index of message to replace
+                
+                # Process image if present and model supports vision
+                if image_data:
+                    cached_caps = agent_cache.get(user_id, {}).get("capabilities", {})
+                    if cached_caps.get("supports_vision"):
+                        # Format content as multimodal message
+                        # The provider will handle the actual formatting
+                        content = format_multimodal_content(content, image_data)
+                        print(f"[Server] Processing image with vision model")
+                        
+                        # Save to media library
+                        media_info = save_media_to_disk(user_id, image_data)
+                        if media_info:
+                            # Send notification to client about saved media
+                            await websocket.send_json({
+                                "type": "media_saved",
+                                "media": media_info
+                            })
+                    else:
+                        print(f"[Server] Warning: Image received but model doesn't support vision")
                 
                 # Ensure session_id has user prefix
                 if not session_id.startswith(f"user_{user_id}_"):

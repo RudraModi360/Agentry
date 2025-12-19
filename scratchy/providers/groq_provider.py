@@ -28,8 +28,8 @@ class GroqProvider(LLMProvider):
         
         if has_images:
             start_name = self.model_name.lower()
-            if "vision" not in start_name and "llava" not in start_name and "scout" not in start_name:
-                raise ValueError("Model not support to given data type")
+            if "vision" not in start_name and "llava" not in start_name:
+                raise ValueError(f"Groq model '{self.model_name}' does not support vision capabilities.")
 
         # Prepare arguments
         kwargs = {
