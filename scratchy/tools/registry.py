@@ -15,6 +15,10 @@ from .office_tools import (
     EditExcelTool, CreateExcelTool
 )
 from .pdf_tools import MergePDFTool, SplitPDFTool
+from .agent_tools import (
+    DateTimeTool, NotesTool, MemoryTool, SmartBashTool, ThinkTool,
+    get_smart_agent_tools, get_smart_agent_tool_schemas
+)
 
 class ToolRegistry:
     def __init__(self):

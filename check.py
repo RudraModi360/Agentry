@@ -2,7 +2,24 @@ import sys
 import os
 
 sys.path.append(os.getcwd())
+def is_palindrome(input_string: str) -> bool:
+    """Return True if the given string is a palindrome.
 
+    The comparison is case‑insensitive and ignores all non‑alphanumeric
+    characters. Leading/trailing whitespace is stripped before processing.
+
+    Examples
+    --------
+    >>> is_palindrome("Madam")
+    True
+    >>> is_palindrome("No lemon, no melon")
+    True
+    >>> is_palindrome("Hello")
+    False
+    """
+    # Normalise: strip whitespace, lower case, remove non‑alnum
+    cleaned = ''.join(ch.lower() for ch in input_string if ch.isalnum())
+    return cleaned == cleaned[::-1]
 print("=" * 60)
 print("Testing Document Handlers with OllamaVision OCR")
 print("=" * 60)

@@ -164,7 +164,16 @@ class WebSearchTool(BaseTool):
         
         return "\n".join(lines)
 
-    def run(self, user_input: str, search_type: str = 'quick') -> ToolResult:
+    def run(self, user_input: str = None, search_type: str = 'quick', query: str = None, **kwargs) -> ToolResult:
+        # Accept 'query' as alias for 'user_input' (models often use 'query')
+        if query and not user_input:
+            user_input = query
+        elif query:
+            user_input = query  # Prefer query if both provided
+        
+        if not user_input:
+            return ToolResult(success=False, error="Search query is required")
+        
         try:
             # Determine result count based on search type
             num_results = 5 if search_type == 'quick' else 8
