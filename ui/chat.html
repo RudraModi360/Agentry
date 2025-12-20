@@ -3222,6 +3222,569 @@
                 min-width: 120px;
             }
         }
+
+        /* ===== MCP Configuration Styles ===== */
+
+        /* MCP Config Button in Header */
+        .mcp-config-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: var(--card-bg);
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--card-border);
+            position: relative;
+        }
+
+        .mcp-config-btn:hover {
+            background: var(--bg-secondary);
+            border-color: var(--accent);
+        }
+
+        .mcp-config-btn svg {
+            width: 18px;
+            height: 18px;
+            stroke: var(--text-primary);
+            fill: none;
+        }
+
+        .mcp-config-btn .mcp-status-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            border: 2px solid var(--bg-primary);
+        }
+
+        .mcp-config-btn .mcp-status-badge.connected {
+            background: #22c55e;
+            box-shadow: 0 0 6px rgba(34, 197, 94, 0.5);
+        }
+
+        .mcp-config-btn .mcp-status-badge.connecting {
+            background: #f59e0b;
+            animation: mcp-pulse 1.5s ease-in-out infinite;
+        }
+
+        .mcp-config-btn .mcp-status-badge.disconnected {
+            background: #ef4444;
+        }
+
+        .mcp-config-btn .mcp-status-badge.none {
+            display: none;
+        }
+
+        @keyframes mcp-pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        /* MCP Status Button in Input Area */
+        .mcp-status-btn {
+            width: 36px;
+            height: 36px;
+            background: transparent;
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            margin-bottom: 6px;
+            position: relative;
+        }
+
+        .mcp-status-btn:hover {
+            background: var(--bg-secondary);
+            border-color: var(--accent);
+        }
+
+        .mcp-status-btn svg {
+            width: 16px;
+            height: 16px;
+            stroke: var(--text-secondary);
+            fill: none;
+        }
+
+        .mcp-status-btn:hover svg {
+            stroke: var(--accent);
+        }
+
+        /* MCP Modal Overlay */
+        .mcp-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 5vh;
+            z-index: 10001;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .mcp-modal-overlay.active {
+            display: flex;
+        }
+
+        /* MCP Modal */
+        .mcp-modal {
+            background: var(--bg-primary);
+            width: 720px;
+            max-width: 95vw;
+            max-height: 85vh;
+            border-radius: 20px;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .mcp-modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--card-border);
+            background: var(--bg-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .mcp-modal-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .mcp-modal-title svg {
+            width: 24px;
+            height: 24px;
+            stroke: var(--accent);
+            fill: none;
+        }
+
+        .mcp-modal-title h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .mcp-modal-close {
+            width: 36px;
+            height: 36px;
+            background: transparent;
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            color: var(--text-secondary);
+            font-size: 20px;
+        }
+
+        .mcp-modal-close:hover {
+            background: var(--error);
+            border-color: var(--error);
+            color: white;
+        }
+
+        .mcp-modal-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* JSON Editor Section */
+        .mcp-json-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .mcp-json-section label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mcp-json-section label svg {
+            width: 16px;
+            height: 16px;
+            stroke: var(--accent);
+        }
+
+        .mcp-json-editor {
+            width: 100%;
+            min-height: 280px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            padding: 16px;
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            background: var(--input-bg);
+            color: var(--text-primary);
+            resize: vertical;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .mcp-json-editor:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-light);
+        }
+
+        .mcp-json-editor.error {
+            border-color: var(--error);
+        }
+
+        .mcp-json-error {
+            font-size: 12px;
+            color: var(--error);
+            padding: 8px 12px;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 8px;
+            display: none;
+        }
+
+        .mcp-json-error.visible {
+            display: block;
+        }
+
+        /* MCP Servers Status List */
+        .mcp-servers-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .mcp-servers-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .mcp-servers-header h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+        }
+
+        .mcp-servers-header h3 svg {
+            width: 16px;
+            height: 16px;
+            stroke: var(--accent);
+        }
+
+        .mcp-refresh-btn {
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            background: var(--bg-secondary);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .mcp-refresh-btn:hover {
+            background: var(--input-bg);
+            border-color: var(--accent);
+            color: var(--text-primary);
+        }
+
+        .mcp-refresh-btn svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .mcp-servers-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .mcp-server-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            transition: all 0.2s;
+        }
+
+        .mcp-server-item:hover {
+            border-color: var(--accent);
+        }
+
+        .mcp-server-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .mcp-server-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .mcp-server-status.connected {
+            background: #22c55e;
+            box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+        }
+
+        .mcp-server-status.connecting {
+            background: #f59e0b;
+            animation: mcp-pulse 1.5s ease-in-out infinite;
+        }
+
+        .mcp-server-status.disconnected {
+            background: #ef4444;
+        }
+
+        .mcp-server-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .mcp-server-type {
+            font-size: 12px;
+            color: var(--text-muted);
+            padding: 2px 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+        }
+
+        .mcp-no-servers {
+            text-align: center;
+            padding: 24px;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        /* MCP Modal Footer */
+        .mcp-modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--card-border);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 12px;
+            background: var(--bg-secondary);
+        }
+
+        .mcp-modal-btn {
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .mcp-modal-btn.cancel {
+            background: transparent;
+            border: 1px solid var(--card-border);
+            color: var(--text-secondary);
+        }
+
+        .mcp-modal-btn.cancel:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .mcp-modal-btn.save {
+            background: var(--accent);
+            border: none;
+            color: white;
+        }
+
+        .mcp-modal-btn.save:hover {
+            opacity: 0.9;
+        }
+
+        .mcp-modal-btn.save:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* MCP Status Popup (from input area button) */
+        .mcp-status-popup {
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            margin-bottom: 8px;
+            width: 320px;
+            background: var(--bg-primary);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            display: none;
+            z-index: 100;
+            overflow: hidden;
+        }
+
+        .mcp-status-popup.active {
+            display: block;
+            animation: slideUp 0.2s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .mcp-status-popup-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-secondary);
+        }
+
+        .mcp-status-popup-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .mcp-status-popup-config {
+            font-size: 11px;
+            color: var(--accent);
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .mcp-status-popup-config:hover {
+            text-decoration: underline;
+        }
+
+        .mcp-status-popup-content {
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .mcp-status-popup-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: background 0.15s;
+        }
+
+        .mcp-status-popup-item:hover {
+            background: var(--bg-secondary);
+        }
+
+        .mcp-status-popup-name {
+            flex: 1;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+
+        .mcp-status-popup-badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .mcp-status-popup-badge.connected {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+        }
+
+        .mcp-status-popup-badge.connecting {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+        }
+
+        .mcp-status-popup-badge.disconnected {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+
+        .mcp-status-popup-empty {
+            padding: 20px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+
+        /* Responsive */
+        @media screen and (max-width: 768px) {
+            .mcp-modal {
+                width: 95%;
+                max-height: 90vh;
+                margin-top: 2vh;
+            }
+
+            .mcp-json-editor {
+                min-height: 200px;
+            }
+
+            .mcp-status-popup {
+                width: 280px;
+            }
+        }
     </style>
 </head>
 
@@ -3418,6 +3981,16 @@
                 </div>
 
                 <div style="display: flex; align-items: center; gap: 16px;">
+                    <!-- MCP Config Button -->
+                    <button id="mcp-config-btn" class="mcp-config-btn" title="MCP Server Configuration">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                            <circle cx="12" cy="12" r="3" />
+                        </svg>
+                        <span id="mcp-header-status" class="mcp-status-badge none"></span>
+                    </button>
                     <!-- Theme Toggle -->
                     <button id="theme-toggle" class="theme-toggle-btn" title="Toggle theme">
                         <svg class="sun-icon" viewBox="0 0 24 24" width="18" height="18">
@@ -3466,6 +4039,25 @@
                 </div>
                 <div class="input-container">
                     <input type="file" id="image-input" accept="image/*" style="display: none;">
+                    <!-- MCP Status Button with Popup -->
+                    <div style="position: relative;">
+                        <button class="mcp-status-btn" id="mcp-input-status-btn" title="MCP Server Status">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                        </button>
+                        <div class="mcp-status-popup" id="mcp-status-popup">
+                            <div class="mcp-status-popup-header">
+                                <span class="mcp-status-popup-title">MCP Servers</span>
+                                <a class="mcp-status-popup-config" id="mcp-popup-config-link">Configure</a>
+                            </div>
+                            <div class="mcp-status-popup-content" id="mcp-status-popup-content">
+                                <div class="mcp-status-popup-empty">No MCP servers configured</div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="input-wrapper">
                         <!-- Image Upload Button (hidden by default, shown when vision is supported) -->
                         <button class="attach-btn" id="attach-image-btn" title="Attach image" style="display: none;">
@@ -3523,6 +4115,87 @@
                 <div class="modal-sessions-list" id="modal-sessions-list">
                     <!-- Results will be loaded here -->
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MCP Configuration Modal -->
+    <div class="mcp-modal-overlay" id="mcp-modal-overlay">
+        <div class="mcp-modal">
+            <div class="mcp-modal-header">
+                <div class="mcp-modal-title">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                        <circle cx="12" cy="12" r="3" />
+                    </svg>
+                    <h2>MCP Server Configuration</h2>
+                </div>
+                <button class="mcp-modal-close" id="mcp-modal-close" title="Close">×</button>
+            </div>
+            <div class="mcp-modal-content">
+                <!-- JSON Editor Section -->
+                <div class="mcp-json-section">
+                    <label>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <line x1="16" y1="13" x2="8" y2="13" />
+                            <line x1="16" y1="17" x2="8" y2="17" />
+                        </svg>
+                        MCP Servers Configuration (JSON)
+                    </label>
+                    <textarea id="mcp-json-editor" class="mcp-json-editor" placeholder='{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/directory"]
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "your-token-here"
+      }
+    }
+  }
+}'></textarea>
+                    <div class="mcp-json-error" id="mcp-json-error">Invalid JSON format</div>
+                </div>
+
+                <!-- Server Status Section -->
+                <div class="mcp-servers-section">
+                    <div class="mcp-servers-header">
+                        <h3>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                                <line x1="8" y1="21" x2="16" y2="21" />
+                                <line x1="12" y1="17" x2="12" y2="21" />
+                            </svg>
+                            Server Status
+                        </h3>
+                        <button class="mcp-refresh-btn" id="mcp-refresh-btn" title="Refresh Status">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="23 4 23 10 17 10" />
+                                <polyline points="1 20 1 14 7 14" />
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                            </svg>
+                            Refresh
+                        </button>
+                    </div>
+                    <div class="mcp-servers-list" id="mcp-servers-list">
+                        <div class="mcp-no-servers">No MCP servers configured. Add servers using the JSON editor
+                            above.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="mcp-modal-footer">
+                <button class="mcp-modal-btn cancel" id="mcp-cancel-btn">Cancel</button>
+                <button class="mcp-modal-btn save" id="mcp-save-btn">Save Configuration</button>
             </div>
         </div>
     </div>
@@ -3589,6 +4262,7 @@
             initTheme();
             initClock();
             initAgentTypeSelector();  // Initialize agent type selector
+            initMCPConfiguration();   // Initialize MCP configuration handlers
             // Initialize UI controls first so they work immediately
             initSidebarControls();
             initChatSearch();
@@ -3598,6 +4272,7 @@
             await loadUserInfo();
             await loadSessions();
             await loadMedia();
+            await loadMCPConfig();  // Load saved MCP configuration
             connectWebSocket();
         }
 
@@ -3774,6 +4449,355 @@
         function showNotification(message, type = 'info') {
             // Simple notification (could be enhanced)
             console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        // ============== MCP Configuration ==============
+        let mcpConfig = { mcpServers: {} };
+        let mcpServerStatuses = {};
+
+        function initMCPConfiguration() {
+            const configBtn = document.getElementById('mcp-config-btn');
+            const modalOverlay = document.getElementById('mcp-modal-overlay');
+            const modalClose = document.getElementById('mcp-modal-close');
+            const cancelBtn = document.getElementById('mcp-cancel-btn');
+            const saveBtn = document.getElementById('mcp-save-btn');
+            const jsonEditor = document.getElementById('mcp-json-editor');
+            const jsonError = document.getElementById('mcp-json-error');
+            const refreshBtn = document.getElementById('mcp-refresh-btn');
+            const inputStatusBtn = document.getElementById('mcp-input-status-btn');
+            const statusPopup = document.getElementById('mcp-status-popup');
+            const popupConfigLink = document.getElementById('mcp-popup-config-link');
+
+            // Open modal from header button
+            if (configBtn) {
+                configBtn.addEventListener('click', () => {
+                    openMCPModal();
+                });
+            }
+
+            // Close modal
+            if (modalClose) {
+                modalClose.addEventListener('click', closeMCPModal);
+            }
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', closeMCPModal);
+            }
+
+            // Close on overlay click
+            if (modalOverlay) {
+                modalOverlay.addEventListener('click', (e) => {
+                    if (e.target === modalOverlay) {
+                        closeMCPModal();
+                    }
+                });
+            }
+
+            // Validate JSON on input
+            if (jsonEditor) {
+                jsonEditor.addEventListener('input', () => {
+                    validateMCPJson();
+                });
+            }
+
+            // Save configuration
+            if (saveBtn) {
+                saveBtn.addEventListener('click', async () => {
+                    await saveMCPConfig();
+                });
+            }
+
+            // Refresh status
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', () => {
+                    refreshMCPStatus();
+                });
+            }
+
+            // Toggle status popup
+            if (inputStatusBtn) {
+                inputStatusBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    statusPopup?.classList.toggle('active');
+                });
+            }
+
+            // Close popup on outside click
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#mcp-input-status-btn') && !e.target.closest('#mcp-status-popup')) {
+                    statusPopup?.classList.remove('active');
+                }
+            });
+
+            // Open modal from popup config link
+            if (popupConfigLink) {
+                popupConfigLink.addEventListener('click', () => {
+                    statusPopup?.classList.remove('active');
+                    openMCPModal();
+                });
+            }
+
+            // ESC key to close modal
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeMCPModal();
+                }
+            });
+        }
+
+        function openMCPModal() {
+            const modalOverlay = document.getElementById('mcp-modal-overlay');
+            const jsonEditor = document.getElementById('mcp-json-editor');
+
+            if (modalOverlay) {
+                modalOverlay.classList.add('active');
+            }
+
+            // Load current config into editor
+            if (jsonEditor && mcpConfig) {
+                jsonEditor.value = JSON.stringify(mcpConfig, null, 2);
+            }
+
+            // Update server status list
+            updateMCPServersList();
+        }
+
+        function closeMCPModal() {
+            const modalOverlay = document.getElementById('mcp-modal-overlay');
+            const jsonError = document.getElementById('mcp-json-error');
+            const jsonEditor = document.getElementById('mcp-json-editor');
+
+            if (modalOverlay) {
+                modalOverlay.classList.remove('active');
+            }
+            if (jsonError) {
+                jsonError.classList.remove('visible');
+            }
+            if (jsonEditor) {
+                jsonEditor.classList.remove('error');
+            }
+        }
+
+        function validateMCPJson() {
+            const jsonEditor = document.getElementById('mcp-json-editor');
+            const jsonError = document.getElementById('mcp-json-error');
+            const saveBtn = document.getElementById('mcp-save-btn');
+
+            if (!jsonEditor) return false;
+
+            const value = jsonEditor.value.trim();
+
+            if (!value) {
+                jsonError?.classList.remove('visible');
+                jsonEditor.classList.remove('error');
+                if (saveBtn) saveBtn.disabled = false;
+                return true;
+            }
+
+            try {
+                const parsed = JSON.parse(value);
+                jsonEditor.classList.remove('error');
+                jsonError?.classList.remove('visible');
+                if (saveBtn) saveBtn.disabled = false;
+                return true;
+            } catch (e) {
+                jsonEditor.classList.add('error');
+                if (jsonError) {
+                    jsonError.textContent = `Invalid JSON: ${e.message}`;
+                    jsonError.classList.add('visible');
+                }
+                if (saveBtn) saveBtn.disabled = true;
+                return false;
+            }
+        }
+
+        async function saveMCPConfig() {
+            const jsonEditor = document.getElementById('mcp-json-editor');
+
+            if (!validateMCPJson()) {
+                return;
+            }
+
+            const value = jsonEditor?.value.trim() || '{}';
+
+            try {
+                mcpConfig = JSON.parse(value);
+
+                // Save to backend
+                const response = await fetch(`${API_BASE}/api/mcp/config`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ config: mcpConfig })
+                });
+
+                if (response.ok) {
+                    showNotification('MCP configuration saved successfully', 'success');
+                    closeMCPModal();
+
+                    // Initialize server statuses as connecting
+                    initMCPServerStatuses();
+
+                    // Update UI
+                    updateMCPHeaderBadge();
+                    updateMCPStatusPopup();
+
+                    // Refresh actual status after a delay
+                    setTimeout(refreshMCPStatus, 1000);
+                } else {
+                    const error = await response.json();
+                    showNotification(`Failed to save: ${error.detail || 'Unknown error'}`, 'error');
+                }
+            } catch (e) {
+                showNotification(`Error saving config: ${e.message}`, 'error');
+            }
+        }
+
+        async function loadMCPConfig() {
+            try {
+                const response = await fetch(`${API_BASE}/api/mcp/config`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    mcpConfig = data.config || { mcpServers: {} };
+
+                    // Initialize statuses
+                    initMCPServerStatuses();
+                    updateMCPHeaderBadge();
+                    updateMCPStatusPopup();
+
+                    // Actually check status
+                    setTimeout(refreshMCPStatus, 500);
+                }
+            } catch (e) {
+                console.error('Failed to load MCP config:', e);
+            }
+        }
+
+        function initMCPServerStatuses() {
+            mcpServerStatuses = {};
+
+            if (mcpConfig.mcpServers) {
+                Object.keys(mcpConfig.mcpServers).forEach(serverName => {
+                    mcpServerStatuses[serverName] = 'connecting';
+                });
+            }
+        }
+
+        async function refreshMCPStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/api/mcp/status`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    mcpServerStatuses = data.statuses || {};
+                } else {
+                    // Mark all as disconnected on error
+                    Object.keys(mcpServerStatuses).forEach(k => {
+                        mcpServerStatuses[k] = 'disconnected';
+                    });
+                }
+            } catch (e) {
+                // Mark all as disconnected on network error
+                Object.keys(mcpServerStatuses).forEach(k => {
+                    mcpServerStatuses[k] = 'disconnected';
+                });
+            }
+
+            updateMCPServersList();
+            updateMCPHeaderBadge();
+            updateMCPStatusPopup();
+        }
+
+        function updateMCPServersList() {
+            const list = document.getElementById('mcp-servers-list');
+            if (!list) return;
+
+            const servers = mcpConfig.mcpServers || {};
+            const serverNames = Object.keys(servers);
+
+            if (serverNames.length === 0) {
+                list.innerHTML = '<div class="mcp-no-servers">No MCP servers configured. Add servers using the JSON editor above.</div>';
+                return;
+            }
+
+            list.innerHTML = serverNames.map(name => {
+                const status = mcpServerStatuses[name] || 'disconnected';
+                const serverConfig = servers[name];
+                const type = serverConfig.command || 'custom';
+
+                return `
+                            <div class="mcp-server-item">
+                                <div class="mcp-server-info">
+                                    <div class="mcp-server-status ${status}"></div>
+                                    <span class="mcp-server-name">${escapeHtml(name)}</span>
+                                </div>
+                                <span class="mcp-server-type">${escapeHtml(type)}</span>
+                            </div>
+                        `;
+            }).join('');
+        }
+
+        function updateMCPHeaderBadge() {
+            const badge = document.getElementById('mcp-header-status');
+            if (!badge) return;
+
+            const servers = Object.keys(mcpConfig.mcpServers || {});
+
+            if (servers.length === 0) {
+                badge.className = 'mcp-status-badge none';
+                return;
+            }
+
+            const statuses = Object.values(mcpServerStatuses);
+            const allConnected = statuses.every(s => s === 'connected');
+            const anyConnecting = statuses.some(s => s === 'connecting');
+
+            if (allConnected) {
+                badge.className = 'mcp-status-badge connected';
+            } else if (anyConnecting) {
+                badge.className = 'mcp-status-badge connecting';
+            } else {
+                badge.className = 'mcp-status-badge disconnected';
+            }
+        }
+
+        function updateMCPStatusPopup() {
+            const content = document.getElementById('mcp-status-popup-content');
+            if (!content) return;
+
+            const servers = mcpConfig.mcpServers || {};
+            const serverNames = Object.keys(servers);
+
+            if (serverNames.length === 0) {
+                content.innerHTML = '<div class="mcp-status-popup-empty">No MCP servers configured</div>';
+                return;
+            }
+
+            content.innerHTML = serverNames.map(name => {
+                const status = mcpServerStatuses[name] || 'disconnected';
+                const statusLabel = status === 'connected' ? 'Connected' :
+                    status === 'connecting' ? 'Connecting' : 'Disconnected';
+
+                return `
+                            <div class="mcp-status-popup-item">
+                                <div class="mcp-server-status ${status}"></div>
+                                <span class="mcp-status-popup-name">${escapeHtml(name)}</span>
+                                <span class="mcp-status-popup-badge ${status}">${statusLabel}</span>
+                            </div>
+                        `;
+            }).join('');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
         // Sidebar Controls (Resize & Toggle)

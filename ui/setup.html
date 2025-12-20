@@ -209,12 +209,13 @@
         }
 
         .step-dot.active {
-            background: var(--gradient-start);
-            box-shadow: 0 0 12px rgba(102, 126, 234, 0.5);
+            background: var(--text-primary);
+            box-shadow: 0 0 12px rgba(250, 250, 250, 0.3);
         }
 
         .step-dot.completed {
-            background: var(--success-color);
+            background: var(--text-primary);
+            opacity: 0.7;
         }
 
         /* Step Sections */
@@ -243,28 +244,29 @@
         .provider-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 20px;
+            gap: 16px;
             margin-bottom: 32px;
         }
 
         .provider-card {
             background: var(--dark-card);
-            border: 2px solid var(--dark-border);
-            border-radius: 20px;
-            padding: 28px;
+            border: 1px solid var(--dark-border);
+            border-radius: 14px;
+            padding: 24px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             position: relative;
+            backdrop-filter: blur(10px);
         }
 
         .provider-card:hover {
-            border-color: var(--gradient-start);
-            transform: translateY(-4px);
+            border-color: var(--text-secondary);
+            background: rgba(39, 39, 42, 0.8);
         }
 
         .provider-card.selected {
-            border-color: var(--accent-cyan);
-            background: rgba(0, 212, 255, 0.05);
+            border-color: var(--text-primary);
+            background: rgba(250, 250, 250, 0.05);
         }
 
         .provider-card.selected::after {
@@ -272,53 +274,56 @@
             position: absolute;
             top: 16px;
             right: 16px;
-            width: 28px;
-            height: 28px;
-            background: var(--accent-cyan);
+            width: 24px;
+            height: 24px;
+            background: var(--text-primary);
+            color: var(--dark-bg);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
+            font-size: 12px;
             font-weight: bold;
         }
 
         .provider-icon {
-            width: 56px;
-            height: 56px;
-            border-radius: 16px;
+            width: 48px;
+            height: 48px;
+            background: var(--dark-input);
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 28px;
+            font-size: 24px;
             margin-bottom: 16px;
         }
 
         .provider-icon img {
-            width: 100%;
-            height: 100%;
+            width: 32px;
+            height: 32px;
             object-fit: contain;
-            border-radius: 12px;
         }
 
         .provider-name {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 6px;
         }
 
         .provider-desc {
             color: var(--text-secondary);
-            font-size: 14px;
+            font-size: 13px;
             line-height: 1.5;
         }
 
         .provider-badge {
             display: inline-block;
             padding: 4px 10px;
-            background: rgba(102, 126, 234, 0.2);
+            background: rgba(129, 140, 248, 0.12);
+            border: 1px solid rgba(129, 140, 248, 0.25);
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 11px;
+            font-weight: 600;
             color: var(--accent-cyan);
             margin-top: 12px;
         }
@@ -345,21 +350,23 @@
         }
 
         .mode-option {
-            background: var(--dark-input);
-            border: 2px solid var(--dark-border);
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
             border-radius: 12px;
             padding: 20px;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(10px);
         }
 
         .mode-option:hover {
-            border-color: var(--gradient-start);
+            border-color: var(--text-secondary);
+            background: rgba(39, 39, 42, 0.8);
         }
 
         .mode-option.selected {
-            border-color: var(--accent-cyan);
-            background: rgba(0, 212, 255, 0.08);
+            border-color: var(--text-primary);
+            background: rgba(250, 250, 250, 0.05);
         }
 
         .mode-option-name {
@@ -400,19 +407,19 @@
         .form-input {
             width: 100%;
             padding: 14px 18px;
-            background: var(--dark-input);
-            border: 2px solid var(--dark-border);
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
             border-radius: 12px;
             color: var(--text-primary);
-            font-size: 15px;
+            font-size: 14px;
             font-family: inherit;
-            transition: all 0.3s;
+            transition: all 0.2s ease;
         }
 
         .form-input:focus {
             outline: none;
-            border-color: var(--gradient-start);
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+            border-color: var(--text-primary);
+            box-shadow: 0 0 0 3px rgba(250, 250, 250, 0.1);
         }
 
         /* Model Selection */
@@ -454,21 +461,23 @@
         }
 
         .model-card {
-            background: var(--dark-input);
-            border: 2px solid var(--dark-border);
-            border-radius: 10px;
-            padding: 14px;
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 12px;
+            padding: 16px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(10px);
         }
 
         .model-card:hover {
-            border-color: var(--gradient-start);
+            border-color: var(--text-secondary);
+            background: rgba(39, 39, 42, 0.8);
         }
 
         .model-card.selected {
-            border-color: var(--accent-cyan);
-            background: rgba(0, 212, 255, 0.08);
+            border-color: var(--text-primary);
+            background: rgba(250, 250, 250, 0.05);
         }
 
         .model-name {
@@ -503,21 +512,21 @@
         }
 
         .capability-badge.tools {
-            background: rgba(46, 213, 115, 0.15);
-            color: #2ed573;
-            border: 1px solid rgba(46, 213, 115, 0.3);
+            background: rgba(129, 140, 248, 0.12);
+            color: var(--accent-cyan);
+            border: 1px solid rgba(129, 140, 248, 0.25);
         }
 
         .capability-badge.vision {
-            background: rgba(99, 102, 241, 0.15);
-            color: #6366f1;
-            border: 1px solid rgba(99, 102, 241, 0.3);
+            background: rgba(129, 140, 248, 0.12);
+            color: var(--accent-cyan);
+            border: 1px solid rgba(129, 140, 248, 0.25);
         }
 
         .capability-badge.no-tools {
-            background: rgba(255, 159, 67, 0.15);
-            color: #ff9f43;
-            border: 1px solid rgba(255, 159, 67, 0.3);
+            background: rgba(161, 161, 170, 0.12);
+            color: var(--text-secondary);
+            border: 1px solid rgba(161, 161, 170, 0.25);
         }
 
         .capability-badge svg {

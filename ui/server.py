@@ -225,6 +225,16 @@ def init_users_db():
             FOREIGN KEY(user_id) REFERENCES users(id)
         )
     """)
+
+    # MCP Configuration
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_mcp_config (
+            user_id INTEGER PRIMARY KEY,
+            config_json TEXT NOT NULL,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        )
+    """)
     
     conn.commit()
     conn.close()
@@ -246,6 +256,9 @@ class ProviderConfig(BaseModel):
 class ChatMessage(BaseModel):
     content: str
     session_id: Optional[str] = "default"
+
+class MCPConfigRequest(BaseModel):
+    config: Dict[str, Any]
 
 # ============== In-Memory Agent Cache ==============
 # Cache agents per user to avoid recreating them
@@ -801,6 +814,21 @@ async def configure_provider(config: ProviderConfig, user: Dict = Depends(get_cu
         if capabilities.supports_tools:
             agent.load_default_tools()
             print(f"[Server] Loaded default tools for {config.model}")
+            
+            # Load MCP Configuration
+            try:
+                conn = sqlite3.connect(DB_PATH)
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                cursor.execute("SELECT config_json FROM user_mcp_config WHERE user_id = ?", (user_id,))
+                row = cursor.fetchone()
+                if row:
+                    mcp_config = json.loads(row["config_json"])
+                    await agent.add_mcp_server(config=mcp_config)
+                    print(f"[Server] Loaded MCP tools for user {user_id}")
+                conn.close()
+            except Exception as e:
+                print(f"[Server] Failed to load MCP config: {e}")
         else:
             print(f"[Server] Skipping tool loading - model {config.model} does not support tools")
         
@@ -819,6 +847,126 @@ async def configure_provider(config: ProviderConfig, user: Dict = Depends(get_cu
         "model": config.model,
         "capabilities": capabilities.to_dict()
     }
+
+# --- MCP Configuration ---
+@app.get("/api/mcp/config")
+async def get_mcp_config(user: Dict = Depends(get_current_user)):
+    """Get MCP configuration for the user."""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT config_json FROM user_mcp_config WHERE user_id = ?", (user["id"],))
+        row = cursor.fetchone()
+        if row:
+            return {"config": json.loads(row["config_json"])}
+        return {"config": {"mcpServers": {}}}
+    finally:
+        conn.close()
+
+@app.post("/api/mcp/config")
+async def save_mcp_config(request: MCPConfigRequest, user: Dict = Depends(get_current_user)):
+    """Save MCP configuration for the user."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    try:
+        config_json = json.dumps(request.config)
+        cursor.execute("""
+            INSERT INTO user_mcp_config (user_id, config_json, updated_at)
+            VALUES (?, ?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET
+                config_json = excluded.config_json,
+                updated_at = excluded.updated_at
+        """, (user["id"], config_json, datetime.now()))
+        conn.commit()
+    finally:
+        conn.close()
+
+    # Hot-reload agent if it exists
+    user_id = user["id"]
+    if user_id in agent_cache:
+        try:
+            agent = agent_cache[user_id]["agent"]
+            # Only hot-reload if it's a default Agent, SmartAgent might handle it differently
+            # For now assume Agent class has the method
+            if hasattr(agent, 'clear_mcp_servers'):
+                print(f"[Server] Reloading MCP config for active agent user {user_id}")
+                await agent.clear_mcp_servers()
+                await agent.add_mcp_server(config=request.config)
+        except Exception as e:
+            print(f"[Server] Failed to hot-reload MCP config: {e}")
+
+    return {"message": "Configuration saved"}
+
+@app.get("/api/mcp/status")
+async def get_mcp_status(user: Dict = Depends(get_current_user)):
+    """Check status of configured MCP servers."""
+    user_id = user["id"]
+    
+    # 1. Get real connection status from active agent if available
+    connected_servers = set()
+    agent_active = False
+    
+    if user_id in agent_cache:
+        try:
+            agent = agent_cache[user_id]["agent"]
+            # Assume agent has mcp_managers list
+            if hasattr(agent, 'mcp_managers'):
+                for manager in agent.mcp_managers:
+                    connected_servers.update(manager.sessions.keys())
+            agent_active = True
+        except Exception as e:
+             print(f"[Server] Error checking agent status: {e}")
+
+    # 2. Get Config
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    config = {}
+    try:
+        cursor.execute("SELECT config_json FROM user_mcp_config WHERE user_id = ?", (user["id"],))
+        row = cursor.fetchone()
+        if row:
+            config = json.loads(row["config_json"])
+    finally:
+        conn.close()
+
+    statuses = {}
+    mcp_servers = config.get("mcpServers", {})
+    
+    import shutil
+    
+    for name, server_config in mcp_servers.items():
+        # If agent is active, use real status
+        if agent_active:
+            if name in connected_servers:
+                statuses[name] = "connected"
+            else:
+                statuses[name] = "disconnected" # Active agent, but not connected
+        else:
+            # Fallback: Check if executable exists
+            command = server_config.get("command")
+            if not command:
+                statuses[name] = "disconnected"
+                continue
+                
+            cmd_check = command
+            if os.name == 'nt' and command in ['npx', 'npm']:
+                cmd_check = f"{command}.cmd"
+                
+            if shutil.which(cmd_check) or shutil.which(command):
+                statuses[name] = "connected"
+            else:
+                try:
+                    if os.path.exists(command) and os.access(command, os.X_OK):
+                        statuses[name] = "connected" 
+                    else:
+                        statuses[name] = "disconnected"
+                except:
+                    statuses[name] = "disconnected"
+                
+    return {"statuses": statuses}
+
 
 @app.get("/api/provider/current")
 async def get_current_provider(user: Dict = Depends(get_current_user)):
@@ -1242,6 +1390,21 @@ async def websocket_chat(websocket: WebSocket):
                     if capabilities.supports_tools:
                         agent.load_default_tools()
                         print(f"[Server WS] Loaded tools for {config['model']}")
+
+                        # Load MCP Configuration
+                        try:
+                            conn = sqlite3.connect(DB_PATH)
+                            conn.row_factory = sqlite3.Row
+                            cursor = conn.cursor()
+                            cursor.execute("SELECT config_json FROM user_mcp_config WHERE user_id = ?", (user_id,))
+                            row = cursor.fetchone()
+                            if row:
+                                mcp_config = json.loads(row["config_json"])
+                                await agent.add_mcp_server(config=mcp_config)
+                                print(f"[Server WS] Loaded MCP tools for user {user_id}")
+                            conn.close()
+                        except Exception as e:
+                            print(f"[Server WS] Failed to load MCP config: {e}")
                     else:
                         print(f"[Server WS] Skipping tools - {config['model']} does not support tools")
                 
