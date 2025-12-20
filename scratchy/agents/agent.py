@@ -143,13 +143,22 @@ class Agent:
         if self.debug:
             print(f"[Agent] Tools disabled: {self.tools_disabled_reason}")
 
-    async def add_mcp_server(self, config_path: str = "mcp.json"):
+    async def clear_mcp_servers(self):
+        """Disconnect and remove all MCP servers."""
+        for manager in self.mcp_managers:
+            await manager.cleanup()
+        self.mcp_managers = []
+        if self.debug:
+            print("[Agent] Cleared all MCP servers")
+
+    async def add_mcp_server(self, config_path: str = "mcp.json", config: Dict[str, Any] = None):
         """Connect to MCP servers defined in a config file and add their tools."""
-        manager = MCPClientManager(config_path)
+        manager = MCPClientManager(config_path, config=config)
         await manager.connect_to_servers()
         self.mcp_managers.append(manager)
         if self.debug:
-            print(f"[Agent] Added MCP servers from {config_path}")
+            source = "memory" if config else config_path
+            print(f"[Agent] Added MCP servers from {source}")
 
     def add_custom_tool(self, schema: Dict[str, Any], executor: Callable):
         """Add a single custom tool with its schema and execution function."""

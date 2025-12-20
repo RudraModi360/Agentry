@@ -15,15 +15,19 @@ class MCPClientManager:
     Acts as a bridge between the Agent and external MCP tools.
     """
     
-    def __init__(self, config_path: str = "mcp.json"):
+    def __init__(self, config_path: str = "mcp.json", config: Dict[str, Any] = None):
         self.config_path = config_path
+        self.config = config
         self.exit_stack = AsyncExitStack()
         self.sessions: Dict[str, ClientSession] = {}
         self.server_tools_map: Dict[str, str] = {}  # tool_name -> server_name
         self.clients: Dict[str, Any] = {} # Keep track of stdio clients
         
     async def load_config(self) -> Dict[str, Any]:
-        """Load configuration from mcp.json."""
+        """Load configuration from memory or mcp.json."""
+        if self.config:
+            return self.config
+
         if not os.path.exists(self.config_path):
             return {}
             
@@ -73,10 +77,11 @@ class MCPClientManager:
                 await session.initialize()
                 
                 self.sessions[server_name] = session
-                # print(f"[MCP Client] Connected to server: {server_name}")
+                print(f"[MCP Client] Connected to server: {server_name}")
                 
                 # List tools and map them
                 result = await session.list_tools()
+                print(f"[MCP Client] Found {len(result.tools)} tools from {server_name}")
                 for tool in result.tools:
                     self.server_tools_map[tool.name] = server_name
                     
