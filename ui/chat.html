@@ -1344,6 +1344,135 @@
             box-shadow: 0 0 8px var(--success-color);
         }
 
+        /* Agent Type Selector */
+        .agent-type-selector {
+            position: relative;
+        }
+
+        .agent-type-button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: var(--dark-input);
+            border: 1px solid var(--dark-border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .agent-type-button:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--accent);
+        }
+
+        .agent-type-button svg {
+            width: 16px;
+            height: 16px;
+            stroke: var(--accent);
+            fill: none;
+            stroke-width: 2;
+        }
+
+        .agent-type-button .chevron {
+            width: 14px;
+            height: 14px;
+            stroke: var(--text-secondary);
+            transition: transform 0.2s ease;
+        }
+
+        .agent-type-button.open .chevron {
+            transform: rotate(180deg);
+        }
+
+        .agent-type-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            min-width: 220px;
+            margin-top: 8px;
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
+        }
+
+        .agent-type-dropdown.open {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .agent-type-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .agent-type-option:first-child {
+            border-radius: 12px 12px 0 0;
+        }
+
+        .agent-type-option:last-child {
+            border-radius: 0 0 12px 12px;
+        }
+
+        .agent-type-option:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .agent-type-option.selected {
+            background: rgba(99, 102, 241, 0.12);
+        }
+
+        .agent-type-option svg {
+            width: 20px;
+            height: 20px;
+            stroke: var(--accent);
+            fill: none;
+            stroke-width: 2;
+            flex-shrink: 0;
+        }
+
+        .agent-type-option-info {
+            flex: 1;
+        }
+
+        .agent-type-option-name {
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+
+        .agent-type-option-desc {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .agent-type-option .check-icon {
+            width: 16px;
+            height: 16px;
+            stroke: var(--success);
+            opacity: 0;
+        }
+
+        .agent-type-option.selected .check-icon {
+            opacity: 1;
+        }
+
         /* Messages Container */
         .messages-container {
             flex: 1;
@@ -2196,7 +2325,8 @@
 
         #message-input {
             flex: 1;
-            padding: 16px 20px 16px 10px; /* Reduced left padding to accommodate attach button */
+            padding: 16px 20px 16px 10px;
+            /* Reduced left padding to accommodate attach button */
             background: transparent;
             border: none;
             color: var(--text-primary);
@@ -2256,7 +2386,8 @@
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            margin-bottom: 6px; /* Align with bottom of textarea */
+            margin-bottom: 6px;
+            /* Align with bottom of textarea */
             margin-left: 10px;
         }
 
@@ -3149,7 +3280,8 @@
                 </div>
             </div>
 
-            <div class="media-container" id="media-container" style="display: none; border-bottom: 1px solid var(--dark-border); max-height: 300px;">
+            <div class="media-container" id="media-container"
+                style="display: none; border-bottom: 1px solid var(--dark-border); max-height: 300px;">
                 <!-- Media files will be loaded here -->
                 <div class="no-media-text">No media uploaded yet</div>
             </div>
@@ -3227,6 +3359,64 @@
                     </svg>
                 </button>
                 <h1 class="chat-title" id="chat-title"></h1>
+
+                <!-- Agent Type Selector -->
+                <div class="agent-type-selector" id="agent-type-selector">
+                    <button class="agent-type-button" id="agent-type-button" title="Change Agent Type">
+                        <svg viewBox="0 0 24 24" class="agent-icon-current" id="agent-icon-current">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                        </svg>
+                        <span id="agent-type-label">Default Agent</span>
+                        <svg viewBox="0 0 24 24" class="chevron">
+                            <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                    </button>
+                    <div class="agent-type-dropdown" id="agent-type-dropdown">
+                        <div class="agent-type-option" data-agent="default">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                                <path d="M2 17l10 5 10-5" />
+                                <path d="M2 12l10 5 10-5" />
+                            </svg>
+                            <div class="agent-type-option-info">
+                                <div class="agent-type-option-name">Default Agent</div>
+                                <div class="agent-type-option-desc">All tools + MCP servers</div>
+                            </div>
+                            <svg viewBox="0 0 24 24" class="check-icon">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                        </div>
+                        <div class="agent-type-option" data-agent="copilot">
+                            <svg viewBox="0 0 24 24">
+                                <polyline points="16 18 22 12 16 6" />
+                                <polyline points="8 6 2 12 8 18" />
+                            </svg>
+                            <div class="agent-type-option-info">
+                                <div class="agent-type-option-name">Copilot Agent</div>
+                                <div class="agent-type-option-desc">Coding tasks & file operations</div>
+                            </div>
+                            <svg viewBox="0 0 24 24" class="check-icon">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                        </div>
+                        <div class="agent-type-option" data-agent="smart">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M9 18h6" />
+                                <path d="M10 22h4" />
+                                <path
+                                    d="M12 2a7 7 0 017 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 01-1 1H9a1 1 0 01-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 017-7z" />
+                            </svg>
+                            <div class="agent-type-option-info">
+                                <div class="agent-type-option-name">Smart Agent</div>
+                                <div class="agent-type-option-desc">Enhanced chat & reasoning</div>
+                            </div>
+                            <svg viewBox="0 0 24 24" class="check-icon">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
                 <div style="display: flex; align-items: center; gap: 16px;">
                     <!-- Theme Toggle -->
                     <button id="theme-toggle" class="theme-toggle-btn" title="Toggle theme">
@@ -3279,7 +3469,8 @@
                     <div class="input-wrapper">
                         <!-- Image Upload Button (hidden by default, shown when vision is supported) -->
                         <button class="attach-btn" id="attach-image-btn" title="Attach image" style="display: none;">
-                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                                 <circle cx="8.5" cy="8.5" r="1.5"></circle>
                                 <polyline points="21 15 16 10 5 21"></polyline>
@@ -3366,14 +3557,14 @@
         const emptyState = document.getElementById('empty-state');
         const statusDot = document.getElementById('status-dot');
         const statusText = document.getElementById('status-text');
-        
+
         // Image upload elements
         const attachImageBtn = document.getElementById('attach-image-btn');
         const imageInput = document.getElementById('image-input');
         const imagePreviewContainer = document.getElementById('image-preview-container');
         const imagePreview = document.getElementById('image-preview');
         const removeImageBtn = document.getElementById('remove-image-btn');
-        
+
         // Image state
         let selectedImageData = null;  // Base64 encoded image data
 
@@ -3397,6 +3588,7 @@
         async function init() {
             initTheme();
             initClock();
+            initAgentTypeSelector();  // Initialize agent type selector
             // Initialize UI controls first so they work immediately
             initSidebarControls();
             initChatSearch();
@@ -3496,6 +3688,92 @@
             } else {
                 console.warn('Theme toggle button not found!');
             }
+        }
+
+        // Agent Type Selector
+        const agentTypes = {
+            default: { name: 'Default Agent', icon: 'M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5' },
+            copilot: { name: 'Copilot Agent', icon: 'M16 18l6-6-6-6M8 6l-6 6 6 6' },
+            smart: { name: 'Smart Agent', icon: 'M9 18h6M10 22h4M12 2a7 7 0 017 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 01-1 1H9a1 1 0 01-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 017-7z' }
+        };
+
+        function initAgentTypeSelector() {
+            const button = document.getElementById('agent-type-button');
+            const dropdown = document.getElementById('agent-type-dropdown');
+            const options = document.querySelectorAll('.agent-type-option');
+            const currentIcon = document.getElementById('agent-icon-current');
+            const label = document.getElementById('agent-type-label');
+
+            // Load saved agent type
+            const savedAgentType = localStorage.getItem('agentry-agent-type') || 'default';
+            updateAgentTypeUI(savedAgentType);
+
+            // Toggle dropdown
+            if (button) {
+                button.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    button.classList.toggle('open');
+                    dropdown.classList.toggle('open');
+                });
+            }
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.agent-type-selector')) {
+                    button?.classList.remove('open');
+                    dropdown?.classList.remove('open');
+                }
+            });
+
+            // Handle option click
+            options.forEach(option => {
+                option.addEventListener('click', async () => {
+                    const agentType = option.dataset.agent;
+
+                    // Save to localStorage
+                    localStorage.setItem('agentry-agent-type', agentType);
+
+                    // Update UI
+                    updateAgentTypeUI(agentType);
+
+                    // Close dropdown
+                    button?.classList.remove('open');
+                    dropdown?.classList.remove('open');
+
+                    // Show notification
+                    showNotification(`Switched to ${agentTypes[agentType].name}`, 'success');
+                });
+            });
+        }
+
+        function updateAgentTypeUI(agentType) {
+            const currentIcon = document.getElementById('agent-icon-current');
+            const label = document.getElementById('agent-type-label');
+            const options = document.querySelectorAll('.agent-type-option');
+
+            // Update button label
+            if (label && agentTypes[agentType]) {
+                label.textContent = agentTypes[agentType].name;
+            }
+
+            // Update icon (simplified - using path data)
+            if (currentIcon && agentTypes[agentType]) {
+                currentIcon.innerHTML = `<path d="${agentTypes[agentType].icon}"/>`;
+            }
+
+            // Update selected state
+            options.forEach(opt => {
+                if (opt.dataset.agent === agentType) {
+                    opt.classList.add('selected');
+                } else {
+                    opt.classList.remove('selected');
+                }
+            });
+        }
+
+        function showNotification(message, type = 'info') {
+            // Simple notification (could be enhanced)
+            console.log(`[${type.toUpperCase()}] ${message}`);
         }
 
         // Sidebar Controls (Resize & Toggle)
@@ -4017,11 +4295,11 @@
         // Update capability status display
         function updateCapabilityStatus(capabilities) {
             if (!capabilities) return;
-            
+
             // Update status text to include capability info
             const supportsTools = capabilities.supports_tools;
             const supportsVision = capabilities.supports_vision;
-            
+
             let modeText = [];
             if (supportsTools) {
                 modeText.push('🔧 Tools');
@@ -4031,7 +4309,7 @@
             if (supportsVision) {
                 modeText.push('👁️ Vision');
             }
-            
+
             // Update the model name display to show capabilities
             const modelNameEl = document.getElementById('model-name');
             if (modelNameEl) {
@@ -4041,7 +4319,7 @@
                     modelNameEl.innerHTML = `${currentModel} <span style="opacity: 0.7; font-size: 11px;">• ${modeText.join(' ')}</span>`;
                 }
             }
-            
+
             // Show/hide image upload button based on vision support
             if (attachImageBtn) {
                 if (supportsVision) {
@@ -4054,20 +4332,20 @@
                     clearSelectedImage();
                 }
             }
-            
+
             // Log for debugging
             console.log('[Capabilities]', capabilities);
         }
-        
+
         // Image upload handlers
         function initImageUpload() {
             if (!attachImageBtn || !imageInput) return;
-            
+
             // Click attach button to trigger file input
             attachImageBtn.addEventListener('click', () => {
                 imageInput.click();
             });
-            
+
             // Handle file selection
             imageInput.addEventListener('change', (e) => {
                 const file = e.target.files[0];
@@ -4075,14 +4353,14 @@
                     handleImageSelect(file);
                 }
             });
-            
+
             // Handle remove image
             if (removeImageBtn) {
                 removeImageBtn.addEventListener('click', () => {
                     clearSelectedImage();
                 });
             }
-            
+
             // Handle drag and drop (optional enhancement)
             const inputWrapper = document.querySelector('.input-wrapper');
             if (inputWrapper) {
@@ -4092,17 +4370,17 @@
                         inputWrapper.style.borderColor = 'var(--accent-purple)';
                     }
                 });
-                
+
                 inputWrapper.addEventListener('dragleave', () => {
                     inputWrapper.style.borderColor = '';
                 });
-                
+
                 inputWrapper.addEventListener('drop', (e) => {
                     e.preventDefault();
                     inputWrapper.style.borderColor = '';
-                    
+
                     if (!window.modelCapabilities?.supports_vision) return;
-                    
+
                     const file = e.dataTransfer.files[0];
                     if (file && file.type.startsWith('image/')) {
                         handleImageSelect(file);
@@ -4110,24 +4388,24 @@
                 });
             }
         }
-        
+
         function handleImageSelect(file) {
             const reader = new FileReader();
             reader.onload = (e) => {
                 const dataUrl = e.target.result;
                 selectedImageData = dataUrl;
-                
+
                 // Show preview
                 imagePreview.src = dataUrl;
                 imagePreviewContainer.style.display = 'block';
                 attachImageBtn.classList.add('has-image');
-                
+
                 // Enable send button if we have an image (even without text)
                 updateSendButtonState();
             };
             reader.readAsDataURL(file);
         }
-        
+
         function clearSelectedImage() {
             selectedImageData = null;
             imageInput.value = '';
@@ -4138,7 +4416,7 @@
             }
             updateSendButtonState();
         }
-        
+
         function updateSendButtonState() {
             const hasText = messageInput.value.trim().length > 0;
             const hasImage = !!selectedImageData;
@@ -5311,7 +5589,7 @@
         function sendMessage() {
             const content = messageInput.value.trim();
             const hasImage = !!selectedImageData;
-            
+
             if ((!content && !hasImage) || !isConnected || isProcessing) return;
 
             isProcessing = true;
@@ -5321,20 +5599,20 @@
             const displayContent = content; // Just show text, image is handled separately now
             const imageDataToSend = selectedImageData;
             addUserMessage(displayContent, null, imageDataToSend);
-            
+
             messageInput.value = '';
             messageInput.style.height = 'auto';
 
             // Show thinking spinner immediately
             currentAssistantMessage = createAssistantMessage();
             currentAssistantText = '';
-            
+
             // Prepare message content with image if present
             const messagePayload = {
                 text: content,
                 image: imageDataToSend  // Base64 image data (or null)
             };
-            
+
             // Clear the selected image after sending
             clearSelectedImage();
 
@@ -5360,12 +5638,12 @@
                 content: content,
                 session_id: currentSessionId
             };
-            
+
             // Add image data if present
             if (imageData) {
                 payload.image = imageData;
             }
-            
+
             ws.send(JSON.stringify(payload));
         }
 
@@ -5507,14 +5785,14 @@
             const mediaEl = document.createElement('div');
             mediaEl.className = 'media-item';
             mediaEl.id = `media-${item.id}`;
-            
+
             // Format time
             const date = new Date(item.created_at + (item.created_at.includes('Z') ? '' : 'Z'));
-            const timeStr = date.toLocaleString([], { 
-                month: 'short', 
-                day: 'numeric', 
-                hour: '2-digit', 
-                minute: '2-digit' 
+            const timeStr = date.toLocaleString([], {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
             });
 
             mediaEl.innerHTML = `
