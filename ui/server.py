@@ -390,6 +390,56 @@ async def get_user_media(user: Dict = Depends(get_current_user)):
     
     return {"media": media}
 
+@app.delete("/api/media/{media_id}")
+async def delete_user_media(media_id: int, user: Dict = Depends(get_current_user)):
+    """Delete a media file by ID (only if owned by the user)."""
+    import sqlite3
+    import os
+    
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    try:
+        # First, get the media info to verify ownership and get file path
+        cursor.execute("""
+            SELECT id, filename, filepath, user_id 
+            FROM user_media 
+            WHERE id = ?
+        """, (media_id,))
+        row = cursor.fetchone()
+        
+        if not row:
+            raise HTTPException(status_code=404, detail="Media not found")
+        
+        # Verify ownership
+        if row[3] != user["id"]:
+            raise HTTPException(status_code=403, detail="Not authorized to delete this media")
+        
+        filename = row[1]
+        filepath = os.path.join(current_dir, "media", filename)
+        
+        # Delete from database
+        cursor.execute("DELETE FROM user_media WHERE id = ?", (media_id,))
+        conn.commit()
+        
+        # Delete from disk
+        if os.path.exists(filepath):
+            try:
+                os.remove(filepath)
+                print(f"[Server] Deleted media file: {filepath}")
+            except Exception as e:
+                print(f"[Server] Warning: Could not delete file from disk: {e}")
+        
+        return {"success": True, "message": "Media deleted successfully"}
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[Server] Error deleting media: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete media: {str(e)}")
+    finally:
+        conn.close()
+
 # ============== Ollama Models ==============
 OLLAMA_CLOUD_MODELS = [
     {"id": "gpt-oss:20b-cloud", "name": "GPT-OSS 20B Cloud", "description": "Cloud-based GPT model"},
@@ -968,6 +1018,178 @@ async def get_mcp_status(user: Dict = Depends(get_current_user)):
     return {"statuses": statuses}
 
 
+# --- Tools Management ---
+class DisabledToolsRequest(BaseModel):
+    disabled_tools: List[str]
+
+@app.get("/api/tools")
+async def get_available_tools(user: Dict = Depends(get_current_user)):
+    """Get all available tools (built-in and MCP) for the user."""
+    user_id = user["id"]
+    
+    builtin_tools = []
+    mcp_tools = {}
+    
+    # Get tools from agent if cached
+    if user_id in agent_cache:
+        agent = agent_cache[user_id].get("agent")
+        
+        # Get built-in tools from internal_tools (list of schemas)
+        if agent and hasattr(agent, 'internal_tools'):
+            mcp_tool_names = set()
+            
+            # First, get MCP tool names to exclude from built-in
+            if hasattr(agent, 'mcp_managers'):
+                for manager in agent.mcp_managers:
+                    if hasattr(manager, 'server_tools_map'):
+                        mcp_tool_names.update(manager.server_tools_map.keys())
+            
+            # Now iterate internal_tools (these are tool schemas)
+            for tool_schema in agent.internal_tools:
+                if isinstance(tool_schema, dict) and 'function' in tool_schema:
+                    func_info = tool_schema['function']
+                    tool_name = func_info.get('name', 'unknown')
+                    
+                    # Skip if this is an MCP tool
+                    if tool_name in mcp_tool_names:
+                        continue
+                    
+                    description = func_info.get('description', '')
+                    builtin_tools.append({
+                        "name": tool_name,
+                        "description": description[:100] if description else "No description"
+                    })
+        
+        # Get MCP tools from agent's mcp_managers
+        if agent and hasattr(agent, 'mcp_managers'):
+            for manager in agent.mcp_managers:
+                # Use server_tools_map to get tools per server
+                if hasattr(manager, 'server_tools_map') and hasattr(manager, 'sessions'):
+                    # Group tools by server
+                    server_tool_names = {}
+                    for tool_name, server_name in manager.server_tools_map.items():
+                        if server_name not in server_tool_names:
+                            server_tool_names[server_name] = []
+                        server_tool_names[server_name].append(tool_name)
+                    
+                    # For each server, try to get tool details
+                    for server_name, tool_names in server_tool_names.items():
+                        session = manager.sessions.get(server_name)
+                        if session:
+                            try:
+                                # Call list_tools() to get full tool information
+                                result = await session.list_tools()
+                                mcp_tools[server_name] = [
+                                    {
+                                        "name": tool.name,
+                                        "description": (tool.description[:100] if tool.description else "No description")
+                                    }
+                                    for tool in result.tools
+                                ]
+                            except Exception as e:
+                                print(f"[Server] Error listing tools from {server_name}: {e}")
+                                # Fallback to just tool names
+                                mcp_tools[server_name] = [
+                                    {"name": tn, "description": "Tool from MCP server"}
+                                    for tn in tool_names
+                                ]
+    
+    # If no agent cached, return default built-in tools list
+    if not builtin_tools:
+        # These are the common default tools in Scratchy
+        builtin_tools = [
+            {"name": "web_search", "description": "Search the web using Groq's browser search"},
+            {"name": "read_file", "description": "Read the contents of a file"},
+            {"name": "write_file", "description": "Write content to a file"},
+            {"name": "execute_python", "description": "Execute Python code"},
+            {"name": "datetime_tool", "description": "Get current date and time"},
+            {"name": "memory_tool", "description": "Store and retrieve persistent memories"},
+            {"name": "wolfram_alpha", "description": "Query Wolfram Alpha for computations"},
+        ]
+    
+    # Get MCP server names from config if no tools loaded yet
+    if not mcp_tools:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        try:
+            cursor.execute("SELECT config_json FROM user_mcp_config WHERE user_id = ?", (user_id,))
+            row = cursor.fetchone()
+            if row:
+                config = json.loads(row["config_json"])
+                for server_name in config.get("mcpServers", {}).keys():
+                    mcp_tools[server_name] = []  # Empty list, tools not yet loaded
+        finally:
+            conn.close()
+    
+    return {
+        "builtin": builtin_tools,
+        "mcp": mcp_tools
+    }
+
+
+@app.post("/api/tools/disabled")
+async def save_disabled_tools(request: DisabledToolsRequest, user: Dict = Depends(get_current_user)):
+    """Save the list of disabled tools for the user."""
+    user_id = user["id"]
+    disabled_tools = request.disabled_tools
+    
+    # Store in database
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    try:
+        # Create table if not exists
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS user_disabled_tools (
+                user_id INTEGER PRIMARY KEY,
+                disabled_tools_json TEXT NOT NULL,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(user_id) REFERENCES users(id)
+            )
+        """)
+        
+        # Save disabled tools
+        disabled_json = json.dumps(disabled_tools)
+        cursor.execute("""
+            INSERT INTO user_disabled_tools (user_id, disabled_tools_json, updated_at)
+            VALUES (?, ?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET
+                disabled_tools_json = excluded.disabled_tools_json,
+                updated_at = excluded.updated_at
+        """, (user_id, disabled_json, datetime.now()))
+        conn.commit()
+    finally:
+        conn.close()
+    
+    # Update agent if cached
+    if user_id in agent_cache:
+        agent = agent_cache[user_id].get("agent")
+        if agent:
+            # Store disabled tools in agent for filtering
+            agent.disabled_tools = set(disabled_tools)
+            print(f"[Server] Updated disabled tools for user {user_id}: {disabled_tools}")
+    
+    return {"message": "Disabled tools saved", "count": len(disabled_tools)}
+
+
+@app.get("/api/tools/disabled")
+async def get_disabled_tools(user: Dict = Depends(get_current_user)):
+    """Get the list of disabled tools for the user."""
+    user_id = user["id"]
+    
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT disabled_tools_json FROM user_disabled_tools WHERE user_id = ?", (user_id,))
+        row = cursor.fetchone()
+        if row:
+            return {"disabled_tools": json.loads(row["disabled_tools_json"])}
+        return {"disabled_tools": []}
+    finally:
+        conn.close()
+
+
 @app.get("/api/provider/current")
 async def get_current_provider(user: Dict = Depends(get_current_user)):
     """Get current provider configuration with capabilities."""
@@ -1391,20 +1613,23 @@ async def websocket_chat(websocket: WebSocket):
                         agent.load_default_tools()
                         print(f"[Server WS] Loaded tools for {config['model']}")
 
-                        # Load MCP Configuration
-                        try:
-                            conn = sqlite3.connect(DB_PATH)
-                            conn.row_factory = sqlite3.Row
-                            cursor = conn.cursor()
-                            cursor.execute("SELECT config_json FROM user_mcp_config WHERE user_id = ?", (user_id,))
-                            row = cursor.fetchone()
-                            if row:
-                                mcp_config = json.loads(row["config_json"])
-                                await agent.add_mcp_server(config=mcp_config)
-                                print(f"[Server WS] Loaded MCP tools for user {user_id}")
-                            conn.close()
-                        except Exception as e:
-                            print(f"[Server WS] Failed to load MCP config: {e}")
+                        # Load MCP Configuration (Only for Default Agent)
+                        current_agent_type = agent_type_config.get("agent_type") if agent_type_config else "default"
+                        
+                        if current_agent_type == "default":
+                            try:
+                                conn = sqlite3.connect(DB_PATH)
+                                conn.row_factory = sqlite3.Row
+                                cursor = conn.cursor()
+                                cursor.execute("SELECT config_json FROM user_mcp_config WHERE user_id = ?", (user_id,))
+                                row = cursor.fetchone()
+                                if row:
+                                    mcp_config = json.loads(row["config_json"])
+                                    await agent.add_mcp_server(config=mcp_config)
+                                    print(f"[Server WS] Loaded MCP tools for user {user_id}")
+                                conn.close()
+                            except Exception as e:
+                                print(f"[Server WS] Failed to load MCP config: {e}")
                     else:
                         print(f"[Server WS] Skipping tools - {config['model']} does not support tools")
                 

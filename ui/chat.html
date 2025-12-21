@@ -156,6 +156,8 @@
         }
 
         /* Custom Horizontal Scrollbar for Code, Tables, and Tool Calls */
+
+        /* Common Dimensions & Track */
         .code-block-container pre::-webkit-scrollbar,
         .message-text pre::-webkit-scrollbar,
         .table-scroll-wrapper::-webkit-scrollbar,
@@ -164,7 +166,6 @@
         .approval-args::-webkit-scrollbar {
             height: 8px;
             width: 8px;
-            /* For vertical scrollbar */
         }
 
         .code-block-container pre::-webkit-scrollbar-track,
@@ -176,12 +177,9 @@
             background: transparent;
         }
 
+        /* Always Dark Content (Code Blocks) */
         .code-block-container pre::-webkit-scrollbar-thumb,
-        .message-text pre::-webkit-scrollbar-thumb,
-        .table-scroll-wrapper::-webkit-scrollbar-thumb,
-        .tool-call-args::-webkit-scrollbar-thumb,
-        .tool-call-result::-webkit-scrollbar-thumb,
-        .approval-args::-webkit-scrollbar-thumb {
+        .message-text pre::-webkit-scrollbar-thumb {
             background: #555;
             border-radius: 4px;
             border: 2px solid transparent;
@@ -189,12 +187,28 @@
         }
 
         .code-block-container pre::-webkit-scrollbar-thumb:hover,
-        .message-text pre::-webkit-scrollbar-thumb:hover,
+        .message-text pre::-webkit-scrollbar-thumb:hover {
+            background: #777;
+            border: 2px solid transparent;
+            background-clip: content-box;
+        }
+
+        /* Theme-Aware Content (Tables, Tool Calls) */
+        .table-scroll-wrapper::-webkit-scrollbar-thumb,
+        .tool-call-args::-webkit-scrollbar-thumb,
+        .tool-call-result::-webkit-scrollbar-thumb,
+        .approval-args::-webkit-scrollbar-thumb {
+            background: var(--text-muted);
+            border-radius: 4px;
+            border: 2px solid transparent;
+            background-clip: content-box;
+        }
+
         .table-scroll-wrapper::-webkit-scrollbar-thumb:hover,
         .tool-call-args::-webkit-scrollbar-thumb:hover,
         .tool-call-result::-webkit-scrollbar-thumb:hover,
         .approval-args::-webkit-scrollbar-thumb:hover {
-            background: #777;
+            background: var(--text-secondary);
             border: 2px solid transparent;
             background-clip: content-box;
         }
@@ -400,11 +414,15 @@
         /* Firefox scrollbar styling for all scrollable containers */
         .messages-container,
         .sessions-container,
-        .code-block-container pre,
-        .message-text pre,
         .table-scroll-wrapper {
-            scrollbar-width: auto;
-            scrollbar-color: #555 #2a2a2a;
+            scrollbar-width: thin;
+            scrollbar-color: var(--text-muted) transparent;
+        }
+
+        .code-block-container pre,
+        .message-text pre {
+            scrollbar-width: thin;
+            scrollbar-color: #555 transparent;
         }
 
         /* --- Premium Loaders --- */
@@ -2314,8 +2332,9 @@
             border: 2px solid var(--dark-border);
             border-radius: 16px;
             display: flex;
-            align-items: flex-end;
+            align-items: center;
             transition: all 0.3s;
+            min-height: 52px;
         }
 
         .input-wrapper:focus-within {
@@ -2325,7 +2344,7 @@
 
         #message-input {
             flex: 1;
-            padding: 16px 20px 16px 10px;
+            padding: 14px 20px 14px 8px;
             /* Reduced left padding to accommodate attach button */
             background: transparent;
             border: none;
@@ -2335,6 +2354,7 @@
             resize: none;
             max-height: 150px;
             line-height: 1.5;
+            align-self: center;
         }
 
         #message-input:focus {
@@ -2375,8 +2395,8 @@
 
         /* Image Upload Button - Now integrated into input bar */
         .attach-btn {
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
             background: transparent;
             border: none;
             color: var(--text-secondary);
@@ -2386,9 +2406,8 @@
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            margin-bottom: 6px;
-            /* Align with bottom of textarea */
-            margin-left: 10px;
+            align-self: center;
+            margin-left: 4px;
         }
 
         .attach-btn:hover {
@@ -2446,6 +2465,30 @@
         }
 
         /* Media Library styles */
+        .media-library-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--card-border);
+            background: var(--bg-secondary);
+        }
+
+        .media-library-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .media-library-title svg {
+            width: 14px;
+            height: 14px;
+            stroke: var(--accent);
+        }
+
         .media-header {
             margin-top: 24px;
         }
@@ -2458,6 +2501,42 @@
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 8px;
+        }
+
+        .media-item .media-delete-btn {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 22px;
+            height: 22px;
+            background: rgba(239, 68, 68, 0.9);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            z-index: 10;
+            padding: 0;
+            opacity: 0;
+            transform: scale(0.8);
+        }
+
+        .media-item .media-delete-btn svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        .media-item:hover .media-delete-btn {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .media-item .media-delete-btn:hover {
+            background: #dc2626;
+            transform: scale(1.1);
         }
 
         .media-item {
@@ -2513,6 +2592,309 @@
             font-size: 11px;
             padding: 10px 0;
             opacity: 0.6;
+        }
+
+        /* Media View All Arrow */
+        .media-view-all {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            padding: 8px 12px;
+            margin: 8px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .media-view-all:hover {
+            background: var(--accent-light);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .media-view-all svg {
+            width: 14px;
+            height: 14px;
+            transition: transform 0.2s;
+        }
+
+        .media-view-all:hover svg {
+            transform: translateX(3px);
+        }
+
+        /* Media Gallery Modal */
+        .media-gallery-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .media-gallery-overlay.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .media-gallery-modal {
+            width: 100%;
+            max-width: 1200px;
+            max-height: 90vh;
+            background: var(--bg-primary);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .media-gallery-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-secondary);
+        }
+
+        .media-gallery-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .media-gallery-title svg {
+            width: 22px;
+            height: 22px;
+            stroke: var(--accent);
+        }
+
+        .media-gallery-close {
+            width: 36px;
+            height: 36px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .media-gallery-close:hover {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+
+        .media-gallery-close svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .media-gallery-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        /* Masonry Grid */
+        .media-masonry {
+            column-count: 4;
+            column-gap: 16px;
+        }
+
+        @media (max-width: 1024px) {
+            .media-masonry {
+                column-count: 3;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .media-masonry {
+                column-count: 2;
+            }
+
+            .media-gallery-overlay {
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .media-masonry {
+                column-count: 1;
+            }
+        }
+
+        /* 3D Card Effect */
+        .media-3d-card {
+            break-inside: avoid;
+            margin-bottom: 16px;
+            perspective: 1000px;
+        }
+
+        .media-3d-card-inner {
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            background: var(--bg-secondary);
+            border: 1px solid var(--card-border);
+            transform-style: preserve-3d;
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+            cursor: pointer;
+        }
+
+        .media-3d-card-inner:hover {
+            transform: rotateX(5deg) rotateY(-5deg) scale(1.02);
+            box-shadow:
+                10px 10px 30px rgba(0, 0, 0, 0.2),
+                0 0 40px rgba(var(--accent-rgb, 99, 102, 241), 0.15);
+        }
+
+        .media-3d-card-inner::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg,
+                    rgba(255, 255, 255, 0.1) 0%,
+                    transparent 50%,
+                    rgba(0, 0, 0, 0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .media-3d-card-inner:hover::before {
+            opacity: 1;
+        }
+
+        .media-3d-card img {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: filter 0.4s ease;
+        }
+
+        .media-3d-card:hover img {
+            filter: brightness(1.05) contrast(1.02);
+        }
+
+        .media-3d-card-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 16px;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            z-index: 3;
+        }
+
+        .media-3d-card-inner:hover .media-3d-card-overlay {
+            transform: translateY(0);
+        }
+
+        .media-3d-card-date {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+        }
+
+        .media-3d-card-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .media-3d-card-btn {
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .media-3d-card-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .media-3d-card-btn.delete {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        .media-3d-card-btn.delete:hover {
+            background: rgba(239, 68, 68, 0.5);
+        }
+
+        .media-3d-card-btn svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        .media-gallery-empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .media-gallery-empty svg {
+            width: 60px;
+            height: 60px;
+            stroke: var(--text-muted);
+            opacity: 0.5;
+            margin-bottom: 16px;
+        }
+
+        .media-gallery-empty p {
+            font-size: 14px;
         }
 
         .message-image {
@@ -3785,6 +4167,488 @@
                 width: 280px;
             }
         }
+
+        /* ===== Tools Button & Popup (Inside Input Bar) ===== */
+        .tools-btn-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-left: 10px;
+            align-self: center;
+        }
+
+        .tools-btn {
+            width: 36px;
+            height: 36px;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            color: var(--text-secondary);
+        }
+
+        .tools-btn:hover {
+            background: var(--bg-tertiary);
+            color: var(--accent);
+        }
+
+        .tools-btn.active {
+            background: var(--accent-light);
+            color: var(--accent);
+        }
+
+        .tools-btn svg {
+            transition: transform 0.2s ease;
+        }
+
+        .tools-btn.active svg {
+            transform: rotate(45deg);
+        }
+
+        /* Tools Popup */
+        .tools-popup {
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            margin-bottom: 12px;
+            width: 340px;
+            max-height: 400px;
+            background: var(--bg-primary);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            display: none;
+            z-index: 200;
+            overflow: hidden;
+            animation: slideUpTools 0.2s ease-out;
+        }
+
+        .tools-popup.active {
+            display: block;
+        }
+
+        @keyframes slideUpTools {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .tools-popup-header {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-secondary);
+        }
+
+        .tools-popup-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .tools-popup-close {
+            width: 24px;
+            height: 24px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .tools-popup-close:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .tools-popup-content {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        /* Tools Section Groups (Expandable) */
+        .tools-section-group {
+            margin-bottom: 4px;
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .tools-section-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .tools-section-header-expandable {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            cursor: pointer;
+            background: var(--bg-secondary);
+            transition: all 0.15s;
+            user-select: none;
+        }
+
+        .tools-section-header-expandable:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .tools-section-group.expanded .tools-section-header-expandable {
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .tools-section-header-expandable svg:first-child {
+            stroke: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .tools-section-title {
+            flex: 1;
+        }
+
+        .tools-section-count {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-muted);
+            background: var(--bg-tertiary);
+            padding: 2px 8px;
+            border-radius: 10px;
+            text-transform: none;
+        }
+
+        .tools-section-expand-icon {
+            width: 14px;
+            height: 14px;
+            stroke: var(--text-muted);
+            transition: transform 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .tools-section-group.expanded .tools-section-expand-icon {
+            transform: rotate(180deg);
+        }
+
+        .tools-section-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.25s ease-out;
+        }
+
+        .tools-section-group.expanded .tools-section-content {
+            max-height: 1500px;
+            transition: max-height 0.35s ease-in;
+        }
+
+        .tools-section-content .tools-list {
+            padding: 4px 0;
+        }
+
+        /* Legacy section styles (keep for backwards compatibility) */
+        .tools-section {
+            margin-bottom: 8px;
+        }
+
+        .tools-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .tools-section-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+        }
+
+        .tools-section-header svg {
+            stroke: var(--text-muted);
+        }
+
+        .tools-configure-link {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--accent);
+            cursor: pointer;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+
+        .tools-configure-link:hover {
+            text-decoration: underline;
+        }
+
+        .tools-list {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .tools-loading,
+        .tools-empty {
+            padding: 16px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+
+        /* Tool Item */
+        .tool-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            transition: background 0.15s;
+        }
+
+        .tool-item:hover {
+            background: var(--bg-secondary);
+        }
+
+        .tool-item-icon {
+            width: 28px;
+            height: 28px;
+            background: var(--accent-light);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .tool-item-icon svg {
+            width: 14px;
+            height: 14px;
+            stroke: var(--accent);
+        }
+
+        .tool-item-icon.mcp {
+            background: rgba(139, 92, 246, 0.15);
+        }
+
+        .tool-item-icon.mcp svg {
+            stroke: #8b5cf6;
+        }
+
+        .tool-item-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .tool-item-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .tool-item-desc {
+            font-size: 11px;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 2px;
+        }
+
+        .tool-item-source {
+            font-size: 10px;
+            color: var(--text-muted);
+            padding: 2px 6px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            margin-left: 6px;
+        }
+
+        /* Toggle Switch */
+        .tool-toggle {
+            position: relative;
+            width: 36px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+
+        .tool-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .tool-toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--card-border);
+            transition: 0.2s;
+            border-radius: 20px;
+        }
+
+        .tool-toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 2px;
+            bottom: 2px;
+            background-color: var(--text-muted);
+            transition: 0.2s;
+            border-radius: 50%;
+        }
+
+        .tool-toggle input:checked+.tool-toggle-slider {
+            background-color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .tool-toggle input:checked+.tool-toggle-slider:before {
+            background-color: white;
+            transform: translateX(16px);
+        }
+
+        .tool-item.disabled .tool-item-name,
+        .tool-item.disabled .tool-item-desc {
+            opacity: 0.5;
+        }
+
+        /* MCP Server Group in Tools - Accordion Style */
+        .mcp-server-group {
+            margin-bottom: 4px;
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .mcp-server-group-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            background: var(--bg-secondary);
+            transition: all 0.15s;
+            user-select: none;
+        }
+
+        .mcp-server-group-header:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .mcp-server-group.expanded .mcp-server-group-header {
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .mcp-server-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22c55e;
+            flex-shrink: 0;
+        }
+
+        .mcp-server-status.disconnected {
+            background: #ef4444;
+        }
+
+        .mcp-server-name {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .mcp-server-tools-count {
+            font-size: 11px;
+            color: var(--text-muted);
+            background: var(--bg-tertiary);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .mcp-server-expand-icon {
+            width: 16px;
+            height: 16px;
+            stroke: var(--text-muted);
+            transition: transform 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .mcp-server-group.expanded .mcp-server-expand-icon {
+            transform: rotate(180deg);
+        }
+
+        .mcp-server-tools {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.25s ease-out;
+        }
+
+        .mcp-server-group.expanded .mcp-server-tools {
+            max-height: 1000px;
+            transition: max-height 0.35s ease-in;
+        }
+
+        .mcp-server-tools .tools-list {
+            padding: 4px 0;
+        }
+
+        .mcp-server-toggle {
+            margin-left: 4px;
+        }
+
+        /* Responsive */
+        @media screen and (max-width: 768px) {
+            .tools-popup {
+                width: 300px;
+                left: -10px;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            .tools-popup {
+                position: fixed;
+                left: 16px;
+                right: 16px;
+                bottom: 80px;
+                width: auto;
+                max-height: 60vh;
+            }
+        }
     </style>
 </head>
 
@@ -3843,10 +4707,33 @@
                 </div>
             </div>
 
-            <div class="media-container" id="media-container"
-                style="display: none; border-bottom: 1px solid var(--dark-border); max-height: 300px;">
-                <!-- Media files will be loaded here -->
-                <div class="no-media-text">No media uploaded yet</div>
+            <!-- Media Library Section -->
+            <div class="media-library-wrapper" id="media-library-wrapper"
+                style="display: none; border-bottom: 1px solid var(--card-border);">
+                <div class="media-library-header">
+                    <div class="media-library-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                        <span>Recent Media</span>
+                    </div>
+                </div>
+                <div class="media-container" id="media-container" style="max-height: 180px;">
+                    <!-- Recent media files will be loaded here (limited to 4) -->
+                    <div class="no-media-text">No media uploaded yet</div>
+                </div>
+                <!-- View All Button -->
+                <button class="media-view-all" id="media-view-all-btn" title="View all media">
+                    <span>View All Media</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </button>
             </div>
 
             <!-- Resizer -->
@@ -4039,26 +4926,77 @@
                 </div>
                 <div class="input-container">
                     <input type="file" id="image-input" accept="image/*" style="display: none;">
-                    <!-- MCP Status Button with Popup -->
-                    <div style="position: relative;">
-                        <button class="mcp-status-btn" id="mcp-input-status-btn" title="MCP Server Status">
-                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="12" y1="5" x2="12" y2="19"></line>
-                                <line x1="5" y1="12" x2="19" y2="12"></line>
-                            </svg>
-                        </button>
-                        <div class="mcp-status-popup" id="mcp-status-popup">
-                            <div class="mcp-status-popup-header">
-                                <span class="mcp-status-popup-title">MCP Servers</span>
-                                <a class="mcp-status-popup-config" id="mcp-popup-config-link">Configure</a>
-                            </div>
-                            <div class="mcp-status-popup-content" id="mcp-status-popup-content">
-                                <div class="mcp-status-popup-empty">No MCP servers configured</div>
+                    <div class="input-wrapper">
+                        <!-- Tools Button (+ button) - Inside the input bar -->
+                        <div class="tools-btn-container" id="tools-btn-container">
+                            <button class="tools-btn" id="tools-btn" title="Available Tools">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                            </button>
+                            <!-- Tools Popup -->
+                            <div class="tools-popup" id="tools-popup">
+                                <div class="tools-popup-header">
+                                    <span class="tools-popup-title">Available Tools</span>
+                                    <button class="tools-popup-close" id="tools-popup-close">×</button>
+                                </div>
+                                <div class="tools-popup-content" id="tools-popup-content">
+                                    <!-- Built-in Tools Section (Collapsible) -->
+                                    <div class="tools-section-group" id="builtin-tools-group">
+                                        <div class="tools-section-header-expandable"
+                                            onclick="toggleToolsSectionExpand('builtin-tools-group')">
+                                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none"
+                                                stroke="currentColor" stroke-width="2">
+                                                <path
+                                                    d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z">
+                                                </path>
+                                            </svg>
+                                            <span class="tools-section-title">Built-in Tools</span>
+                                            <span class="tools-section-count" id="builtin-tools-count">0</span>
+                                            <svg class="tools-section-expand-icon" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                stroke-linejoin="round">
+                                                <polyline points="6 9 12 15 18 9"></polyline>
+                                            </svg>
+                                        </div>
+                                        <div class="tools-section-content">
+                                            <div class="tools-list" id="builtin-tools-list">
+                                                <div class="tools-loading">Loading tools...</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- MCP Tools Section (Collapsible) -->
+                                    <div class="tools-section-group" id="mcp-tools-group">
+                                        <div class="tools-section-header-expandable"
+                                            onclick="toggleToolsSectionExpand('mcp-tools-group')">
+                                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none"
+                                                stroke="currentColor" stroke-width="2">
+                                                <path
+                                                    d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83">
+                                                </path>
+                                                <circle cx="12" cy="12" r="3"></circle>
+                                            </svg>
+                                            <span class="tools-section-title">MCP Tools</span>
+                                            <span class="tools-section-count" id="mcp-tools-count">0</span>
+                                            <a class="tools-configure-link" id="tools-mcp-config-link"
+                                                onclick="event.stopPropagation()">Configure</a>
+                                            <svg class="tools-section-expand-icon" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                stroke-linejoin="round">
+                                                <polyline points="6 9 12 15 18 9"></polyline>
+                                            </svg>
+                                        </div>
+                                        <div class="tools-section-content">
+                                            <div class="tools-list" id="mcp-tools-list">
+                                                <div class="tools-empty">No MCP servers configured</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="input-wrapper">
                         <!-- Image Upload Button (hidden by default, shown when vision is supported) -->
                         <button class="attach-btn" id="attach-image-btn" title="Attach image" style="display: none;">
                             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
@@ -4068,7 +5006,8 @@
                                 <polyline points="21 15 16 10 5 21"></polyline>
                             </svg>
                         </button>
-                        <textarea id="message-input" placeholder="Type your message..." rows="1"></textarea>
+                        <textarea id="message-input" placeholder="Type your message or attach an image..."
+                            rows="1"></textarea>
                     </div>
                     <button class="send-btn" id="send-btn" disabled>➤</button>
                 </div>
@@ -4200,6 +5139,35 @@
         </div>
     </div>
 
+    <!-- Media Gallery Modal -->
+    <div class="media-gallery-overlay" id="media-gallery-overlay">
+        <div class="media-gallery-modal">
+            <div class="media-gallery-header">
+                <div class="media-gallery-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                    <span>Media Gallery</span>
+                </div>
+                <button class="media-gallery-close" id="media-gallery-close" title="Close">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="media-gallery-content">
+                <div class="media-masonry" id="media-masonry">
+                    <!-- 3D cards will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Apply theme immediately to prevent flash
         (function () {
@@ -4263,6 +5231,7 @@
             initClock();
             initAgentTypeSelector();  // Initialize agent type selector
             initMCPConfiguration();   // Initialize MCP configuration handlers
+            initToolsPopup();         // Initialize tools popup
             // Initialize UI controls first so they work immediately
             initSidebarControls();
             initChatSearch();
@@ -4444,6 +5413,18 @@
                     opt.classList.remove('selected');
                 }
             });
+
+            // Toggle MCP/Tools Visibility - only available for Default Agent
+            const mcpConfigBtn = document.getElementById('mcp-config-btn');
+            const toolsBtnContainer = document.getElementById('tools-btn-container');
+
+            if (agentType === 'default') {
+                if (mcpConfigBtn) mcpConfigBtn.style.display = '';
+                if (toolsBtnContainer) toolsBtnContainer.style.display = '';
+            } else {
+                if (mcpConfigBtn) mcpConfigBtn.style.display = 'none';
+                if (toolsBtnContainer) toolsBtnContainer.style.display = 'none';
+            }
         }
 
         function showNotification(message, type = 'info') {
@@ -4798,6 +5779,308 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+
+        // ============== Tools Management ==============
+        let availableTools = { builtin: [], mcp: {} };
+        let disabledTools = new Set(); // Set of tool names that are disabled
+
+        function initToolsPopup() {
+            const toolsBtn = document.getElementById('tools-btn');
+            const toolsPopup = document.getElementById('tools-popup');
+            const toolsPopupClose = document.getElementById('tools-popup-close');
+            const mcpConfigLink = document.getElementById('tools-mcp-config-link');
+
+            // Toggle popup on button click
+            if (toolsBtn) {
+                toolsBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isActive = toolsPopup?.classList.contains('active');
+                    if (!isActive) {
+                        loadAvailableTools(); // Refresh tools when opening
+                    }
+                    toolsBtn.classList.toggle('active');
+                    toolsPopup?.classList.toggle('active');
+                });
+            }
+
+            // Close popup button
+            if (toolsPopupClose) {
+                toolsPopupClose.addEventListener('click', () => {
+                    closeToolsPopup();
+                });
+            }
+
+            // Close on outside click
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#tools-btn') && !e.target.closest('#tools-popup')) {
+                    closeToolsPopup();
+                }
+            });
+
+            // Open MCP config from tools popup
+            if (mcpConfigLink) {
+                mcpConfigLink.addEventListener('click', () => {
+                    closeToolsPopup();
+                    openMCPModal();
+                });
+            }
+
+            // Load disabled tools from localStorage first
+            const savedDisabled = localStorage.getItem('agentry-disabled-tools');
+            if (savedDisabled) {
+                try {
+                    disabledTools = new Set(JSON.parse(savedDisabled));
+                } catch (e) {
+                    disabledTools = new Set();
+                }
+            }
+
+            // Also try to load from backend
+            loadDisabledToolsFromBackend();
+        }
+
+        async function loadDisabledToolsFromBackend() {
+            try {
+                const response = await fetch(`${API_BASE}/api/tools/disabled`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.disabled_tools && data.disabled_tools.length > 0) {
+                        disabledTools = new Set(data.disabled_tools);
+                        localStorage.setItem('agentry-disabled-tools', JSON.stringify([...disabledTools]));
+                    }
+                }
+            } catch (e) {
+                console.log('Could not load disabled tools from backend, using localStorage');
+            }
+        }
+
+        function closeToolsPopup() {
+            const toolsBtn = document.getElementById('tools-btn');
+            const toolsPopup = document.getElementById('tools-popup');
+            toolsBtn?.classList.remove('active');
+            toolsPopup?.classList.remove('active');
+        }
+
+        async function loadAvailableTools() {
+            try {
+                const response = await fetch(`${API_BASE}/api/tools`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    availableTools = data;
+                    renderToolsList();
+                } else {
+                    // Fallback to showing placeholder
+                    renderToolsListFallback();
+                }
+            } catch (e) {
+                console.error('Failed to load tools:', e);
+                renderToolsListFallback();
+            }
+        }
+
+        function renderToolsList() {
+            const builtinList = document.getElementById('builtin-tools-list');
+            const mcpList = document.getElementById('mcp-tools-list');
+            const builtinCountEl = document.getElementById('builtin-tools-count');
+            const mcpCountEl = document.getElementById('mcp-tools-count');
+
+            // Render built-in tools
+            if (builtinList) {
+                const builtinTools = availableTools.builtin || [];
+
+                // Update count
+                if (builtinCountEl) {
+                    builtinCountEl.textContent = builtinTools.length;
+                }
+
+                if (builtinTools.length === 0) {
+                    builtinList.innerHTML = '<div class="tools-empty">No built-in tools available</div>';
+                } else {
+                    builtinList.innerHTML = builtinTools.map(tool => createToolItemHTML(tool, 'builtin')).join('');
+                    // Add event listeners
+                    builtinList.querySelectorAll('.tool-toggle input').forEach(input => {
+                        input.addEventListener('change', (e) => handleToolToggle(e, 'builtin'));
+                    });
+                }
+            }
+
+            // Calculate total MCP tools count
+            const mcpServers = availableTools.mcp || {};
+            const totalMcpTools = Object.values(mcpServers).reduce((sum, tools) => sum + (tools?.length || 0), 0);
+            if (mcpCountEl) {
+                mcpCountEl.textContent = totalMcpTools;
+            }
+
+            // Render MCP tools with expanders
+            if (mcpList) {
+                const mcpServers = availableTools.mcp || {};
+                const serverNames = Object.keys(mcpServers);
+
+                if (serverNames.length === 0) {
+                    mcpList.innerHTML = '<div class="tools-empty">No MCP servers configured</div>';
+                } else {
+                    let html = '';
+                    serverNames.forEach((serverName, index) => {
+                        const serverTools = mcpServers[serverName] || [];
+                        const status = mcpServerStatuses[serverName] || 'disconnected';
+                        const serverId = `mcp-server-${index}`;
+
+                        html += `
+                            <div class="mcp-server-group" id="${serverId}" data-server="${escapeHtml(serverName)}">
+                                <div class="mcp-server-group-header" onclick="toggleMCPServerExpand('${serverId}')">
+                                    <div class="mcp-server-status ${status}"></div>
+                                    <span class="mcp-server-name">${escapeHtml(serverName)}</span>
+                                    <span class="mcp-server-tools-count">${serverTools.length} tools</span>
+                                    <svg class="mcp-server-expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="6 9 12 15 18 9"></polyline>
+                                    </svg>
+                                </div>
+                                <div class="mcp-server-tools">
+                                    <div class="tools-list">
+                                        ${serverTools.length > 0
+                                ? serverTools.map(tool => createToolItemHTML({ ...tool, server: serverName }, 'mcp')).join('')
+                                : '<div class="tools-empty" style="padding: 8px 12px;">No tools from this server</div>'}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    mcpList.innerHTML = html;
+
+                    // Add event listeners for tool toggles
+                    mcpList.querySelectorAll('.tool-toggle input').forEach(input => {
+                        input.addEventListener('change', (e) => handleToolToggle(e, 'mcp'));
+                    });
+                }
+            }
+        }
+
+        // Toggle MCP server expansion
+        function toggleMCPServerExpand(serverId) {
+            const serverGroup = document.getElementById(serverId);
+            if (serverGroup) {
+                serverGroup.classList.toggle('expanded');
+            }
+        }
+
+        // Toggle tools section expansion (for Built-in Tools and MCP Tools sections)
+        function toggleToolsSectionExpand(sectionId) {
+            const sectionGroup = document.getElementById(sectionId);
+            if (sectionGroup) {
+                sectionGroup.classList.toggle('expanded');
+            }
+        }
+
+        function createToolItemHTML(tool, type) {
+            const toolId = type === 'mcp' ? `mcp:${tool.server}:${tool.name}` : `builtin:${tool.name}`;
+            const isDisabled = disabledTools.has(toolId);
+            const iconClass = type === 'mcp' ? 'mcp' : '';
+
+            return `
+                <div class="tool-item ${isDisabled ? 'disabled' : ''}" data-tool-id="${toolId}">
+                    <div class="tool-item-icon ${iconClass}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                        </svg>
+                    </div>
+                    <div class="tool-item-info">
+                        <div class="tool-item-name">${escapeHtml(tool.name)}</div>
+                        <div class="tool-item-desc">${escapeHtml(tool.description || 'No description')}</div>
+                    </div>
+                    <label class="tool-toggle">
+                        <input type="checkbox" data-tool-id="${toolId}" ${isDisabled ? '' : 'checked'}>
+                        <span class="tool-toggle-slider"></span>
+                    </label>
+                </div>
+            `;
+        }
+
+        function renderToolsListFallback() {
+            const builtinList = document.getElementById('builtin-tools-list');
+            const mcpList = document.getElementById('mcp-tools-list');
+
+            // Show default built-in tools placeholder
+            if (builtinList) {
+                const defaultTools = [
+                    { name: 'web_search', description: 'Search the web for information' },
+                    { name: 'read_file', description: 'Read contents of a file' },
+                    { name: 'write_file', description: 'Write content to a file' },
+                    { name: 'execute_code', description: 'Execute Python code' },
+                    { name: 'datetime', description: 'Get current date/time' },
+                    { name: 'memory', description: 'Store and retrieve memories' }
+                ];
+                builtinList.innerHTML = defaultTools.map(tool => createToolItemHTML(tool, 'builtin')).join('');
+                builtinList.querySelectorAll('.tool-toggle input').forEach(input => {
+                    input.addEventListener('change', (e) => handleToolToggle(e, 'builtin'));
+                });
+            }
+
+            // Update MCP tools from existing mcpConfig with expanders
+            if (mcpList) {
+                const serverNames = Object.keys(mcpConfig.mcpServers || {});
+                if (serverNames.length === 0) {
+                    mcpList.innerHTML = '<div class="tools-empty">No MCP servers configured</div>';
+                } else {
+                    mcpList.innerHTML = serverNames.map((serverName, index) => {
+                        const status = mcpServerStatuses[serverName] || 'disconnected';
+                        const serverId = `mcp-server-fallback-${index}`;
+                        return `
+                            <div class="mcp-server-group" id="${serverId}" data-server="${escapeHtml(serverName)}">
+                                <div class="mcp-server-group-header" onclick="toggleMCPServerExpand('${serverId}')">
+                                    <div class="mcp-server-status ${status}"></div>
+                                    <span class="mcp-server-name">${escapeHtml(serverName)}</span>
+                                    <span class="mcp-server-tools-count">-</span>
+                                    <svg class="mcp-server-expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="6 9 12 15 18 9"></polyline>
+                                    </svg>
+                                </div>
+                                <div class="mcp-server-tools">
+                                    <div class="tools-list">
+                                        <div class="tools-empty" style="padding: 8px 12px;">Connect to MCP server to see tools</div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
+        }
+
+        async function handleToolToggle(event, type) {
+            const toolId = event.target.dataset.toolId;
+            const isEnabled = event.target.checked;
+            const toolItem = event.target.closest('.tool-item');
+
+            if (isEnabled) {
+                disabledTools.delete(toolId);
+                toolItem?.classList.remove('disabled');
+            } else {
+                disabledTools.add(toolId);
+                toolItem?.classList.add('disabled');
+            }
+
+            // Save to localStorage
+            localStorage.setItem('agentry-disabled-tools', JSON.stringify([...disabledTools]));
+
+            // Send to backend
+            try {
+                await fetch(`${API_BASE}/api/tools/disabled`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ disabled_tools: [...disabledTools] })
+                });
+            } catch (e) {
+                console.error('Failed to save disabled tools:', e);
+            }
         }
 
         // Sidebar Controls (Resize & Toggle)
@@ -6768,6 +8051,8 @@
         }
 
         // Media Library functions
+        let allMediaItems = []; // Store all media for gallery
+
         async function loadMedia() {
             try {
                 const response = await fetch(`${API_BASE}/api/media`, {
@@ -6776,7 +8061,8 @@
 
                 if (response.ok) {
                     const data = await response.json();
-                    renderMedia(data.media);
+                    allMediaItems = data.media || [];
+                    renderMedia(allMediaItems);
                 }
             } catch (error) {
                 console.error('Failed to load media:', error);
@@ -6785,17 +8071,27 @@
 
         function renderMedia(mediaList) {
             const container = document.getElementById('media-container');
+            const viewAllBtn = document.getElementById('media-view-all-btn');
             if (!container) return;
 
             container.innerHTML = '';
+
             if (!mediaList || mediaList.length === 0) {
                 container.innerHTML = '<div class="no-media-text">No media uploaded yet</div>';
+                if (viewAllBtn) viewAllBtn.style.display = 'none';
                 return;
             }
 
-            mediaList.forEach(item => {
+            // Show only 4 recent items in sidebar
+            const recentItems = mediaList.slice(0, 4);
+            recentItems.forEach(item => {
                 addMediaItem(item, false);
             });
+
+            // Show View All button if there are media items
+            if (viewAllBtn) {
+                viewAllBtn.style.display = 'flex';
+            }
         }
 
         function addMediaItem(item, prepend = true) {
@@ -6809,6 +8105,7 @@
             const mediaEl = document.createElement('div');
             mediaEl.className = 'media-item';
             mediaEl.id = `media-${item.id}`;
+            mediaEl.dataset.mediaId = item.id;
 
             // Format time
             const date = new Date(item.created_at + (item.created_at.includes('Z') ? '' : 'Z'));
@@ -6820,13 +8117,21 @@
             });
 
             mediaEl.innerHTML = `
+                <button class="media-delete-btn" title="Delete" onclick="event.stopPropagation(); deleteMediaItem(${item.id});">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
                 <img src="${item.url}" alt="${item.filename}" />
                 <div class="media-info-overlay">
                     <div class="media-time">${timeStr}</div>
                 </div>
             `;
 
-            mediaEl.onclick = () => {
+            mediaEl.onclick = (e) => {
+                // Don't open if clicking the delete button
+                if (e.target.closest('.media-delete-btn')) return;
                 window.open(item.url, '_blank');
             };
 
@@ -6834,6 +8139,233 @@
                 container.prepend(mediaEl);
             } else {
                 container.appendChild(mediaEl);
+            }
+        }
+
+        // Media Gallery Modal Functions
+        function openMediaGallery() {
+            const overlay = document.getElementById('media-gallery-overlay');
+            const masonry = document.getElementById('media-masonry');
+
+            if (!overlay || !masonry) return;
+
+            overlay.classList.add('active');
+            renderMediaGallery(allMediaItems);
+
+            // Add escape key handler
+            document.addEventListener('keydown', handleGalleryEscape);
+        }
+
+        function closeMediaGallery() {
+            const overlay = document.getElementById('media-gallery-overlay');
+            if (overlay) {
+                overlay.classList.remove('active');
+            }
+            document.removeEventListener('keydown', handleGalleryEscape);
+        }
+
+        function handleGalleryEscape(e) {
+            if (e.key === 'Escape') {
+                closeMediaGallery();
+            }
+        }
+
+        function renderMediaGallery(mediaList) {
+            const masonry = document.getElementById('media-masonry');
+            if (!masonry) return;
+
+            masonry.innerHTML = '';
+
+            if (!mediaList || mediaList.length === 0) {
+                masonry.innerHTML = `
+                    <div class="media-gallery-empty">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                        <p>No media files yet</p>
+                    </div>
+                `;
+                return;
+            }
+
+            mediaList.forEach(item => {
+                add3DCardToGallery(item, masonry);
+            });
+        }
+
+        function add3DCardToGallery(item, container) {
+            const date = new Date(item.created_at + (item.created_at.includes('Z') ? '' : 'Z'));
+            const dateStr = date.toLocaleDateString([], {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            const card = document.createElement('div');
+            card.className = 'media-3d-card';
+            card.id = `gallery-media-${item.id}`;
+
+            card.innerHTML = `
+                <div class="media-3d-card-inner">
+                    <img src="${item.url}" alt="${item.filename}" loading="lazy" />
+                    <div class="media-3d-card-overlay">
+                        <div class="media-3d-card-date">${dateStr}</div>
+                        <div class="media-3d-card-actions">
+                            <button class="media-3d-card-btn" onclick="window.open('${item.url}', '_blank')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                    <polyline points="15 3 21 3 21 9"></polyline>
+                                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                                </svg>
+                                Open
+                            </button>
+                            <button class="media-3d-card-btn delete" onclick="deleteMediaFromGallery(${item.id})">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Add 3D tilt effect on mouse move
+            const inner = card.querySelector('.media-3d-card-inner');
+            inner.addEventListener('mousemove', (e) => {
+                const rect = inner.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                const rotateX = (y - centerY) / 10;
+                const rotateY = (centerX - x) / 10;
+
+                inner.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
+            });
+
+            inner.addEventListener('mouseleave', () => {
+                inner.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale(1)';
+            });
+
+            container.appendChild(card);
+        }
+
+        async function deleteMediaFromGallery(mediaId) {
+            if (!confirm('Are you sure you want to delete this media file?')) {
+                return;
+            }
+
+            const galleryCard = document.getElementById(`gallery-media-${mediaId}`);
+            const sidebarItem = document.getElementById(`media-${mediaId}`);
+
+            // Add loading state
+            if (galleryCard) {
+                galleryCard.style.opacity = '0.5';
+                galleryCard.style.pointerEvents = 'none';
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/media/${mediaId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    // Remove from allMediaItems
+                    allMediaItems = allMediaItems.filter(m => m.id !== mediaId);
+
+                    // Remove from gallery with animation
+                    if (galleryCard) {
+                        galleryCard.style.transform = 'scale(0.8)';
+                        galleryCard.style.opacity = '0';
+                        setTimeout(() => {
+                            galleryCard.remove();
+                            // Check if gallery is empty
+                            const masonry = document.getElementById('media-masonry');
+                            if (masonry && masonry.children.length === 0) {
+                                renderMediaGallery([]);
+                            }
+                        }, 300);
+                    }
+
+                    // Also remove from sidebar
+                    if (sidebarItem) {
+                        sidebarItem.remove();
+                    }
+
+                    // Re-render sidebar with updated items
+                    renderMedia(allMediaItems);
+
+                } else {
+                    const errorData = await response.json();
+                    alert(`Failed to delete: ${errorData.detail || 'Unknown error'}`);
+                    if (galleryCard) {
+                        galleryCard.style.opacity = '1';
+                        galleryCard.style.pointerEvents = 'auto';
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to delete media:', error);
+                alert('Failed to delete media. Please try again.');
+                if (galleryCard) {
+                    galleryCard.style.opacity = '1';
+                    galleryCard.style.pointerEvents = 'auto';
+                }
+            }
+        }
+
+        async function deleteMediaItem(mediaId) {
+            if (!confirm('Are you sure you want to delete this media file?')) {
+                return;
+            }
+
+            const mediaEl = document.getElementById(`media-${mediaId}`);
+            if (mediaEl) {
+                mediaEl.style.opacity = '0.5';
+                mediaEl.style.pointerEvents = 'none';
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/media/${mediaId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    // Remove from allMediaItems
+                    allMediaItems = allMediaItems.filter(m => m.id !== mediaId);
+
+                    // Remove from DOM with animation
+                    if (mediaEl) {
+                        mediaEl.style.transform = 'scale(0.8)';
+                        mediaEl.style.opacity = '0';
+                        setTimeout(() => {
+                            mediaEl.remove();
+                            // Re-render to show next item if available
+                            renderMedia(allMediaItems);
+                        }, 200);
+                    }
+                } else {
+                    const errorData = await response.json();
+                    alert(`Failed to delete: ${errorData.detail || 'Unknown error'}`);
+                    if (mediaEl) {
+                        mediaEl.style.opacity = '1';
+                        mediaEl.style.pointerEvents = 'auto';
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to delete media:', error);
+                alert('Failed to delete media. Please try again.');
+                if (mediaEl) {
+                    mediaEl.style.opacity = '1';
+                    mediaEl.style.pointerEvents = 'auto';
+                }
             }
         }
 
@@ -6919,13 +8451,42 @@
 
             // Media Library Toggle
             const mediaToggle = document.getElementById('media-library-toggle');
-            const mediaContainer = document.getElementById('media-container');
-            if (mediaToggle && mediaContainer) {
+            const mediaLibraryWrapper = document.getElementById('media-library-wrapper');
+
+            if (mediaToggle && mediaLibraryWrapper) {
                 mediaToggle.onclick = (e) => {
                     e.preventDefault();
-                    const isVisible = mediaContainer.style.display !== 'none';
-                    mediaContainer.style.display = isVisible ? 'none' : 'grid';
+                    const isVisible = mediaLibraryWrapper.style.display !== 'none';
+                    mediaLibraryWrapper.style.display = isVisible ? 'none' : 'block';
                     mediaToggle.classList.toggle('active', !isVisible);
+                };
+            }
+
+            // Media Gallery Modal - View All Button
+            const viewAllBtn = document.getElementById('media-view-all-btn');
+            if (viewAllBtn) {
+                viewAllBtn.onclick = (e) => {
+                    e.preventDefault();
+                    openMediaGallery();
+                };
+            }
+
+            // Media Gallery Modal - Close Button
+            const galleryClose = document.getElementById('media-gallery-close');
+            if (galleryClose) {
+                galleryClose.onclick = (e) => {
+                    e.preventDefault();
+                    closeMediaGallery();
+                };
+            }
+
+            // Media Gallery Modal - Click outside to close
+            const galleryOverlay = document.getElementById('media-gallery-overlay');
+            if (galleryOverlay) {
+                galleryOverlay.onclick = (e) => {
+                    if (e.target === galleryOverlay) {
+                        closeMediaGallery();
+                    }
                 };
             }
         }
