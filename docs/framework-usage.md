@@ -1,13 +1,13 @@
-# Scratchy Framework Documentation
+# Agentry Framework Documentation
 ## *The Python SDK*
 
-Build your own AI applications by importing Scratchy as a library.
+Build your own AI applications by importing Agentry as a library.
 
 ### Basic Usage
 
 ```python
 import asyncio
-from scratchy import Agent
+from agentry import Agent
 
 async def main():
     agent = Agent(llm="ollama", model="llama3.2")
@@ -24,8 +24,8 @@ asyncio.run(main())
 You can register any Python function as a tool:
 
 ```python
-from scratchy import Agent
-from scratchy.tools import register_tool_from_function
+from agentry import Agent
+from agentry.tools import register_tool_from_function
 
 def get_weather(city: str) -> str:
     """Get the current weather for a city."""
@@ -44,10 +44,10 @@ async def main():
 
 ### Multi-Agent Systems
 
-Scratchy supports specialized agents like `CopilotAgent` which is optimized for coding tasks:
+Agentry supports specialized agents like `CopilotAgent` which is optimized for coding tasks:
 
 ```python
-from scratchy import CopilotAgent
+from agentry import CopilotAgent
 
 coder = CopilotAgent(llm="groq", api_key="...")
 await coder.chat("Refactor this code for performance...")

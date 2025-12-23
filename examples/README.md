@@ -23,7 +23,7 @@ This folder contains examples for each type of agent in the Agentry framework.
 ## Running Examples
 
 ```bash
-# From the Scratchy directory
+# From the Agentry directory
 python examples/default_agent_example.py
 python examples/smart_agent_example.py
 python examples/basic_agent_example.py

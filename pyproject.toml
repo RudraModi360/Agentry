@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "scratchy"
-version = "0.1.0"
+name = "agentry_community"
+version = "1.0.3"
 description = """
 A modular AI agent framework built from scratch in Python, designed to evolve
 into a real-time voice-driven assistant for task automation.
@@ -15,7 +15,7 @@ dependencies = [
     "ddgs>=9.9.1",
     "google>=3.0.0",
     "google-api-python-client>=2.187.0",
-    "google-generativeai>=0.8.5",
+    "google-genai>=0.1.0",
     "groq>=0.36.0",
     "langchain-community>=0.4.1",
     "mcp>=1.22.0",
@@ -30,11 +30,11 @@ dependencies = [
     "python-pptx>=1.0.2",
     "openpyxl>=3.1.5",
     "fastapi>=0.124.2",
-    "uvicorn>=0.38.0",
+    "uvicorn[standard]>=0.38.0",
 ]
 
 [project.scripts]
-agentry = "scratchy.cli:main"
+agentry = "agentry.cli:main"
 
-[tool.setuptools]
-packages = ["scratchy"]
+[tool.setuptools.packages.find]
+include = ["agentry*"]

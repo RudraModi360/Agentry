@@ -1,6 +1,6 @@
-# Getting Started with Scratchy
+# Getting Started with Agentry
 
-This guide will help you get up and running with Scratchy in minutes.
+This guide will help you get up and running with Agentry in minutes.
 
 ## Installation
 
@@ -12,12 +12,12 @@ This guide will help you get up and running with Scratchy in minutes.
   - [Groq](https://groq.com/) API key (cloud, fast)
   - [Gemini](https://ai.google.dev/) API key (Google)
 
-### Install Scratchy
+### Install Agentry
 
 ```bash
 # Clone the repository
 git clone https://github.com/RudraModi360/Agentry.git
-cd Scratchy
+cd Agentry
 
 # Install dependencies using uv (recommended)
 uv sync
@@ -65,7 +65,7 @@ Create a file `my_first_agent.py`:
 
 ```python
 import asyncio
-from scratchy import Agent
+from agentry import Agent
 
 async def main():
     # Initialize agent with Ollama
@@ -132,7 +132,7 @@ agent = Agent(
 ### Using CopilotAgent
 
 ```python
-from scratchy import CopilotAgent
+from agentry import CopilotAgent
 
 copilot = CopilotAgent(llm="ollama")
 
@@ -161,9 +161,9 @@ ollama pull <model-name>
 
 ### Import errors
 
-Make sure you're in the Scratchy directory and dependencies are installed:
+Make sure you're in the Agentry directory and dependencies are installed:
 ```bash
-cd Scratchy
+cd Agentry
 uv sync  # or pip install -r requirements.txt
 ```
 

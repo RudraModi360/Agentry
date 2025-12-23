@@ -1,6 +1,6 @@
-# 🧠 Gap Analysis: Scratchy Agent vs. State-of-the-Art Assistants
+# 🧠 Gap Analysis: Agentry Agent vs. State-of-the-Art Assistants
 
-This document outlines the significant gaps between the current implementation of the Scratchy Agent (`Agent` class) and advanced AI coding assistants (e.g., GitHub Copilot, Devin, Antigravity).
+This document outlines the significant gaps between the current implementation of the Agentry Agent (`Agent` class) and advanced AI coding assistants (e.g., GitHub Copilot, Devin, Antigravity).
 
 ## 1. Logical Reasoning & Planning (The "Thinking" Gap)
 
@@ -11,7 +11,7 @@ This document outlines the significant gaps between the current implementation o
 
 **The Gap:**
 - **Lack of "Mental Sandbox":** Advanced agents simulate actions or verify assumptions *before* executing tools.
-- **No Iterative Reasoning Loop:** True agentic behavior requires a `Think -> Act -> Observe -> Refine -> Act` loop *within* a single user turn. Currently, Scratchy is mostly `Think -> Act -> Respond`.
+- **No Iterative Reasoning Loop:** True agentic behavior requires a `Think -> Act -> Observe -> Refine -> Act` loop *within* a single user turn. Currently, Agentry is mostly `Think -> Act -> Respond`.
 - **Shallow Planning:** Plans are generated as text but not structurally tracked. Complex tasks (e.g., "Refactor this module") require a persistent task list that survives context window flushing.
 
 **Recommendation:**
@@ -26,7 +26,7 @@ This document outlines the significant gaps between the current implementation o
 - It relies on a `global_read_files_tracker` to ensure safety.
 
 **The Gap:**
-- **"Goldfish Memory" for Code:** The agent essentially "forgets" code it isn't currently looking at. It lacks a **Semantic Index** or **Codebase Graph**. Copilot understands "Go to definition" because it indexes the codebase. Scratchy only knows what's in the string buffer.
+- **"Goldfish Memory" for Code:** The agent essentially "forgets" code it isn't currently looking at. It lacks a **Semantic Index** or **Codebase Graph**. Copilot understands "Go to definition" because it indexes the codebase. Agentry only knows what's in the string buffer.
 - **Context Pollution:** Summarization reduces token usage but destroys code details. Important function signatures from 20 turns ago might be lost.
 - **Safety Overkill:** The strict `validate_read_before_edit` rule, while safe, hampers "Prompt Understanding" when the agent *knows* what to do but is forced to perform redundant `read_file` actions, breaking the flow.
 
@@ -41,8 +41,8 @@ This document outlines the significant gaps between the current implementation o
 - The agent struggles to "explain" *why* it's doing an edit because it sees the edit as a simple string replacement task.
 
 **The Gap:**
-- **Semantic Edits vs. String Edits:** Copilot understands "Add error handling to this function". It identifies the function scope (AST) and inserts code. Scratchy tries to string-match `def foo():` and might fail on whitespace.
-- **Feedback Loop:** When Copilot generates code, it often runs a background linter/syntax checker. If `edit_file` introduces a syntax error, advanced agents catch it immediately. Scratchy would leave the broken file.
+- **Semantic Edits vs. String Edits:** Copilot understands "Add error handling to this function". It identifies the function scope (AST) and inserts code. Agentry tries to string-match `def foo():` and might fail on whitespace.
+- **Feedback Loop:** When Copilot generates code, it often runs a background linter/syntax checker. If `edit_file` introduces a syntax error, advanced agents catch it immediately. Agentry would leave the broken file.
 
 **Recommendation:**
 - **AST-Aware Tools:** Implement tools that can `replace_function(name, new_code)` or `insert_import(module)`.

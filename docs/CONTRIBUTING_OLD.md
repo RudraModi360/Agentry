@@ -1,6 +1,6 @@
-# Contributing to Scratchy
+# Contributing to Agentry
 
-Thank you for your interest in contributing to Scratchy! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to Agentry! This document provides guidelines and instructions for contributing.
 
 ## 🎯 Ways to Contribute
 
@@ -18,7 +18,7 @@ Thank you for your interest in contributing to Scratchy! This document provides 
 # Fork the repository on GitHub
 # Then clone your fork
 git clone https://github.com/YOUR_USERNAME/Agentry.git
-cd Scratchy
+cd Agentry
 ```
 
 ### 2. Set Up Development Environment
@@ -28,7 +28,7 @@ cd Scratchy
 uv sync  # or: pip install -r requirements.txt
 
 # Run tests to ensure everything works
-python test_scratchy_suite.py
+python test_Agentry_suite.py
 ```
 
 ### 3. Create a Branch
@@ -74,7 +74,7 @@ def my_function(param1: str, param2: int) -> bool:
 
 ```bash
 # Run test suite
-python test_scratchy_suite.py
+python test_Agentry_suite.py
 
 # Run command tests
 python test_commands.py
@@ -168,7 +168,7 @@ When reporting bugs, please include:
 5. **Environment**:
    - OS (Windows/Mac/Linux)
    - Python version
-   - Scratchy version
+   - Agentry version
    - LLM provider and model
 
 ## 💡 Feature Requests
@@ -208,7 +208,7 @@ We pledge to make participation in our project a harassment-free experience for 
 
 ## 🙏 Thank You!
 
-Your contributions make Scratchy better for everyone. We appreciate your time and effort!
+Your contributions make Agentry better for everyone. We appreciate your time and effort!
 
 ---
 

@@ -1,7 +1,7 @@
-# Scratchy UI Documentation
+# Agentry UI Documentation
 ## *The Modern Web Interface*
 
-For a more visual experience, Scratchy provides a local web server with a modern chat interface.
+For a more visual experience, Agentry provides a local web server with a modern chat interface.
 
 ### Running the Server
 

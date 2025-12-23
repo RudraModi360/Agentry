@@ -1,6 +1,6 @@
 # Examples
 
-Practical examples to help you get started with Scratchy.
+Practical examples to help you get started with Agentry.
 
 ## Table of Contents
 
@@ -17,7 +17,7 @@ Practical examples to help you get started with Scratchy.
 
 ```python
 import asyncio
-from scratchy import Agent
+from agentry import Agent
 
 async def main():
     agent = Agent(llm="ollama", model="llama3.2")
@@ -82,7 +82,7 @@ asyncio.run(code_execution())
 ### Simple Calculator Tool
 
 ```python
-from scratchy import Agent
+from agentry import Agent
 
 def calculate_bmi(weight_kg: float, height_m: float) -> str:
     """Calculate Body Mass Index given weight in kg and height in meters."""
@@ -195,8 +195,8 @@ asyncio.run(multi_turn())
 ### Saving and Loading Sessions
 
 ```python
-from scratchy import Agent
-from scratchy.session_manager import SessionManager
+from agentry import Agent
+from agentry.session_manager import SessionManager
 
 async def persistent_sessions():
     agent = Agent(llm="ollama")

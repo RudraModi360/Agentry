@@ -1,6 +1,6 @@
 # Custom Tools
 
-Learn how to create and integrate custom tools into your Scratchy agents.
+Learn how to create and integrate custom tools into your Agentry agents.
 
 ## Table of Contents
 
@@ -26,7 +26,7 @@ Custom tools are Python functions that extend your agent's capabilities beyond t
 ### Simple Function to Tool
 
 ```python
-from scratchy import Agent
+from agentry import Agent
 
 def greet_user(name: str, language: str = "english") -> str:
     """Greet a user in the specified language."""
@@ -52,7 +52,7 @@ That's it! The agent can now use your function.
 
 ### Method 1: Auto-Registration (Recommended)
 
-The easiest way - Scratchy automatically generates the schema from your function:
+The easiest way - Agentry automatically generates the schema from your function:
 
 ```python
 def calculate_tip(bill_amount: float, tip_percentage: float = 15.0) -> str:
@@ -255,7 +255,7 @@ async def fetch_url_async(url: str) -> str:
             content = await response.text()
             return content[:500]  # Return first 500 chars
 
-# Note: Currently, Scratchy's execute_tool is sync
+# Note: Currently, Agentry's execute_tool is sync
 # You'll need to wrap async functions:
 import asyncio
 
@@ -332,7 +332,7 @@ For dangerous operations, you can require user approval:
 
 ### Built-in Dangerous Tools
 
-Scratchy automatically requires approval for:
+Agentry automatically requires approval for:
 - `delete_file`
 - `run_shell_command`
 - `execute_python`
@@ -340,7 +340,7 @@ Scratchy automatically requires approval for:
 ### Custom Approval
 
 ```python
-from scratchy.tools import APPROVAL_REQUIRED_TOOLS
+from agentry.tools import APPROVAL_REQUIRED_TOOLS
 
 # Add your tool to the approval list
 APPROVAL_REQUIRED_TOOLS.add("send_email")

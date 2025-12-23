@@ -93,7 +93,7 @@ Agentry/                      # Main package
 ```
 ┌─────────────────────────────────────────────────┐
 │                   User Code                     │
-│         from Agentry import Agent              │
+│         from agentry import Agent              │
 └─────────────────────┬───────────────────────────┘
                       │
 ┌─────────────────────▼───────────────────────────┐
@@ -119,7 +119,7 @@ Agentry/                      # Main package
 ## Quick Start
 
 ```python
-from Agentry import Agent
+from agentry import Agent
 
 # Initialize
 agent = Agent(llm="ollama", model="llama3.2")

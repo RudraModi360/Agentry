@@ -1,7 +1,7 @@
-# Scratchy CLI Documentation
+# Agentry CLI Documentation
 ## *The Command Line Interface*
 
-The CLI is the fastest way to interact with Scratchy. It is perfect for developers who prefer keyboard-first workflows and rapid iteration.
+The CLI is the fastest way to interact with Agentry. It is perfect for developers who prefer keyboard-first workflows and rapid iteration.
 
 ### Launching
 

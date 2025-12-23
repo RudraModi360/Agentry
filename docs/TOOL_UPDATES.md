@@ -23,4 +23,4 @@ All updates have been verified with a new test suite:
 - `test_edit_file_v2.py`: Validated line replacement and text matching.
 - `test_tools_v2.py`: Validated execution output, tree generation, and git error handling.
 
-These updates bridge the gap between Scratchy and advanced agents by providing **robust, forgiving, and informative** interfaces for interacting with the system.
+These updates bridge the gap between Agentry and advanced agents by providing **robust, forgiving, and informative** interfaces for interacting with the system.

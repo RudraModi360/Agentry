@@ -1,6 +1,6 @@
 # API Reference
 
-Complete API documentation for the Scratchy framework.
+Complete API documentation for the Agentry framework.
 
 ## Agent Class
 
@@ -194,7 +194,7 @@ SessionManager(history_dir: str = None)
 ```
 
 **Parameters:**
-- `history_dir`: Directory for session files (default: `scratchy/session_history/`)
+- `history_dir`: Directory for session files (default: `Agentry/session_history/`)
 
 ### Methods
 
@@ -273,7 +273,7 @@ session.clear_history()
 ### OllamaProvider
 
 ```python
-from scratchy.providers import OllamaProvider
+from agentry.providers import OllamaProvider
 
 provider = OllamaProvider(
     model="llama3.2",
@@ -284,7 +284,7 @@ provider = OllamaProvider(
 ### GroqProvider
 
 ```python
-from scratchy.providers import GroqProvider
+from agentry.providers import GroqProvider
 
 provider = GroqProvider(
     model="llama-3.3-70b-versatile",
@@ -295,7 +295,7 @@ provider = GroqProvider(
 ### GeminiProvider
 
 ```python
-from scratchy.providers import GeminiProvider
+from agentry.providers import GeminiProvider
 
 provider = GeminiProvider(
     model="gemini-pro",
@@ -330,4 +330,4 @@ provider = GeminiProvider(
 ### Document Tools
 - `pandoc_convert` - Convert documents between formats using Pandoc
 
-For detailed tool schemas, see the [source code](../scratchy/tools/).
+For detailed tool schemas, see the [source code](../Agentry/tools/).

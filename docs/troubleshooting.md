@@ -1,6 +1,6 @@
 # Troubleshooting Guide
 
-Common issues and their solutions when working with Scratchy.
+Common issues and their solutions when working with Agentry.
 
 ## Table of Contents
 
@@ -14,27 +14,27 @@ Common issues and their solutions when working with Scratchy.
 
 ## Installation Issues
 
-### Import Error: No module named 'scratchy'
+### Import Error: No module named 'Agentry'
 
-**Problem:** Python can't find the Scratchy module.
+**Problem:** Python can't find the Agentry module.
 
 **Solution:**
 ```bash
-# Make sure you're in the Scratchy directory
-cd Scratchy
+# Make sure you're in the Agentry directory
+cd Agentry
 
 # Verify the directory structure
-ls  # Should see scratchy/ folder
+ls  # Should see Agentry/ folder
 
 # Run from the parent directory
-python -c "import sys; sys.path.insert(0, '.'); from scratchy import Agent"
+python -c "import sys; sys.path.insert(0, '.'); from agentry import Agent"
 ```
 
 Or add to your Python path:
 ```python
 import sys
-sys.path.insert(0, '/path/to/Scratchy')
-from scratchy import Agent
+sys.path.insert(0, '/path/to/Agentry')
+from agentry import Agent
 ```
 
 ### Dependency Installation Fails
@@ -151,7 +151,7 @@ export GEMINI_API_KEY="your-actual-api-key"
 
 **Solution:**
 
-Scratchy has built-in retry logic, but you can:
+Agentry has built-in retry logic, but you can:
 
 1. **Enable debug mode** to see what's happening:
 ```python
@@ -230,7 +230,7 @@ print([t['function']['name'] for t in tools])
 
 1. **Test the tool directly:**
 ```python
-from scratchy.tools import execute_tool
+from agentry.tools import execute_tool
 
 result = execute_tool("read_file", {"path": "test.txt"})
 print(result)
@@ -295,7 +295,7 @@ if os.path.exists("myfile.txt"):
 
 **Solution:**
 ```python
-from scratchy.session_manager import SessionManager
+from agentry.session_manager import SessionManager
 
 # Create session manager
 manager = SessionManager(storage_dir="./sessions")
@@ -478,7 +478,7 @@ async def auto_approve(session_id, tool_name, args):
 agent.set_callbacks(on_tool_approval=auto_approve)
 
 # Or remove from approval list (use cautiously!)
-from scratchy.tools import APPROVAL_REQUIRED_TOOLS
+from agentry.tools import APPROVAL_REQUIRED_TOOLS
 APPROVAL_REQUIRED_TOOLS.discard("run_shell_command")
 ```
 
@@ -510,7 +510,7 @@ agent = Agent(llm="ollama", debug=True)
 
 4. **Open a new issue** with:
    - Your Python version
-   - Scratchy version
+   - Agentry version
    - LLM provider and model
    - Full error traceback
    - Minimal code to reproduce

@@ -1,10 +1,10 @@
 # Session Management
 
-Complete guide to session management in Scratchy.
+Complete guide to session management in Agentry.
 
 ## Overview
 
-Scratchy provides robust session management with:
+Agentry provides robust session management with:
 - Automatic persistence to `.toon` format
 - Multi-session support
 - Session switching
@@ -15,7 +15,7 @@ Scratchy provides robust session management with:
 ### Creating Sessions
 
 ```python
-from scratchy import Agent
+from agentry import Agent
 
 agent = Agent()
 agent.load_default_tools()
@@ -30,7 +30,7 @@ await agent.chat("Hello", session_id="my_project")
 ### Session Persistence
 
 ```python
-from scratchy import SessionManager
+from agentry import SessionManager
 
 sm = SessionManager()
 
@@ -96,10 +96,10 @@ $ python run_agent.py
 
 ### Location
 
-Sessions are stored in `scratchy/session_history/`:
+Sessions are stored in `Agentry/session_history/`:
 
 ```
-scratchy/
+Agentry/
 └── session_history/
     ├── default_chat.toon
     ├── my_project_chat.toon
@@ -136,7 +136,7 @@ Sessions use `.toon` format (Token-Oriented Object Notation):
 ### Programmatic Access
 
 ```python
-from scratchy import Agent, SessionManager
+from agentry import Agent, SessionManager
 
 agent = Agent()
 sm = SessionManager()

@@ -73,7 +73,7 @@
 3. **Test MCP servers separately**:
    ```bash
    # Test the MCP server directly
-   python -m scratchy.mcp_client
+   python -m Agentry.mcp_client
    ```
 
 ### 4. API Key Issues
@@ -102,7 +102,7 @@
 1. **Clear session history**:
    ```bash
    # Delete session_history folder
-   rm -rf scratchy/session_history/*
+   rm -rf Agentry/session_history/*
    ```
 
 2. **Start fresh session**:

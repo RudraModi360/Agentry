@@ -6,7 +6,7 @@ The **BasicAgent** is a generic, customizable wrapper around the Agentry framewo
 
 ```python
 import asyncio
-from scratchy.agents import BasicAgent
+from agentry.agents import BasicAgent
 
 # Create a simple agent
 agent = BasicAgent(
@@ -29,7 +29,7 @@ asyncio.run(main())
 Tools can be regular Python functions:
 
 ```python
-from scratchy.agents import BasicAgent, tool
+from agentry.agents import BasicAgent, tool
 
 # Define tools as functions
 def calculator(expression: str) -> str:
@@ -64,7 +64,7 @@ response = await agent.chat("What's 15 * 23?")
 ## Using the Convenience Function
 
 ```python
-from scratchy.agents import create_agent
+from agentry.agents import create_agent
 
 agent = create_agent(
     name="ResearchBot",
@@ -133,7 +133,7 @@ agent.clear_history(session_id="user_1")
 For complex tools, use the BaseTool class:
 
 ```python
-from scratchy.tools.base import BaseTool, ToolResult
+from agentry.tools.base import BaseTool, ToolResult
 from pydantic import BaseModel, Field
 
 class EmailArgs(BaseModel):
@@ -162,7 +162,7 @@ agent = BasicAgent(
 For scripts that don't use async:
 
 ```python
-from scratchy.agents import BasicAgent
+from agentry.agents import BasicAgent
 
 agent = BasicAgent(name="SyncBot", provider="ollama")
 
@@ -191,12 +191,12 @@ print(agent.tools)  # ['my_function', 'func1', 'func2', 'func3']
 ### Research Assistant
 
 ```python
-from scratchy.agents import BasicAgent
+from agentry.agents import BasicAgent
 
 def web_search(query: str) -> str:
     """Search the web for information."""
     # Use your preferred search API
-    from scratchy.tools.web import WebSearchTool
+    from agentry.tools.web import WebSearchTool
     tool = WebSearchTool()
     result = tool.run(user_input=query, search_type="quick")
     return result.get("content", "No results")

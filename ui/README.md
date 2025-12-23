@@ -41,7 +41,7 @@ start ui/index.html
 
 3. **Open the UI in your browser:**
    ```
-   file:///d:/Scratchy/ui/index.html
+   file:///d:/Agentry/ui/index.html
    ```
    
    Or use a local server:

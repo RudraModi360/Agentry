@@ -159,7 +159,7 @@ DELETE /api/memory/{memory_id}
 
 ```python
 import asyncio
-from scratchy.agents import SmartAgent
+from agentry.agents import SmartAgent
 
 async def main():
     agent = SmartAgent(llm="ollama", model="llama3.2:3b")
@@ -172,7 +172,7 @@ asyncio.run(main())
 ### Creating a Project
 
 ```python
-from scratchy.agents import SmartAgent, SmartAgentMode
+from agentry.agents import SmartAgent, SmartAgentMode
 
 # Create Smart Agent
 agent = SmartAgent(
@@ -219,7 +219,7 @@ context = agent.get_project_context_for_llm()
 # Returns Markdown-formatted project context + memories
 
 # Can also use the memory directly
-from scratchy.memory.project_memory import get_project_memory
+from agentry.memory.project_memory import get_project_memory
 memory = get_project_memory()
 context = memory.export_for_llm(project_id="my-project", format="markdown")
 ```

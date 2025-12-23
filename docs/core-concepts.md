@@ -1,6 +1,6 @@
 # Core Concepts
 
-Understanding how Scratchy agents work under the hood.
+Understanding how Agentry agents work under the hood.
 
 ## Table of Contents
 
@@ -39,7 +39,7 @@ Agent responds: "The weather in New York is 72°F and sunny!"
 
 ## The Agent Loop
 
-Scratchy uses a **ReAct** (Reasoning + Acting) pattern:
+Agentry uses a **ReAct** (Reasoning + Acting) pattern:
 
 ![ReAct Pattern Flowchart](assets/react_pattern_flowchart.png)
 
@@ -109,7 +109,7 @@ The LLM:
 
 ### Safety & Permissions
 
-Scratchy includes a built-in safety mechanism for critical operations. Tools can be classified as:
+Agentry includes a built-in safety mechanism for critical operations. Tools can be classified as:
 - **Safe**: Read-only operations (e.g., `read_file`, `list_files`)
 - **Dangerous**: Destructive or critical operations (e.g., `delete_file`, `git_command`)
 
@@ -169,10 +169,10 @@ Each session contains:
 
 ### Session Persistence
 
-Scratchy can save sessions to disk in `.toon` format:
+Agentry can save sessions to disk in `.toon` format:
 
 ```python
-from scratchy.session_manager import SessionManager
+from agentry.session_manager import SessionManager
 
 manager = SessionManager(storage_dir="./sessions")
 
@@ -187,7 +187,7 @@ See [Session Management Guide](session-management.md) for details.
 
 ## Providers
 
-Providers are adapters that connect Scratchy to different LLM services.
+Providers are adapters that connect Agentry to different LLM services.
 
 ### Available Providers
 
@@ -246,7 +246,7 @@ agent = Agent(llm="groq", model="llama-3.3-70b-versatile", api_key="...")
 
 ## MCP Integration
 
-**Model Context Protocol (MCP)** allows Scratchy to connect to external tool servers.
+**Model Context Protocol (MCP)** allows Agentry to connect to external tool servers.
 
 ### What is MCP?
 
@@ -261,7 +261,7 @@ MCP is a standard protocol for:
 
 ```
 ┌─────────────┐
-│   Scratchy  │
+│   Agentry  │
 │    Agent    │
 └──────┬──────┘
        │
