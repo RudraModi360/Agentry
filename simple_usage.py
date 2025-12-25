@@ -1,5 +1,5 @@
 import asyncio
-from scratchy.agents import Agent, CopilotAgent
+from agentry.agents import Agent, CopilotAgent
 
 async def main():
     # # 1. Simple Agent (defaults to Ollama)

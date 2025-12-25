@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "scratchy"
-version = "0.1.0"
+name = "agentry_community"
+version = "1.0.6"
 description = """
 A modular AI agent framework built from scratch in Python, designed to evolve
 into a real-time voice-driven assistant for task automation.
@@ -31,10 +31,18 @@ dependencies = [
     "openpyxl>=3.1.5",
     "fastapi>=0.124.2",
     "uvicorn>=0.38.0",
+    "rich>=13.0.0",
+    "httpx>=0.27.0",
+    "anthropic",
 ]
 
 [project.scripts]
-agentry = "scratchy.cli:main"
+agentry = "agentry.cli:main"
+agentry_cli = "agentry.cli:main"
+agentry-cli = "agentry.cli:main"
+agentry_gui = "agentry.gui:main"
+agentry-gui = "agentry.gui:main"
 
-[tool.setuptools]
-packages = ["scratchy"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["agentry*"]
