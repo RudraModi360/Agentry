@@ -1246,7 +1246,6 @@
                 </div>
             </div>
 
-
             <div class="button-row">
                 <button class="btn btn-secondary" id="step2-back">← Back</button>
                 <button class="btn btn-primary" id="step2-next">Continue →</button>
@@ -1264,8 +1263,8 @@
                 <!-- Manual Model Input -->
                 <div class="manual-model-section"
                     style="margin-top: 24px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.1);">
-                    <div class="model-title" style="font-size: 18px; margin-bottom: 12px;">Or enter Deployment Name
-                        manually</div>
+                    <div class="model-title" id="manual-model-title" style="font-size: 18px; margin-bottom: 12px;">Or
+                        enter Deployment Name manually</div>
                     <div class="input-group">
                         <input type="text" class="form-input" id="manual-model-input"
                             placeholder="e.g. my-gpt4-deployment">
@@ -1368,6 +1367,7 @@
                         providerCard.classList.add('selected');
                         document.getElementById('step1-next').disabled = false; // Enable next button for pre-selected provider
                     }
+
 
                     // Pre-fill model deployment manually if it's Azure
                     if (selectedModel && selectedProvider === 'azure') {
@@ -1690,6 +1690,18 @@
                 if (data.models && data.models.length > 0) {
                     renderModels(data.models);
                     document.getElementById('model-title').textContent = `Select a ${selectedProvider.charAt(0).toUpperCase() + selectedProvider.slice(1)} Model`;
+
+                    // Update manual input title and placeholder based on provider
+                    const manualTitle = document.getElementById('manual-model-title');
+                    const manualInput = document.getElementById('manual-model-input');
+                    if (selectedProvider === 'ollama') {
+                        manualTitle.textContent = 'Or run the other Ollama model';
+                        manualInput.placeholder = 'e.g. qwen2.5-coder:7b';
+                    } else {
+                        manualTitle.textContent = 'Or enter Deployment Name manually';
+                        manualInput.placeholder = 'e.g. my-gpt4-deployment';
+                    }
+
                     goToStep(3);
                 } else {
                     showMessage('No models available. Please check your API key.');
@@ -1806,9 +1818,7 @@
             goToStep(2);
         });
 
-        document.getElementById('step4-back').addEventListener('click', () => {
-            goToStep(3);
-        });
+        // Step 4 back is no longer needed/exists as step 3 is the final step
 
         // Manual model input handling
         const manualInput = document.getElementById('manual-model-input');
@@ -1817,15 +1827,15 @@
                 if (manualInput.value.trim()) {
                     document.querySelectorAll('.model-card').forEach(c => c.classList.remove('selected'));
                     selectedModel = manualInput.value.trim();
-                    document.getElementById('step4-finish').disabled = false;
+                    document.getElementById('step3-finish').disabled = false;
                 } else {
-                    document.getElementById('step4-finish').disabled = true;
+                    document.getElementById('step3-finish').disabled = true;
                 }
             });
         }
 
-        // Finish setup (Step 4)
-        document.getElementById('step4-finish').addEventListener('click', async () => {
+        // Finish setup (Step 3)
+        document.getElementById('step3-finish').addEventListener('click', async () => {
             hideMessage();
 
             // Final check on model (manual override)
@@ -1838,40 +1848,7 @@
                 return;
             }
 
-            showLoading('Configuring your AI provider...');
-
-            try {
-                const response = await fetch(`${API_BASE}/api/provider/configure`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        provider: selectedProvider,
-                        mode: selectedMode,
-                        model: selectedModel,
-                        api_key: apiKey || null,
-                        endpoint: selectedProvider === 'azure' ? (storedEndpoints['azure'] || document.getElementById('endpoint-input').value.trim()) : null,
-                        agent_type: selectedAgentType // Include agent type in config
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    showMessage('Setup complete! Redirecting...', 'success');
-                    setTimeout(() => {
-                        window.location.href = '/chat';
-                    }, 1500);
-                } else {
-                    showMessage(data.detail || 'Configuration failed. Please try again.');
-                }
-            } catch (error) {
-                showMessage('Connection error. Please try again.');
-            } finally {
-                hideLoading();
-            }
+            await submitConfiguration();
         });
 
         // Initialize on page load

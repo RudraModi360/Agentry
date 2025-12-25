@@ -232,3 +232,19 @@ class OllamaProvider(LLMProvider):
 
     def get_model_name(self) -> str:
         return self.model_name
+
+    def pull_model(self) -> bool:
+        """Pulls the model if it's not already present locally."""
+        try:
+            # Check if model exists
+            local_models = self.client.list()
+            model_exists = any(m['name'] == self.model_name or m['name'].startswith(f"{self.model_name}:") for m in local_models.get('models', []))
+            
+            if not model_exists:
+                print(f"[Ollama] Pulling model: {self.model_name}...")
+                self.client.pull(self.model_name)
+                return True
+            return False
+        except Exception as e:
+            print(f"[Ollama] Error pulling model {self.model_name}: {e}")
+            return False

@@ -84,6 +84,7 @@ class Agent:
         self.internal_tools = []  # List of schemas
         self.mcp_managers: List[MCPClientManager] = []
         self.custom_tool_executors: Dict[str, Callable] = {}
+        self.disabled_tools = set() # Tool names or formatted IDs (e.g., 'mcp:server:tool')
         
         # Session Management
         self.sessions: Dict[str, AgentSession] = {}
@@ -231,14 +232,35 @@ class Agent:
         self.add_custom_tool(schema, func)
 
     async def get_all_tools(self) -> List[Dict[str, Any]]:
-        """Aggregate all tools (Internal + MCP)."""
-        tools = list(self.internal_tools)
+        """Aggregate all tools (Internal + MCP), filtering out disabled ones."""
+        filtered_tools = []
         
+        # Process Internal Tools
+        for tool in self.internal_tools:
+            name = tool.get("function", {}).get("name")
+            # We check both the name and a 'builtin:name' prefix for clarity
+            if name and name not in self.disabled_tools and f"builtin:{name}" not in self.disabled_tools:
+                filtered_tools.append(tool)
+        
+        # Process MCP Tools
         for manager in self.mcp_managers:
             mcp_tools = await manager.get_tools()
-            tools.extend(mcp_tools)
+            for tool in mcp_tools:
+                name = tool.get("function", {}).get("name")
+                # Find which server this tool belongs to (manager should know)
+                server_name = "unknown"
+                if hasattr(manager, 'server_tools_map'):
+                    server_name = manager.server_tools_map.get(name, "unknown")
+                
+                # Check server-level disabling and tool-level disabling
+                if server_name not in self.disabled_tools and \
+                   f"mcp_server:{server_name}" not in self.disabled_tools:
+                    
+                    tool_id = f"mcp:{server_name}:{name}"
+                    if tool_id not in self.disabled_tools and name not in self.disabled_tools:
+                        filtered_tools.append(tool)
             
-        return tools
+        return filtered_tools
 
     # --- Session Management ---
 

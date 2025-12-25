@@ -236,12 +236,28 @@ def init_users_db():
             FOREIGN KEY(user_id) REFERENCES users(id)
         )
     """)
+
+    # Granular Tools Disabling
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_disabled_tools (
+            user_id INTEGER PRIMARY KEY,
+            disabled_tools_json TEXT NOT NULL,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        )
+    """)
     
     # Check if 'endpoint' column exists in user_api_keys, if not add it
     try:
         cursor.execute("SELECT endpoint FROM user_api_keys LIMIT 1")
     except sqlite3.OperationalError:
         cursor.execute("ALTER TABLE user_api_keys ADD COLUMN endpoint TEXT")
+
+    # Check if 'tools_enabled' column exists in user_active_settings, if not add it
+    try:
+        cursor.execute("SELECT tools_enabled FROM user_active_settings LIMIT 1")
+    except sqlite3.OperationalError:
+        cursor.execute("ALTER TABLE user_active_settings ADD COLUMN tools_enabled INTEGER DEFAULT 1")
 
     conn.commit()
     conn.close()
@@ -262,6 +278,7 @@ class ProviderConfig(BaseModel):
     model: Optional[str] = None
     model_type: Optional[str] = None  # For Azure: 'openai' or 'anthropic'
     agent_type: Optional[str] = None  # 'default', 'copilot', 'smart'
+    tools_enabled: bool = True
 
 class ChatMessage(BaseModel):
     content: str
@@ -337,14 +354,15 @@ def save_active_settings(user_id: int, config: ProviderConfig):
     try:
         # 1. Update active settings
         cursor.execute("""
-            INSERT INTO user_active_settings (user_id, provider, mode, model, updated_at)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO user_active_settings (user_id, provider, mode, model, tools_enabled, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?)
             ON CONFLICT(user_id) DO UPDATE SET
                 provider = excluded.provider,
                 mode = excluded.mode,
                 model = excluded.model,
+                tools_enabled = excluded.tools_enabled,
                 updated_at = excluded.updated_at
-        """, (user_id, config.provider, config.mode, config.model, datetime.now()))
+        """, (user_id, config.provider, config.mode, config.model, 1 if config.tools_enabled else 0, datetime.now()))
 
         # 2. Update API Key and Endpoint if provided
         # We need to fetch existing values to merge if partial update? 
@@ -668,7 +686,8 @@ async def get_current_user_info(user: Dict = Depends(get_current_user)):
             "mode": config["mode"] if config else None,
             "model": config["model"] if config else None,
             "api_key": active_key,
-            "endpoint": active_endpoint
+            "endpoint": active_endpoint,
+            "tools_enabled": bool(config["tools_enabled"]) if (config and "tools_enabled" in config) else True
         } if config else None,
         "stored_keys": stored_keys
     }
@@ -725,6 +744,29 @@ async def get_providers():
             }
         ]
     }
+
+@app.post("/api/provider/toggle-tools")
+async def toggle_tools(enabled: bool, user: dict = Depends(get_current_user)):
+    user_id = user["id"]
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE user_active_settings 
+            SET tools_enabled = ?, updated_at = ?
+            WHERE user_id = ?
+        """, (1 if enabled else 0, datetime.now(), user_id))
+        conn.commit()
+        
+        # Invalidate agent cache so it reloads with new setting
+        if user_id in agent_cache:
+            del agent_cache[user_id]
+            
+        return {"status": "success", "tools_enabled": enabled}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
 
 @app.get("/api/models/{provider}")
 async def get_models(provider: str, mode: Optional[str] = None, api_key: Optional[str] = None, endpoint: Optional[str] = None, user: Dict = Depends(get_current_user)):
@@ -910,7 +952,14 @@ async def configure_provider(config: ProviderConfig, user: Dict = Depends(get_cu
             # Check requirements
             if config.mode == "cloud" and not final_api_key:
                  raise ValueError("Ollama Cloud requires an API Key.")
+            
             provider = OllamaProvider(model_name=config.model or "llama3.2:3b")
+            
+            # Pull model if local and not present
+            if config.mode == "local" or not config.mode:
+                # This might take a while, in a real app we might want to background this
+                # or send progress updates via websocket.
+                provider.pull_model()
             
         elif config.provider == "groq":
             if not final_api_key:
@@ -1808,6 +1857,19 @@ async def websocket_chat(websocket: WebSocket):
                 except:
                     pass
                 
+                # Load granular tool settings
+                disabled_tools_list = []
+                try:
+                    conn = sqlite3.connect(DB_PATH)
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT disabled_tools_json FROM user_disabled_tools WHERE user_id = ?", (user_id,))
+                    row = cursor.fetchone()
+                    if row:
+                        disabled_tools_list = json.loads(row[0])
+                    conn.close()
+                except:
+                    pass
+
                 # Create the appropriate agent type
                 if agent_type_config and agent_type_config.get("agent_type") == "smart":
                     # Use Smart Agent
@@ -1823,12 +1885,25 @@ async def websocket_chat(websocket: WebSocket):
                     )
                     print(f"[Server WS] Created SmartAgent in {mode} mode" + 
                           (f" for project {project_id}" if project_id else ""))
+                    
+                    # Apply granular tool disabling
+                    if disabled_tools_list:
+                        agent.disabled_tools = set(disabled_tools_list)
+                    
+                    # Smart agent always uses its tools as they are integral to its reasoning mode
+                    # However, we respect granular disabling if user explicitly turned them off
                 else:
                     # Use default Agent
                     agent = Agent(llm=provider, debug=True, capabilities=capabilities)
                     
-                    # Only load tools if model supports them
-                    if capabilities.supports_tools:
+                    # Apply granular tool disabling
+                    if disabled_tools_list:
+                        agent.disabled_tools = set(disabled_tools_list)
+
+                    # Check if tools are enabled by user AND supported by model
+                    tools_enabled_by_user = config.get("tools_enabled", True)
+                    
+                    if tools_enabled_by_user and capabilities.supports_tools:
                         agent.load_default_tools()
                         print(f"[Server WS] Loaded tools for {config['model']}")
 
@@ -1849,6 +1924,9 @@ async def websocket_chat(websocket: WebSocket):
                                 conn.close()
                             except Exception as e:
                                 print(f"[Server WS] Failed to load MCP config: {e}")
+                    elif not tools_enabled_by_user:
+                         agent.disable_tools("User disabled tools in setup")
+                         print(f"[Server WS] Tools disabled by user for {config['model']}")
                     else:
                         print(f"[Server WS] Skipping tools - {config['model']} does not support tools")
                 
@@ -1999,7 +2077,7 @@ async def websocket_chat(websocket: WebSocket):
                     if isinstance(content, list):
                         has_images = any(p.get("type") == "image" for p in content)
                         print(f"[Server] Content is multimodal. Has images: {has_images}")
-                        if self.debug:
+                        if agent.debug:
                             print(f"[Server] Multimodal content structure: {[p.get('type') for p in content]}")
                     else:
                         print(f"[Server] Content is plain text.")

@@ -658,6 +658,49 @@
 
 
 
+        /* Scroll to Bottom Button */
+        .scroll-bottom-btn {
+            position: absolute;
+            bottom: 110px;
+            right: 32px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(var(--bg-secondary-rgb, 40, 44, 52), 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--card-border);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateY(10px);
+        }
+
+        .scroll-bottom-btn.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .scroll-bottom-btn:hover {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow);
+            transform: scale(1.1);
+        }
+
+        .scroll-bottom-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
         /* Layout */
         .app-container {
             display: flex;
@@ -801,15 +844,26 @@
         }
 
         .sidebar-header {
-            padding: 10px 12px;
+            padding: 0;
             border-bottom: none;
+            display: flex;
+            flex-direction: column;
+            background: transparent;
+        }
+
+        .logo-header-wrapper {
+            padding: 16px 12px 8px 20px;
+            display: flex;
+            align-items: center;
+            width: 100%;
         }
 
         .logo {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             margin-bottom: 0;
+            flex: 1;
         }
 
         .logo-img {
@@ -825,6 +879,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
         }
 
         .logo-icon svg {
@@ -876,38 +931,53 @@
         }
 
         /* Sidebar Action Buttons Row */
-        /* Sidebar Action Buttons Row */
-        /* Sidebar Action Buttons Row */
         .sidebar-actions-row {
             display: flex;
             flex-direction: column;
-            gap: 0;
-            margin-top: 12px;
-            margin-bottom: 0;
-            padding: 0;
+            gap: 3.2px;
+            margin-top: 4px;
+            margin-bottom: 12px;
+            padding: 0 8px;
         }
 
         .sidebar-action-btn {
             width: 100%;
-            padding: 8px 8px;
-            border-radius: 6px;
-            font-size: 14px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 14.63px;
             font-weight: 400;
+            color: var(--text-primary);
             font-family: inherit;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: flex-start;
-            gap: 10px;
-            transition: all 0.15s ease;
-            color: var(--text-primary);
-            background-color: transparent;
+            gap: 8px;
+            background: transparent;
             border: none;
+            transition: background 0.2s ease;
+            text-align: left;
+        }
+
+        .btn-icon-wrapper {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: var(--text-primary);
+        }
+
+        .btn-icon-wrapper svg {
+            color: var(--text-primary);
         }
 
         .sidebar-action-btn:hover {
-            background-color: rgba(255, 255, 255, 0.05);
+            background: var(--dark-input);
         }
+
+
 
         .sidebar-action-btn.active {
             background-color: rgba(147, 51, 234, 0.1);
@@ -3489,6 +3559,9 @@
             .chat-main {
                 width: 100%;
                 height: 100vh;
+                position: relative;
+                display: flex;
+                flex-direction: column;
             }
 
             .chat-header {
@@ -4503,7 +4576,8 @@
         .tools-popup-header {
             padding: 14px 16px;
             border-bottom: 1px solid var(--card-border);
-            display: flex;
+            display: none;
+            /* Hide the old header */
             align-items: center;
             justify-content: space-between;
             background: var(--bg-secondary);
@@ -4573,12 +4647,67 @@
             background: var(--bg-tertiary);
         }
 
+        .tools-section-static-header {
+            padding: 12px 16px 8px 16px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .upload-media-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            margin: 0 8px 8px 8px;
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--card-border);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .upload-media-item:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--accent);
+            transform: translateY(-1px);
+        }
+
+        .upload-media-item-info {
+            flex: 1;
+        }
+
+        .upload-media-item-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .upload-media-item-desc {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .tools-popup-content {
+            max-height: 480px;
+            overflow-y: auto;
+            padding: 8px 0;
+        }
+
         .tools-section-group.expanded .tools-section-header-expandable {
             border-bottom: 1px solid var(--card-border);
         }
 
         .tools-section-header-expandable svg:first-child {
             stroke: var(--text-muted);
+            width: 14px;
+            height: 14px;
             flex-shrink: 0;
         }
 
@@ -4672,7 +4801,155 @@
             padding: 16px;
             text-align: center;
             color: var(--text-muted);
-            font-size: 12px;
+        }
+
+        /* Global Disabled State for Tools Popup */
+        .tools-toggle-wrapper {
+            display: flex;
+            align-items: center;
+            margin-left: 8px;
+            margin-right: 4px;
+        }
+
+        .tools-switch {
+            position: relative;
+            display: inline-block;
+            width: 28px;
+            height: 16px;
+        }
+
+        .tools-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .tools-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--bg-tertiary);
+            transition: .3s;
+            border-radius: 18px;
+            border: 1px solid var(--card-border);
+        }
+
+        .tools-slider:before {
+            position: absolute;
+            content: "";
+            height: 12px;
+            width: 12px;
+            left: 2px;
+            bottom: 2px;
+            background-color: var(--text-muted);
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        .tools-switch input:checked+.tools-slider {
+            background-color: rgba(46, 204, 113, 0.2);
+            border-color: #2ecc71;
+        }
+
+        .tools-switch input:checked+.tools-slider:before {
+            transform: translateX(14px);
+            background-color: #2ecc71;
+        }
+
+        .tools-popup.global-disabled .tools-list,
+        .tools-popup.global-disabled .mcp-server-group-header .tools-switch,
+        .tools-popup.global-disabled .tool-item .tool-toggle {
+            opacity: 0.5;
+            pointer-events: none;
+            filter: grayscale(100%);
+        }
+
+        /* Tool Item */
+        .tools-toggle-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: auto;
+            margin-right: 8px;
+        }
+
+        .tools-switch {
+            position: relative;
+            display: inline-block;
+            width: 32px;
+            height: 18px;
+        }
+
+        .tools-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        /* Tooltip style for header buttons */
+        .tooltip-container {
+            position: relative;
+        }
+
+        .tooltip-text {
+            visibility: hidden;
+            width: auto;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 10px;
+            position: absolute;
+            z-index: 1001;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.2s, visibility 0.2s;
+            font-size: 11px;
+            white-space: nowrap;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            pointer-events: none;
+            text-transform: none;
+            font-weight: 500;
+        }
+
+        .tooltip-container:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Tools Popup Granular Control Styles */
+        .tools-popup.global-disabled .tools-section-group:not(#mcp-tools-group),
+        .tools-popup.global-disabled .upload-media-item {
+            opacity: 0.5;
+            pointer-events: none;
+            filter: grayscale(1);
+        }
+
+        .tools-popup.global-disabled #mcp-tools-group .tools-list,
+        .tools-popup.global-disabled #mcp-tools-group .mcp-server-group {
+            opacity: 0.5;
+            pointer-events: none;
+            filter: grayscale(1);
+        }
+
+        .tools-popup.global-disabled #global-tools-toggle {
+            pointer-events: auto;
+        }
+
+        .tools-section-group.disabled-section .tools-list {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .mcp-server-group.disabled-server .mcp-server-tools {
+            opacity: 0.5;
+            pointer-events: none;
         }
 
         /* Tool Item */
@@ -4980,8 +5257,8 @@
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <div style="display: flex; align-items: center; width: 100%; margin-bottom: 12px;">
-                    <div class="logo" style="margin-bottom: 0;">
+                <div class="logo-header-wrapper">
+                    <div class="logo">
                         <div class="logo-icon">
                             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
@@ -5000,28 +5277,34 @@
                 <!-- Action Buttons: New Chat & Search -->
                 <div class="sidebar-actions-row">
                     <button class="sidebar-action-btn" id="new-chat-btn" title="New Chat">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                        </svg>
+                        <div class="btn-icon-wrapper">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                        </div>
                         <span>New chat</span>
                     </button>
                     <button class="sidebar-action-btn" id="search-toggle-btn" title="Search chats">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        </svg>
+                        <div class="btn-icon-wrapper">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                        </div>
                         <span>Search chats</span>
                     </button>
                     <button class="sidebar-action-btn" id="media-library-toggle" title="Media Library">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                            <polyline points="21 15 16 10 5 21"></polyline>
-                        </svg>
+                        <div class="btn-icon-wrapper">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                <polyline points="21 15 16 10 5 21"></polyline>
+                            </svg>
+                        </div>
                         <span>Media</span>
                     </button>
                 </div>
@@ -5208,7 +5491,7 @@
                 <!-- Right side controls -->
                 <div class="chat-header-right">
                     <!-- MCP Config Button (only visible for Default Agent) -->
-                    <button id="mcp-config-btn" class="mcp-config-btn" title="MCP Server Configuration">
+                    <button id="mcp-config-btn" class="mcp-config-btn tooltip-container">
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path
@@ -5216,6 +5499,7 @@
                             <circle cx="12" cy="12" r="3" />
                         </svg>
                         <span id="mcp-header-status" class="mcp-status-badge none"></span>
+                        <span class="tooltip-text">MCP Server Configuration</span>
                     </button>
                     <!-- Theme Toggle Button -->
                     <button id="theme-toggle-btn" class="theme-toggle-btn" title="Toggle theme">
@@ -5287,6 +5571,30 @@
                                     <button class="tools-popup-close" id="tools-popup-close">×</button>
                                 </div>
                                 <div class="tools-popup-content" id="tools-popup-content">
+                                    <!-- Media Section -->
+                                    <div class="tools-section-static-header">Upload Media</div>
+                                    <div class="upload-media-item" id="merged-upload-btn">
+                                        <div class="tool-item-icon">
+                                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none"
+                                                stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                stroke-linejoin="round">
+                                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                                <polyline points="21 15 16 10 5 21"></polyline>
+                                            </svg>
+                                        </div>
+                                        <div class="upload-media-item-info">
+                                            <div class="upload-media-item-name">Attach Images</div>
+                                            <div class="upload-media-item-desc">Upload photos from your device</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Tools Section -->
+                                    <div class="tools-section-static-header">
+                                        <span>tools</span>
+                                        <span class="tools-section-count" id="total-tools-count">0</span>
+                                    </div>
+
                                     <!-- Built-in Tools Section (Collapsible) -->
                                     <div class="tools-section-group" id="builtin-tools-group">
                                         <div class="tools-section-header-expandable"
@@ -5299,6 +5607,12 @@
                                             </svg>
                                             <span class="tools-section-title">Built-in Tools</span>
                                             <span class="tools-section-count" id="builtin-tools-count">0</span>
+                                            <div class="tools-toggle-wrapper" onclick="event.stopPropagation()">
+                                                <label class="tools-switch">
+                                                    <input type="checkbox" id="builtin-tools-toggle" checked>
+                                                    <span class="tools-slider"></span>
+                                                </label>
+                                            </div>
                                             <svg class="tools-section-expand-icon" viewBox="0 0 24 24" fill="none"
                                                 stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                                 stroke-linejoin="round">
@@ -5324,8 +5638,12 @@
                                             </svg>
                                             <span class="tools-section-title">MCP Tools</span>
                                             <span class="tools-section-count" id="mcp-tools-count">0</span>
-                                            <a class="tools-configure-link" id="tools-mcp-config-link"
-                                                onclick="event.stopPropagation()">Configure</a>
+                                            <div class="tools-toggle-wrapper" onclick="event.stopPropagation()">
+                                                <label class="tools-switch">
+                                                    <input type="checkbox" id="mcp-section-toggle" checked>
+                                                    <span class="tools-slider"></span>
+                                                </label>
+                                            </div>
                                             <svg class="tools-section-expand-icon" viewBox="0 0 24 24" fill="none"
                                                 stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                                 stroke-linejoin="round">
@@ -5356,6 +5674,13 @@
                     <button class="send-btn" id="send-btn" disabled>➤</button>
                 </div>
             </div>
+            <!-- Scroll to bottom button -->
+            <button id="scroll-bottom-btn" class="scroll-bottom-btn" title="Scroll to bottom">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+            </button>
         </main>
     </div>
 
@@ -5527,6 +5852,7 @@
         let isConnected = false;
         let isProcessing = false;
         let userInitial = '?';  // Will be set when user info loads
+        let isAutoScrollEnabled = true;
 
         // Auth check
         // Auth check
@@ -5579,6 +5905,7 @@
             initChatSearch();
             initNewChatButton();
             initImageUpload();  // Initialize image upload handlers
+            initScrollBehavior(); // Initialize scroll behavior
 
             await loadUserInfo();
             await loadSessions();
@@ -5762,9 +6089,11 @@
             if (agentType === 'default') {
                 if (mcpConfigBtn) mcpConfigBtn.style.display = '';
                 if (toolsBtnContainer) toolsBtnContainer.style.display = '';
+                if (attachImageBtn) attachImageBtn.style.display = 'none';
             } else {
                 if (mcpConfigBtn) mcpConfigBtn.style.display = 'none';
                 if (toolsBtnContainer) toolsBtnContainer.style.display = 'none';
+                if (attachImageBtn) attachImageBtn.style.display = 'flex';
             }
         }
 
@@ -6132,34 +6461,27 @@
             const toolsPopupClose = document.getElementById('tools-popup-close');
             const mcpConfigLink = document.getElementById('tools-mcp-config-link');
 
-            // Toggle popup on button click
             if (toolsBtn) {
                 toolsBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    const isActive = toolsPopup?.classList.contains('active');
-                    if (!isActive) {
-                        loadAvailableTools(); // Refresh tools when opening
+                    if (!toolsPopup?.classList.contains('active')) {
+                        loadAvailableTools();
                     }
                     toolsBtn.classList.toggle('active');
                     toolsPopup?.classList.toggle('active');
                 });
             }
 
-            // Close popup button
             if (toolsPopupClose) {
-                toolsPopupClose.addEventListener('click', () => {
-                    closeToolsPopup();
-                });
+                toolsPopupClose.addEventListener('click', closeToolsPopup);
             }
 
-            // Close on outside click
             document.addEventListener('click', (e) => {
                 if (!e.target.closest('#tools-btn') && !e.target.closest('#tools-popup')) {
                     closeToolsPopup();
                 }
             });
 
-            // Open MCP config from tools popup
             if (mcpConfigLink) {
                 mcpConfigLink.addEventListener('click', () => {
                     closeToolsPopup();
@@ -6167,7 +6489,7 @@
                 });
             }
 
-            // Load disabled tools from localStorage first
+            // Load tool preferences
             const savedDisabled = localStorage.getItem('agentry-disabled-tools');
             if (savedDisabled) {
                 try {
@@ -6176,9 +6498,97 @@
                     disabledTools = new Set();
                 }
             }
-
-            // Also try to load from backend
             loadDisabledToolsFromBackend();
+
+            // Setup Toggles
+            const mcpSectionToggle = document.getElementById('mcp-section-toggle');
+            if (mcpSectionToggle) {
+                mcpSectionToggle.addEventListener('change', handleMCPSectionToggle);
+            }
+
+            const builtinToggle = document.getElementById('builtin-tools-toggle');
+            if (builtinToggle) {
+                builtinToggle.addEventListener('change', handleBuiltinSectionToggle);
+            }
+        }
+
+        async function handleMCPSectionToggle() {
+            const enabled = this.checked;
+            const mcpServers = availableTools.mcp || {};
+            const serverNames = Object.keys(mcpServers);
+
+            serverNames.forEach(serverName => {
+                const serverKey = `mcp_server:${serverName}`;
+                if (enabled) {
+                    disabledTools.delete(serverKey);
+                } else {
+                    disabledTools.add(serverKey);
+                }
+
+                const tools = mcpServers[serverName] || [];
+                tools.forEach(tool => {
+                    const toolId = `mcp:${serverName}:${tool.name}`;
+                    enabled ? disabledTools.delete(toolId) : disabledTools.add(toolId);
+                });
+            });
+
+            renderToolsList();
+            saveDisabledTools();
+        }
+
+        async function handleBuiltinSectionToggle() {
+            const enabled = this.checked;
+            const builtinTools = availableTools.builtin || [];
+            builtinTools.forEach(tool => {
+                const toolId = `builtin:${tool.name}`;
+                enabled ? disabledTools.delete(toolId) : disabledTools.add(toolId);
+            });
+            renderToolsList();
+            saveDisabledTools();
+        }
+
+        async function handleMCPServerToggle(event) {
+            const serverName = event.target.dataset.server;
+            const enabled = event.target.checked;
+            const serverTools = availableTools.mcp?.[serverName] || [];
+            const serverKey = `mcp_server:${serverName}`;
+
+            if (enabled) {
+                disabledTools.delete(serverKey);
+            } else {
+                disabledTools.add(serverKey);
+            }
+
+            serverTools.forEach(tool => {
+                const toolId = `mcp:${serverName}:${tool.name}`;
+                enabled ? disabledTools.delete(toolId) : disabledTools.add(toolId);
+            });
+            renderToolsList();
+            saveDisabledTools();
+        }
+
+        async function handleToolToggle(event, type) {
+            const toolId = event.target.dataset.toolId;
+            const enabled = event.target.checked;
+            enabled ? disabledTools.delete(toolId) : disabledTools.add(toolId);
+            renderToolsList();
+            saveDisabledTools();
+        }
+
+        async function saveDisabledTools() {
+            localStorage.setItem('agentry-disabled-tools', JSON.stringify([...disabledTools]));
+            try {
+                await fetch(`${API_BASE}/api/tools/disabled`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ disabled_tools: [...disabledTools] })
+                });
+            } catch (e) {
+                console.error('Failed to sync tools:', e);
+            }
         }
 
         async function loadDisabledToolsFromBackend() {
@@ -6188,14 +6598,13 @@
                 });
                 if (response.ok) {
                     const data = await response.json();
-                    if (data.disabled_tools && data.disabled_tools.length > 0) {
+                    if (data.disabled_tools) {
                         disabledTools = new Set(data.disabled_tools);
                         localStorage.setItem('agentry-disabled-tools', JSON.stringify([...disabledTools]));
+                        renderToolsList();
                     }
                 }
-            } catch (e) {
-                console.log('Could not load disabled tools from backend, using localStorage');
-            }
+            } catch (e) { }
         }
 
         function closeToolsPopup() {
@@ -6210,19 +6619,34 @@
                 const response = await fetch(`${API_BASE}/api/tools`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-
                 if (response.ok) {
-                    const data = await response.json();
-                    availableTools = data;
+                    availableTools = await response.json();
                     renderToolsList();
                 } else {
-                    // Fallback to showing placeholder
                     renderToolsListFallback();
                 }
             } catch (e) {
-                console.error('Failed to load tools:', e);
                 renderToolsListFallback();
             }
+        }
+
+        function createToolItemHTML(tool, type) {
+            const toolId = type === 'mcp' ? `mcp:${tool.server}:${tool.name}` : `builtin:${tool.name}`;
+            const isDisabled = disabledTools.has(toolId);
+            return `
+            <div class="tool-item ${isDisabled ? 'disabled' : ''}">
+                <div class="tool-item-icon ${type === 'mcp' ? 'mcp' : ''}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+                </div>
+                <div class="tool-item-info">
+                    <div class="tool-item-name">${escapeHtml(tool.name)}</div>
+                    <div class="tool-item-desc">${escapeHtml(tool.description || 'No description')}</div>
+                </div>
+                <label class="tool-toggle">
+                    <input type="checkbox" data-tool-id="${toolId}" ${isDisabled ? '' : 'checked'}>
+                    <span class="tool-toggle-slider"></span>
+                </label>
+            </div>`;
         }
 
         function renderToolsList() {
@@ -6230,198 +6654,112 @@
             const mcpList = document.getElementById('mcp-tools-list');
             const builtinCountEl = document.getElementById('builtin-tools-count');
             const mcpCountEl = document.getElementById('mcp-tools-count');
+            const builtinSectionToggle = document.getElementById('builtin-tools-toggle');
 
-            // Render built-in tools
+            let enabledBuiltinCount = 0;
+
+            // 1. Render Built-in Tools
             if (builtinList) {
                 const builtinTools = availableTools.builtin || [];
+                enabledBuiltinCount = builtinTools.filter(t => !disabledTools.has(`builtin:${t.name}`)).length;
 
                 // Update count
                 if (builtinCountEl) {
-                    builtinCountEl.textContent = builtinTools.length;
+                    builtinCountEl.textContent = enabledBuiltinCount;
                 }
 
+                const allDisabled = builtinTools.length > 0 && builtinTools.every(t => disabledTools.has(`builtin:${t.name}`));
+                if (builtinSectionToggle) builtinSectionToggle.checked = !allDisabled;
+
                 if (builtinTools.length === 0) {
-                    builtinList.innerHTML = '<div class="tools-empty">No built-in tools available</div>';
+                    builtinList.innerHTML = '<div class="tools-empty">No built-in tools</div>';
                 } else {
-                    builtinList.innerHTML = builtinTools.map(tool => createToolItemHTML(tool, 'builtin')).join('');
-                    // Add event listeners
+                    builtinList.innerHTML = builtinTools.map(t => createToolItemHTML(t, 'builtin')).join('');
                     builtinList.querySelectorAll('.tool-toggle input').forEach(input => {
                         input.addEventListener('change', (e) => handleToolToggle(e, 'builtin'));
                     });
                 }
             }
 
-            // Calculate total MCP tools count
-            const mcpServers = availableTools.mcp || {};
-            const totalMcpTools = Object.values(mcpServers).reduce((sum, tools) => sum + (tools?.length || 0), 0);
-            if (mcpCountEl) {
-                mcpCountEl.textContent = totalMcpTools;
-            }
-
-            // Render MCP tools with expanders
+            // 2. Render MCP Tools
             if (mcpList) {
                 const mcpServers = availableTools.mcp || {};
                 const serverNames = Object.keys(mcpServers);
 
-                if (serverNames.length === 0) {
-                    mcpList.innerHTML = '<div class="tools-empty">No MCP servers configured</div>';
-                } else {
-                    let html = '';
-                    serverNames.forEach((serverName, index) => {
-                        const serverTools = mcpServers[serverName] || [];
-                        const status = mcpServerStatuses[serverName] || 'disconnected';
-                        const serverId = `mcp-server-${index}`;
+                const enabledMcpTools = Object.keys(mcpServers).reduce((sum, serverName) => {
+                    const tools = mcpServers[serverName] || [];
+                    return sum + tools.filter(t => !disabledTools.has(`mcp:${serverName}:${t.name}`)).length;
+                }, 0);
 
-                        html += `
-                            <div class="mcp-server-group" id="${serverId}" data-server="${escapeHtml(serverName)}">
-                                <div class="mcp-server-group-header" onclick="toggleMCPServerExpand('${serverId}')">
-                                    <div class="mcp-server-status ${status}"></div>
-                                    <span class="mcp-server-name">${escapeHtml(serverName)}</span>
-                                    <span class="mcp-server-tools-count">${serverTools.length} tools</span>
-                                    <svg class="mcp-server-expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="6 9 12 15 18 9"></polyline>
-                                    </svg>
+                if (mcpCountEl) {
+                    mcpCountEl.textContent = enabledMcpTools;
+                }
+
+                // Update Total active tools count
+                const totalToolsCountEl = document.getElementById('total-tools-count');
+                if (totalToolsCountEl) {
+                    const totalEnabled = enabledBuiltinCount + enabledMcpTools;
+                    totalToolsCountEl.textContent = totalEnabled;
+                }
+
+                if (serverNames.length === 0) {
+                    mcpList.innerHTML = '<div class="tools-empty">No MCP servers</div>';
+                } else {
+                    mcpList.innerHTML = serverNames.map((name, idx) => {
+                        const tools = mcpServers[name] || [];
+                        const status = mcpServerStatuses[name] || 'disconnected';
+                        const serverId = `mcp-server-${idx}`;
+                        const allDisabled = tools.length > 0 && tools.every(t => disabledTools.has(`mcp:${name}:${t.name}`));
+
+                        // Calculate enabled count for this specific server
+                        const serverEnabledCount = tools.filter(t => !disabledTools.has(`mcp:${name}:${t.name}`)).length;
+
+                        return `
+                        <div class="mcp-server-group ${allDisabled ? 'disabled-server' : ''}" id="${serverId}">
+                            <div class="mcp-server-group-header" onclick="toggleMCPServerExpand('${serverId}')">
+                                <div class="mcp-server-status ${status}"></div>
+                                <span class="mcp-server-name">${escapeHtml(name)}</span>
+                                <span class="mcp-server-tools-count">${serverEnabledCount} / ${tools.length}</span>
+                                <div class="tools-toggle-wrapper" onclick="event.stopPropagation()">
+                                    <label class="tools-switch">
+                                        <input type="checkbox" class="mcp-server-toggle" data-server="${escapeHtml(name)}" ${allDisabled ? '' : 'checked'}>
+                                        <span class="tools-slider"></span>
+                                    </label>
                                 </div>
-                                <div class="mcp-server-tools">
-                                    <div class="tools-list">
-                                        ${serverTools.length > 0
-                                ? serverTools.map(tool => createToolItemHTML({ ...tool, server: serverName }, 'mcp')).join('')
-                                : '<div class="tools-empty" style="padding: 8px 12px;">No tools from this server</div>'}
-                                    </div>
+                                <svg class="mcp-server-expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </div>
+                            <div class="mcp-server-tools">
+                                <div class="tools-list">
+                                    ${tools.length > 0 ? tools.map(t => createToolItemHTML({ ...t, server: name }, 'mcp')).join('') : '<div class="tools-empty">No tools</div>'}
                                 </div>
                             </div>
-                        `;
-                    });
-                    mcpList.innerHTML = html;
+                        </div>`;
+                    }).join('');
 
-                    // Add event listeners for tool toggles
                     mcpList.querySelectorAll('.tool-toggle input').forEach(input => {
                         input.addEventListener('change', (e) => handleToolToggle(e, 'mcp'));
                     });
+                    mcpList.querySelectorAll('.mcp-server-toggle').forEach(input => {
+                        input.addEventListener('change', (e) => handleMCPServerToggle(e));
+                    });
+                }
+
+                // Sync Section Toggle visual state
+                const mcpSectionToggle = document.getElementById('mcp-section-toggle');
+                if (mcpSectionToggle) {
+                    const allDisabled = Object.keys(mcpServers).every(serverName => {
+                        const tools = mcpServers[serverName] || [];
+                        return tools.every(t => disabledTools.has(`mcp:${serverName}:${t.name}`));
+                    });
+                    mcpSectionToggle.checked = !allDisabled;
                 }
             }
-        }
-
-        // Toggle MCP server expansion
-        function toggleMCPServerExpand(serverId) {
-            const serverGroup = document.getElementById(serverId);
-            if (serverGroup) {
-                serverGroup.classList.toggle('expanded');
-            }
-        }
-
-        // Toggle tools section expansion (for Built-in Tools and MCP Tools sections)
-        function toggleToolsSectionExpand(sectionId) {
-            const sectionGroup = document.getElementById(sectionId);
-            if (sectionGroup) {
-                sectionGroup.classList.toggle('expanded');
-            }
-        }
-
-        function createToolItemHTML(tool, type) {
-            const toolId = type === 'mcp' ? `mcp:${tool.server}:${tool.name}` : `builtin:${tool.name}`;
-            const isDisabled = disabledTools.has(toolId);
-            const iconClass = type === 'mcp' ? 'mcp' : '';
-
-            return `
-                <div class="tool-item ${isDisabled ? 'disabled' : ''}" data-tool-id="${toolId}">
-                    <div class="tool-item-icon ${iconClass}">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
-                        </svg>
-                    </div>
-                    <div class="tool-item-info">
-                        <div class="tool-item-name">${escapeHtml(tool.name)}</div>
-                        <div class="tool-item-desc">${escapeHtml(tool.description || 'No description')}</div>
-                    </div>
-                    <label class="tool-toggle">
-                        <input type="checkbox" data-tool-id="${toolId}" ${isDisabled ? '' : 'checked'}>
-                        <span class="tool-toggle-slider"></span>
-                    </label>
-                </div>
-            `;
         }
 
         function renderToolsListFallback() {
-            const builtinList = document.getElementById('builtin-tools-list');
-            const mcpList = document.getElementById('mcp-tools-list');
-
-            // Show default built-in tools placeholder
-            if (builtinList) {
-                const defaultTools = [
-                    { name: 'web_search', description: 'Search the web for information' },
-                    { name: 'read_file', description: 'Read contents of a file' },
-                    { name: 'write_file', description: 'Write content to a file' },
-                    { name: 'execute_code', description: 'Execute Python code' },
-                    { name: 'datetime', description: 'Get current date/time' },
-                    { name: 'memory', description: 'Store and retrieve memories' }
-                ];
-                builtinList.innerHTML = defaultTools.map(tool => createToolItemHTML(tool, 'builtin')).join('');
-                builtinList.querySelectorAll('.tool-toggle input').forEach(input => {
-                    input.addEventListener('change', (e) => handleToolToggle(e, 'builtin'));
-                });
-            }
-
-            // Update MCP tools from existing mcpConfig with expanders
-            if (mcpList) {
-                const serverNames = Object.keys(mcpConfig.mcpServers || {});
-                if (serverNames.length === 0) {
-                    mcpList.innerHTML = '<div class="tools-empty">No MCP servers configured</div>';
-                } else {
-                    mcpList.innerHTML = serverNames.map((serverName, index) => {
-                        const status = mcpServerStatuses[serverName] || 'disconnected';
-                        const serverId = `mcp-server-fallback-${index}`;
-                        return `
-                            <div class="mcp-server-group" id="${serverId}" data-server="${escapeHtml(serverName)}">
-                                <div class="mcp-server-group-header" onclick="toggleMCPServerExpand('${serverId}')">
-                                    <div class="mcp-server-status ${status}"></div>
-                                    <span class="mcp-server-name">${escapeHtml(serverName)}</span>
-                                    <span class="mcp-server-tools-count">-</span>
-                                    <svg class="mcp-server-expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="6 9 12 15 18 9"></polyline>
-                                    </svg>
-                                </div>
-                                <div class="mcp-server-tools">
-                                    <div class="tools-list">
-                                        <div class="tools-empty" style="padding: 8px 12px;">Connect to MCP server to see tools</div>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
-                }
-            }
-        }
-
-        async function handleToolToggle(event, type) {
-            const toolId = event.target.dataset.toolId;
-            const isEnabled = event.target.checked;
-            const toolItem = event.target.closest('.tool-item');
-
-            if (isEnabled) {
-                disabledTools.delete(toolId);
-                toolItem?.classList.remove('disabled');
-            } else {
-                disabledTools.add(toolId);
-                toolItem?.classList.add('disabled');
-            }
-
-            // Save to localStorage
-            localStorage.setItem('agentry-disabled-tools', JSON.stringify([...disabledTools]));
-
-            // Send to backend
-            try {
-                await fetch(`${API_BASE}/api/tools/disabled`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ disabled_tools: [...disabledTools] })
-                });
-            } catch (e) {
-                console.error('Failed to save disabled tools:', e);
-            }
+            // ... (keep fallback if needed or let renderToolsList handle empty availableTools)
+            // For brevity, I'll let renderToolsList handle empty states
+            renderToolsList();
         }
 
         // Sidebar Controls (Resize & Toggle)
@@ -6470,8 +6808,13 @@
                         providerIcon.style.background = 'white';
                         providerIcon.innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Microsoft_Azure.svg" alt="Azure" style="width: 18px; height: 18px;">`;
                     } else {
-                        // Default Fallback
                         providerIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect></svg>`;
+                    }
+
+                    // Set tools enabled/disabled state
+                    const globalToolsToggle = document.getElementById('global-tools-toggle');
+                    if (globalToolsToggle && data.provider_config.tools_enabled !== undefined) {
+                        globalToolsToggle.checked = data.provider_config.tools_enabled;
                     }
                 }
             } catch (error) {
@@ -6976,8 +7319,14 @@
             }
 
             // Show/hide image upload button based on vision support
+            // BUT: if we are in Default Agent, it's merged into the + menu
             if (attachImageBtn) {
-                attachImageBtn.style.display = 'flex';
+                const currentAgentType = localStorage.getItem('agentry-agent-type') || 'default';
+                if (currentAgentType === 'default') {
+                    attachImageBtn.style.display = 'none';
+                } else {
+                    attachImageBtn.style.display = 'flex';
+                }
 
                 if (supportsVision) {
                     messageInput.placeholder = 'Type your message or attach an image...';
@@ -7000,6 +7349,16 @@
                 imageInput.value = '';
                 imageInput.click();
             });
+
+            const mergedUploadBtn = document.getElementById('merged-upload-btn');
+            if (mergedUploadBtn) {
+                mergedUploadBtn.addEventListener('click', () => {
+                    imageInput.value = '';
+                    imageInput.click();
+                    // Close the popup after clicking
+                    closeToolsPopup();
+                });
+            }
 
             // Handle file selection
             imageInput.addEventListener('change', (e) => {
@@ -8341,8 +8700,47 @@
             }
         }
 
-        function scrollToBottom() {
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        function scrollToBottom(force = false) {
+            if (force || isAutoScrollEnabled) {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                if (force) {
+                    isAutoScrollEnabled = true;
+                    const scrollBtn = document.getElementById('scroll-bottom-btn');
+                    if (scrollBtn) scrollBtn.classList.remove('visible');
+                }
+            }
+        }
+
+        function initScrollBehavior() {
+            const scrollBtn = document.getElementById('scroll-bottom-btn');
+
+            messagesContainer.addEventListener('scroll', () => {
+                // Check if user is near bottom
+                const threshold = 100; // pixels from bottom
+                const isNearBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight < threshold;
+
+                if (isNearBottom) {
+                    isAutoScrollEnabled = true;
+                    scrollBtn.classList.remove('visible');
+                } else {
+                    // If we just scrolled up manually
+                    if (isAutoScrollEnabled) {
+                        // We check if it was an actual manual scroll or an auto-scroll
+                        // Since scrollToBottom sets scrollTop, it triggers this event.
+                        // But we only disable auto-scroll if the scroll event wasn't triggered by an auto-scroll.
+                        // However, a simple way is: if scroll event happens and we are NOT near bottom,
+                        // and it wasn't exactly at scrollHeight, we can show the button.
+                        isAutoScrollEnabled = false;
+                    }
+                    scrollBtn.classList.add('visible');
+                }
+            });
+
+            if (scrollBtn) {
+                scrollBtn.addEventListener('click', () => {
+                    scrollToBottom(true);
+                });
+            }
         }
 
         // Send message
