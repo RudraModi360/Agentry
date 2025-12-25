@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Any
 from .agent import Agent, AgentSession
 from scratchy.providers.base import LLMProvider
 from scratchy.config.prompts import get_system_prompt, get_copilot_prompt
@@ -20,7 +20,8 @@ class CopilotAgent(Agent):
         model: str = None,
         api_key: str = None,
         system_message: str = None,
-        debug: bool = False
+        debug: bool = False,
+        capabilities: Any = None
     ):
         # Use copilot-specific prompt if no custom message provided
         if not system_message:
@@ -33,7 +34,8 @@ class CopilotAgent(Agent):
             api_key=api_key,
             system_message=system_message,
             role="copilot",
-            debug=debug
+            debug=debug,
+            capabilities=capabilities
         )
         
         # Auto-load tools useful for coding

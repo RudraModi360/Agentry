@@ -43,7 +43,8 @@ class SmartAgent(Agent):
         mode: str = SmartAgentMode.SOLO,
         project_id: str = None,
         debug: bool = False,
-        max_iterations: int = 40
+        max_iterations: int = 40,
+        capabilities: Any = None
     ):
         # Initialize base agent
         super().__init__(
@@ -53,7 +54,8 @@ class SmartAgent(Agent):
             system_message=None,  # Will be set based on mode
             role="general",
             debug=debug,
-            max_iterations=max_iterations
+            max_iterations=max_iterations,
+            capabilities=capabilities
         )
         
         # Smart Agent specific

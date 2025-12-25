@@ -69,7 +69,11 @@ class OllamaProvider(LLMProvider):
 
         # Simplify tools for Ollama compatibility
         from .utils import simplify_tool_schema
-        simplified_tools = [simplify_tool_schema(t) for t in tools] if tools else None
+        # Disable tools if images are present (vision models usually don't support tools)
+        if has_images:
+            simplified_tools = None
+        else:
+            simplified_tools = [simplify_tool_schema(t) for t in tools] if tools else None
 
         try:
             response = self.client.chat(
@@ -130,7 +134,11 @@ class OllamaProvider(LLMProvider):
             
             # Simplify tools for Ollama compatibility
             from .utils import simplify_tool_schema
-            simplified_tools = [simplify_tool_schema(t) for t in tools] if tools else None
+            # Disable tools if images are present (vision models usually don't support tools)
+            if has_images:
+                simplified_tools = None
+            else:
+                simplified_tools = [simplify_tool_schema(t) for t in tools] if tools else None
 
             try:
                 stream = self.client.chat(

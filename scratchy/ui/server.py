@@ -51,17 +51,28 @@ app.add_middleware(
 )
 
 # ============== Helper Functions ==============
-def format_multimodal_content_multi(text: str, images_data: List[str]) -> list:
+def format_multimodal_content(text: str, image_data: str) -> list:
     """
-    Format text and multiple images into multimodal content for vision models.
+    Format text and image into multimodal content for vision models.
+    Returns a list format that providers can process.
     
     Args:
         text: The text content
-        images_data: List of base64 encoded image data strings (may be data URLs)
+        image_data: Base64 encoded image data (may include data:image/... prefix)
     
     Returns:
         List of content parts compatible with vision providers
     """
+    import base64
+    
+    # Extract base64 data if it has a data URL prefix
+    if image_data.startswith('data:'):
+        # Format: data:image/png;base64,<data>
+        parts = image_data.split(',', 1)
+        if len(parts) == 2:
+            image_data = parts[1]
+    
+    # Build multimodal content structure
     content = []
     
     if text:
@@ -70,25 +81,14 @@ def format_multimodal_content_multi(text: str, images_data: List[str]) -> list:
             "text": text
         })
     
-    for img_data in images_data:
-        # Keep full data URL so provider can parse mime type
-        # If it doesn't have a data prefix, the provider will default to image/png
-        content.append({
-            "type": "image",
-            "data": img_data
-        })
+    content.append({
+        "type": "image",
+        "data": image_data  # Base64 encoded
+    })
     
     return content
 
-# ... existing save_media_to_disk ...
-
-# --- WebSocket Chat ---
-def format_multimodal_content(text: str, image_data: str) -> list:
-    """
-    Format text and image into multimodal content for vision models.
-    """
-    return format_multimodal_content_multi(text, [image_data] if image_data else [])
-
+    return content
 
 def save_media_to_disk(user_id: int, image_data: str, filename: str = None) -> dict:
     """
@@ -866,16 +866,10 @@ async def get_models(provider: str, mode: Optional[str] = None, api_key: Optiona
              pass
         
         return {
-            "models": [
-                {"id": "gpt-4o", "name": "GPT-4o", "description": "Vision + Fast (Enter Deployment Name)"},
-                {"id": "gpt-4-turbo", "name": "GPT-4 Turbo with Vision", "description": "Vision + Capable"},
-                {"id": "claude-3-5-sonnet", "name": "Claude 3.5 Sonnet", "description": "Vision + Smart (Azure Anthropic)"},
-                {"id": "claude-3-opus", "name": "Claude 3 Opus", "description": "Intelligence (Azure Anthropic)"},
-                {"id": "claude-3-haiku", "name": "Claude 3 Haiku", "description": "Fast + Vision"}
-            ],
+            "models": [{"id": "gpt-4", "name": "gpt-4", "description": "Deployment Name"}, {"id": "claude-opus-4.5", "name": "Claude Opus 4.5", "description": "If deployed on Azure"}],
             "requires_key": True,
             "requires_endpoint": True,
-            "message": "Deployment names vary. If using Azure Anthropic, deployment name might be 'claude-3-5-sonnet' etc."
+            "message": "Could not fetch deployments. Enter Deployment Name."
         }
     
     raise HTTPException(status_code=400, detail="Unknown provider")
@@ -998,7 +992,7 @@ async def configure_provider(config: ProviderConfig, user: Dict = Depends(get_cu
     
     # Create agent and cache it
     try:
-        agent = Agent(llm=provider, debug=True, capabilities=capabilities)
+        agent = Agent(llm=provider, debug=True)
         
         # Only load tools if the model supports them
         if capabilities.supports_tools:
@@ -1157,70 +1151,6 @@ async def get_mcp_status(user: Dict = Depends(get_current_user)):
                 
     return {"statuses": statuses}
 
-# --- Model Capabilities ---
-@app.get("/api/capabilities")
-async def get_model_capabilities(
-    provider: str,
-    model: str,
-    user: Dict = Depends(get_current_user)
-):
-    """Get capabilities for a specific model."""
-    user_id = user["id"]
-    
-    # First check if we have cached capabilities for this user's active model
-    if user_id in agent_cache:
-        cached_caps = agent_cache[user_id].get("capabilities", {})
-        cached_provider = agent_cache[user_id].get("config", {}).get("provider")
-        cached_model = agent_cache[user_id].get("config", {}).get("model")
-        
-        if cached_provider == provider and cached_model == model and cached_caps:
-            return {
-                "capabilities": {
-                    "tools": cached_caps.get("supports_tools", False),
-                    "vision": cached_caps.get("supports_vision", False)
-                }
-            }
-    
-    # Fall back to detecting capabilities
-    try:
-        # Get API key for the provider
-        api_key = get_api_key(user_id, provider)
-        
-        # Create a temporary provider instance for capability detection
-        temp_provider = None
-        if provider == "ollama":
-            temp_provider = OllamaProvider(model_name=model)
-        elif provider == "groq" and api_key:
-            temp_provider = GroqProvider(model_name=model, api_key=api_key)
-        elif provider == "gemini" and api_key:
-            temp_provider = GeminiProvider(model_name=model, api_key=api_key)
-        elif provider == "azure" and api_key:
-            endpoint = get_provider_endpoint_helper(user_id, provider)
-            if endpoint:
-                temp_provider = AzureProvider(model_name=model, api_key=api_key, endpoint=endpoint)
-        
-        if temp_provider:
-            capabilities = await detect_model_capabilities(
-                provider_name=provider,
-                model_name=model,
-                provider_instance=temp_provider
-            )
-            return {
-                "capabilities": {
-                    "tools": capabilities.supports_tools,
-                    "vision": capabilities.supports_vision
-                }
-            }
-    except Exception as e:
-        print(f"[Server] Capability detection error: {e}")
-    
-    # Default fallback - assume no special capabilities
-    return {
-        "capabilities": {
-            "tools": False,
-            "vision": False
-        }
-    }
 
 # --- Tools Management ---
 class DisabledToolsRequest(BaseModel):
@@ -1770,20 +1700,6 @@ async def websocket_chat(websocket: WebSocket):
                     provider = GroqProvider(model_name=config["model"], api_key=api_key)
                 elif provider_name == "gemini":
                     provider = GeminiProvider(model_name=config["model"], api_key=api_key)
-                elif provider_name == "azure":
-                    endpoint = get_provider_endpoint(user_id, "azure")
-                    # Infer model_type from model name if not stored
-                    model_name_lower = (config.get("model") or "").lower()
-                    if "claude" in model_name_lower:
-                        model_type = "anthropic"
-                    else:
-                        model_type = config.get("model_type", "openai")
-                    provider = AzureProvider(
-                        model_name=config["model"], 
-                        api_key=api_key, 
-                        endpoint=endpoint,
-                        model_type=model_type
-                    )
                 else:
                     raise ValueError(f"Unknown provider: {provider_name}")
                 
@@ -1818,14 +1734,13 @@ async def websocket_chat(websocket: WebSocket):
                         llm=provider,
                         mode=mode,
                         project_id=project_id,
-                        debug=True,
-                        capabilities=capabilities
+                        debug=True
                     )
                     print(f"[Server WS] Created SmartAgent in {mode} mode" + 
                           (f" for project {project_id}" if project_id else ""))
                 else:
                     # Use default Agent
-                    agent = Agent(llm=provider, debug=True, capabilities=capabilities)
+                    agent = Agent(llm=provider, debug=True)
                     
                     # Only load tools if model supports them
                     if capabilities.supports_tools:
@@ -1882,34 +1797,30 @@ async def websocket_chat(websocket: WebSocket):
             
             if msg_type == "message":
                 content = data.get("content", "")
-                image_data = data.get("image")  # Base64 image data from client (single)
-                images_data = data.get("images", []) # List of images
+                image_data = data.get("image")  # Base64 image data from client
                 session_id = data.get("session_id", f"user_{user_id}_default")
                 is_edit = data.get("is_edit", False)
                 edit_index = data.get("edit_index") # 0-based index of message to replace
                 
-                # Normalize images
-                all_images = []
+                # Process image if present and model supports vision
                 if image_data:
-                    all_images.append(image_data)
-                if images_data and isinstance(images_data, list):
-                    all_images.extend(images_data)
-
-                # Process image if present
-                if all_images:
-                    # Format content as multimodal message to ensure persistence in history
-                    content = format_multimodal_content_multi(content, all_images)
-                    print(f"[Server] Processing {len(all_images)} images (Vision support: {agent_cache.get(user_id, {}).get('capabilities', {}).get('supports_vision', False)})")
-                    
-                    # Save ALL images to media library
-                    for img in all_images:
-                        media_info = save_media_to_disk(user_id, img)
+                    cached_caps = agent_cache.get(user_id, {}).get("capabilities", {})
+                    if cached_caps.get("supports_vision"):
+                        # Format content as multimodal message
+                        # The provider will handle the actual formatting
+                        content = format_multimodal_content(content, image_data)
+                        print(f"[Server] Processing image with vision model")
+                        
+                        # Save to media library
+                        media_info = save_media_to_disk(user_id, image_data)
                         if media_info:
                             # Send notification to client about saved media
                             await websocket.send_json({
                                 "type": "media_saved",
                                 "media": media_info
                             })
+                    else:
+                        print(f"[Server] Warning: Image received but model doesn't support vision")
                 
                 # Ensure session_id has user prefix
                 if not session_id.startswith(f"user_{user_id}_"):
@@ -1995,15 +1906,6 @@ async def websocket_chat(websocket: WebSocket):
                 
                 try:
                     # Run agent
-                    print(f"[Server] Calling agent.chat with session_id: {session_id}")
-                    if isinstance(content, list):
-                        has_images = any(p.get("type") == "image" for p in content)
-                        print(f"[Server] Content is multimodal. Has images: {has_images}")
-                        if self.debug:
-                            print(f"[Server] Multimodal content structure: {[p.get('type') for p in content]}")
-                    else:
-                        print(f"[Server] Content is plain text.")
-                        
                     response = await agent.chat(content, session_id=session_id)
                     
                     # Get updated messages and save

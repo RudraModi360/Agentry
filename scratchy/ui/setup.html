@@ -1116,20 +1116,166 @@
 
     <div class="setup-container">
         <div class="setup-header">
-            <h1 class="setup-title" id="setup-title">Configure Your AI Provider</h1>
-            <p class="setup-subtitle" id="setup-subtitle">Choose how you want to power your AI assistant</p>
+            <h1 class="setup-title" id="setup-title">Choose Your Agent Type</h1>
+            <p class="setup-subtitle" id="setup-subtitle">Select the type of AI agent that best fits your needs</p>
         </div>
 
         <div class="progress-steps">
             <div class="step-dot active" data-step="1"></div>
             <div class="step-dot" data-step="2"></div>
             <div class="step-dot" data-step="3"></div>
+            <div class="step-dot" data-step="4"></div>
         </div>
 
         <div id="message" class="message"></div>
 
-        <!-- Step 1: Provider Selection -->
+        <!-- Step 1: Agent Type Selection -->
         <div class="step-section active" id="step-1">
+            <div class="agent-type-container">
+                <div class="agent-type-grid">
+                    <!-- Default Agent Card -->
+                    <div class="agent-card-3d" data-agent="default">
+                        <span class="agent-recommended">Recommended</span>
+                        <div class="agent-card-body">
+                            <div class="particle particle-1"></div>
+                            <div class="particle particle-2"></div>
+                            <div class="particle particle-3"></div>
+                            <div class="agent-icon">
+                                <!-- Layers/Stack icon for Default/Full agent -->
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                                    <path d="M2 17l10 5 10-5" />
+                                    <path d="M2 12l10 5 10-5" />
+                                </svg>
+                            </div>
+                            <div class="agent-name">Default Agent</div>
+                            <div class="agent-desc">
+                                Full-featured AI assistant with all built-in tools and MCP server integrations.
+                                Best for versatile tasks requiring file operations, web access, and external tool
+                                connections.
+                            </div>
+                            <div class="agent-features">
+                                <span class="agent-feature-tag tools">
+                                    <svg viewBox="0 0 24 24">
+                                        <path
+                                            d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z" />
+                                    </svg>
+                                    All Tools
+                                </span>
+                                <span class="agent-feature-tag mcp">
+                                    <svg viewBox="0 0 24 24">
+                                        <path d="M4 6h16M4 12h16M4 18h16" />
+                                    </svg>
+                                    MCP Servers
+                                </span>
+                                <span class="agent-feature-tag">
+                                    <svg viewBox="0 0 24 24">
+                                        <path
+                                            d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
+                                    </svg>
+                                    Full Access
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Copilot Agent Card -->
+                    <div class="agent-card-3d" data-agent="copilot">
+                        <div class="agent-card-body">
+                            <div class="particle particle-1"></div>
+                            <div class="particle particle-2"></div>
+                            <div class="particle particle-3"></div>
+                            <div class="agent-icon">
+                                <!-- Code icon for Copilot -->
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="16 18 22 12 16 6" />
+                                    <polyline points="8 6 2 12 8 18" />
+                                </svg>
+                            </div>
+                            <div class="agent-name">Copilot Agent</div>
+                            <div class="agent-desc">
+                                Optimized for coding tasks with filesystem and execution tools.
+                                Perfect for code reviews, bug fixes, and writing new code with IDE-like experience.
+                            </div>
+                            <div class="agent-features">
+                                <span class="agent-feature-tag code">
+                                    <svg viewBox="0 0 24 24">
+                                        <path d="M16 18l6-6-6-6M8 6l-6 6 6 6" />
+                                    </svg>
+                                    Code Generation
+                                </span>
+                                <span class="agent-feature-tag code">
+                                    <svg viewBox="0 0 24 24">
+                                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                                        <polyline points="14 2 14 8 20 8" />
+                                    </svg>
+                                    File Operations
+                                </span>
+                                <span class="agent-feature-tag code">
+                                    <svg viewBox="0 0 24 24">
+                                        <circle cx="12" cy="12" r="10" />
+                                        <line x1="12" y1="8" x2="12" y2="12" />
+                                        <line x1="12" y1="16" x2="12.01" y2="16" />
+                                    </svg>
+                                    Bug Fixing
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Smart Agent Card -->
+                    <div class="agent-card-3d" data-agent="smart">
+                        <div class="agent-card-body">
+                            <div class="particle particle-1"></div>
+                            <div class="particle particle-2"></div>
+                            <div class="particle particle-3"></div>
+                            <div class="agent-icon">
+                                <!-- Brain/Lightbulb icon for Smart Agent -->
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 18h6" />
+                                    <path d="M10 22h4" />
+                                    <path
+                                        d="M12 2a7 7 0 017 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 01-1 1H9a1 1 0 01-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 017-7z" />
+                                </svg>
+                            </div>
+                            <div class="agent-name">Smart Agent</div>
+                            <div class="agent-desc">
+                                Versatile reasoning agent with project memory and note-taking.
+                                Ideal for complex thinking tasks, research, and conversational interactions.
+                            </div>
+                            <div class="agent-features">
+                                <span class="agent-feature-tag chat">
+                                    <svg viewBox="0 0 24 24">
+                                        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                                    </svg>
+                                    Enhanced Chat
+                                </span>
+                                <span class="agent-feature-tag chat">
+                                    <svg viewBox="0 0 24 24">
+                                        <path
+                                            d="M12 2a10 10 0 1010 10A10 10 0 0012 2zm0 18a8 8 0 118-8 8 8 0 01-8 8z" />
+                                        <path d="M12 6v6l4 2" />
+                                    </svg>
+                                    Project Memory
+                                </span>
+                                <span class="agent-feature-tag chat">
+                                    <svg viewBox="0 0 24 24">
+                                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                                    </svg>
+                                    Deep Reasoning
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="button-row">
+                <button class="btn btn-primary" id="step1-next" disabled>Continue →</button>
+            </div>
+        </div>
+
+        <!-- Step 2: Provider Selection -->
+        <div class="step-section" id="step-2">
             <div class="provider-grid">
                 <div class="provider-card" data-provider="ollama">
                     <div class="provider-icon ollama">
@@ -1159,8 +1305,7 @@
                 </div>
                 <div class="provider-card" data-provider="azure">
                     <div class="provider-icon azure" style="background: white;">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Microsoft_Azure.svg" alt="Azure"
-                            style="width: 24px; height: 24px;">
+                        <img src="/assets/azure_logo.png" alt="Azure" style="width: 28px; height: 28px;">
                     </div>
                     <div class="provider-name">Azure OpenAI</div>
                     <div class="provider-desc">Enterprise-grade AI. Requires Endpoint and API Key.</div>
@@ -1168,14 +1313,13 @@
                 </div>
             </div>
             <div class="button-row">
-                <button class="btn btn-secondary" id="step1-back" onclick="window.location.href='/login'">←
-                    Logout</button>
-                <button class="btn btn-primary" id="step1-next" disabled>Continue →</button>
+                <button class="btn btn-secondary" id="step2-back">← Back</button>
+                <button class="btn btn-primary" id="step2-next" disabled>Continue →</button>
             </div>
         </div>
 
-        <!-- Step 2: Configuration -->
-        <div class="step-section" id="step-2">
+        <!-- Step 3: Configuration -->
+        <div class="step-section" id="step-3">
             <!-- Ollama Mode Selection -->
             <div class="mode-section" id="ollama-mode" style="display: none;">
                 <div class="mode-title">Choose Ollama Mode</div>
@@ -1205,21 +1349,11 @@
                 <div class="mode-title">Select Model Family</div>
                 <div class="mode-options">
                     <div class="mode-option" data-azure-type="openai">
-                        <div class="mode-option-name">
-                            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSobT6Nq7W-FJnK5lLapZlwySLwB0W4sKCYDg&s"
-                                alt="OpenAI"
-                                style="width: 20px; height: 20px; border-radius: 4px; vertical-align: middle; margin-right: 8px;">OpenAI
-                            Models
-                        </div>
+                        <div class="mode-option-name">🤖 OpenAI Models</div>
                         <div class="mode-option-desc">GPT-4, GPT-4o, GPT-3.5-Turbo, etc.</div>
                     </div>
                     <div class="mode-option" data-azure-type="anthropic">
-                        <div class="mode-option-name">
-                            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS2PsgtG72OdF4hwAqzuxhemqV22hbbote1zA&s"
-                                alt="Anthropic"
-                                style="width: 20px; height: 20px; border-radius: 4px; vertical-align: middle; margin-right: 8px;">Anthropic
-                            Claude
-                        </div>
+                        <div class="mode-option-name">🧠 Anthropic Claude</div>
                         <div class="mode-option-desc">Claude Opus, Sonnet, Haiku models</div>
                     </div>
                 </div>
@@ -1248,13 +1382,13 @@
 
 
             <div class="button-row">
-                <button class="btn btn-secondary" id="step2-back">← Back</button>
-                <button class="btn btn-primary" id="step2-next">Continue →</button>
+                <button class="btn btn-secondary" id="step3-back">← Back</button>
+                <button class="btn btn-primary" id="step3-next">Continue →</button>
             </div>
         </div>
 
-        <!-- Step 3: Model Selection -->
-        <div class="step-section" id="step-3">
+        <!-- Step 4: Model Selection -->
+        <div class="step-section" id="step-4">
             <div class="model-section">
                 <div class="model-title" id="model-title">Select a Model</div>
                 <div class="model-grid" id="model-grid">
@@ -1273,15 +1407,15 @@
                 </div>
             </div>
             <div class="button-row">
-                <button class="btn btn-secondary" id="step3-back">← Back</button>
-                <button class="btn btn-primary" id="step3-finish" disabled>Complete Setup</button>
+                <button class="btn btn-secondary" id="step4-back">← Back</button>
+                <button class="btn btn-primary" id="step4-finish" disabled>Complete Setup</button>
             </div>
         </div>
     </div>
 
     <script>
         const API_BASE = '';
-        let selectedAgentType = 'default'; // Default to 'default'
+        let selectedAgentType = null; // 'default', 'copilot', 'smart'
         let selectedProvider = null;
         let selectedMode = null;
         let selectedModel = null;
@@ -1294,9 +1428,10 @@
 
         // Step titles and subtitles
         const stepTitles = {
-            1: { title: 'Configure Your AI Provider', subtitle: 'Choose how you want to power your AI assistant' },
-            2: { title: 'Provider Configuration', subtitle: 'Set up your provider settings and API key' },
-            3: { title: 'Select Your Model', subtitle: 'Choose the AI model you want to use' }
+            1: { title: 'Choose Your Agent Type', subtitle: 'Select the type of AI agent that best fits your needs' },
+            2: { title: 'Configure Your AI Provider', subtitle: 'Choose how you want to power your AI assistant' },
+            3: { title: 'Provider Configuration', subtitle: 'Set up your provider settings and API key' },
+            4: { title: 'Select Your Model', subtitle: 'Choose the AI model you want to use' }
         };
 
         // Theme Toggle
@@ -1344,7 +1479,16 @@
                     Object.assign(storedApiKeys, data.stored_keys);
                 }
 
-                // No agent type selection anymore, default is 'default'
+                // Load existing agent type from localStorage
+                const savedAgentType = localStorage.getItem('agentry-agent-type');
+                if (savedAgentType) {
+                    selectedAgentType = savedAgentType;
+                    const agentCard = document.querySelector(`[data-agent="${selectedAgentType}"]`);
+                    if (agentCard) {
+                        agentCard.classList.add('selected');
+                        document.getElementById('step1-next').disabled = false;
+                    }
+                }
 
                 if (data.provider_config) {
                     existingConfig = data.provider_config;
@@ -1366,7 +1510,6 @@
                     const providerCard = document.querySelector(`[data-provider="${selectedProvider}"]`);
                     if (providerCard) {
                         providerCard.classList.add('selected');
-                        document.getElementById('step1-next').disabled = false; // Enable next button for pre-selected provider
                     }
 
                     // Pre-fill model deployment manually if it's Azure
@@ -1377,7 +1520,9 @@
                     // Add "Skip to Chat" button if already configured
                     addSkipButton();
 
-                    showMessage(`You're currently using ${selectedProvider.charAt(0).toUpperCase() + selectedProvider.slice(1)}. You can reconfigure or skip to chat.`, 'success');
+                    const agentLabel = selectedAgentType ?
+                        `${selectedAgentType.charAt(0).toUpperCase() + selectedAgentType.slice(1)} Agent with ` : '';
+                    showMessage(`You're currently using ${agentLabel}${selectedProvider.charAt(0).toUpperCase() + selectedProvider.slice(1)}. You can reconfigure or skip to chat.`, 'success');
                 }
             } catch (error) {
                 console.error('Failed to load config:', error);
@@ -1433,25 +1578,59 @@
                 document.getElementById('setup-subtitle').textContent = stepTitles[stepNum].subtitle;
             }
 
-            for (let i = 1; i <= 3; i++) {
+            for (let i = 1; i <= 4; i++) {
                 const dot = document.querySelector(`.step-dot[data-step="${i}"]`);
                 if (i < stepNum) dot.classList.add('completed');
                 else if (i === stepNum) dot.classList.add('active');
             }
         }
 
-        // Provider selection (Step 1)
+        // Agent Type selection (Step 1)
+        document.querySelectorAll('.agent-card-3d').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.agent-card-3d').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                selectedAgentType = card.dataset.agent;
+                document.getElementById('step1-next').disabled = false;
+            });
+        });
+
+        // Step 1 -> Step 2 (Agent Type -> Provider Selection)
+        document.getElementById('step1-next').addEventListener('click', () => {
+            hideMessage();
+
+            if (!selectedAgentType) {
+                showMessage('Please select an agent type');
+                return;
+            }
+
+            // Save agent type to localStorage
+            localStorage.setItem('agentry-agent-type', selectedAgentType);
+
+            // Pre-select provider if available
+            if (selectedProvider) {
+                const providerCard = document.querySelector(`[data-provider="${selectedProvider}"]`);
+                if (providerCard) {
+                    providerCard.classList.add('selected');
+                    document.getElementById('step2-next').disabled = false;
+                }
+            }
+
+            goToStep(2);
+        });
+
+        // Provider selection (Step 2)
         document.querySelectorAll('.provider-card').forEach(card => {
             card.addEventListener('click', () => {
                 document.querySelectorAll('.provider-card').forEach(c => c.classList.remove('selected'));
                 card.classList.add('selected');
                 selectedProvider = card.dataset.provider;
-                document.getElementById('step1-next').disabled = false;
+                document.getElementById('step2-next').disabled = false;
             });
         });
 
-        // Step 1 -> Step 2 (Provider Selection -> Configuration)
-        document.getElementById('step1-next').addEventListener('click', () => {
+        // Step 2 -> Step 3 (Provider Selection -> Configuration)
+        document.getElementById('step2-next').addEventListener('click', () => {
             hideMessage();
 
             if (!selectedProvider) {
@@ -1465,7 +1644,7 @@
             document.getElementById('endpoint-section').style.display = 'none';
             document.getElementById('deployment-section').style.display = 'none';
             document.getElementById('azure-model-type').style.display = 'none';
-            document.getElementById('step2-next').textContent = 'Continue →';
+            document.getElementById('step3-next').textContent = 'Continue →';
             azureModelType = null; // Reset
 
 
@@ -1491,7 +1670,7 @@
                 document.getElementById('azure-model-type').style.display = 'block';
                 document.getElementById('endpoint-section').style.display = 'block';
                 document.getElementById('deployment-section').style.display = 'block';
-                document.getElementById('step2-next').textContent = 'Complete Setup';
+                document.getElementById('step3-next').textContent = 'Complete Setup';
 
                 // Pre-fill endpoint
                 const storedEndpoint = storedEndpoints['azure'];
@@ -1519,10 +1698,10 @@
                 descEl.textContent += ' (Stored key found. Enter new key to overwrite)';
             }
 
-            goToStep(2);
+            goToStep(3);
         });
 
-        // Mode selection (Ollama) - in Step 2
+        // Mode selection (Ollama) - in Step 3
         document.querySelectorAll('.mode-option').forEach(opt => {
             opt.addEventListener('click', () => {
                 // Only handle if not Azure type selector
@@ -1614,8 +1793,8 @@
         }
 
 
-        // Step 2 -> Step 3 OR Finish (Configuration -> Model Selection)
-        document.getElementById('step2-next').addEventListener('click', async () => {
+        // Step 3 -> Step 4 OR Finish (Configuration -> Model Selection)
+        document.getElementById('step3-next').addEventListener('click', async () => {
             hideMessage();
 
             // Validation
@@ -1690,7 +1869,7 @@
                 if (data.models && data.models.length > 0) {
                     renderModels(data.models);
                     document.getElementById('model-title').textContent = `Select a ${selectedProvider.charAt(0).toUpperCase() + selectedProvider.slice(1)} Model`;
-                    goToStep(3);
+                    goToStep(4);
                 } else {
                     showMessage('No models available. Please check your API key.');
                 }
@@ -1718,7 +1897,7 @@
                 if (existingConfig && existingConfig.model === model.id) {
                     card.classList.add('selected');
                     selectedModel = model.id;
-                    document.getElementById('step3-finish').disabled = false;
+                    document.getElementById('step4-finish').disabled = false;
                 }
 
                 card.innerHTML = `
@@ -1733,7 +1912,7 @@
                     document.querySelectorAll('.model-card').forEach(c => c.classList.remove('selected'));
                     card.classList.add('selected');
                     selectedModel = model.id;
-                    document.getElementById('step3-finish').disabled = false;
+                    document.getElementById('step4-finish').disabled = false;
                 });
 
                 grid.appendChild(card);

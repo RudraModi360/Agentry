@@ -62,19 +62,35 @@ def parse_image_url(url: str) -> Tuple[Optional[str], Optional[bytes]]:
     Parses a data URL.
     Returns (mime_type, image_bytes).
     """
+    if not isinstance(url, str):
+        return None, None
+        
     # Check for data URI scheme
-    match = re.match(r"data:(image/[a-zA-Z0-9+.-]+);base64,(.+)", url)
+    # More lenient regex to handle common variations
+    match = re.search(r"data:(image/[a-zA-Z0-9+.-]+);base64,(.+)", url, re.DOTALL)
     if match:
         mime_type = match.group(1)
-        b64_data = match.group(2)
+        b64_data = match.group(2).strip()
         try:
             return mime_type, base64.b64decode(b64_data)
         except Exception:
             return mime_type, None
             
-    # If standard URL, we can't easily get bytes without downloading, 
-    # but the providers might handle URLs.
-    # For this specific task, we assume the user provides data URIs or we return None for data.
+    # Fallback for raw base64 that might have been passed without prefix
+    # but still looks like a data URL or just base64
+    if url.startswith('data:'):
+        # Try to extract at least the mime type if regex failed
+        parts = url.split(',', 1)
+        if len(parts) == 2:
+            mime_part = parts[0]
+            data_part = parts[1].strip()
+            mime_match = re.search(r"image/[a-zA-Z0-9+.-]+", mime_part)
+            mime_type = mime_match.group(0) if mime_match else "image/png"
+            try:
+                return mime_type, base64.b64decode(data_part)
+            except Exception:
+                return mime_type, None
+
     return None, None
 
 def simplify_tool_schema(schema: Dict[str, Any]) -> Dict[str, Any]:

@@ -1238,8 +1238,7 @@
 
         .provider-details {
             flex: 1;
-            min-width: 0;
-            /* overflow: hidden; Removed to allow tooltip to show */
+            overflow: hidden;
         }
 
         .provider-name-small {
@@ -1254,112 +1253,6 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
-
-        .model-info-row {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .capabilities-info-btn {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--card-border);
-            color: var(--text-muted);
-            font-size: 9px;
-            font-weight: 600;
-            cursor: help;
-            flex-shrink: 0;
-            transition: all 0.2s ease;
-        }
-
-        .capabilities-info-btn:hover {
-            background: var(--accent-light);
-            border-color: var(--accent);
-            color: var(--accent);
-        }
-
-        .capabilities-tooltip {
-            position: absolute;
-            bottom: calc(100% + 8px);
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--bg-secondary);
-            border: 1px solid var(--card-border);
-            border-radius: 8px;
-            padding: 8px 10px;
-            min-width: 140px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.2s ease;
-            z-index: 1000;
-            pointer-events: none;
-        }
-
-        .capabilities-info-btn:hover .capabilities-tooltip {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .capabilities-tooltip::after {
-            content: '';
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            border: 6px solid transparent;
-            border-top-color: var(--card-border);
-        }
-
-        .capabilities-tooltip::before {
-            content: '';
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            border: 5px solid transparent;
-            border-top-color: var(--bg-secondary);
-            z-index: 1;
-        }
-
-        .capabilities-tooltip-title {
-            font-size: 10px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            margin-bottom: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .capabilities-list {
-            margin: 0;
-            padding-left: 16px;
-            list-style-type: disc;
-        }
-
-        .capability-item {
-            font-size: 11px;
-            color: var(--text-muted);
-            line-height: 1.5;
-        }
-
-        .capability-item.supported {
-            color: #22c55e;
-            font-weight: 600;
-        }
-
-        .capability-item.not-supported {
-            color: var(--text-muted);
-            opacity: 0.7;
-        }
-
 
         .change-btn {
             font-size: 11px;
@@ -1435,114 +1328,18 @@
             background: var(--dark-bg);
         }
 
-        /* Chat Header - Using CSS Grid for perfect centering */
+        /* Chat Header */
         .chat-header {
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            background: var(--dark-bg);
             padding: 16px 24px;
             border-bottom: 1px solid var(--dark-border);
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            align-items: center;
-        }
-
-        .chat-header-left {
             display: flex;
             align-items: center;
-            justify-content: flex-start;
-        }
-
-        .header-logo {
-            display: none;
-            align-items: center;
-            gap: 10px;
-            text-decoration: none;
-            color: var(--text-primary);
-            transition: opacity 0.2s ease;
-        }
-
-        .header-logo:hover {
-            opacity: 0.8;
-        }
-
-        .header-logo .logo-icon {
-            width: 28px;
-            height: 28px;
-            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .header-logo .logo-icon svg {
-            width: 16px;
-            height: 16px;
-            stroke: white;
-            fill: none;
-            stroke-width: 2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        @keyframes shine {
-            0% {
-                background-position: 100%;
-            }
-
-            100% {
-                background-position: -100%;
-            }
-        }
-
-        .shiny-text {
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            color: transparent;
-            background: linear-gradient(120deg,
-                    var(--text-primary) 40%,
-                    var(--accent-light, #ffffff) 50%,
-                    var(--text-primary) 60%);
-            background-size: 200% 100%;
-            -webkit-background-clip: text;
-            background-clip: text;
-            display: inline-block;
-            animation: shine 5s linear infinite;
-        }
-
-        .header-logo .logo-text {
-            font-size: 18px;
-        }
-
-        /* Show logo when sidebar is collapsed */
-        #sidebar.collapsed~.chat-main .header-logo {
-            display: flex;
-        }
-
-        .chat-header-center {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .chat-header-right {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 12px;
-        }
-
-        .chat-header .mobile-menu-btn {
-            display: none;
+            justify-content: space-between;
         }
 
         .chat-title {
             font-size: 18px;
             font-weight: 600;
-            display: none;
         }
 
         .connection-status {
@@ -1669,9 +1466,6 @@
 
         .agent-type-option-info {
             flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
         }
 
         .agent-type-option-name {
@@ -1680,32 +1474,10 @@
             color: var(--text-primary);
         }
 
-        /* Agent Info - Shows on hover of the entire option */
         .agent-type-option-desc {
             font-size: 11px;
             color: var(--text-secondary);
-            line-height: 1.3;
-            max-height: 0;
-            overflow: hidden;
-            opacity: 0;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .agent-type-option:hover .agent-type-option-desc {
-            max-height: 40px;
-            opacity: 1;
             margin-top: 2px;
-        }
-
-        .agent-type-option.selected .agent-type-option-desc {
-            max-height: 40px;
-            opacity: 0.8;
-            margin-top: 2px;
-        }
-
-        /* Hidden info icon/container - not needed with new approach */
-        .agent-info-container {
-            display: none;
         }
 
         .agent-type-option .check-icon {
@@ -1717,33 +1489,6 @@
 
         .agent-type-option.selected .check-icon {
             opacity: 1;
-        }
-
-        /* Theme Icon Buttons */
-        .theme-icon-btn {
-            width: 36px;
-            height: 36px;
-            background: var(--dark-input);
-            border: 1px solid var(--dark-border);
-            border-radius: 10px;
-            color: var(--text-secondary);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-        }
-
-        .theme-icon-btn:hover {
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-            border-color: var(--text-secondary);
-        }
-
-        .theme-icon-btn.active {
-            background: var(--dark-card);
-            color: var(--text-primary);
-            border-color: var(--accent);
         }
 
         /* Messages Container */
@@ -4904,71 +4649,6 @@
                 max-height: 60vh;
             }
         }
-
-        /* Multiple Image Previews above Input */
-        .images-preview-wrapper {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            padding: 8px 16px;
-            margin-bottom: 8px;
-            max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
-            width: 100%;
-            min-height: 0;
-        }
-
-        /* Ensure the container is visible/hidden appropriately */
-        .images-preview-wrapper:empty {
-            display: none;
-        }
-
-        .image-preview-item {
-            position: relative;
-            width: 64px;
-            height: 64px;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1px solid var(--dark-border);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-            transition: transform 0.2s;
-            background: var(--dark-card);
-        }
-
-        .image-preview-item:hover {
-            transform: scale(1.05);
-        }
-
-        .image-preview-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .image-preview-remove {
-            position: absolute;
-            top: 2px;
-            right: 2px;
-            width: 18px;
-            height: 18px;
-            background: rgba(0, 0, 0, 0.6);
-            border-radius: 50%;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 14px;
-            border: none;
-            transition: background 0.2s;
-            padding: 0;
-            line-height: 1;
-        }
-
-        .image-preview-remove:hover {
-            background: #ef4444;
-        }
     </style>
 </head>
 
@@ -4987,7 +4667,7 @@
                                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                             </svg>
                         </div>
-                        <span class="logo-text shiny-text">Agentry</span>
+                        <span class="logo-text">Agentry</span>
                     </div>
                     <button class="sidebar-header-toggle" id="sidebar-collapse-btn" title="Collapse Sidebar">
                         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
@@ -5088,20 +4768,7 @@
                     </div>
                     <div class="provider-details">
                         <div class="provider-name-small" id="provider-name">Loading...</div>
-                        <div class="model-info-row">
-                            <div class="model-name-small" id="model-name">-</div>
-                            <div class="capabilities-info-btn" id="capabilities-info-btn"
-                                onclick="event.stopPropagation();">
-                                <span></span>
-                                <div class="capabilities-tooltip" id="capabilities-tooltip">
-                                    <div class="capabilities-tooltip-title">Model Capabilities</div>
-                                    <ul class="capabilities-list" id="capabilities-list">
-                                        <li class="capability-item not-supported" id="cap-tools">Tools</li>
-                                        <li class="capability-item not-supported" id="cap-vision">Vision</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
+                        <div class="model-name-small" id="model-name">-</div>
                     </div>
                     <span class="change-btn">Change</span>
                 </div>
@@ -5133,81 +4800,75 @@
             </div>
 
             <div class="chat-header">
-                <!-- Left side (empty for now, keeps grid balanced) -->
-                <div class="chat-header-left">
-                    <a href="/" class="header-logo">
-                        <div class="logo-icon">
+                <button class="mobile-menu-btn" id="mobile-menu-btn" title="Open Menu">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                <h1 class="chat-title" id="chat-title"></h1>
+
+                <!-- Agent Type Selector -->
+                <div class="agent-type-selector" id="agent-type-selector">
+                    <button class="agent-type-button" id="agent-type-button" title="Change Agent Type">
+                        <svg viewBox="0 0 24 24" class="agent-icon-current" id="agent-icon-current">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                        </svg>
+                        <span id="agent-type-label">Default Agent</span>
+                        <svg viewBox="0 0 24 24" class="chevron">
+                            <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                    </button>
+                    <div class="agent-type-dropdown" id="agent-type-dropdown">
+                        <div class="agent-type-option" data-agent="default">
                             <svg viewBox="0 0 24 24">
-                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                                <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                                <path d="M2 17l10 5 10-5" />
+                                <path d="M2 12l10 5 10-5" />
+                            </svg>
+                            <div class="agent-type-option-info">
+                                <div class="agent-type-option-name">Default Agent</div>
+                                <div class="agent-type-option-desc">All tools + MCP servers</div>
+                            </div>
+                            <svg viewBox="0 0 24 24" class="check-icon">
+                                <polyline points="20 6 9 17 4 12" />
                             </svg>
                         </div>
-                        <span class="logo-text shiny-text">Agentry</span>
-                    </a>
-                </div>
-
-                <!-- Center - Agent Type Selector -->
-                <div class="chat-header-center">
-                    <div class="agent-type-selector" id="agent-type-selector">
-                        <button class="agent-type-button" id="agent-type-button" title="Change Agent Type">
-                            <svg viewBox="0 0 24 24" class="agent-icon-current" id="agent-icon-current">
-                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                        <div class="agent-type-option" data-agent="copilot">
+                            <svg viewBox="0 0 24 24">
+                                <polyline points="16 18 22 12 16 6" />
+                                <polyline points="8 6 2 12 8 18" />
                             </svg>
-                            <span id="agent-type-label">Default Agent</span>
-                            <svg viewBox="0 0 24 24" class="chevron">
-                                <polyline points="6 9 12 15 18 9" />
+                            <div class="agent-type-option-info">
+                                <div class="agent-type-option-name">Copilot Agent</div>
+                                <div class="agent-type-option-desc">Coding tasks & file operations</div>
+                            </div>
+                            <svg viewBox="0 0 24 24" class="check-icon">
+                                <polyline points="20 6 9 17 4 12" />
                             </svg>
-                        </button>
-                        <div class="agent-type-dropdown" id="agent-type-dropdown">
-                            <div class="agent-type-option" data-agent="default">
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                                    <path d="M2 17l10 5 10-5" />
-                                    <path d="M2 12l10 5 10-5" />
-                                </svg>
-                                <div class="agent-type-option-info">
-                                    <div class="agent-type-option-name">Default Agent</div>
-                                    <div class="agent-type-option-desc">All tools + MCP servers for complex workflows
-                                    </div>
-                                </div>
-                                <svg viewBox="0 0 24 24" class="check-icon">
-                                    <polyline points="20 6 9 17 4 12" />
-                                </svg>
+                        </div>
+                        <div class="agent-type-option" data-agent="smart">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M9 18h6" />
+                                <path d="M10 22h4" />
+                                <path
+                                    d="M12 2a7 7 0 017 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 01-1 1H9a1 1 0 01-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 017-7z" />
+                            </svg>
+                            <div class="agent-type-option-info">
+                                <div class="agent-type-option-name">Smart Agent</div>
+                                <div class="agent-type-option-desc">Enhanced chat & reasoning</div>
                             </div>
-                            <div class="agent-type-option" data-agent="copilot">
-                                <svg viewBox="0 0 24 24">
-                                    <polyline points="16 18 22 12 16 6" />
-                                    <polyline points="8 6 2 12 8 18" />
-                                </svg>
-                                <div class="agent-type-option-info">
-                                    <div class="agent-type-option-name">Copilot Agent</div>
-                                    <div class="agent-type-option-desc">Coding focused with file & execution tools</div>
-                                </div>
-                                <svg viewBox="0 0 24 24" class="check-icon">
-                                    <polyline points="20 6 9 17 4 12" />
-                                </svg>
-                            </div>
-                            <div class="agent-type-option" data-agent="smart">
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M9 18h6" />
-                                    <path d="M10 22h4" />
-                                    <path
-                                        d="M12 2a7 7 0 017 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 01-1 1H9a1 1 0 01-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 017-7z" />
-                                </svg>
-                                <div class="agent-type-option-info">
-                                    <div class="agent-type-option-name">Smart Agent</div>
-                                    <div class="agent-type-option-desc">Enhanced reasoning & project context</div>
-                                </div>
-                                <svg viewBox="0 0 24 24" class="check-icon">
-                                    <polyline points="20 6 9 17 4 12" />
-                                </svg>
-                            </div>
+                            <svg viewBox="0 0 24 24" class="check-icon">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg>
                         </div>
                     </div>
                 </div>
 
-                <!-- Right side controls -->
-                <div class="chat-header-right">
-                    <!-- MCP Config Button (only visible for Default Agent) -->
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <!-- MCP Config Button -->
                     <button id="mcp-config-btn" class="mcp-config-btn" title="MCP Server Configuration">
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -5217,28 +4878,18 @@
                         </svg>
                         <span id="mcp-header-status" class="mcp-status-badge none"></span>
                     </button>
-                    <!-- Theme Toggle Button -->
-                    <button id="theme-toggle-btn" class="theme-toggle-btn" title="Toggle theme">
-                        <!-- Sun icon -->
-                        <svg class="sun-icon" viewBox="0 0 24 24" width="20" height="20" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="5"></circle>
-                            <line x1="12" y1="1" x2="12" y2="3"></line>
-                            <line x1="12" y1="21" x2="12" y2="23"></line>
-                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                            <line x1="1" y1="12" x2="3" y2="12"></line>
-                            <line x1="21" y1="12" x2="23" y2="12"></line>
-                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    <!-- Theme Toggle -->
+                    <button id="theme-toggle" class="theme-toggle-btn" title="Toggle theme">
+                        <svg class="sun-icon" viewBox="0 0 24 24" width="18" height="18">
+                            <circle cx="12" cy="12" r="5" fill="currentColor" />
+                            <path
+                                d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+                                stroke="currentColor" stroke-width="2" fill="none" />
                         </svg>
-                        <!-- Moon icon -->
-                        <svg class="moon-icon" viewBox="0 0 24 24" width="20" height="20" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        <svg class="moon-icon" viewBox="0 0 24 24" width="18" height="18" style="display:none;">
+                            <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="currentColor" />
                         </svg>
                     </button>
-                    <!-- Connection Status -->
                     <div class="connection-status">
                         <div class="status-dot" id="status-dot"></div>
                         <span id="status-text">Connecting...</span>
@@ -5267,9 +4918,14 @@
 
             <div class="input-area">
                 <!-- Image Preview Area (hidden by default) -->
-                <div class="images-preview-wrapper" id="images-preview-wrapper" style="display: none;"></div>
+                <div class="image-preview-container" id="image-preview-container" style="display: none;">
+                    <div class="image-preview-wrapper">
+                        <img id="image-preview" src="" alt="Preview">
+                        <button class="image-preview-remove" id="remove-image-btn" title="Remove image">×</button>
+                    </div>
+                </div>
                 <div class="input-container">
-                    <input type="file" id="image-input" accept="image/*" multiple style="display: none;">
+                    <input type="file" id="image-input" accept="image/*" style="display: none;">
                     <div class="input-wrapper">
                         <!-- Tools Button (+ button) - Inside the input bar -->
                         <div class="tools-btn-container" id="tools-btn-container">
@@ -5342,7 +4998,7 @@
                             </div>
                         </div>
                         <!-- Image Upload Button (hidden by default, shown when vision is supported) -->
-                        <button class="attach-btn" id="attach-image-btn" title="Attach image">
+                        <button class="attach-btn" id="attach-image-btn" title="Attach image" style="display: none;">
                             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -5546,10 +5202,12 @@
         // Image upload elements
         const attachImageBtn = document.getElementById('attach-image-btn');
         const imageInput = document.getElementById('image-input');
-        const imagesPreviewWrapper = document.getElementById('images-preview-wrapper');
+        const imagePreviewContainer = document.getElementById('image-preview-container');
+        const imagePreview = document.getElementById('image-preview');
+        const removeImageBtn = document.getElementById('remove-image-btn');
 
         // Image state
-        let selectedImagesData = [];  // Array of Base64 encoded image data strings
+        let selectedImageData = null;  // Base64 encoded image data
 
         // New Chat Button Logic
         function initNewChatButton() {
@@ -5653,25 +5311,26 @@
 
         // Theme Toggle
         function initTheme() {
-            const toggleBtn = document.getElementById('theme-toggle-btn');
+            const toggle = document.getElementById('theme-toggle');
             const savedTheme = localStorage.getItem('agentry-theme');
             const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            const theme = savedTheme || systemTheme;
+            document.documentElement.setAttribute('data-theme', theme);
+            console.log('Theme initialized:', theme);
 
-            // Set initial theme - default to system if no saved theme
-            let currentTheme = savedTheme || systemTheme;
-            document.documentElement.setAttribute('data-theme', currentTheme);
-            console.log('Theme initialized:', currentTheme);
-
-            if (toggleBtn) {
-                toggleBtn.addEventListener('click', (e) => {
+            if (toggle) {
+                console.log('Theme toggle button found');
+                toggle.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-
-                    const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-                    document.documentElement.setAttribute('data-theme', newTheme);
-                    localStorage.setItem('agentry-theme', newTheme);
-                    console.log('Theme toggled to:', newTheme);
+                    const current = document.documentElement.getAttribute('data-theme');
+                    const next = current === 'dark' ? 'light' : 'dark';
+                    console.log('Switching theme from', current, 'to', next);
+                    document.documentElement.setAttribute('data-theme', next);
+                    localStorage.setItem('agentry-theme', next);
                 });
+            } else {
+                console.warn('Theme toggle button not found!');
             }
         }
 
@@ -6465,10 +6124,6 @@
                     } else if (provider === 'gemini') {
                         // Gemini Logo
                         providerIcon.innerHTML = `<img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg" alt="Gemini">`;
-                    } else if (provider === 'azure') {
-                        // Azure Logo
-                        providerIcon.style.background = 'white';
-                        providerIcon.innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Microsoft_Azure.svg" alt="Azure" style="width: 18px; height: 18px;">`;
                     } else {
                         // Default Fallback
                         providerIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect></svg>`;
@@ -6948,41 +6603,40 @@
         function updateCapabilityStatus(capabilities) {
             if (!capabilities) return;
 
+            // Update status text to include capability info
             const supportsTools = capabilities.supports_tools;
             const supportsVision = capabilities.supports_vision;
 
-            // Update the tooltip capability items
-            const capTools = document.getElementById('cap-tools');
-            const capVision = document.getElementById('cap-vision');
-
-            if (capTools) {
-                if (supportsTools) {
-                    capTools.classList.remove('not-supported');
-                    capTools.classList.add('supported');
-                } else {
-                    capTools.classList.remove('supported');
-                    capTools.classList.add('not-supported');
-                }
+            let modeText = [];
+            if (supportsTools) {
+                modeText.push('🔧 Tools');
+            } else {
+                modeText.push('💬 Chat Only');
+            }
+            if (supportsVision) {
+                modeText.push('👁️ Vision');
             }
 
-            if (capVision) {
-                if (supportsVision) {
-                    capVision.classList.remove('not-supported');
-                    capVision.classList.add('supported');
-                } else {
-                    capVision.classList.remove('supported');
-                    capVision.classList.add('not-supported');
+            // Update the model name display to show capabilities
+            const modelNameEl = document.getElementById('model-name');
+            if (modelNameEl) {
+                const currentModel = modelNameEl.textContent;
+                // Check if we haven't already added capability info
+                if (!currentModel.includes('•')) {
+                    modelNameEl.innerHTML = `${currentModel} <span style="opacity: 0.7; font-size: 11px;">• ${modeText.join(' ')}</span>`;
                 }
             }
 
             // Show/hide image upload button based on vision support
             if (attachImageBtn) {
-                attachImageBtn.style.display = 'flex';
-
                 if (supportsVision) {
+                    attachImageBtn.style.display = 'flex';
                     messageInput.placeholder = 'Type your message or attach an image...';
                 } else {
+                    attachImageBtn.style.display = 'none';
                     messageInput.placeholder = 'Type your message...';
+                    // Clear any pending image if vision is not supported
+                    clearSelectedImage();
                 }
             }
 
@@ -6996,31 +6650,21 @@
 
             // Click attach button to trigger file input
             attachImageBtn.addEventListener('click', () => {
-                // Clear value so same files can be selected again
-                imageInput.value = '';
                 imageInput.click();
             });
 
             // Handle file selection
             imageInput.addEventListener('change', (e) => {
-                const files = Array.from(e.target.files);
-                if (files.length > 0) {
-                    // Filter images
-                    const imageFiles = files.filter(f => f.type.startsWith('image/'));
-                    if (imageFiles.length > 0) {
-                        handleImageSelect(imageFiles);
-                    }
+                const file = e.target.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    handleImageSelect(file);
                 }
             });
 
-            // Handle remove image (DELEGATION since buttons are dynamic)
-            if (imagesPreviewWrapper) {
-                imagesPreviewWrapper.addEventListener('click', (e) => {
-                    if (e.target.closest('.image-preview-remove')) {
-                        const btn = e.target.closest('.image-preview-remove');
-                        const index = parseInt(btn.dataset.index);
-                        removeImage(index);
-                    }
+            // Handle remove image
+            if (removeImageBtn) {
+                removeImageBtn.addEventListener('click', () => {
+                    clearSelectedImage();
                 });
             }
 
@@ -7044,78 +6688,46 @@
 
                     if (!window.modelCapabilities?.supports_vision) return;
 
-                    const files = Array.from(e.dataTransfer.files);
-                    const imageFiles = files.filter(f => f.type.startsWith('image/'));
-                    if (imageFiles.length > 0) {
-                        handleImageSelect(imageFiles);
+                    const file = e.dataTransfer.files[0];
+                    if (file && file.type.startsWith('image/')) {
+                        handleImageSelect(file);
                     }
                 });
             }
         }
 
-        function handleImageSelect(files) {
-            // Process all selected files
-            let processedCount = 0;
+        function handleImageSelect(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const dataUrl = e.target.result;
+                selectedImageData = dataUrl;
 
-            files.forEach(file => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const dataUrl = e.target.result;
-                    // Add to array
-                    selectedImagesData.push(dataUrl);
-                    processedCount++;
+                // Show preview
+                imagePreview.src = dataUrl;
+                imagePreviewContainer.style.display = 'block';
+                attachImageBtn.classList.add('has-image');
 
-                    if (processedCount === files.length) {
-                        renderImagePreviews();
-                    }
-                };
-                reader.readAsDataURL(file);
-            });
+                // Enable send button if we have an image (even without text)
+                updateSendButtonState();
+            };
+            reader.readAsDataURL(file);
         }
 
-        function renderImagePreviews() {
-            if (!imagesPreviewWrapper) return;
-            imagesPreviewWrapper.innerHTML = '';
-
-            if (selectedImagesData.length === 0) {
-                imagesPreviewWrapper.style.display = 'none';
-                if (attachImageBtn) attachImageBtn.classList.remove('has-image');
-                return;
+        function clearSelectedImage() {
+            selectedImageData = null;
+            imageInput.value = '';
+            imagePreviewContainer.style.display = 'none';
+            imagePreview.src = '';
+            if (attachImageBtn) {
+                attachImageBtn.classList.remove('has-image');
             }
-
-            imagesPreviewWrapper.style.display = 'flex';
-            if (attachImageBtn) attachImageBtn.classList.add('has-image');
-
-            selectedImagesData.forEach((dataUrl, index) => {
-                const item = document.createElement('div');
-                item.className = 'image-preview-item';
-                item.innerHTML = `
-                    <img src="${dataUrl}" alt="Preview ${index + 1}">
-                    <button class="image-preview-remove" data-index="${index}" title="Remove image">×</button>
-                `;
-                imagesPreviewWrapper.appendChild(item);
-            });
-
             updateSendButtonState();
-        }
-
-        function removeImage(index) {
-            selectedImagesData.splice(index, 1);
-            renderImagePreviews();
-        }
-
-        function clearSelectedImages() {
-            selectedImagesData = [];
-            if (imageInput) imageInput.value = '';
-            renderImagePreviews();
         }
 
         function updateSendButtonState() {
             const hasText = messageInput.value.trim().length > 0;
-            const hasImages = selectedImagesData.length > 0;
-            const isSendable = (hasText || hasImages) && isConnected;
-            // console.log('[UI] Update Send Button:', { hasText, hasImages, isConnected, isSendable });
-            sendBtn.disabled = !isSendable;
+            const hasImage = !!selectedImageData;
+            sendBtn.disabled = !(hasText || hasImage) || !isConnected;
         }
 
         // Message rendering
@@ -7130,69 +6742,21 @@
             emptyState.style.display = 'none';
         }
 
-        function addUserMessage(content, messageIndex = null, imageData = null, extraImages = []) {
+        function addUserMessage(content, messageIndex = null, imageData = null) {
             hideEmptyState();
 
             const msg = document.createElement('div');
             msg.className = 'message user';
-
-            // Store original content
             msg.dataset.originalContent = typeof content === 'string' ? content : JSON.stringify(content);
             if (messageIndex !== null) {
                 msg.dataset.messageIndex = messageIndex;
             }
 
-            // Parse content if it's multimodal (array)
-            let displayContent = content;
-            let imagesFromContent = [];
-
-            if (typeof content === 'object' && content !== null) {
-                // Handle Array format (common for multimodal history)
-                if (Array.isArray(content)) {
-                    let textParts = [];
-                    content.forEach(part => {
-                        if (part.type === 'text') {
-                            textParts.push(part.text || '');
-                        } else if (part.type === 'image') {
-                            if (part.data) {
-                                // Check if needs prefix
-                                let src = part.data;
-                                if (!src.startsWith('data:') && !src.startsWith('http')) {
-                                    src = 'data:image/png;base64,' + src;
-                                }
-                                imagesFromContent.push(src);
-                            }
-                        } else if (part.type === 'image_url') {
-                            if (part.image_url && part.image_url.url) {
-                                imagesFromContent.push(part.image_url.url);
-                            }
-                        }
-                    });
-                    displayContent = textParts.join('\n');
-                }
-                // Handle simple object
-                else if (content.text) {
-                    displayContent = content.text;
-                }
-            }
-
-            // Combine all images
-            let allImages = [...imagesFromContent];
-            if (imageData) allImages.push(imageData);
-            if (extraImages && Array.isArray(extraImages)) allImages.push(...extraImages);
-
-            let imagesHtml = '';
-            if (allImages.length > 0) {
-                imagesHtml = `<div class="message-images-grid" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
-                    ${allImages.map(img => `<div class="message-image-item" style="width: 80px; height: 80px; border-radius: 8px; overflow: hidden; border: 1px solid var(--dark-border);"><img src="${img}" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="window.open(this.src)" title="Click to view full image"></div>`).join('')}
-                </div>`;
-            }
-
             // Simplified User Message Structure (No Avatar)
             msg.innerHTML = `
                 <div class="message-content">
-                    <div class="message-text">${formatMessage(displayContent)}</div>
-                    ${imagesHtml}
+                    <div class="message-text">${formatMessage(content)}</div>
+                    ${imageData ? `<div class="message-image"><img src="${imageData}" onclick="window.open(this.src)" title="Click to view full image" /></div>` : ''}
                      <div class="message-actions">
                         <button class="message-action-btn edit-btn" title="Edit message">
                             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -7229,30 +6793,13 @@
 
             messagesContainer.appendChild(msg);
             scrollToBottom();
-
             return msg;
         }
 
         function startEditMessage(msgElement) {
             if (isProcessing) return;
 
-            let contentToEdit = msgElement.dataset.originalContent;
-
-            // Handle multimodal content (show text only)
-            try {
-                if (contentToEdit && contentToEdit.trim().startsWith('[')) {
-                    const parsed = JSON.parse(contentToEdit);
-                    if (Array.isArray(parsed)) {
-                        const textParts = parsed
-                            .filter(p => p.type === 'text')
-                            .map(p => p.text);
-                        contentToEdit = textParts.join('\n');
-                    }
-                }
-            } catch (e) {
-                // Ignore parsing errors
-            }
-
+            const originalContent = msgElement.dataset.originalContent;
             const contentDiv = msgElement.querySelector('.message-content');
             const textDiv = contentDiv.querySelector('.message-text');
             const actionsDiv = contentDiv.querySelector('.message-actions');
@@ -7265,7 +6812,7 @@
             const editContainer = document.createElement('div');
             editContainer.className = 'message-edit-container';
             editContainer.innerHTML = `
-                <textarea class="message-edit-input">${escapeHtml(contentToEdit)}</textarea>
+                <textarea class="message-edit-input">${escapeHtml(originalContent)}</textarea>
                 <div class="message-edit-actions">
                     <button class="btn-sm save">Save & Regenerate</button>
                     <button class="btn-sm cancel">Cancel</button>
@@ -8346,28 +7893,35 @@
         }
 
         // Send message
-        // Send message
         function sendMessage() {
             const content = messageInput.value.trim();
-            const images = [...selectedImagesData]; // Clone array
-            const hasImages = images.length > 0;
+            const hasImage = !!selectedImageData;
 
-            if ((!content && !hasImages) || !isConnected || isProcessing) return;
+            if ((!content && !hasImage) || !isConnected || isProcessing) return;
 
             isProcessing = true;
             sendBtn.disabled = true;
 
-            // Display user message details
-            // Pass content and images
-            addUserMessage(content, null, null, images);
+            // Display user message (with image indicator if present)
+            const displayContent = content; // Just show text, image is handled separately now
+            const imageDataToSend = selectedImageData;
+            addUserMessage(displayContent, null, imageDataToSend);
 
             messageInput.value = '';
             messageInput.style.height = 'auto';
-            clearSelectedImages();
 
             // Show thinking spinner immediately
             currentAssistantMessage = createAssistantMessage();
             currentAssistantText = '';
+
+            // Prepare message content with image if present
+            const messagePayload = {
+                text: content,
+                image: imageDataToSend  // Base64 image data (or null)
+            };
+
+            // Clear the selected image after sending
+            clearSelectedImage();
 
             // If no session, create one first
             if (!currentSessionId) {
@@ -8378,23 +7932,23 @@
                     .then(r => r.json())
                     .then(data => {
                         currentSessionId = data.session.id;
-                        sendToWebSocket(content, images);
+                        sendToWebSocket(content, imageDataToSend);
                     });
             } else {
-                sendToWebSocket(content, images);
+                sendToWebSocket(content, imageDataToSend);
             }
         }
 
-        function sendToWebSocket(content, images = []) {
+        function sendToWebSocket(content, imageData = null) {
             const payload = {
                 type: 'message',
                 content: content,
                 session_id: currentSessionId
             };
 
-            // Add images data if present
-            if (images && images.length > 0) {
-                payload.images = images;
+            // Add image data if present
+            if (imageData) {
+                payload.image = imageData;
             }
 
             ws.send(JSON.stringify(payload));
@@ -8902,20 +8456,10 @@
             if (mediaToggle && mediaLibraryWrapper) {
                 mediaToggle.onclick = (e) => {
                     e.preventDefault();
-                    e.stopPropagation();
                     const isVisible = mediaLibraryWrapper.style.display !== 'none';
                     mediaLibraryWrapper.style.display = isVisible ? 'none' : 'block';
                     mediaToggle.classList.toggle('active', !isVisible);
                 };
-
-                // Close on outside click
-                document.addEventListener('click', (e) => {
-                    const isVisible = mediaLibraryWrapper.style.display !== 'none';
-                    if (isVisible && !mediaLibraryWrapper.contains(e.target) && !mediaToggle.contains(e.target)) {
-                        mediaLibraryWrapper.style.display = 'none';
-                        mediaToggle.classList.remove('active');
-                    }
-                });
             }
 
             // Media Gallery Modal - View All Button

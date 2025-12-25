@@ -123,6 +123,28 @@ KNOWN_CAPABILITIES = {
     "gemini-2.5-flash": {"supports_tools": True, "supports_vision": True},
     "gemini-2.5-flash-lite": {"supports_tools": True, "supports_vision": True},
     "gemini-3.0-pro-preview": {"supports_tools": True, "supports_vision": True},
+
+    # === Azure / OpenAI Models ===
+    "gpt-4o": {"supports_tools": True, "supports_vision": True},
+    "gpt-4o-mini": {"supports_tools": True, "supports_vision": True},
+    "gpt-4-turbo": {"supports_tools": True, "supports_vision": True},
+    "gpt-4-vision-preview": {"supports_tools": True, "supports_vision": True},
+    "gpt-4": {"supports_tools": True, "supports_vision": False},
+    "gpt-3.5-turbo": {"supports_tools": True, "supports_vision": False},
+    "o1-preview": {"supports_tools": True, "supports_vision": True},
+    "o1-mini": {"supports_tools": True, "supports_vision": True},
+
+    "claude-3-5-sonnet": {"supports_tools": True, "supports_vision": True},
+    "claude-3-5-haiku": {"supports_tools": True, "supports_vision": True},
+    "claude-3-opus": {"supports_tools": True, "supports_vision": True},
+    "claude-3-sonnet": {"supports_tools": True, "supports_vision": True},
+    "claude-3-haiku": {"supports_tools": True, "supports_vision": True},
+    "claude-opus": {"supports_tools": True, "supports_vision": True},
+    "claude-sonnet": {"supports_tools": True, "supports_vision": True}, 
+    "claude-haiku": {"supports_tools": True, "supports_vision": True},
+    "claude-2.1": {"supports_tools": True, "supports_vision": False},
+    "claude-2.0": {"supports_tools": True, "supports_vision": False},
+    "claude-instant-1.2": {"supports_tools": True, "supports_vision": False},
 }
 
 
@@ -175,6 +197,36 @@ class CapabilityDetector:
                     model_name=model_name,
                     detection_method="partial_match"
                 )
+        
+        # Strategy 2b: Keyword-based matching for common model families
+        name_lower = normalized_name.lower()
+        
+        # Vision + Tools Keywords
+        # Claude 3+ models always support vision. GPT-4o and o1 models too.
+        vision_keywords = ["gpt-4o", "o1-", "claude-3", "sonnet", "haiku", "opus", "pixtral", "llava"]
+        if any(kw in name_lower for kw in vision_keywords):
+             if "agent" in name_lower: # Some wrapper model names might contain 'agent'
+                 pass 
+             print(f"[CapabilityDetector] Keyword match: '{name_lower}' contains vision keyword. Vision=True")
+             return ModelCapabilities(
+                 supports_tools=True, 
+                 supports_vision=True, 
+                 provider=self.provider_name, 
+                 model_name=model_name, 
+                 detection_method="keyword_match"
+             )
+             
+        # Tools Only (non-vision) Keywords
+        tool_keywords = ["gpt-4", "gpt-3.5", "claude-", "llama-3", "mistral", "mixtral", "qwen"]
+        if any(kw in name_lower for kw in tool_keywords):
+             print(f"[CapabilityDetector] Keyword match: '{name_lower}' contains tool keyword. Vision=False")
+             return ModelCapabilities(
+                 supports_tools=True, 
+                 supports_vision=False, 
+                 provider=self.provider_name, 
+                 model_name=model_name, 
+                 detection_method="keyword_match"
+             )
         
         # Strategy 3: Provider-specific API query
         if self.provider_name == "ollama" and provider_instance:
@@ -324,6 +376,7 @@ class CapabilityDetector:
             "ollama": {"supports_tools": False, "supports_vision": False},
             "groq": {"supports_tools": True, "supports_vision": False},
             "gemini": {"supports_tools": True, "supports_vision": True},
+            "azure": {"supports_tools": True, "supports_vision": True},
         }
         
         provider_defaults = defaults.get(self.provider_name, {"supports_tools": False, "supports_vision": False})

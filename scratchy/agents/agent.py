@@ -54,8 +54,20 @@ class Agent:
         system_message: str = None,
         role: str = "general",
         debug: bool = False,
-        max_iterations: int = 40
+        max_iterations: int = 40,
+        capabilities: Any = None
     ):
+        # Initialize Capabilities
+        from scratchy.providers.capability_detector import ModelCapabilities
+        if capabilities:
+            if isinstance(capabilities, dict):
+                self.capabilities = ModelCapabilities.from_dict(capabilities)
+            else:
+                self.capabilities = capabilities
+        else:
+            # Default capabilities if not provided
+            self.capabilities = ModelCapabilities()
+        
         # Initialize Provider
         if isinstance(llm, str):
             self.provider = self._create_provider(llm, model, api_key)
@@ -323,12 +335,24 @@ class Agent:
             # 1. Get response from LLM
             response = None
             try:
+                # Prepare messages for provider: strip images if vision not supported
+                llm_messages = session.messages
+                if not self.capabilities.supports_vision:
+                    from scratchy.providers.utils import extract_content
+                    llm_messages = []
+                    for m in session.messages:
+                        m_copy = m.copy()
+                        if m.get("role") == "user" and isinstance(m.get("content"), list):
+                            text, _ = extract_content(m.get("content"))
+                            m_copy["content"] = text
+                        llm_messages.append(m_copy)
+
                 # Use streaming if on_token callback is set and provider supports it
                 on_token = self.callbacks.get("on_token")
                 if on_token and hasattr(self.provider, 'chat_stream'):
-                    response = await self.provider.chat_stream(session.messages, tools=all_tools, on_token=on_token)
+                    response = await self.provider.chat_stream(llm_messages, tools=all_tools, on_token=on_token)
                 else:
-                    response = await self.provider.chat(session.messages, tools=all_tools)
+                    response = await self.provider.chat(llm_messages, tools=all_tools)
             except Exception as e:
                 # Error handling & Retry logic
                 error_str = str(e).lower()

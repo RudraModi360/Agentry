@@ -5,24 +5,27 @@ from scratchy.providers.base import LLMProvider
 class ContextMiddleware:
     def __init__(self, llm_provider: LLMProvider, token_threshold: int = 100000):
         self.llm = llm_provider
-        self.threshold = token_threshold
+        # Increase threshold significantly for vision models, as base64 is heavy
+        self.threshold = token_threshold if token_threshold > 100000 else 200000
         # Keep last N messages raw to preserve immediate context flow
         self.preserve_recent_count = 10 
 
     def _estimate_tokens(self, messages: List[Dict[str, Any]]) -> int:
         """
         Estimate token count using character length heuristic (1 token ~= 4 chars).
-        This is faster and sufficient for trigger conditions.
+        Ignores base64 image data to avoid artificial spikes.
         """
+        from scratchy.providers.utils import extract_content
         total_chars = 0
         for msg in messages:
             content = msg.get('content', '')
-            if content:
-                total_chars += len(str(content))
+            if isinstance(content, (str, list)):
+                text, _ = extract_content(content)
+                total_chars += len(text)
             
-            # Also count tool calls/results if present
+            # Also count tool calls/results if present (briefly)
             if 'tool_calls' in msg:
-                total_chars += len(str(msg['tool_calls']))
+                total_chars += len(str(msg['tool_calls'])) // 10
         
         return total_chars // 4
 
@@ -30,12 +33,17 @@ class ContextMiddleware:
         """
         Summarize a list of messages into a single concise paragraph.
         """
+        from scratchy.providers.utils import extract_content
         # Convert messages to a text block
         conversation_text = ""
         for msg in messages:
             role = msg.get('role', 'unknown')
             content = msg.get('content', '')
-            conversation_text += f"{role.upper()}: {content}\n"
+            
+            text, images = extract_content(content)
+            image_note = f" [Contains {len(images)} image(s)]" if images else ""
+            
+            conversation_text += f"{role.upper()}: {text}{image_note}\n"
 
         prompt = f"""
 You are a context manager. The following is a segment of a conversation history that is being compressed.

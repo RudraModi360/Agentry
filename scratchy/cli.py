@@ -60,6 +60,7 @@ def show_help():
     provider_table.add_row("Ollama", "-p ollama (default)", "Local models, no API key needed")
     provider_table.add_row("Groq", "-p groq", "Fast cloud inference, needs GROQ_API_KEY")
     provider_table.add_row("Gemini", "-p gemini", "Google AI, needs GEMINI_API_KEY")
+    provider_table.add_row("Azure", "-p azure", "Azure OpenAI, needs Key + Endpoint")
     console.print(provider_table)
     
     # Examples
@@ -98,8 +99,9 @@ agentry --list-models
     options_table.add_row("--copilot", "-c", "Shortcut for --agent copilot")
     options_table.add_row("--mode", "", "Smart Agent mode: solo, project")
     options_table.add_row("--project", "", "Project ID for project mode")
-    options_table.add_row("--provider", "-p", "LLM provider: ollama, groq, gemini")
+    options_table.add_row("--provider", "-p", "LLM provider: ollama, groq, gemini, azure")
     options_table.add_row("--model", "-m", "Model name (provider-specific)")
+    options_table.add_row("--endpoint", "", "Azure Endpoint URL")
     options_table.add_row("--session", "-s", "Session ID to resume")
     options_table.add_row("--attach", "", "Attach file(s) to session")
     options_table.add_row("--debug", "-d", "Enable debug mode")
@@ -163,6 +165,12 @@ def list_models():
     console.print(gemini_table)
     console.print(f"\n[dim]Use with: agentry -p gemini -m <model_name>[/dim]\n")
 
+    # Azure models
+    console.print("\n[bold cyan]🏢 Azure OpenAI[/bold cyan]\n")
+    console.print("Azure models depend on your specific deployments.")
+    console.print("Common deployment names: [green]gpt-4, gpt-35-turbo, claude-3-opus[/green]")
+    console.print(f"\n[dim]Use with: agentry -p azure --endpoint <url> -m <deployment_name>[/dim]\n")
+
 
 async def run_main():
     parser = argparse.ArgumentParser(
@@ -172,8 +180,9 @@ async def run_main():
     parser.add_argument('--help', '-h', action='store_true', help='Show help')
     parser.add_argument('--list-models', action='store_true', help='List available models')
     parser.add_argument('--session', '-s', default=None, help='Session ID')
-    parser.add_argument('--provider', '-p', default='ollama', choices=['ollama', 'groq', 'gemini'], help='LLM provider')
+    parser.add_argument('--provider', '-p', default='ollama', choices=['ollama', 'groq', 'gemini', 'azure'], help='LLM provider')
     parser.add_argument('--model', '-m', help='Model name')
+    parser.add_argument('--endpoint', help='Endpoint URL (required for Azure)')
     
     # Agent type selection
     parser.add_argument('--agent', '-a', default='default', 
@@ -222,8 +231,14 @@ async def run_main():
     
     # Get API key if needed
     api_key = None
-    if args.provider in ['groq', 'gemini']:
+    if args.provider in ['groq', 'gemini', 'azure']:
         api_key = get_api_key(args.provider) or console.input(f"[bold yellow]Enter {args.provider.title()} API Key: [/]")
+    
+    # Get Endpoint if needed
+    endpoint = args.endpoint
+    if args.provider == 'azure' and not endpoint:
+        # Try to load from env or input
+        endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT") or console.input("[bold yellow]Enter Azure Endpoint URL: [/]")
     
     # Initialize Agent & Tools with Spinner
     observer = None
@@ -241,6 +256,7 @@ async def run_main():
                 llm=args.provider,
                 model=args.model,
                 api_key=api_key,
+                endpoint=endpoint,
                 mode=mode,
                 project_id=args.project,
                 debug=debug
@@ -251,6 +267,7 @@ async def run_main():
                 llm=args.provider,
                 model=args.model,
                 api_key=api_key,
+                endpoint=endpoint,
                 debug=debug
             )
             
@@ -259,6 +276,7 @@ async def run_main():
                 llm=args.provider,
                 model=args.model,
                 api_key=api_key,
+                endpoint=endpoint,
                 debug=debug
             )
             agent.load_default_tools()
