@@ -305,22 +305,22 @@ agentry/
 
 For detailed documentation, see the `docs/` directory in the repository:
 
--   [Getting Started](https://github.com/RudraModi360/Agentry/blob/main/docs/getting-started.md)
--   [Core Concepts](https://github.com/RudraModi360/Agentry/blob/main/docs/core-concepts.md)
--   [API Reference](https://github.com/RudraModi360/Agentry/blob/main/docs/api-reference.md)
--   [Custom Tools](https://github.com/RudraModi360/Agentry/blob/main/docs/custom-tools.md)
--   [MCP Integration](https://github.com/RudraModi360/Agentry/blob/main/docs/mcp-integration.md)
--   [Session Management](https://github.com/RudraModi360/Agentry/blob/main/docs/session-management.md)
--   [Troubleshooting](https://github.com/RudraModi360/Agentry/blob/main/docs/troubleshooting.md)
+-   [Getting Started](https://github.com/RudraModi360/Agentry/blob/Azure_Provider/docs/getting-started.md)
+-   [Core Concepts](https://github.com/RudraModi360/Agentry/blob/Azure_Provider/docs/core-concepts.md)
+-   [API Reference](https://github.com/RudraModi360/Agentry/blob/Azure_Provider/docs/api-reference.md)
+-   [Custom Tools](https://github.com/RudraModi360/Agentry/blob/Azure_Provider/docs/custom-tools.md)
+-   [MCP Integration](https://github.com/RudraModi360/Agentry/blob/Azure_Provider/docs/mcp-integration.md)
+-   [Session Management](https://github.com/RudraModi360/Agentry/blob/Azure_Provider/docs/session-management.md)
+-   [Troubleshooting](https://github.com/RudraModi360/Agentry/blob/Azure_Provider/docs/troubleshooting.md)
 
 ---
 
 ## Contributing
 
-We welcome contributions. Please see the [Contributing Guide](https://github.com/RudraModi360/Agentry/blob/main/docs/CONTRIBUTING.md) for details on how to get started.
+We welcome contributions. Please see the [Contributing Guide](https://github.com/RudraModi360/Agentry/blob/Azure_Provider/docs/CONTRIBUTING.md) for details on how to get started.
 
 ---
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](https://github.com/RudraModi360/Agentry/blob/main/LICENSE) file for details.
+This project is licensed under the MIT License. See the [LICENSE](https://github.com/RudraModi360/Agentry/blob/Azure_Provider/LICENSE) file for details.
