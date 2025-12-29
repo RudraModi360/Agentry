@@ -464,22 +464,29 @@ class Agent:
                          response['tool_calls'] = serialized_tool_calls
                          
                     session.add_message(response)
-                else: # Object (Groq/Gemini)
+                else: # Object (Groq/Gemini/Azure)
                     content = response.content
                     tool_calls = response.tool_calls
                     # Convert to dict for history
                     msg_dict = {"role": "assistant", "content": content}
                     if tool_calls:
-                        msg_dict["tool_calls"] = [
-                            {
-                                "id": getattr(tc, 'id', None),
-                                "type": "function",
-                                "function": {
-                                    "name": tc.function.name,
-                                    "arguments": tc.function.arguments 
-                                }
-                            } for tc in tool_calls
-                        ]
+                        # Handle both dict-style (Azure) and object-style (Groq/Gemini) tool calls
+                        serialized_calls = []
+                        for tc in tool_calls:
+                            if isinstance(tc, dict):
+                                # Already a dict (e.g., from Azure provider)
+                                serialized_calls.append(tc)
+                            else:
+                                # Object-style (Groq/Gemini)
+                                serialized_calls.append({
+                                    "id": getattr(tc, 'id', None),
+                                    "type": "function",
+                                    "function": {
+                                        "name": tc.function.name,
+                                        "arguments": tc.function.arguments 
+                                    }
+                                })
+                        msg_dict["tool_calls"] = serialized_calls
                     session.add_message(msg_dict)
             except Exception as parse_error:
                 print(f"[Agent] ⚠️  Response Parsing Error (Ignored): {parse_error}")
@@ -506,6 +513,10 @@ class Agent:
             # 4. Execute Tools
             for tc in tool_calls:
                 # Extract details
+                if self.debug:
+                    print(f"[Agent] Debug - Tool call object type: {type(tc)}")
+                    print(f"[Agent] Debug - Tool call content: {tc}")
+                
                 if isinstance(tc, dict):
                     name = tc['function']['name']
                     args = tc['function']['arguments']

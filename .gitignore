@@ -81,7 +81,7 @@ test_web_search.py
 marker_outputs/
 simple_agent.py
 
-# agentry/
+agentry/
 test_azure_anthropic.py
 test_azure_connectivity.py
 ui/media/

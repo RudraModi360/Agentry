@@ -299,6 +299,531 @@
             font-size: 11px;
         }
 
+        /* ===== Component Reference System Styles ===== */
+
+        /* Reference Badge - Shows @ref-id for components */
+        .component-ref-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            font-size: 10px;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--accent-purple);
+            background: rgba(168, 85, 247, 0.15);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+            margin-left: 8px;
+        }
+
+        .component-ref-badge:hover {
+            background: rgba(168, 85, 247, 0.25);
+            border-color: rgba(168, 85, 247, 0.5);
+            color: var(--text-primary);
+            transform: scale(1.02);
+        }
+
+        .component-ref-badge:active {
+            transform: scale(0.98);
+        }
+
+        .component-ref-badge.copied {
+            background: rgba(123, 158, 99, 0.2);
+            border-color: var(--success-color);
+            color: var(--success-color);
+        }
+
+        .component-ref-badge svg {
+            width: 10px;
+            height: 10px;
+            opacity: 0.8;
+        }
+
+        /* Reference Container - wraps components with ref */
+        .ref-component {
+            position: relative;
+        }
+
+        /* JSON Block specific styling */
+        .json-block-container {
+            position: relative;
+            margin: 12px 0;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--dark-border);
+            background: #1e2127;
+        }
+
+        .json-block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid var(--dark-border);
+        }
+
+        .json-block-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--accent-cyan);
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: lowercase;
+        }
+
+        /* List Block styling */
+        .list-block-container {
+            position: relative;
+            margin: 12px 0;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--dark-border);
+            background: var(--bg-secondary);
+        }
+
+        .list-block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--dark-border);
+        }
+
+        .list-block-label {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .list-block-container ul,
+        .list-block-container ol {
+            margin: 0;
+            margin-left: 16px;
+        }
+
+        /* Blockquote Block styling */
+        .quote-block-container {
+            position: relative;
+            margin: 12px 0;
+        }
+
+        .quote-block-header {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        /* Component Reference Tooltip */
+        .ref-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 6px 10px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--dark-border);
+            border-radius: 6px;
+            font-size: 11px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .component-ref-badge:hover .ref-tooltip {
+            opacity: 1;
+            visibility: visible;
+            bottom: calc(100% + 6px);
+        }
+
+        /* Reference mention in input */
+        .ref-mention {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 2px 6px;
+            background: rgba(168, 85, 247, 0.2);
+            border-radius: 4px;
+            color: var(--accent-purple);
+            font-size: 12px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Reference autocomplete dropdown */
+        .ref-autocomplete {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            max-height: 320px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--dark-border);
+            border-radius: 12px;
+            box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: none;
+            overflow: hidden;
+        }
+
+        .ref-autocomplete.visible {
+            display: block;
+            animation: ref-autocomplete-slide-up 0.15s ease;
+        }
+
+        @keyframes ref-autocomplete-slide-up {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .ref-autocomplete-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+            border-bottom: 1px solid var(--dark-border);
+        }
+
+        .ref-autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
+        .ref-autocomplete-item:hover,
+        .ref-autocomplete-item.selected {
+            background: var(--bg-tertiary);
+        }
+
+        .ref-autocomplete-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent-purple);
+            background: rgba(168, 85, 247, 0.15);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .ref-autocomplete-type {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .ref-autocomplete-preview {
+            flex: 1;
+            font-size: 12px;
+            color: var(--text-secondary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .ref-autocomplete-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--dark-border);
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .ref-autocomplete-hint {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .ref-autocomplete-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .ref-autocomplete-empty {
+            padding: 20px 14px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+
+        .ref-autocomplete-type-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .ref-autocomplete-type-icon.code {
+            background: rgba(96, 165, 250, 0.2);
+            color: #60a5fa;
+        }
+
+        .ref-autocomplete-type-icon.json {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+        }
+
+        .ref-autocomplete-type-icon.table {
+            background: rgba(52, 211, 153, 0.2);
+            color: #34d399;
+        }
+
+        .ref-autocomplete-type-icon.list {
+            background: rgba(244, 114, 182, 0.2);
+            color: #f472b6;
+        }
+
+        .ref-autocomplete-type-icon.quote {
+            background: rgba(168, 85, 247, 0.2);
+            color: #a855f7;
+        }
+
+        .ref-autocomplete-type-icon.heading {
+            background: rgba(251, 146, 60, 0.2);
+            color: #fb923c;
+        }
+
+        /* Heading badge - inline with heading text */
+        .message-text h1 .heading-badge,
+        .message-text h2 .heading-badge,
+        .message-text h3 .heading-badge {
+            font-size: 9px;
+            padding: 2px 6px;
+            margin-left: 10px;
+            vertical-align: middle;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .message-text h1:hover .heading-badge,
+        .message-text h2:hover .heading-badge,
+        .message-text h3:hover .heading-badge {
+            opacity: 1;
+        }
+
+        /* ===== Antigravity-style Context Menu ===== */
+        .ref-context-menu {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 0;
+            width: 320px;
+            max-height: 400px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--dark-border);
+            border-radius: 12px;
+            box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: none;
+            overflow: hidden;
+            flex-direction: column;
+        }
+
+        .ref-context-menu.visible {
+            display: flex;
+            animation: ref-context-slide-up 0.15s ease;
+        }
+
+        @keyframes ref-context-slide-up {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .ref-context-search {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--dark-border);
+            background: var(--bg-tertiary);
+        }
+
+        .ref-context-search svg {
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .ref-context-search input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 13px;
+            outline: none;
+        }
+
+        .ref-context-search input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .ref-context-category {
+            border-bottom: 1px solid var(--dark-border);
+        }
+
+        .ref-context-category:last-of-type {
+            border-bottom: none;
+        }
+
+        .ref-context-category-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .ref-context-category-header:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .ref-context-category-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .ref-context-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: var(--accent);
+        }
+
+        .ref-context-arrow {
+            width: 16px;
+            height: 16px;
+            fill: none;
+            stroke: var(--text-muted);
+            stroke-width: 2;
+            transition: transform 0.2s ease;
+        }
+
+        .ref-context-category.expanded .ref-context-arrow {
+            transform: rotate(90deg);
+        }
+
+        .ref-context-items {
+            display: none;
+            max-height: 150px;
+            overflow-y: auto;
+            background: var(--bg-primary);
+        }
+
+        .ref-context-category.expanded .ref-context-items {
+            display: block;
+        }
+
+        .ref-context-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 14px 8px 44px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .ref-context-item:hover,
+        .ref-context-item.selected {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .ref-context-item-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--accent-purple);
+            background: rgba(168, 85, 247, 0.15);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .ref-context-item-preview {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--text-muted);
+        }
+
+        .ref-context-item-empty {
+            padding: 12px 14px 12px 44px;
+            font-size: 12px;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .ref-context-footer {
+            display: flex;
+            gap: 16px;
+            padding: 8px 14px;
+            border-top: 1px solid var(--dark-border);
+            background: var(--bg-tertiary);
+            font-size: 10px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .ref-context-badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .ref-context-badge.code {
+            background: rgba(96, 165, 250, 0.2);
+            color: #60a5fa;
+        }
+
+        .ref-context-badge.json {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+        }
+
+        .ref-context-badge.table {
+            background: rgba(52, 211, 153, 0.2);
+            color: #34d399;
+        }
+
         .blockquote-container:hover .copy-block-btn {
             opacity: 1;
         }
@@ -658,6 +1183,49 @@
 
 
 
+        /* Scroll to Bottom Button */
+        .scroll-bottom-btn {
+            position: absolute;
+            bottom: 110px;
+            right: 32px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(var(--bg-secondary-rgb, 40, 44, 52), 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--card-border);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateY(10px);
+        }
+
+        .scroll-bottom-btn.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .scroll-bottom-btn:hover {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow);
+            transform: scale(1.1);
+        }
+
+        .scroll-bottom-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
         /* Layout */
         .app-container {
             display: flex;
@@ -801,15 +1369,26 @@
         }
 
         .sidebar-header {
-            padding: 10px 12px;
+            padding: 0;
             border-bottom: none;
+            display: flex;
+            flex-direction: column;
+            background: transparent;
+        }
+
+        .logo-header-wrapper {
+            padding: 16px 12px 8px 20px;
+            display: flex;
+            align-items: center;
+            width: 100%;
         }
 
         .logo {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             margin-bottom: 0;
+            flex: 1;
         }
 
         .logo-img {
@@ -825,6 +1404,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
         }
 
         .logo-icon svg {
@@ -876,38 +1456,53 @@
         }
 
         /* Sidebar Action Buttons Row */
-        /* Sidebar Action Buttons Row */
-        /* Sidebar Action Buttons Row */
         .sidebar-actions-row {
             display: flex;
             flex-direction: column;
-            gap: 0;
-            margin-top: 12px;
-            margin-bottom: 0;
-            padding: 0;
+            gap: 3.2px;
+            margin-top: 4px;
+            margin-bottom: 12px;
+            padding: 0 8px;
         }
 
         .sidebar-action-btn {
             width: 100%;
-            padding: 8px 8px;
-            border-radius: 6px;
-            font-size: 14px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 14.63px;
             font-weight: 400;
+            color: var(--text-primary);
             font-family: inherit;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: flex-start;
-            gap: 10px;
-            transition: all 0.15s ease;
-            color: var(--text-primary);
-            background-color: transparent;
+            gap: 8px;
+            background: transparent;
             border: none;
+            transition: background 0.2s ease;
+            text-align: left;
+        }
+
+        .btn-icon-wrapper {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: var(--text-primary);
+        }
+
+        .btn-icon-wrapper svg {
+            color: var(--text-primary);
         }
 
         .sidebar-action-btn:hover {
-            background-color: rgba(255, 255, 255, 0.05);
+            background: var(--dark-input);
         }
+
+
 
         .sidebar-action-btn.active {
             background-color: rgba(147, 51, 234, 0.1);
@@ -1238,7 +1833,8 @@
 
         .provider-details {
             flex: 1;
-            overflow: hidden;
+            min-width: 0;
+            /* overflow: hidden; Removed to allow tooltip to show */
         }
 
         .provider-name-small {
@@ -1253,6 +1849,112 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+
+        .model-info-row {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .capabilities-info-btn {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+            font-size: 9px;
+            font-weight: 600;
+            cursor: help;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+
+        .capabilities-info-btn:hover {
+            background: var(--accent-light);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .capabilities-tooltip {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-secondary);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 8px 10px;
+            min-width: 140px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .capabilities-info-btn:hover .capabilities-tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .capabilities-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: var(--card-border);
+        }
+
+        .capabilities-tooltip::before {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: var(--bg-secondary);
+            z-index: 1;
+        }
+
+        .capabilities-tooltip-title {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .capabilities-list {
+            margin: 0;
+            padding-left: 16px;
+            list-style-type: disc;
+        }
+
+        .capability-item {
+            font-size: 11px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .capability-item.supported {
+            color: #22c55e;
+            font-weight: 600;
+        }
+
+        .capability-item.not-supported {
+            color: var(--text-muted);
+            opacity: 0.7;
+        }
+
 
         .change-btn {
             font-size: 11px;
@@ -1328,18 +2030,114 @@
             background: var(--dark-bg);
         }
 
-        /* Chat Header */
+        /* Chat Header - Using CSS Grid for perfect centering */
         .chat-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: var(--dark-bg);
             padding: 16px 24px;
             border-bottom: 1px solid var(--dark-border);
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+        }
+
+        .chat-header-left {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: flex-start;
+        }
+
+        .header-logo {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: opacity 0.2s ease;
+        }
+
+        .header-logo:hover {
+            opacity: 0.8;
+        }
+
+        .header-logo .logo-icon {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-logo .logo-icon svg {
+            width: 16px;
+            height: 16px;
+            stroke: white;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        @keyframes shine {
+            0% {
+                background-position: 100%;
+            }
+
+            100% {
+                background-position: -100%;
+            }
+        }
+
+        .shiny-text {
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: transparent;
+            background: linear-gradient(120deg,
+                    var(--text-primary) 40%,
+                    var(--accent-light, #ffffff) 50%,
+                    var(--text-primary) 60%);
+            background-size: 200% 100%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            display: inline-block;
+            animation: shine 5s linear infinite;
+        }
+
+        .header-logo .logo-text {
+            font-size: 18px;
+        }
+
+        /* Show logo when sidebar is collapsed */
+        #sidebar.collapsed~.chat-main .header-logo {
+            display: flex;
+        }
+
+        .chat-header-center {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-header-right {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .chat-header .mobile-menu-btn {
+            display: none;
         }
 
         .chat-title {
             font-size: 18px;
             font-weight: 600;
+            display: none;
         }
 
         .connection-status {
@@ -1466,6 +2264,9 @@
 
         .agent-type-option-info {
             flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
         }
 
         .agent-type-option-name {
@@ -1474,10 +2275,32 @@
             color: var(--text-primary);
         }
 
+        /* Agent Info - Shows on hover of the entire option */
         .agent-type-option-desc {
             font-size: 11px;
             color: var(--text-secondary);
+            line-height: 1.3;
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .agent-type-option:hover .agent-type-option-desc {
+            max-height: 40px;
+            opacity: 1;
             margin-top: 2px;
+        }
+
+        .agent-type-option.selected .agent-type-option-desc {
+            max-height: 40px;
+            opacity: 0.8;
+            margin-top: 2px;
+        }
+
+        /* Hidden info icon/container - not needed with new approach */
+        .agent-info-container {
+            display: none;
         }
 
         .agent-type-option .check-icon {
@@ -1489,6 +2312,33 @@
 
         .agent-type-option.selected .check-icon {
             opacity: 1;
+        }
+
+        /* Theme Icon Buttons */
+        .theme-icon-btn {
+            width: 36px;
+            height: 36px;
+            background: var(--dark-input);
+            border: 1px solid var(--dark-border);
+            border-radius: 10px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .theme-icon-btn:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-color: var(--text-secondary);
+        }
+
+        .theme-icon-btn.active {
+            background: var(--dark-card);
+            color: var(--text-primary);
+            border-color: var(--accent);
         }
 
         /* Messages Container */
@@ -2324,6 +3174,8 @@
             display: flex;
             gap: 12px;
             align-items: flex-end;
+            position: relative;
+            /* Required for autocomplete dropdown positioning */
         }
 
         .input-wrapper {
@@ -3234,6 +4086,9 @@
             .chat-main {
                 width: 100%;
                 height: 100vh;
+                position: relative;
+                display: flex;
+                flex-direction: column;
             }
 
             .chat-header {
@@ -4248,7 +5103,8 @@
         .tools-popup-header {
             padding: 14px 16px;
             border-bottom: 1px solid var(--card-border);
-            display: flex;
+            display: none;
+            /* Hide the old header */
             align-items: center;
             justify-content: space-between;
             background: var(--bg-secondary);
@@ -4318,12 +5174,67 @@
             background: var(--bg-tertiary);
         }
 
+        .tools-section-static-header {
+            padding: 12px 16px 8px 16px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .upload-media-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            margin: 0 8px 8px 8px;
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--card-border);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .upload-media-item:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--accent);
+            transform: translateY(-1px);
+        }
+
+        .upload-media-item-info {
+            flex: 1;
+        }
+
+        .upload-media-item-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .upload-media-item-desc {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .tools-popup-content {
+            max-height: 480px;
+            overflow-y: auto;
+            padding: 8px 0;
+        }
+
         .tools-section-group.expanded .tools-section-header-expandable {
             border-bottom: 1px solid var(--card-border);
         }
 
         .tools-section-header-expandable svg:first-child {
             stroke: var(--text-muted);
+            width: 14px;
+            height: 14px;
             flex-shrink: 0;
         }
 
@@ -4417,7 +5328,155 @@
             padding: 16px;
             text-align: center;
             color: var(--text-muted);
-            font-size: 12px;
+        }
+
+        /* Global Disabled State for Tools Popup */
+        .tools-toggle-wrapper {
+            display: flex;
+            align-items: center;
+            margin-left: 8px;
+            margin-right: 4px;
+        }
+
+        .tools-switch {
+            position: relative;
+            display: inline-block;
+            width: 28px;
+            height: 16px;
+        }
+
+        .tools-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .tools-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--bg-tertiary);
+            transition: .3s;
+            border-radius: 18px;
+            border: 1px solid var(--card-border);
+        }
+
+        .tools-slider:before {
+            position: absolute;
+            content: "";
+            height: 12px;
+            width: 12px;
+            left: 2px;
+            bottom: 2px;
+            background-color: var(--text-muted);
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        .tools-switch input:checked+.tools-slider {
+            background-color: rgba(46, 204, 113, 0.2);
+            border-color: #2ecc71;
+        }
+
+        .tools-switch input:checked+.tools-slider:before {
+            transform: translateX(14px);
+            background-color: #2ecc71;
+        }
+
+        .tools-popup.global-disabled .tools-list,
+        .tools-popup.global-disabled .mcp-server-group-header .tools-switch,
+        .tools-popup.global-disabled .tool-item .tool-toggle {
+            opacity: 0.5;
+            pointer-events: none;
+            filter: grayscale(100%);
+        }
+
+        /* Tool Item */
+        .tools-toggle-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: auto;
+            margin-right: 8px;
+        }
+
+        .tools-switch {
+            position: relative;
+            display: inline-block;
+            width: 32px;
+            height: 18px;
+        }
+
+        .tools-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        /* Tooltip style for header buttons */
+        .tooltip-container {
+            position: relative;
+        }
+
+        .tooltip-text {
+            visibility: hidden;
+            width: auto;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 10px;
+            position: absolute;
+            z-index: 1001;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.2s, visibility 0.2s;
+            font-size: 11px;
+            white-space: nowrap;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            pointer-events: none;
+            text-transform: none;
+            font-weight: 500;
+        }
+
+        .tooltip-container:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Tools Popup Granular Control Styles */
+        .tools-popup.global-disabled .tools-section-group:not(#mcp-tools-group),
+        .tools-popup.global-disabled .upload-media-item {
+            opacity: 0.5;
+            pointer-events: none;
+            filter: grayscale(1);
+        }
+
+        .tools-popup.global-disabled #mcp-tools-group .tools-list,
+        .tools-popup.global-disabled #mcp-tools-group .mcp-server-group {
+            opacity: 0.5;
+            pointer-events: none;
+            filter: grayscale(1);
+        }
+
+        .tools-popup.global-disabled #global-tools-toggle {
+            pointer-events: auto;
+        }
+
+        .tools-section-group.disabled-section .tools-list {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .mcp-server-group.disabled-server .mcp-server-tools {
+            opacity: 0.5;
+            pointer-events: none;
         }
 
         /* Tool Item */
@@ -4649,6 +5708,71 @@
                 max-height: 60vh;
             }
         }
+
+        /* Multiple Image Previews above Input */
+        .images-preview-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 8px 16px;
+            margin-bottom: 8px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            width: 100%;
+            min-height: 0;
+        }
+
+        /* Ensure the container is visible/hidden appropriately */
+        .images-preview-wrapper:empty {
+            display: none;
+        }
+
+        .image-preview-item {
+            position: relative;
+            width: 64px;
+            height: 64px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--dark-border);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s;
+            background: var(--dark-card);
+        }
+
+        .image-preview-item:hover {
+            transform: scale(1.05);
+        }
+
+        .image-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .image-preview-remove {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 18px;
+            height: 18px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 50%;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            border: none;
+            transition: background 0.2s;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .image-preview-remove:hover {
+            background: #ef4444;
+        }
     </style>
 </head>
 
@@ -4660,14 +5784,14 @@
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <div style="display: flex; align-items: center; width: 100%; margin-bottom: 12px;">
-                    <div class="logo" style="margin-bottom: 0;">
+                <div class="logo-header-wrapper">
+                    <div class="logo">
                         <div class="logo-icon">
                             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                             </svg>
                         </div>
-                        <span class="logo-text">Agentry</span>
+                        <span class="logo-text shiny-text">Agentry</span>
                     </div>
                     <button class="sidebar-header-toggle" id="sidebar-collapse-btn" title="Collapse Sidebar">
                         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
@@ -4680,28 +5804,34 @@
                 <!-- Action Buttons: New Chat & Search -->
                 <div class="sidebar-actions-row">
                     <button class="sidebar-action-btn" id="new-chat-btn" title="New Chat">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                        </svg>
+                        <div class="btn-icon-wrapper">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                        </div>
                         <span>New chat</span>
                     </button>
                     <button class="sidebar-action-btn" id="search-toggle-btn" title="Search chats">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        </svg>
+                        <div class="btn-icon-wrapper">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                        </div>
                         <span>Search chats</span>
                     </button>
                     <button class="sidebar-action-btn" id="media-library-toggle" title="Media Library">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                            <polyline points="21 15 16 10 5 21"></polyline>
-                        </svg>
+                        <div class="btn-icon-wrapper">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                <polyline points="21 15 16 10 5 21"></polyline>
+                            </svg>
+                        </div>
                         <span>Media</span>
                     </button>
                 </div>
@@ -4768,7 +5898,20 @@
                     </div>
                     <div class="provider-details">
                         <div class="provider-name-small" id="provider-name">Loading...</div>
-                        <div class="model-name-small" id="model-name">-</div>
+                        <div class="model-info-row">
+                            <div class="model-name-small" id="model-name">-</div>
+                            <div class="capabilities-info-btn" id="capabilities-info-btn"
+                                onclick="event.stopPropagation();">
+                                <span></span>
+                                <div class="capabilities-tooltip" id="capabilities-tooltip">
+                                    <div class="capabilities-tooltip-title">Model Capabilities</div>
+                                    <ul class="capabilities-list" id="capabilities-list">
+                                        <li class="capability-item not-supported" id="cap-tools">Tools</li>
+                                        <li class="capability-item not-supported" id="cap-vision">Vision</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <span class="change-btn">Change</span>
                 </div>
@@ -4800,76 +5943,82 @@
             </div>
 
             <div class="chat-header">
-                <button class="mobile-menu-btn" id="mobile-menu-btn" title="Open Menu">
-                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="3" y1="12" x2="21" y2="12"></line>
-                        <line x1="3" y1="6" x2="21" y2="6"></line>
-                        <line x1="3" y1="18" x2="21" y2="18"></line>
-                    </svg>
-                </button>
-                <h1 class="chat-title" id="chat-title"></h1>
+                <!-- Left side (empty for now, keeps grid balanced) -->
+                <div class="chat-header-left">
+                    <a href="/" class="header-logo">
+                        <div class="logo-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                            </svg>
+                        </div>
+                        <span class="logo-text shiny-text">Agentry</span>
+                    </a>
+                </div>
 
-                <!-- Agent Type Selector -->
-                <div class="agent-type-selector" id="agent-type-selector">
-                    <button class="agent-type-button" id="agent-type-button" title="Change Agent Type">
-                        <svg viewBox="0 0 24 24" class="agent-icon-current" id="agent-icon-current">
-                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                        </svg>
-                        <span id="agent-type-label">Default Agent</span>
-                        <svg viewBox="0 0 24 24" class="chevron">
-                            <polyline points="6 9 12 15 18 9" />
-                        </svg>
-                    </button>
-                    <div class="agent-type-dropdown" id="agent-type-dropdown">
-                        <div class="agent-type-option" data-agent="default">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                                <path d="M2 17l10 5 10-5" />
-                                <path d="M2 12l10 5 10-5" />
+                <!-- Center - Agent Type Selector -->
+                <div class="chat-header-center">
+                    <div class="agent-type-selector" id="agent-type-selector">
+                        <button class="agent-type-button" id="agent-type-button" title="Change Agent Type">
+                            <svg viewBox="0 0 24 24" class="agent-icon-current" id="agent-icon-current">
+                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                             </svg>
-                            <div class="agent-type-option-info">
-                                <div class="agent-type-option-name">Default Agent</div>
-                                <div class="agent-type-option-desc">All tools + MCP servers</div>
+                            <span id="agent-type-label">Default Agent</span>
+                            <svg viewBox="0 0 24 24" class="chevron">
+                                <polyline points="6 9 12 15 18 9" />
+                            </svg>
+                        </button>
+                        <div class="agent-type-dropdown" id="agent-type-dropdown">
+                            <div class="agent-type-option" data-agent="default">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                                    <path d="M2 17l10 5 10-5" />
+                                    <path d="M2 12l10 5 10-5" />
+                                </svg>
+                                <div class="agent-type-option-info">
+                                    <div class="agent-type-option-name">Default Agent</div>
+                                    <div class="agent-type-option-desc">All tools + MCP servers for complex workflows
+                                    </div>
+                                </div>
+                                <svg viewBox="0 0 24 24" class="check-icon">
+                                    <polyline points="20 6 9 17 4 12" />
+                                </svg>
                             </div>
-                            <svg viewBox="0 0 24 24" class="check-icon">
-                                <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                        </div>
-                        <div class="agent-type-option" data-agent="copilot">
-                            <svg viewBox="0 0 24 24">
-                                <polyline points="16 18 22 12 16 6" />
-                                <polyline points="8 6 2 12 8 18" />
-                            </svg>
-                            <div class="agent-type-option-info">
-                                <div class="agent-type-option-name">Copilot Agent</div>
-                                <div class="agent-type-option-desc">Coding tasks & file operations</div>
+                            <div class="agent-type-option" data-agent="copilot">
+                                <svg viewBox="0 0 24 24">
+                                    <polyline points="16 18 22 12 16 6" />
+                                    <polyline points="8 6 2 12 8 18" />
+                                </svg>
+                                <div class="agent-type-option-info">
+                                    <div class="agent-type-option-name">Copilot Agent</div>
+                                    <div class="agent-type-option-desc">Coding focused with file & execution tools</div>
+                                </div>
+                                <svg viewBox="0 0 24 24" class="check-icon">
+                                    <polyline points="20 6 9 17 4 12" />
+                                </svg>
                             </div>
-                            <svg viewBox="0 0 24 24" class="check-icon">
-                                <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                        </div>
-                        <div class="agent-type-option" data-agent="smart">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M9 18h6" />
-                                <path d="M10 22h4" />
-                                <path
-                                    d="M12 2a7 7 0 017 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 01-1 1H9a1 1 0 01-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 017-7z" />
-                            </svg>
-                            <div class="agent-type-option-info">
-                                <div class="agent-type-option-name">Smart Agent</div>
-                                <div class="agent-type-option-desc">Enhanced chat & reasoning</div>
+                            <div class="agent-type-option" data-agent="smart">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M9 18h6" />
+                                    <path d="M10 22h4" />
+                                    <path
+                                        d="M12 2a7 7 0 017 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 01-1 1H9a1 1 0 01-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 017-7z" />
+                                </svg>
+                                <div class="agent-type-option-info">
+                                    <div class="agent-type-option-name">Smart Agent</div>
+                                    <div class="agent-type-option-desc">Enhanced reasoning & project context</div>
+                                </div>
+                                <svg viewBox="0 0 24 24" class="check-icon">
+                                    <polyline points="20 6 9 17 4 12" />
+                                </svg>
                             </div>
-                            <svg viewBox="0 0 24 24" class="check-icon">
-                                <polyline points="20 6 9 17 4 12" />
-                            </svg>
                         </div>
                     </div>
                 </div>
 
-                <div style="display: flex; align-items: center; gap: 16px;">
-                    <!-- MCP Config Button -->
-                    <button id="mcp-config-btn" class="mcp-config-btn" title="MCP Server Configuration">
+                <!-- Right side controls -->
+                <div class="chat-header-right">
+                    <!-- MCP Config Button (only visible for Default Agent) -->
+                    <button id="mcp-config-btn" class="mcp-config-btn tooltip-container">
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path
@@ -4877,19 +6026,30 @@
                             <circle cx="12" cy="12" r="3" />
                         </svg>
                         <span id="mcp-header-status" class="mcp-status-badge none"></span>
+                        <span class="tooltip-text">MCP Server Configuration</span>
                     </button>
-                    <!-- Theme Toggle -->
-                    <button id="theme-toggle" class="theme-toggle-btn" title="Toggle theme">
-                        <svg class="sun-icon" viewBox="0 0 24 24" width="18" height="18">
-                            <circle cx="12" cy="12" r="5" fill="currentColor" />
-                            <path
-                                d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
-                                stroke="currentColor" stroke-width="2" fill="none" />
+                    <!-- Theme Toggle Button -->
+                    <button id="theme-toggle-btn" class="theme-toggle-btn" title="Toggle theme">
+                        <!-- Sun icon -->
+                        <svg class="sun-icon" viewBox="0 0 24 24" width="20" height="20" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="5"></circle>
+                            <line x1="12" y1="1" x2="12" y2="3"></line>
+                            <line x1="12" y1="21" x2="12" y2="23"></line>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                            <line x1="1" y1="12" x2="3" y2="12"></line>
+                            <line x1="21" y1="12" x2="23" y2="12"></line>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
                         </svg>
-                        <svg class="moon-icon" viewBox="0 0 24 24" width="18" height="18" style="display:none;">
-                            <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="currentColor" />
+                        <!-- Moon icon -->
+                        <svg class="moon-icon" viewBox="0 0 24 24" width="20" height="20" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                         </svg>
                     </button>
+                    <!-- Connection Status -->
                     <div class="connection-status">
                         <div class="status-dot" id="status-dot"></div>
                         <span id="status-text">Connecting...</span>
@@ -4918,14 +6078,9 @@
 
             <div class="input-area">
                 <!-- Image Preview Area (hidden by default) -->
-                <div class="image-preview-container" id="image-preview-container" style="display: none;">
-                    <div class="image-preview-wrapper">
-                        <img id="image-preview" src="" alt="Preview">
-                        <button class="image-preview-remove" id="remove-image-btn" title="Remove image">×</button>
-                    </div>
-                </div>
+                <div class="images-preview-wrapper" id="images-preview-wrapper" style="display: none;"></div>
                 <div class="input-container">
-                    <input type="file" id="image-input" accept="image/*" style="display: none;">
+                    <input type="file" id="image-input" accept="image/*" multiple style="display: none;">
                     <div class="input-wrapper">
                         <!-- Tools Button (+ button) - Inside the input bar -->
                         <div class="tools-btn-container" id="tools-btn-container">
@@ -4943,6 +6098,30 @@
                                     <button class="tools-popup-close" id="tools-popup-close">×</button>
                                 </div>
                                 <div class="tools-popup-content" id="tools-popup-content">
+                                    <!-- Media Section -->
+                                    <div class="tools-section-static-header">Upload Media</div>
+                                    <div class="upload-media-item" id="merged-upload-btn">
+                                        <div class="tool-item-icon">
+                                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none"
+                                                stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                stroke-linejoin="round">
+                                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                                <polyline points="21 15 16 10 5 21"></polyline>
+                                            </svg>
+                                        </div>
+                                        <div class="upload-media-item-info">
+                                            <div class="upload-media-item-name">Attach Images</div>
+                                            <div class="upload-media-item-desc">Upload photos from your device</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Tools Section -->
+                                    <div class="tools-section-static-header">
+                                        <span>tools</span>
+                                        <span class="tools-section-count" id="total-tools-count">0</span>
+                                    </div>
+
                                     <!-- Built-in Tools Section (Collapsible) -->
                                     <div class="tools-section-group" id="builtin-tools-group">
                                         <div class="tools-section-header-expandable"
@@ -4955,6 +6134,12 @@
                                             </svg>
                                             <span class="tools-section-title">Built-in Tools</span>
                                             <span class="tools-section-count" id="builtin-tools-count">0</span>
+                                            <div class="tools-toggle-wrapper" onclick="event.stopPropagation()">
+                                                <label class="tools-switch">
+                                                    <input type="checkbox" id="builtin-tools-toggle" checked>
+                                                    <span class="tools-slider"></span>
+                                                </label>
+                                            </div>
                                             <svg class="tools-section-expand-icon" viewBox="0 0 24 24" fill="none"
                                                 stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                                 stroke-linejoin="round">
@@ -4980,8 +6165,12 @@
                                             </svg>
                                             <span class="tools-section-title">MCP Tools</span>
                                             <span class="tools-section-count" id="mcp-tools-count">0</span>
-                                            <a class="tools-configure-link" id="tools-mcp-config-link"
-                                                onclick="event.stopPropagation()">Configure</a>
+                                            <div class="tools-toggle-wrapper" onclick="event.stopPropagation()">
+                                                <label class="tools-switch">
+                                                    <input type="checkbox" id="mcp-section-toggle" checked>
+                                                    <span class="tools-slider"></span>
+                                                </label>
+                                            </div>
                                             <svg class="tools-section-expand-icon" viewBox="0 0 24 24" fill="none"
                                                 stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                                 stroke-linejoin="round">
@@ -4998,7 +6187,7 @@
                             </div>
                         </div>
                         <!-- Image Upload Button (hidden by default, shown when vision is supported) -->
-                        <button class="attach-btn" id="attach-image-btn" title="Attach image" style="display: none;">
+                        <button class="attach-btn" id="attach-image-btn" title="Attach image">
                             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -5009,9 +6198,98 @@
                         <textarea id="message-input" placeholder="Type your message or attach an image..."
                             rows="1"></textarea>
                     </div>
+                    <!-- Reference Context Menu (Antigravity-style) -->
+                    <div class="ref-context-menu" id="ref-context-menu">
+                        <div class="ref-context-search">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="M21 21l-4.35-4.35"></path>
+                            </svg>
+                            <input type="text" id="ref-context-search-input" placeholder="Search context items..." />
+                        </div>
+
+                        <!-- Code Context Items Category -->
+                        <div class="ref-context-category" data-category="code">
+                            <div class="ref-context-category-header" onclick="toggleContextCategory('code')">
+                                <div class="ref-context-category-title">
+                                    <span class="ref-context-icon">&lt;/&gt;</span>
+                                    <span>Code Context Items</span>
+                                </div>
+                                <svg viewBox="0 0 24 24" class="ref-context-arrow">
+                                    <path d="M9 18l6-6-6-6" />
+                                </svg>
+                            </div>
+                            <div class="ref-context-items" id="ref-context-code-items">
+                                <!-- Code blocks, JSON, etc populated here -->
+                            </div>
+                        </div>
+
+                        <!-- Tables Category -->
+                        <div class="ref-context-category" data-category="tables">
+                            <div class="ref-context-category-header" onclick="toggleContextCategory('tables')">
+                                <div class="ref-context-category-title">
+                                    <span class="ref-context-icon">▤</span>
+                                    <span>Tables</span>
+                                </div>
+                                <svg viewBox="0 0 24 24" class="ref-context-arrow">
+                                    <path d="M9 18l6-6-6-6" />
+                                </svg>
+                            </div>
+                            <div class="ref-context-items" id="ref-context-table-items">
+                                <!-- Tables populated here -->
+                            </div>
+                        </div>
+
+                        <!-- Sessions/Conversations Category -->
+                        <div class="ref-context-category" data-category="sessions">
+                            <div class="ref-context-category-header" onclick="toggleContextCategory('sessions')">
+                                <div class="ref-context-category-title">
+                                    <span class="ref-context-icon">💬</span>
+                                    <span>Conversations</span>
+                                </div>
+                                <svg viewBox="0 0 24 24" class="ref-context-arrow">
+                                    <path d="M9 18l6-6-6-6" />
+                                </svg>
+                            </div>
+                            <div class="ref-context-items" id="ref-context-session-items">
+                                <div class="ref-context-item-empty">Current session context</div>
+                            </div>
+                        </div>
+
+                        <!-- Lists & Quotes Category -->
+                        <div class="ref-context-category" data-category="content">
+                            <div class="ref-context-category-header" onclick="toggleContextCategory('content')">
+                                <div class="ref-context-category-title">
+                                    <span class="ref-context-icon">📝</span>
+                                    <span>Content Blocks</span>
+                                </div>
+                                <svg viewBox="0 0 24 24" class="ref-context-arrow">
+                                    <path d="M9 18l6-6-6-6" />
+                                </svg>
+                            </div>
+                            <div class="ref-context-items" id="ref-context-content-items">
+                                <!-- Lists, quotes, headings populated here -->
+                            </div>
+                        </div>
+
+                        <!-- Keyboard Hints -->
+                        <div class="ref-context-footer">
+                            <span>↑↓ Navigate</span>
+                            <span>Enter Select</span>
+                            <span>Esc Close</span>
+                        </div>
+                    </div>
                     <button class="send-btn" id="send-btn" disabled>➤</button>
                 </div>
             </div>
+            <!-- Scroll to bottom button -->
+            <button id="scroll-bottom-btn" class="scroll-bottom-btn" title="Scroll to bottom">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+            </button>
         </main>
     </div>
 
@@ -5183,6 +6461,7 @@
         let isConnected = false;
         let isProcessing = false;
         let userInitial = '?';  // Will be set when user info loads
+        let isAutoScrollEnabled = true;
 
         // Auth check
         // Auth check
@@ -5202,12 +6481,10 @@
         // Image upload elements
         const attachImageBtn = document.getElementById('attach-image-btn');
         const imageInput = document.getElementById('image-input');
-        const imagePreviewContainer = document.getElementById('image-preview-container');
-        const imagePreview = document.getElementById('image-preview');
-        const removeImageBtn = document.getElementById('remove-image-btn');
+        const imagesPreviewWrapper = document.getElementById('images-preview-wrapper');
 
         // Image state
-        let selectedImageData = null;  // Base64 encoded image data
+        let selectedImagesData = [];  // Array of Base64 encoded image data strings
 
         // New Chat Button Logic
         function initNewChatButton() {
@@ -5237,6 +6514,7 @@
             initChatSearch();
             initNewChatButton();
             initImageUpload();  // Initialize image upload handlers
+            initScrollBehavior(); // Initialize scroll behavior
 
             await loadUserInfo();
             await loadSessions();
@@ -5311,26 +6589,25 @@
 
         // Theme Toggle
         function initTheme() {
-            const toggle = document.getElementById('theme-toggle');
+            const toggleBtn = document.getElementById('theme-toggle-btn');
             const savedTheme = localStorage.getItem('agentry-theme');
             const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-            const theme = savedTheme || systemTheme;
-            document.documentElement.setAttribute('data-theme', theme);
-            console.log('Theme initialized:', theme);
 
-            if (toggle) {
-                console.log('Theme toggle button found');
-                toggle.addEventListener('click', (e) => {
+            // Set initial theme - default to system if no saved theme
+            let currentTheme = savedTheme || systemTheme;
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            console.log('Theme initialized:', currentTheme);
+
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    const current = document.documentElement.getAttribute('data-theme');
-                    const next = current === 'dark' ? 'light' : 'dark';
-                    console.log('Switching theme from', current, 'to', next);
-                    document.documentElement.setAttribute('data-theme', next);
-                    localStorage.setItem('agentry-theme', next);
+
+                    const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+                    document.documentElement.setAttribute('data-theme', newTheme);
+                    localStorage.setItem('agentry-theme', newTheme);
+                    console.log('Theme toggled to:', newTheme);
                 });
-            } else {
-                console.warn('Theme toggle button not found!');
             }
         }
 
@@ -5421,9 +6698,11 @@
             if (agentType === 'default') {
                 if (mcpConfigBtn) mcpConfigBtn.style.display = '';
                 if (toolsBtnContainer) toolsBtnContainer.style.display = '';
+                if (attachImageBtn) attachImageBtn.style.display = 'none';
             } else {
                 if (mcpConfigBtn) mcpConfigBtn.style.display = 'none';
                 if (toolsBtnContainer) toolsBtnContainer.style.display = 'none';
+                if (attachImageBtn) attachImageBtn.style.display = 'flex';
             }
         }
 
@@ -5791,34 +7070,27 @@
             const toolsPopupClose = document.getElementById('tools-popup-close');
             const mcpConfigLink = document.getElementById('tools-mcp-config-link');
 
-            // Toggle popup on button click
             if (toolsBtn) {
                 toolsBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    const isActive = toolsPopup?.classList.contains('active');
-                    if (!isActive) {
-                        loadAvailableTools(); // Refresh tools when opening
+                    if (!toolsPopup?.classList.contains('active')) {
+                        loadAvailableTools();
                     }
                     toolsBtn.classList.toggle('active');
                     toolsPopup?.classList.toggle('active');
                 });
             }
 
-            // Close popup button
             if (toolsPopupClose) {
-                toolsPopupClose.addEventListener('click', () => {
-                    closeToolsPopup();
-                });
+                toolsPopupClose.addEventListener('click', closeToolsPopup);
             }
 
-            // Close on outside click
             document.addEventListener('click', (e) => {
                 if (!e.target.closest('#tools-btn') && !e.target.closest('#tools-popup')) {
                     closeToolsPopup();
                 }
             });
 
-            // Open MCP config from tools popup
             if (mcpConfigLink) {
                 mcpConfigLink.addEventListener('click', () => {
                     closeToolsPopup();
@@ -5826,7 +7098,7 @@
                 });
             }
 
-            // Load disabled tools from localStorage first
+            // Load tool preferences
             const savedDisabled = localStorage.getItem('agentry-disabled-tools');
             if (savedDisabled) {
                 try {
@@ -5835,9 +7107,97 @@
                     disabledTools = new Set();
                 }
             }
-
-            // Also try to load from backend
             loadDisabledToolsFromBackend();
+
+            // Setup Toggles
+            const mcpSectionToggle = document.getElementById('mcp-section-toggle');
+            if (mcpSectionToggle) {
+                mcpSectionToggle.addEventListener('change', handleMCPSectionToggle);
+            }
+
+            const builtinToggle = document.getElementById('builtin-tools-toggle');
+            if (builtinToggle) {
+                builtinToggle.addEventListener('change', handleBuiltinSectionToggle);
+            }
+        }
+
+        async function handleMCPSectionToggle() {
+            const enabled = this.checked;
+            const mcpServers = availableTools.mcp || {};
+            const serverNames = Object.keys(mcpServers);
+
+            serverNames.forEach(serverName => {
+                const serverKey = `mcp_server:${serverName}`;
+                if (enabled) {
+                    disabledTools.delete(serverKey);
+                } else {
+                    disabledTools.add(serverKey);
+                }
+
+                const tools = mcpServers[serverName] || [];
+                tools.forEach(tool => {
+                    const toolId = `mcp:${serverName}:${tool.name}`;
+                    enabled ? disabledTools.delete(toolId) : disabledTools.add(toolId);
+                });
+            });
+
+            renderToolsList();
+            saveDisabledTools();
+        }
+
+        async function handleBuiltinSectionToggle() {
+            const enabled = this.checked;
+            const builtinTools = availableTools.builtin || [];
+            builtinTools.forEach(tool => {
+                const toolId = `builtin:${tool.name}`;
+                enabled ? disabledTools.delete(toolId) : disabledTools.add(toolId);
+            });
+            renderToolsList();
+            saveDisabledTools();
+        }
+
+        async function handleMCPServerToggle(event) {
+            const serverName = event.target.dataset.server;
+            const enabled = event.target.checked;
+            const serverTools = availableTools.mcp?.[serverName] || [];
+            const serverKey = `mcp_server:${serverName}`;
+
+            if (enabled) {
+                disabledTools.delete(serverKey);
+            } else {
+                disabledTools.add(serverKey);
+            }
+
+            serverTools.forEach(tool => {
+                const toolId = `mcp:${serverName}:${tool.name}`;
+                enabled ? disabledTools.delete(toolId) : disabledTools.add(toolId);
+            });
+            renderToolsList();
+            saveDisabledTools();
+        }
+
+        async function handleToolToggle(event, type) {
+            const toolId = event.target.dataset.toolId;
+            const enabled = event.target.checked;
+            enabled ? disabledTools.delete(toolId) : disabledTools.add(toolId);
+            renderToolsList();
+            saveDisabledTools();
+        }
+
+        async function saveDisabledTools() {
+            localStorage.setItem('agentry-disabled-tools', JSON.stringify([...disabledTools]));
+            try {
+                await fetch(`${API_BASE}/api/tools/disabled`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ disabled_tools: [...disabledTools] })
+                });
+            } catch (e) {
+                console.error('Failed to sync tools:', e);
+            }
         }
 
         async function loadDisabledToolsFromBackend() {
@@ -5847,14 +7207,13 @@
                 });
                 if (response.ok) {
                     const data = await response.json();
-                    if (data.disabled_tools && data.disabled_tools.length > 0) {
+                    if (data.disabled_tools) {
                         disabledTools = new Set(data.disabled_tools);
                         localStorage.setItem('agentry-disabled-tools', JSON.stringify([...disabledTools]));
+                        renderToolsList();
                     }
                 }
-            } catch (e) {
-                console.log('Could not load disabled tools from backend, using localStorage');
-            }
+            } catch (e) { }
         }
 
         function closeToolsPopup() {
@@ -5869,19 +7228,34 @@
                 const response = await fetch(`${API_BASE}/api/tools`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-
                 if (response.ok) {
-                    const data = await response.json();
-                    availableTools = data;
+                    availableTools = await response.json();
                     renderToolsList();
                 } else {
-                    // Fallback to showing placeholder
                     renderToolsListFallback();
                 }
             } catch (e) {
-                console.error('Failed to load tools:', e);
                 renderToolsListFallback();
             }
+        }
+
+        function createToolItemHTML(tool, type) {
+            const toolId = type === 'mcp' ? `mcp:${tool.server}:${tool.name}` : `builtin:${tool.name}`;
+            const isDisabled = disabledTools.has(toolId);
+            return `
+            <div class="tool-item ${isDisabled ? 'disabled' : ''}">
+                <div class="tool-item-icon ${type === 'mcp' ? 'mcp' : ''}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+                </div>
+                <div class="tool-item-info">
+                    <div class="tool-item-name">${escapeHtml(tool.name)}</div>
+                    <div class="tool-item-desc">${escapeHtml(tool.description || 'No description')}</div>
+                </div>
+                <label class="tool-toggle">
+                    <input type="checkbox" data-tool-id="${toolId}" ${isDisabled ? '' : 'checked'}>
+                    <span class="tool-toggle-slider"></span>
+                </label>
+            </div>`;
         }
 
         function renderToolsList() {
@@ -5889,198 +7263,112 @@
             const mcpList = document.getElementById('mcp-tools-list');
             const builtinCountEl = document.getElementById('builtin-tools-count');
             const mcpCountEl = document.getElementById('mcp-tools-count');
+            const builtinSectionToggle = document.getElementById('builtin-tools-toggle');
 
-            // Render built-in tools
+            let enabledBuiltinCount = 0;
+
+            // 1. Render Built-in Tools
             if (builtinList) {
                 const builtinTools = availableTools.builtin || [];
+                enabledBuiltinCount = builtinTools.filter(t => !disabledTools.has(`builtin:${t.name}`)).length;
 
                 // Update count
                 if (builtinCountEl) {
-                    builtinCountEl.textContent = builtinTools.length;
+                    builtinCountEl.textContent = enabledBuiltinCount;
                 }
 
+                const allDisabled = builtinTools.length > 0 && builtinTools.every(t => disabledTools.has(`builtin:${t.name}`));
+                if (builtinSectionToggle) builtinSectionToggle.checked = !allDisabled;
+
                 if (builtinTools.length === 0) {
-                    builtinList.innerHTML = '<div class="tools-empty">No built-in tools available</div>';
+                    builtinList.innerHTML = '<div class="tools-empty">No built-in tools</div>';
                 } else {
-                    builtinList.innerHTML = builtinTools.map(tool => createToolItemHTML(tool, 'builtin')).join('');
-                    // Add event listeners
+                    builtinList.innerHTML = builtinTools.map(t => createToolItemHTML(t, 'builtin')).join('');
                     builtinList.querySelectorAll('.tool-toggle input').forEach(input => {
                         input.addEventListener('change', (e) => handleToolToggle(e, 'builtin'));
                     });
                 }
             }
 
-            // Calculate total MCP tools count
-            const mcpServers = availableTools.mcp || {};
-            const totalMcpTools = Object.values(mcpServers).reduce((sum, tools) => sum + (tools?.length || 0), 0);
-            if (mcpCountEl) {
-                mcpCountEl.textContent = totalMcpTools;
-            }
-
-            // Render MCP tools with expanders
+            // 2. Render MCP Tools
             if (mcpList) {
                 const mcpServers = availableTools.mcp || {};
                 const serverNames = Object.keys(mcpServers);
 
-                if (serverNames.length === 0) {
-                    mcpList.innerHTML = '<div class="tools-empty">No MCP servers configured</div>';
-                } else {
-                    let html = '';
-                    serverNames.forEach((serverName, index) => {
-                        const serverTools = mcpServers[serverName] || [];
-                        const status = mcpServerStatuses[serverName] || 'disconnected';
-                        const serverId = `mcp-server-${index}`;
+                const enabledMcpTools = Object.keys(mcpServers).reduce((sum, serverName) => {
+                    const tools = mcpServers[serverName] || [];
+                    return sum + tools.filter(t => !disabledTools.has(`mcp:${serverName}:${t.name}`)).length;
+                }, 0);
 
-                        html += `
-                            <div class="mcp-server-group" id="${serverId}" data-server="${escapeHtml(serverName)}">
-                                <div class="mcp-server-group-header" onclick="toggleMCPServerExpand('${serverId}')">
-                                    <div class="mcp-server-status ${status}"></div>
-                                    <span class="mcp-server-name">${escapeHtml(serverName)}</span>
-                                    <span class="mcp-server-tools-count">${serverTools.length} tools</span>
-                                    <svg class="mcp-server-expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="6 9 12 15 18 9"></polyline>
-                                    </svg>
+                if (mcpCountEl) {
+                    mcpCountEl.textContent = enabledMcpTools;
+                }
+
+                // Update Total active tools count
+                const totalToolsCountEl = document.getElementById('total-tools-count');
+                if (totalToolsCountEl) {
+                    const totalEnabled = enabledBuiltinCount + enabledMcpTools;
+                    totalToolsCountEl.textContent = totalEnabled;
+                }
+
+                if (serverNames.length === 0) {
+                    mcpList.innerHTML = '<div class="tools-empty">No MCP servers</div>';
+                } else {
+                    mcpList.innerHTML = serverNames.map((name, idx) => {
+                        const tools = mcpServers[name] || [];
+                        const status = mcpServerStatuses[name] || 'disconnected';
+                        const serverId = `mcp-server-${idx}`;
+                        const allDisabled = tools.length > 0 && tools.every(t => disabledTools.has(`mcp:${name}:${t.name}`));
+
+                        // Calculate enabled count for this specific server
+                        const serverEnabledCount = tools.filter(t => !disabledTools.has(`mcp:${name}:${t.name}`)).length;
+
+                        return `
+                        <div class="mcp-server-group ${allDisabled ? 'disabled-server' : ''}" id="${serverId}">
+                            <div class="mcp-server-group-header" onclick="toggleMCPServerExpand('${serverId}')">
+                                <div class="mcp-server-status ${status}"></div>
+                                <span class="mcp-server-name">${escapeHtml(name)}</span>
+                                <span class="mcp-server-tools-count">${serverEnabledCount} / ${tools.length}</span>
+                                <div class="tools-toggle-wrapper" onclick="event.stopPropagation()">
+                                    <label class="tools-switch">
+                                        <input type="checkbox" class="mcp-server-toggle" data-server="${escapeHtml(name)}" ${allDisabled ? '' : 'checked'}>
+                                        <span class="tools-slider"></span>
+                                    </label>
                                 </div>
-                                <div class="mcp-server-tools">
-                                    <div class="tools-list">
-                                        ${serverTools.length > 0
-                                ? serverTools.map(tool => createToolItemHTML({ ...tool, server: serverName }, 'mcp')).join('')
-                                : '<div class="tools-empty" style="padding: 8px 12px;">No tools from this server</div>'}
-                                    </div>
+                                <svg class="mcp-server-expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </div>
+                            <div class="mcp-server-tools">
+                                <div class="tools-list">
+                                    ${tools.length > 0 ? tools.map(t => createToolItemHTML({ ...t, server: name }, 'mcp')).join('') : '<div class="tools-empty">No tools</div>'}
                                 </div>
                             </div>
-                        `;
-                    });
-                    mcpList.innerHTML = html;
+                        </div>`;
+                    }).join('');
 
-                    // Add event listeners for tool toggles
                     mcpList.querySelectorAll('.tool-toggle input').forEach(input => {
                         input.addEventListener('change', (e) => handleToolToggle(e, 'mcp'));
                     });
+                    mcpList.querySelectorAll('.mcp-server-toggle').forEach(input => {
+                        input.addEventListener('change', (e) => handleMCPServerToggle(e));
+                    });
+                }
+
+                // Sync Section Toggle visual state
+                const mcpSectionToggle = document.getElementById('mcp-section-toggle');
+                if (mcpSectionToggle) {
+                    const allDisabled = Object.keys(mcpServers).every(serverName => {
+                        const tools = mcpServers[serverName] || [];
+                        return tools.every(t => disabledTools.has(`mcp:${serverName}:${t.name}`));
+                    });
+                    mcpSectionToggle.checked = !allDisabled;
                 }
             }
-        }
-
-        // Toggle MCP server expansion
-        function toggleMCPServerExpand(serverId) {
-            const serverGroup = document.getElementById(serverId);
-            if (serverGroup) {
-                serverGroup.classList.toggle('expanded');
-            }
-        }
-
-        // Toggle tools section expansion (for Built-in Tools and MCP Tools sections)
-        function toggleToolsSectionExpand(sectionId) {
-            const sectionGroup = document.getElementById(sectionId);
-            if (sectionGroup) {
-                sectionGroup.classList.toggle('expanded');
-            }
-        }
-
-        function createToolItemHTML(tool, type) {
-            const toolId = type === 'mcp' ? `mcp:${tool.server}:${tool.name}` : `builtin:${tool.name}`;
-            const isDisabled = disabledTools.has(toolId);
-            const iconClass = type === 'mcp' ? 'mcp' : '';
-
-            return `
-                <div class="tool-item ${isDisabled ? 'disabled' : ''}" data-tool-id="${toolId}">
-                    <div class="tool-item-icon ${iconClass}">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
-                        </svg>
-                    </div>
-                    <div class="tool-item-info">
-                        <div class="tool-item-name">${escapeHtml(tool.name)}</div>
-                        <div class="tool-item-desc">${escapeHtml(tool.description || 'No description')}</div>
-                    </div>
-                    <label class="tool-toggle">
-                        <input type="checkbox" data-tool-id="${toolId}" ${isDisabled ? '' : 'checked'}>
-                        <span class="tool-toggle-slider"></span>
-                    </label>
-                </div>
-            `;
         }
 
         function renderToolsListFallback() {
-            const builtinList = document.getElementById('builtin-tools-list');
-            const mcpList = document.getElementById('mcp-tools-list');
-
-            // Show default built-in tools placeholder
-            if (builtinList) {
-                const defaultTools = [
-                    { name: 'web_search', description: 'Search the web for information' },
-                    { name: 'read_file', description: 'Read contents of a file' },
-                    { name: 'write_file', description: 'Write content to a file' },
-                    { name: 'execute_code', description: 'Execute Python code' },
-                    { name: 'datetime', description: 'Get current date/time' },
-                    { name: 'memory', description: 'Store and retrieve memories' }
-                ];
-                builtinList.innerHTML = defaultTools.map(tool => createToolItemHTML(tool, 'builtin')).join('');
-                builtinList.querySelectorAll('.tool-toggle input').forEach(input => {
-                    input.addEventListener('change', (e) => handleToolToggle(e, 'builtin'));
-                });
-            }
-
-            // Update MCP tools from existing mcpConfig with expanders
-            if (mcpList) {
-                const serverNames = Object.keys(mcpConfig.mcpServers || {});
-                if (serverNames.length === 0) {
-                    mcpList.innerHTML = '<div class="tools-empty">No MCP servers configured</div>';
-                } else {
-                    mcpList.innerHTML = serverNames.map((serverName, index) => {
-                        const status = mcpServerStatuses[serverName] || 'disconnected';
-                        const serverId = `mcp-server-fallback-${index}`;
-                        return `
-                            <div class="mcp-server-group" id="${serverId}" data-server="${escapeHtml(serverName)}">
-                                <div class="mcp-server-group-header" onclick="toggleMCPServerExpand('${serverId}')">
-                                    <div class="mcp-server-status ${status}"></div>
-                                    <span class="mcp-server-name">${escapeHtml(serverName)}</span>
-                                    <span class="mcp-server-tools-count">-</span>
-                                    <svg class="mcp-server-expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="6 9 12 15 18 9"></polyline>
-                                    </svg>
-                                </div>
-                                <div class="mcp-server-tools">
-                                    <div class="tools-list">
-                                        <div class="tools-empty" style="padding: 8px 12px;">Connect to MCP server to see tools</div>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
-                }
-            }
-        }
-
-        async function handleToolToggle(event, type) {
-            const toolId = event.target.dataset.toolId;
-            const isEnabled = event.target.checked;
-            const toolItem = event.target.closest('.tool-item');
-
-            if (isEnabled) {
-                disabledTools.delete(toolId);
-                toolItem?.classList.remove('disabled');
-            } else {
-                disabledTools.add(toolId);
-                toolItem?.classList.add('disabled');
-            }
-
-            // Save to localStorage
-            localStorage.setItem('agentry-disabled-tools', JSON.stringify([...disabledTools]));
-
-            // Send to backend
-            try {
-                await fetch(`${API_BASE}/api/tools/disabled`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ disabled_tools: [...disabledTools] })
-                });
-            } catch (e) {
-                console.error('Failed to save disabled tools:', e);
-            }
+            // ... (keep fallback if needed or let renderToolsList handle empty availableTools)
+            // For brevity, I'll let renderToolsList handle empty states
+            renderToolsList();
         }
 
         // Sidebar Controls (Resize & Toggle)
@@ -6124,9 +7412,18 @@
                     } else if (provider === 'gemini') {
                         // Gemini Logo
                         providerIcon.innerHTML = `<img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg" alt="Gemini">`;
+                    } else if (provider === 'azure') {
+                        // Azure Logo
+                        providerIcon.style.background = 'white';
+                        providerIcon.innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Microsoft_Azure.svg" alt="Azure" style="width: 18px; height: 18px;">`;
                     } else {
-                        // Default Fallback
                         providerIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect></svg>`;
+                    }
+
+                    // Set tools enabled/disabled state
+                    const globalToolsToggle = document.getElementById('global-tools-toggle');
+                    if (globalToolsToggle && data.provider_config.tools_enabled !== undefined) {
+                        globalToolsToggle.checked = data.provider_config.tools_enabled;
                     }
                 }
             } catch (error) {
@@ -6603,40 +7900,47 @@
         function updateCapabilityStatus(capabilities) {
             if (!capabilities) return;
 
-            // Update status text to include capability info
             const supportsTools = capabilities.supports_tools;
             const supportsVision = capabilities.supports_vision;
 
-            let modeText = [];
-            if (supportsTools) {
-                modeText.push('🔧 Tools');
-            } else {
-                modeText.push('💬 Chat Only');
-            }
-            if (supportsVision) {
-                modeText.push('👁️ Vision');
+            // Update the tooltip capability items
+            const capTools = document.getElementById('cap-tools');
+            const capVision = document.getElementById('cap-vision');
+
+            if (capTools) {
+                if (supportsTools) {
+                    capTools.classList.remove('not-supported');
+                    capTools.classList.add('supported');
+                } else {
+                    capTools.classList.remove('supported');
+                    capTools.classList.add('not-supported');
+                }
             }
 
-            // Update the model name display to show capabilities
-            const modelNameEl = document.getElementById('model-name');
-            if (modelNameEl) {
-                const currentModel = modelNameEl.textContent;
-                // Check if we haven't already added capability info
-                if (!currentModel.includes('•')) {
-                    modelNameEl.innerHTML = `${currentModel} <span style="opacity: 0.7; font-size: 11px;">• ${modeText.join(' ')}</span>`;
+            if (capVision) {
+                if (supportsVision) {
+                    capVision.classList.remove('not-supported');
+                    capVision.classList.add('supported');
+                } else {
+                    capVision.classList.remove('supported');
+                    capVision.classList.add('not-supported');
                 }
             }
 
             // Show/hide image upload button based on vision support
+            // BUT: if we are in Default Agent, it's merged into the + menu
             if (attachImageBtn) {
-                if (supportsVision) {
+                const currentAgentType = localStorage.getItem('agentry-agent-type') || 'default';
+                if (currentAgentType === 'default') {
+                    attachImageBtn.style.display = 'none';
+                } else {
                     attachImageBtn.style.display = 'flex';
+                }
+
+                if (supportsVision) {
                     messageInput.placeholder = 'Type your message or attach an image...';
                 } else {
-                    attachImageBtn.style.display = 'none';
                     messageInput.placeholder = 'Type your message...';
-                    // Clear any pending image if vision is not supported
-                    clearSelectedImage();
                 }
             }
 
@@ -6650,21 +7954,41 @@
 
             // Click attach button to trigger file input
             attachImageBtn.addEventListener('click', () => {
+                // Clear value so same files can be selected again
+                imageInput.value = '';
                 imageInput.click();
             });
 
+            const mergedUploadBtn = document.getElementById('merged-upload-btn');
+            if (mergedUploadBtn) {
+                mergedUploadBtn.addEventListener('click', () => {
+                    imageInput.value = '';
+                    imageInput.click();
+                    // Close the popup after clicking
+                    closeToolsPopup();
+                });
+            }
+
             // Handle file selection
             imageInput.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file && file.type.startsWith('image/')) {
-                    handleImageSelect(file);
+                const files = Array.from(e.target.files);
+                if (files.length > 0) {
+                    // Filter images
+                    const imageFiles = files.filter(f => f.type.startsWith('image/'));
+                    if (imageFiles.length > 0) {
+                        handleImageSelect(imageFiles);
+                    }
                 }
             });
 
-            // Handle remove image
-            if (removeImageBtn) {
-                removeImageBtn.addEventListener('click', () => {
-                    clearSelectedImage();
+            // Handle remove image (DELEGATION since buttons are dynamic)
+            if (imagesPreviewWrapper) {
+                imagesPreviewWrapper.addEventListener('click', (e) => {
+                    if (e.target.closest('.image-preview-remove')) {
+                        const btn = e.target.closest('.image-preview-remove');
+                        const index = parseInt(btn.dataset.index);
+                        removeImage(index);
+                    }
                 });
             }
 
@@ -6688,46 +8012,78 @@
 
                     if (!window.modelCapabilities?.supports_vision) return;
 
-                    const file = e.dataTransfer.files[0];
-                    if (file && file.type.startsWith('image/')) {
-                        handleImageSelect(file);
+                    const files = Array.from(e.dataTransfer.files);
+                    const imageFiles = files.filter(f => f.type.startsWith('image/'));
+                    if (imageFiles.length > 0) {
+                        handleImageSelect(imageFiles);
                     }
                 });
             }
         }
 
-        function handleImageSelect(file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const dataUrl = e.target.result;
-                selectedImageData = dataUrl;
+        function handleImageSelect(files) {
+            // Process all selected files
+            let processedCount = 0;
 
-                // Show preview
-                imagePreview.src = dataUrl;
-                imagePreviewContainer.style.display = 'block';
-                attachImageBtn.classList.add('has-image');
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const dataUrl = e.target.result;
+                    // Add to array
+                    selectedImagesData.push(dataUrl);
+                    processedCount++;
 
-                // Enable send button if we have an image (even without text)
-                updateSendButtonState();
-            };
-            reader.readAsDataURL(file);
+                    if (processedCount === files.length) {
+                        renderImagePreviews();
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
         }
 
-        function clearSelectedImage() {
-            selectedImageData = null;
-            imageInput.value = '';
-            imagePreviewContainer.style.display = 'none';
-            imagePreview.src = '';
-            if (attachImageBtn) {
-                attachImageBtn.classList.remove('has-image');
+        function renderImagePreviews() {
+            if (!imagesPreviewWrapper) return;
+            imagesPreviewWrapper.innerHTML = '';
+
+            if (selectedImagesData.length === 0) {
+                imagesPreviewWrapper.style.display = 'none';
+                if (attachImageBtn) attachImageBtn.classList.remove('has-image');
+                return;
             }
+
+            imagesPreviewWrapper.style.display = 'flex';
+            if (attachImageBtn) attachImageBtn.classList.add('has-image');
+
+            selectedImagesData.forEach((dataUrl, index) => {
+                const item = document.createElement('div');
+                item.className = 'image-preview-item';
+                item.innerHTML = `
+                    <img src="${dataUrl}" alt="Preview ${index + 1}">
+                    <button class="image-preview-remove" data-index="${index}" title="Remove image">×</button>
+                `;
+                imagesPreviewWrapper.appendChild(item);
+            });
+
             updateSendButtonState();
+        }
+
+        function removeImage(index) {
+            selectedImagesData.splice(index, 1);
+            renderImagePreviews();
+        }
+
+        function clearSelectedImages() {
+            selectedImagesData = [];
+            if (imageInput) imageInput.value = '';
+            renderImagePreviews();
         }
 
         function updateSendButtonState() {
             const hasText = messageInput.value.trim().length > 0;
-            const hasImage = !!selectedImageData;
-            sendBtn.disabled = !(hasText || hasImage) || !isConnected;
+            const hasImages = selectedImagesData.length > 0;
+            const isSendable = (hasText || hasImages) && isConnected;
+            // console.log('[UI] Update Send Button:', { hasText, hasImages, isConnected, isSendable });
+            sendBtn.disabled = !isSendable;
         }
 
         // Message rendering
@@ -6736,27 +8092,81 @@
             emptyState.style.display = 'flex';
             messagesContainer.appendChild(emptyState);
             document.getElementById('chat-title').textContent = '';
+
+            // Reset component registry for new chat
+            if (window.componentRegistry) {
+                window.componentRegistry.reset();
+                console.log('[RefSystem] Component registry reset for new chat');
+            }
         }
 
         function hideEmptyState() {
             emptyState.style.display = 'none';
         }
 
-        function addUserMessage(content, messageIndex = null, imageData = null) {
+        function addUserMessage(content, messageIndex = null, imageData = null, extraImages = []) {
             hideEmptyState();
 
             const msg = document.createElement('div');
             msg.className = 'message user';
+
+            // Store original content
             msg.dataset.originalContent = typeof content === 'string' ? content : JSON.stringify(content);
             if (messageIndex !== null) {
                 msg.dataset.messageIndex = messageIndex;
             }
 
+            // Parse content if it's multimodal (array)
+            let displayContent = content;
+            let imagesFromContent = [];
+
+            if (typeof content === 'object' && content !== null) {
+                // Handle Array format (common for multimodal history)
+                if (Array.isArray(content)) {
+                    let textParts = [];
+                    content.forEach(part => {
+                        if (part.type === 'text') {
+                            textParts.push(part.text || '');
+                        } else if (part.type === 'image') {
+                            if (part.data) {
+                                // Check if needs prefix
+                                let src = part.data;
+                                if (!src.startsWith('data:') && !src.startsWith('http')) {
+                                    src = 'data:image/png;base64,' + src;
+                                }
+                                imagesFromContent.push(src);
+                            }
+                        } else if (part.type === 'image_url') {
+                            if (part.image_url && part.image_url.url) {
+                                imagesFromContent.push(part.image_url.url);
+                            }
+                        }
+                    });
+                    displayContent = textParts.join('\n');
+                }
+                // Handle simple object
+                else if (content.text) {
+                    displayContent = content.text;
+                }
+            }
+
+            // Combine all images
+            let allImages = [...imagesFromContent];
+            if (imageData) allImages.push(imageData);
+            if (extraImages && Array.isArray(extraImages)) allImages.push(...extraImages);
+
+            let imagesHtml = '';
+            if (allImages.length > 0) {
+                imagesHtml = `<div class="message-images-grid" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+                    ${allImages.map(img => `<div class="message-image-item" style="width: 80px; height: 80px; border-radius: 8px; overflow: hidden; border: 1px solid var(--dark-border);"><img src="${img}" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="window.open(this.src)" title="Click to view full image"></div>`).join('')}
+                </div>`;
+            }
+
             // Simplified User Message Structure (No Avatar)
             msg.innerHTML = `
                 <div class="message-content">
-                    <div class="message-text">${formatMessage(content)}</div>
-                    ${imageData ? `<div class="message-image"><img src="${imageData}" onclick="window.open(this.src)" title="Click to view full image" /></div>` : ''}
+                    <div class="message-text">${formatMessage(displayContent)}</div>
+                    ${imagesHtml}
                      <div class="message-actions">
                         <button class="message-action-btn edit-btn" title="Edit message">
                             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -6793,13 +8203,30 @@
 
             messagesContainer.appendChild(msg);
             scrollToBottom();
+
             return msg;
         }
 
         function startEditMessage(msgElement) {
             if (isProcessing) return;
 
-            const originalContent = msgElement.dataset.originalContent;
+            let contentToEdit = msgElement.dataset.originalContent;
+
+            // Handle multimodal content (show text only)
+            try {
+                if (contentToEdit && contentToEdit.trim().startsWith('[')) {
+                    const parsed = JSON.parse(contentToEdit);
+                    if (Array.isArray(parsed)) {
+                        const textParts = parsed
+                            .filter(p => p.type === 'text')
+                            .map(p => p.text);
+                        contentToEdit = textParts.join('\n');
+                    }
+                }
+            } catch (e) {
+                // Ignore parsing errors
+            }
+
             const contentDiv = msgElement.querySelector('.message-content');
             const textDiv = contentDiv.querySelector('.message-text');
             const actionsDiv = contentDiv.querySelector('.message-actions');
@@ -6812,7 +8239,7 @@
             const editContainer = document.createElement('div');
             editContainer.className = 'message-edit-container';
             editContainer.innerHTML = `
-                <textarea class="message-edit-input">${escapeHtml(originalContent)}</textarea>
+                <textarea class="message-edit-input">${escapeHtml(contentToEdit)}</textarea>
                 <div class="message-edit-actions">
                     <button class="btn-sm save">Save & Regenerate</button>
                     <button class="btn-sm cancel">Cancel</button>
@@ -7435,6 +8862,12 @@
         function renderSessionMessages(messages) {
             messagesContainer.innerHTML = '';
 
+            // Reset component registry for session load
+            if (window.componentRegistry) {
+                window.componentRegistry.reset();
+                console.log('[RefSystem] Component registry reset for session load');
+            }
+
             if (!messages || messages.length === 0) {
                 messagesContainer.appendChild(emptyState);
                 emptyState.style.display = 'flex';
@@ -7673,6 +9106,136 @@
             return div.innerHTML;
         }
 
+        // ===== Component Reference System =====
+        // Global registry for referencing components in messages
+        const componentRegistry = {
+            components: new Map(),  // id -> { type, content, preview, element, messageId }
+            counters: {             // Sequential counters per type
+                code: 0,
+                table: 0,
+                json: 0,
+                list: 0,
+                quote: 0,
+                heading: 0
+            },
+            currentMessageId: null,  // Track current message being rendered
+
+            // Reset counters for new session
+            reset() {
+                this.components.clear();
+                this.counters = { code: 0, table: 0, json: 0, list: 0, quote: 0, heading: 0 };
+                this.currentMessageId = null;
+            },
+
+            // Register a new component and return its reference ID
+            register(type, content, preview = '') {
+                this.counters[type] = (this.counters[type] || 0) + 1;
+                const refId = `@${type}-${this.counters[type]}`;
+
+                this.components.set(refId, {
+                    type,
+                    content,
+                    preview: preview.substring(0, 100),
+                    messageId: this.currentMessageId,
+                    timestamp: Date.now()
+                });
+
+                return refId;
+            },
+
+            // Get component by reference ID
+            get(refId) {
+                return this.components.get(refId);
+            },
+
+            // Get all components of a type
+            getByType(type) {
+                const result = [];
+                this.components.forEach((value, key) => {
+                    if (value.type === type) {
+                        result.push({ id: key, ...value });
+                    }
+                });
+                return result;
+            },
+
+            // Get all components as array for autocomplete
+            getAll() {
+                const result = [];
+                this.components.forEach((value, key) => {
+                    result.push({ id: key, ...value });
+                });
+                return result;
+            },
+
+            // Search components
+            search(query) {
+                const lowerQuery = query.toLowerCase();
+                const result = [];
+                this.components.forEach((value, key) => {
+                    if (key.toLowerCase().includes(lowerQuery) ||
+                        value.preview.toLowerCase().includes(lowerQuery) ||
+                        value.type.toLowerCase().includes(lowerQuery)) {
+                        result.push({ id: key, ...value });
+                    }
+                });
+                return result;
+            }
+        };
+
+        // Make registry globally accessible for backend integration
+        window.componentRegistry = componentRegistry;
+
+        // Generate reference badge HTML
+        function getRefBadgeHtml(refId, tooltip = 'Click to copy reference') {
+            return `
+                <span class="component-ref-badge" data-ref-id="${refId}" onclick="copyComponentRef('${refId}')" title="${tooltip}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                        <circle cx="12" cy="17" r="0.5" fill="currentColor"></circle>
+                    </svg>
+                    ${refId}
+                    <span class="ref-tooltip">${tooltip}</span>
+                </span>
+            `;
+        }
+
+        // Copy component reference to clipboard
+        async function copyComponentRef(refId) {
+            try {
+                await navigator.clipboard.writeText(refId);
+
+                // Find the badge and show feedback
+                const badge = document.querySelector(`.component-ref-badge[data-ref-id="${refId}"]`);
+                if (badge) {
+                    badge.classList.add('copied');
+                    const originalText = badge.innerHTML;
+
+                    setTimeout(() => {
+                        badge.classList.remove('copied');
+                    }, 1500);
+                }
+
+                console.log(`[RefSystem] Copied reference: ${refId}`);
+            } catch (err) {
+                console.error('Failed to copy reference:', err);
+            }
+        }
+
+        // Insert reference into message input
+        function insertReference(refId) {
+            const input = document.getElementById('message-input');
+            if (input) {
+                const cursorPos = input.selectionStart;
+                const textBefore = input.value.substring(0, cursorPos);
+                const textAfter = input.value.substring(cursorPos);
+                input.value = textBefore + refId + ' ' + textAfter;
+                input.focus();
+                input.setSelectionRange(cursorPos + refId.length + 1, cursorPos + refId.length + 1);
+            }
+        }
+
         function formatMessage(content) {
             if (!content) return '';
 
@@ -7695,10 +9258,10 @@
             const text = content;
             if (typeof text !== 'string') return '';
 
-            // Create custom renderer to wrap code blocks and tables with copy buttons
+            // Create custom renderer to wrap code blocks and tables with copy buttons and refs
             const renderer = new marked.Renderer();
 
-            // Custom code block renderer - handles both marked v4+ (object) and legacy (separate params)
+            // Custom code block renderer with reference system
             renderer.code = function (codeOrToken, language, escaped) {
                 // Handle marked.js v4+ where first param is a token object
                 let code, lang;
@@ -7712,6 +9275,15 @@
 
                 const displayLang = lang === 'plaintext' ? 'text' : lang;
 
+                // Determine if this is a JSON block
+                const isJson = lang === 'json' || (lang === 'plaintext' && code.trim().startsWith('{'));
+                const componentType = isJson ? 'json' : 'code';
+
+                // Register component and get reference ID
+                const preview = code.split('\n')[0].substring(0, 50);
+                const refId = componentRegistry.register(componentType, code, preview);
+                const blockId = refId.replace('@', '');
+
                 let highlightedCode;
                 try {
                     const validLang = highlight.getLanguage(lang) ? lang : 'plaintext';
@@ -7720,69 +9292,80 @@
                     highlightedCode = escapeHtml(code);
                 }
 
-                // Create unique ID for this code block
-                const blockId = 'code-' + Math.random().toString(36).substr(2, 9);
+                // Generate the reference badge
+                const refBadge = getRefBadgeHtml(refId, `Reference this ${componentType} block`);
 
                 return `
-                    <div class="code-block-container" data-block-id="${blockId}">
+                    <div class="code-block-container ref-component" data-block-id="${blockId}" data-ref-id="${refId}">
                         <div class="code-block-header">
                             <span class="code-block-language">${escapeHtml(displayLang)}</span>
-                            <button class="copy-block-btn" onclick="copyCodeBlock(this, '${blockId}')" title="Copy code">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                </svg>
-                                <span>Copy</span>
-                            </button>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                ${refBadge}
+                                <button class="copy-block-btn" onclick="copyCodeBlock(this, '${blockId}')" title="Copy code">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                    </svg>
+                                    <span>Copy</span>
+                                </button>
+                            </div>
                         </div>
                         <pre><code class="hljs language-${lang}" data-code="${btoa(unescape(encodeURIComponent(code)))}">${highlightedCode}</code></pre>
                     </div>
                 `;
             };
 
-            // Custom table renderer - handles both marked v4+ (object) and legacy (separate params)
+            // Custom table renderer with reference system
             renderer.table = function (headerOrToken, body) {
-                let header, tableBody;
+                let header, tableBody, rawContent = '';
+
                 // Handle marked.js v4+ where first param is a token object
                 if (typeof headerOrToken === 'object' && headerOrToken !== null && headerOrToken.header) {
-                    // v4+ format: token object with header and rows arrays
                     const token = headerOrToken;
 
-                    // Build header HTML - use parseInline for markdown rendering
+                    // Build header HTML
                     header = '<tr>' + token.header.map(cell => {
                         const rawText = cell.text || (cell.tokens ? cell.tokens.map(t => t.raw || t.text || '').join('') : '');
-                        // Parse inline markdown (bold, italic, code, etc.)
+                        rawContent += rawText + ' | ';
                         const parsedText = marked.parseInline ? marked.parseInline(rawText) : rawText;
                         return `<th>${parsedText}</th>`;
                     }).join('') + '</tr>';
 
-                    // Build body HTML - use parseInline for markdown rendering
+                    // Build body HTML
                     tableBody = token.rows.map(row => {
                         return '<tr>' + row.map(cell => {
                             const rawText = cell.text || (cell.tokens ? cell.tokens.map(t => t.raw || t.text || '').join('') : '');
-                            // Parse inline markdown (bold, italic, code, etc.)
+                            rawContent += rawText + ' | ';
                             const parsedText = marked.parseInline ? marked.parseInline(rawText) : rawText;
                             return `<td>${parsedText}</td>`;
                         }).join('') + '</tr>';
                     }).join('');
                 } else {
-                    // Legacy format: separate header and body strings
                     header = headerOrToken || '';
                     tableBody = body || '';
+                    rawContent = 'table data';
                 }
 
-                const blockId = 'table-' + Math.random().toString(36).substr(2, 9);
+                // Register table component
+                const preview = rawContent.substring(0, 50);
+                const refId = componentRegistry.register('table', rawContent, preview);
+                const blockId = refId.replace('@', '');
+                const refBadge = getRefBadgeHtml(refId, 'Reference this table');
+
                 return `
-                    <div class="table-container" data-block-id="${blockId}">
+                    <div class="table-container ref-component" data-block-id="${blockId}" data-ref-id="${refId}">
                         <div class="table-header">
                             <span class="table-header-label">table</span>
-                            <button class="copy-block-btn" onclick="copyTableBlock(this, '${blockId}')" title="Copy table">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                </svg>
-                                <span>Copy</span>
-                            </button>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                ${refBadge}
+                                <button class="copy-block-btn" onclick="copyTableBlock(this, '${blockId}')" title="Copy table">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                    </svg>
+                                    <span>Copy</span>
+                                </button>
+                            </div>
                         </div>
                         <div class="table-scroll-wrapper">
                             <table>
@@ -7792,6 +9375,126 @@
                         </div>
                     </div>
                 `;
+            };
+
+            // Custom list renderer with reference system
+            renderer.list = function (bodyOrToken, ordered, start) {
+                let body, items = [];
+
+                // Handle marked.js v4+ token object
+                if (typeof bodyOrToken === 'object' && bodyOrToken !== null && bodyOrToken.items) {
+                    const token = bodyOrToken;
+                    ordered = token.ordered;
+                    start = token.start;
+
+                    items = token.items.map(item => {
+                        const text = item.text || (item.tokens ? item.tokens.map(t => t.raw || t.text || '').join('') : '');
+                        return text;
+                    });
+
+                    body = token.items.map(item => {
+                        const text = item.text || (item.tokens ? item.tokens.map(t => t.raw || t.text || '').join('') : '');
+                        const parsedText = marked.parseInline ? marked.parseInline(text) : text;
+                        return `<li>${parsedText}</li>`;
+                    }).join('\n');
+                } else {
+                    body = bodyOrToken || '';
+                    items = body.split('</li>').filter(i => i.trim()).map(i => i.replace(/<li>/g, '').trim());
+                }
+
+                // Only register lists with 3+ items (significant lists)
+                if (items.length >= 3) {
+                    const preview = items.slice(0, 2).join(', ').substring(0, 50);
+                    const rawContent = items.join('\n');
+                    const refId = componentRegistry.register('list', rawContent, preview);
+                    const refBadge = getRefBadgeHtml(refId, 'Reference this list');
+
+                    const tag = ordered ? 'ol' : 'ul';
+                    const startAttr = ordered && start !== 1 ? ` start="${start}"` : '';
+
+                    return `
+                        <div class="list-block-container ref-component" data-ref-id="${refId}">
+                            <div class="list-block-header">
+                                <span class="list-block-label">${ordered ? 'Ordered' : 'Unordered'} List (${items.length} items)</span>
+                                ${refBadge}
+                            </div>
+                            <${tag}${startAttr}>${body}</${tag}>
+                        </div>
+                    `;
+                }
+
+                // For smaller lists, render normally without container
+                const tag = ordered ? 'ol' : 'ul';
+                const startAttr = ordered && start !== 1 ? ` start="${start}"` : '';
+                return `<${tag}${startAttr}>${body}</${tag}>`;
+            };
+
+            // Custom blockquote renderer with reference system
+            renderer.blockquote = function (quoteOrToken) {
+                let quote;
+
+                // Handle marked.js v4+ token object
+                if (typeof quoteOrToken === 'object' && quoteOrToken !== null) {
+                    quote = quoteOrToken.text || (quoteOrToken.tokens ? quoteOrToken.tokens.map(t => t.raw || t.text || '').join('') : '');
+                } else {
+                    quote = quoteOrToken || '';
+                }
+
+                // Strip HTML and get plain text for storage
+                const plainQuote = quote.replace(/<[^>]*>/g, '').trim();
+
+                // Only register quotes with meaningful content (30+ chars)
+                if (plainQuote.length >= 30) {
+                    const preview = plainQuote.substring(0, 50);
+                    const refId = componentRegistry.register('quote', plainQuote, preview);
+                    const refBadge = getRefBadgeHtml(refId, 'Reference this quote');
+
+                    return `
+                        <div class="quote-block-container ref-component" data-ref-id="${refId}">
+                            <div class="quote-block-header">
+                                ${refBadge}
+                            </div>
+                            <blockquote>${quote}</blockquote>
+                        </div>
+                    `;
+                }
+
+                // For short quotes, render normally
+                return `<blockquote>${quote}</blockquote>`;
+            };
+
+            // Custom heading renderer with reference system (for H1-H3 only)
+            renderer.heading = function (textOrToken, level, raw) {
+                let text;
+
+                // Handle marked.js v4+ token object
+                if (typeof textOrToken === 'object' && textOrToken !== null) {
+                    text = textOrToken.text || (textOrToken.tokens ? textOrToken.tokens.map(t => t.raw || t.text || '').join('') : '');
+                    level = textOrToken.depth || level;
+                } else {
+                    text = textOrToken || '';
+                }
+
+                // Only register H1-H3 headings
+                if (level <= 3) {
+                    const preview = text.substring(0, 50);
+                    const refId = componentRegistry.register('heading', text, preview);
+
+                    // Create slug for anchor
+                    const slug = text.toLowerCase().replace(/[^\w]+/g, '-');
+
+                    return `
+                        <h${level} id="${slug}" class="ref-component" data-ref-id="${refId}">
+                            ${text}
+                            <span class="component-ref-badge heading-badge" data-ref-id="${refId}" onclick="copyComponentRef('${refId}')" title="Reference this heading">
+                                ${refId}
+                            </span>
+                        </h${level}>
+                    `;
+                }
+
+                // For H4-H6, render normally
+                return `<h${level}>${text}</h${level}>`;
             };
 
             // Configure marked options
@@ -7814,6 +9517,47 @@
                 return text;
             }
         }
+
+        // Resolve references in user message content before sending
+        function resolveReferences(content) {
+            // Find all @type-N references in the content
+            const refPattern = /@(code|table|json|list|quote|heading)-(\d+)/g;
+            let resolvedContent = content;
+            let hasReferences = false;
+            const referencedComponents = [];
+
+            let match;
+            while ((match = refPattern.exec(content)) !== null) {
+                const refId = match[0];
+                const component = componentRegistry.get(refId);
+
+                if (component) {
+                    hasReferences = true;
+                    referencedComponents.push({
+                        refId,
+                        type: component.type,
+                        content: component.content
+                    });
+                }
+            }
+
+            // If references found, append context
+            if (hasReferences && referencedComponents.length > 0) {
+                resolvedContent += '\n\n---\n**Referenced Components:**\n';
+                referencedComponents.forEach(ref => {
+                    resolvedContent += `\n**${ref.refId}** (${ref.type}):\n\`\`\`\n${ref.content}\n\`\`\`\n`;
+                });
+            }
+
+            return {
+                content: resolvedContent,
+                hasReferences,
+                references: referencedComponents
+            };
+        }
+
+        // Make resolve function globally accessible
+        window.resolveReferences = resolveReferences;
 
         // Copy code block content
         async function copyCodeBlock(btn, blockId) {
@@ -7888,40 +9632,72 @@
             }
         }
 
-        function scrollToBottom() {
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        function scrollToBottom(force = false) {
+            if (force || isAutoScrollEnabled) {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                if (force) {
+                    isAutoScrollEnabled = true;
+                    const scrollBtn = document.getElementById('scroll-bottom-btn');
+                    if (scrollBtn) scrollBtn.classList.remove('visible');
+                }
+            }
+        }
+
+        function initScrollBehavior() {
+            const scrollBtn = document.getElementById('scroll-bottom-btn');
+
+            messagesContainer.addEventListener('scroll', () => {
+                // Check if user is near bottom
+                const threshold = 100; // pixels from bottom
+                const isNearBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight < threshold;
+
+                if (isNearBottom) {
+                    isAutoScrollEnabled = true;
+                    scrollBtn.classList.remove('visible');
+                } else {
+                    // If we just scrolled up manually
+                    if (isAutoScrollEnabled) {
+                        // We check if it was an actual manual scroll or an auto-scroll
+                        // Since scrollToBottom sets scrollTop, it triggers this event.
+                        // But we only disable auto-scroll if the scroll event wasn't triggered by an auto-scroll.
+                        // However, a simple way is: if scroll event happens and we are NOT near bottom,
+                        // and it wasn't exactly at scrollHeight, we can show the button.
+                        isAutoScrollEnabled = false;
+                    }
+                    scrollBtn.classList.add('visible');
+                }
+            });
+
+            if (scrollBtn) {
+                scrollBtn.addEventListener('click', () => {
+                    scrollToBottom(true);
+                });
+            }
         }
 
         // Send message
+        // Send message
         function sendMessage() {
             const content = messageInput.value.trim();
-            const hasImage = !!selectedImageData;
+            const images = [...selectedImagesData]; // Clone array
+            const hasImages = images.length > 0;
 
-            if ((!content && !hasImage) || !isConnected || isProcessing) return;
+            if ((!content && !hasImages) || !isConnected || isProcessing) return;
 
             isProcessing = true;
             sendBtn.disabled = true;
 
-            // Display user message (with image indicator if present)
-            const displayContent = content; // Just show text, image is handled separately now
-            const imageDataToSend = selectedImageData;
-            addUserMessage(displayContent, null, imageDataToSend);
+            // Display user message details
+            // Pass content and images
+            addUserMessage(content, null, null, images);
 
             messageInput.value = '';
             messageInput.style.height = 'auto';
+            clearSelectedImages();
 
             // Show thinking spinner immediately
             currentAssistantMessage = createAssistantMessage();
             currentAssistantText = '';
-
-            // Prepare message content with image if present
-            const messagePayload = {
-                text: content,
-                image: imageDataToSend  // Base64 image data (or null)
-            };
-
-            // Clear the selected image after sending
-            clearSelectedImage();
 
             // If no session, create one first
             if (!currentSessionId) {
@@ -7932,23 +9708,32 @@
                     .then(r => r.json())
                     .then(data => {
                         currentSessionId = data.session.id;
-                        sendToWebSocket(content, imageDataToSend);
+                        sendToWebSocket(content, images);
                     });
             } else {
-                sendToWebSocket(content, imageDataToSend);
+                sendToWebSocket(content, images);
             }
         }
 
-        function sendToWebSocket(content, imageData = null) {
+        function sendToWebSocket(content, images = []) {
+            // Resolve any component references in the content
+            const resolved = resolveReferences(content);
+
             const payload = {
                 type: 'message',
-                content: content,
+                content: resolved.content,  // Use resolved content with expanded references
                 session_id: currentSessionId
             };
 
-            // Add image data if present
-            if (imageData) {
-                payload.image = imageData;
+            // Add images data if present
+            if (images && images.length > 0) {
+                payload.images = images;
+            }
+
+            // If there were references, add metadata for logging
+            if (resolved.hasReferences) {
+                payload.referenced_components = resolved.references.map(r => r.refId);
+                console.log('[RefSystem] Resolved references:', resolved.references.map(r => r.refId));
             }
 
             ws.send(JSON.stringify(payload));
@@ -7968,6 +9753,251 @@
             messageInput.style.height = 'auto';
             messageInput.style.height = Math.min(messageInput.scrollHeight, 150) + 'px';
             updateSendButtonState();  // Update send button based on content
+
+            // Check for @ reference autocomplete trigger
+            checkRefAutocomplete();
+        });
+
+        // ===== Antigravity-style Context Menu System =====
+        let contextMenuVisible = false;
+        let contextMenuSelectedIndex = 0;
+        let contextMenuQuery = '';
+        let contextMenuStartPosition = -1;
+        let contextMenuItems = [];
+
+        function checkRefAutocomplete() {
+            const input = messageInput;
+            const value = input.value;
+            const cursorPos = input.selectionStart;
+
+            // Find the last @ before cursor
+            const textBeforeCursor = value.substring(0, cursorPos);
+            const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+
+            if (lastAtIndex === -1) {
+                hideContextMenu();
+                return;
+            }
+
+            // Check if there's a space between @ and cursor (means completed)
+            const textAfterAt = textBeforeCursor.substring(lastAtIndex + 1);
+            if (textAfterAt.includes(' ')) {
+                hideContextMenu();
+                return;
+            }
+
+            // Show context menu with search query
+            contextMenuQuery = textAfterAt.toLowerCase();
+            contextMenuStartPosition = lastAtIndex;
+            showContextMenu(contextMenuQuery);
+        }
+
+        function showContextMenu(query = '') {
+            const menu = document.getElementById('ref-context-menu');
+            if (!menu) return;
+
+            // Get all components grouped by category
+            const components = componentRegistry.getAll();
+
+            // Categorize components
+            const codeItems = components.filter(c => c.type === 'code' || c.type === 'json');
+            const tableItems = components.filter(c => c.type === 'table');
+            const contentItems = components.filter(c => c.type === 'list' || c.type === 'quote' || c.type === 'heading');
+
+            // Filter by query if provided
+            const filterItems = (items) => {
+                if (!query) return items;
+                return items.filter(c =>
+                    c.id.toLowerCase().includes(query) ||
+                    c.type.toLowerCase().includes(query) ||
+                    c.preview.toLowerCase().includes(query)
+                );
+            };
+
+            const filteredCode = filterItems(codeItems);
+            const filteredTables = filterItems(tableItems);
+            const filteredContent = filterItems(contentItems);
+
+            // Populate code items
+            const codeContainer = document.getElementById('ref-context-code-items');
+            if (codeContainer) {
+                if (filteredCode.length === 0) {
+                    codeContainer.innerHTML = '<div class="ref-context-item-empty">No code blocks yet</div>';
+                } else {
+                    codeContainer.innerHTML = filteredCode.map(c => `
+                        <div class="ref-context-item" data-ref-id="${c.id}">
+                            <span class="ref-context-item-id">${c.id}</span>
+                            <span class="ref-context-badge ${c.type}">${c.type}</span>
+                            <span class="ref-context-item-preview">${escapeHtml(c.preview)}</span>
+                        </div>
+                    `).join('');
+                }
+            }
+
+            // Populate table items
+            const tableContainer = document.getElementById('ref-context-table-items');
+            if (tableContainer) {
+                if (filteredTables.length === 0) {
+                    tableContainer.innerHTML = '<div class="ref-context-item-empty">No tables yet</div>';
+                } else {
+                    tableContainer.innerHTML = filteredTables.map(c => `
+                        <div class="ref-context-item" data-ref-id="${c.id}">
+                            <span class="ref-context-item-id">${c.id}</span>
+                            <span class="ref-context-item-preview">${escapeHtml(c.preview)}</span>
+                        </div>
+                    `).join('');
+                }
+            }
+
+            // Populate content items
+            const contentContainer = document.getElementById('ref-context-content-items');
+            if (contentContainer) {
+                if (filteredContent.length === 0) {
+                    contentContainer.innerHTML = '<div class="ref-context-item-empty">No lists, quotes, or headings yet</div>';
+                } else {
+                    contentContainer.innerHTML = filteredContent.map(c => `
+                        <div class="ref-context-item" data-ref-id="${c.id}">
+                            <span class="ref-context-item-id">${c.id}</span>
+                            <span class="ref-context-badge">${c.type}</span>
+                            <span class="ref-context-item-preview">${escapeHtml(c.preview)}</span>
+                        </div>
+                    `).join('');
+                }
+            }
+
+            // Collect all items for keyboard navigation
+            contextMenuItems = [...filteredCode, ...filteredTables, ...filteredContent];
+
+            // Add click handlers to all items
+            menu.querySelectorAll('.ref-context-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    selectContextMenuItem(item.dataset.refId);
+                });
+            });
+
+            // Auto-expand first category with items
+            const categories = ['code', 'tables', 'sessions', 'content'];
+            const hasItems = {
+                code: filteredCode.length > 0,
+                tables: filteredTables.length > 0,
+                sessions: false,
+                content: filteredContent.length > 0
+            };
+
+            categories.forEach(cat => {
+                const catEl = menu.querySelector(`[data-category="${cat}"]`);
+                if (catEl && hasItems[cat]) {
+                    catEl.classList.add('expanded');
+                }
+            });
+
+            // Update search input
+            const searchInput = document.getElementById('ref-context-search-input');
+            if (searchInput) {
+                searchInput.value = query;
+                // Focus search input when menu opens
+                setTimeout(() => searchInput.focus(), 50);
+            }
+
+            menu.classList.add('visible');
+            contextMenuVisible = true;
+        }
+
+        function hideContextMenu() {
+            const menu = document.getElementById('ref-context-menu');
+            if (menu) {
+                menu.classList.remove('visible');
+                // Collapse all categories
+                menu.querySelectorAll('.ref-context-category').forEach(cat => {
+                    cat.classList.remove('expanded');
+                });
+            }
+            contextMenuVisible = false;
+            contextMenuSelectedIndex = 0;
+            contextMenuQuery = '';
+            contextMenuStartPosition = -1;
+            contextMenuItems = [];
+        }
+
+        function toggleContextCategory(category) {
+            const catEl = document.querySelector(`[data-category="${category}"]`);
+            if (catEl) {
+                catEl.classList.toggle('expanded');
+            }
+        }
+
+        function selectContextMenuItem(refId) {
+            if (contextMenuStartPosition === -1) return;
+
+            const input = messageInput;
+            const value = input.value;
+            const cursorPos = input.selectionStart;
+
+            // Replace from @ to cursor with the reference
+            const before = value.substring(0, contextMenuStartPosition);
+            const after = value.substring(cursorPos);
+
+            input.value = before + refId + ' ' + after;
+
+            // Move cursor after the inserted reference
+            const newCursorPos = before.length + refId.length + 1;
+            input.setSelectionRange(newCursorPos, newCursorPos);
+            input.focus();
+
+            hideContextMenu();
+            updateSendButtonState();
+        }
+
+        // Search input handler for context menu
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchInput = document.getElementById('ref-context-search-input');
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    contextMenuQuery = e.target.value.toLowerCase();
+                    showContextMenu(contextMenuQuery);
+                });
+
+                searchInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        e.preventDefault();
+                        hideContextMenu();
+                        messageInput.focus();
+                    } else if (e.key === 'Enter') {
+                        e.preventDefault();
+                        // Select first visible item
+                        const firstItem = document.querySelector('.ref-context-item');
+                        if (firstItem) {
+                            selectContextMenuItem(firstItem.dataset.refId);
+                        }
+                    }
+                });
+            }
+        });
+
+        // Keyboard navigation for context menu
+        messageInput.addEventListener('keydown', (e) => {
+            if (!contextMenuVisible) return;
+
+            switch (e.key) {
+                case 'Escape':
+                    e.preventDefault();
+                    hideContextMenu();
+                    break;
+
+                case 'Enter':
+                    if (contextMenuItems.length > 0) {
+                        e.preventDefault();
+                        selectContextMenuItem(contextMenuItems[0].id);
+                    }
+                    break;
+            }
+        });
+
+        // Close context menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#message-input') && !e.target.closest('#ref-context-menu')) {
+                hideContextMenu();
+            }
         });
 
         // Logout
@@ -8456,10 +10486,20 @@
             if (mediaToggle && mediaLibraryWrapper) {
                 mediaToggle.onclick = (e) => {
                     e.preventDefault();
+                    e.stopPropagation();
                     const isVisible = mediaLibraryWrapper.style.display !== 'none';
                     mediaLibraryWrapper.style.display = isVisible ? 'none' : 'block';
                     mediaToggle.classList.toggle('active', !isVisible);
                 };
+
+                // Close on outside click
+                document.addEventListener('click', (e) => {
+                    const isVisible = mediaLibraryWrapper.style.display !== 'none';
+                    if (isVisible && !mediaLibraryWrapper.contains(e.target) && !mediaToggle.contains(e.target)) {
+                        mediaLibraryWrapper.style.display = 'none';
+                        mediaToggle.classList.remove('active');
+                    }
+                });
             }
 
             // Media Gallery Modal - View All Button

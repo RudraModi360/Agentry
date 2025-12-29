@@ -299,6 +299,719 @@
             font-size: 11px;
         }
 
+        /* ===== Component Reference System Styles ===== */
+
+        /* Reference Badge - Shows @ref-id for components */
+        .component-ref-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            font-size: 10px;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--accent-purple);
+            background: rgba(168, 85, 247, 0.15);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+            margin-left: 8px;
+        }
+
+        .component-ref-badge:hover {
+            background: rgba(168, 85, 247, 0.25);
+            border-color: rgba(168, 85, 247, 0.5);
+            color: var(--text-primary);
+            transform: scale(1.02);
+        }
+
+        .component-ref-badge:active {
+            transform: scale(0.98);
+        }
+
+        .component-ref-badge.copied {
+            background: rgba(123, 158, 99, 0.2);
+            border-color: var(--success-color);
+            color: var(--success-color);
+        }
+
+        .component-ref-badge svg {
+            width: 10px;
+            height: 10px;
+            opacity: 0.8;
+        }
+
+        /* Reference Container - wraps components with ref */
+        .ref-component {
+            position: relative;
+        }
+
+        /* JSON Block specific styling */
+        .json-block-container {
+            position: relative;
+            margin: 12px 0;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--dark-border);
+            background: #1e2127;
+        }
+
+        .json-block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid var(--dark-border);
+        }
+
+        .json-block-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--accent-cyan);
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: lowercase;
+        }
+
+        /* List Block styling */
+        .list-block-container {
+            position: relative;
+            margin: 12px 0;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--dark-border);
+            background: var(--bg-secondary);
+        }
+
+        .list-block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--dark-border);
+        }
+
+        .list-block-label {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .list-block-container ul,
+        .list-block-container ol {
+            margin: 0;
+            margin-left: 16px;
+        }
+
+        /* Blockquote Block styling */
+        .quote-block-container {
+            position: relative;
+            margin: 12px 0;
+        }
+
+        .quote-block-header {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        /* Component Reference Tooltip */
+        .ref-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 6px 10px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--dark-border);
+            border-radius: 6px;
+            font-size: 11px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .component-ref-badge:hover .ref-tooltip {
+            opacity: 1;
+            visibility: visible;
+            bottom: calc(100% + 6px);
+        }
+
+        /* Reference mention in input */
+        .ref-mention {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 2px 6px;
+            background: rgba(168, 85, 247, 0.2);
+            border-radius: 4px;
+            color: var(--accent-purple);
+            font-size: 12px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Reference autocomplete dropdown */
+        .ref-autocomplete {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            max-height: 320px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--dark-border);
+            border-radius: 12px;
+            box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: none;
+            overflow: hidden;
+        }
+
+        .ref-autocomplete.visible {
+            display: block;
+            animation: ref-autocomplete-slide-up 0.15s ease;
+        }
+
+        @keyframes ref-autocomplete-slide-up {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .ref-autocomplete-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+            border-bottom: 1px solid var(--dark-border);
+        }
+
+        .ref-autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
+        .ref-autocomplete-item:hover,
+        .ref-autocomplete-item.selected {
+            background: var(--bg-tertiary);
+        }
+
+        .ref-autocomplete-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent-purple);
+            background: rgba(168, 85, 247, 0.15);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .ref-autocomplete-type {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .ref-autocomplete-preview {
+            flex: 1;
+            font-size: 12px;
+            color: var(--text-secondary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .ref-autocomplete-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--dark-border);
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .ref-autocomplete-hint {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .ref-autocomplete-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .ref-autocomplete-empty {
+            padding: 20px 14px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+
+        .ref-autocomplete-type-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .ref-autocomplete-type-icon.code {
+            background: rgba(96, 165, 250, 0.2);
+            color: #60a5fa;
+        }
+
+        .ref-autocomplete-type-icon.json {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+        }
+
+        .ref-autocomplete-type-icon.table {
+            background: rgba(52, 211, 153, 0.2);
+            color: #34d399;
+        }
+
+        .ref-autocomplete-type-icon.list {
+            background: rgba(244, 114, 182, 0.2);
+            color: #f472b6;
+        }
+
+        .ref-autocomplete-type-icon.quote {
+            background: rgba(168, 85, 247, 0.2);
+            color: #a855f7;
+        }
+
+        .ref-autocomplete-type-icon.heading {
+            background: rgba(251, 146, 60, 0.2);
+            color: #fb923c;
+        }
+
+        /* Heading badge - inline with heading text */
+        .message-text h1 .heading-badge,
+        .message-text h2 .heading-badge,
+        .message-text h3 .heading-badge {
+            font-size: 9px;
+            padding: 2px 6px;
+            margin-left: 10px;
+            vertical-align: middle;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .message-text h1:hover .heading-badge,
+        .message-text h2:hover .heading-badge,
+        .message-text h3:hover .heading-badge {
+            opacity: 1;
+        }
+
+        /* ===== Antigravity-style Context Menu ===== */
+        .ref-context-menu {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 0;
+            width: 340px;
+            max-height: 480px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--dark-border);
+            border-radius: 12px;
+            box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: none;
+            overflow: hidden;
+            flex-direction: column;
+        }
+
+        .ref-context-menu-categories {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .ref-context-menu.visible {
+            display: flex;
+            animation: ref-context-slide-up 0.15s ease;
+        }
+
+        @keyframes ref-context-slide-up {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .ref-context-search {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--dark-border);
+            background: var(--bg-tertiary);
+        }
+
+        .ref-context-search svg {
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .ref-context-search input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 13px;
+            outline: none;
+        }
+
+        .ref-context-search input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .ref-context-category {
+            border-bottom: 1px solid var(--dark-border);
+        }
+
+        .ref-context-category:last-of-type {
+            border-bottom: none;
+        }
+
+        .ref-context-category-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .ref-context-category-header:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .ref-context-category-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .ref-context-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .ref-context-icon svg {
+            width: 16px;
+            height: 16px;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            fill: none;
+        }
+
+        /* Category-specific icon colors */
+        .ref-context-category[data-category="code"] .ref-context-icon svg {
+            stroke: #60a5fa;
+        }
+
+        .ref-context-category[data-category="tables"] .ref-context-icon svg {
+            stroke: #34d399;
+        }
+
+        .ref-context-category[data-category="sessions"] .ref-context-icon svg {
+            stroke: #a78bfa;
+        }
+
+        .ref-context-category[data-category="content"] .ref-context-icon svg {
+            stroke: #fbbf24;
+        }
+
+        .ref-context-category[data-category="files"] .ref-context-icon svg {
+            stroke: #f472b6;
+        }
+
+        .ref-context-category[data-category="folders"] .ref-context-icon svg {
+            stroke: #fb923c;
+        }
+
+        .ref-context-category[data-category="terminal"] .ref-context-icon svg {
+            stroke: #4ade80;
+        }
+
+        .ref-context-category[data-category="images"] .ref-context-icon svg {
+            stroke: #f87171;
+        }
+
+        .ref-context-arrow {
+            width: 16px;
+            height: 16px;
+            fill: none;
+            stroke: var(--text-muted);
+            stroke-width: 2;
+            transition: transform 0.2s ease;
+        }
+
+        .ref-context-category.expanded .ref-context-arrow {
+            transform: rotate(90deg);
+        }
+
+        .ref-context-items {
+            display: none;
+            max-height: 150px;
+            overflow-y: auto;
+            background: var(--bg-primary);
+        }
+
+        .ref-context-category.expanded .ref-context-items {
+            display: block;
+        }
+
+        .ref-context-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 14px 8px 44px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .ref-context-item:hover,
+        .ref-context-item.selected {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .ref-context-item-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--accent-purple);
+            background: rgba(168, 85, 247, 0.15);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .ref-context-item-preview {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            opacity: 0.7;
+        }
+
+        /* New clean item layout */
+        .ref-context-item-icon {
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            margin-right: -4px;
+        }
+
+        .ref-context-item-details {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            flex: 1;
+            overflow: hidden;
+            min-width: 0;
+        }
+
+        .ref-context-item-name {
+            color: var(--text-primary);
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .ref-context-item-path {
+            color: var(--text-muted);
+            font-size: 11px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Badge style only for code/generic items if needed, or overridden */
+        .ref-context-item-id.badge-style {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--accent-purple);
+            background: rgba(168, 85, 247, 0.15);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .ref-context-item-empty {
+            padding: 12px 14px 12px 44px;
+            font-size: 12px;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .ref-context-footer {
+            display: flex;
+            gap: 16px;
+            padding: 8px 14px;
+            border-top: 1px solid var(--dark-border);
+            background: var(--bg-tertiary);
+            font-size: 10px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .ref-context-footer span {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .ref-context-footer svg {
+            opacity: 0.7;
+        }
+
+        .ref-context-badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .ref-context-badge svg {
+            width: 10px;
+            height: 10px;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            fill: none;
+        }
+
+        .ref-context-badge.code {
+            background: rgba(96, 165, 250, 0.2);
+            color: #60a5fa;
+        }
+
+        .ref-context-badge.code svg {
+            stroke: #60a5fa;
+        }
+
+        .ref-context-badge.json {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+        }
+
+        .ref-context-badge.json svg {
+            stroke: #fbbf24;
+        }
+
+        .ref-context-badge.table {
+            background: rgba(52, 211, 153, 0.2);
+            color: #34d399;
+        }
+
+        .ref-context-badge.table svg {
+            stroke: #34d399;
+        }
+
+        .ref-context-badge.file {
+            background: rgba(244, 114, 182, 0.2);
+            color: #f472b6;
+        }
+
+        .ref-context-badge.file svg {
+            stroke: #f472b6;
+        }
+
+        .ref-context-badge.folder {
+            background: rgba(251, 146, 60, 0.2);
+            color: #fb923c;
+        }
+
+        .ref-context-badge.folder svg {
+            stroke: #fb923c;
+        }
+
+        .ref-context-badge.terminal {
+            background: rgba(74, 222, 128, 0.2);
+            color: #4ade80;
+        }
+
+        .ref-context-badge.terminal svg {
+            stroke: #4ade80;
+        }
+
+        .ref-context-badge.image {
+            background: rgba(248, 113, 113, 0.2);
+            color: #f87171;
+        }
+
+        .ref-context-badge.image svg {
+            stroke: #f87171;
+        }
+
+        .ref-context-badge.list {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+        }
+
+        .ref-context-badge.list svg {
+            stroke: #fbbf24;
+        }
+
+        .ref-context-badge.heading {
+            background: rgba(167, 139, 250, 0.2);
+            color: #a78bfa;
+        }
+
+        .ref-context-badge.heading svg {
+            stroke: #a78bfa;
+        }
+
+        .ref-context-badge.quote {
+            background: rgba(148, 163, 184, 0.2);
+            color: #94a3b8;
+        }
+
+        .ref-context-badge.quote svg {
+            stroke: #94a3b8;
+        }
+
         .blockquote-container:hover .copy-block-btn {
             opacity: 1;
         }
@@ -2649,6 +3362,8 @@
             display: flex;
             gap: 12px;
             align-items: flex-end;
+            position: relative;
+            /* Required for autocomplete dropdown positioning */
         }
 
         .input-wrapper {
@@ -5671,6 +6386,273 @@
                         <textarea id="message-input" placeholder="Type your message or attach an image..."
                             rows="1"></textarea>
                     </div>
+                    <!-- Reference Context Menu (Antigravity-style) -->
+                    <div class="ref-context-menu" id="ref-context-menu">
+                        <div class="ref-context-search">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="M21 21l-4.35-4.35"></path>
+                            </svg>
+                            <input type="text" id="ref-context-search-input" placeholder="Search context items..." />
+                        </div>
+
+                        <!-- Scrollable Categories Container -->
+                        <div class="ref-context-menu-categories">
+                            <!-- Files Category -->
+                            <div class="ref-context-category" data-category="files">
+                                <div class="ref-context-category-header" onclick="toggleContextCategory('files')">
+                                    <div class="ref-context-category-title">
+                                        <span class="ref-context-icon">
+                                            <svg viewBox="0 0 24 24">
+                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                                <polyline points="14 2 14 8 20 8" />
+                                                <line x1="16" y1="13" x2="8" y2="13" />
+                                                <line x1="16" y1="17" x2="8" y2="17" />
+                                                <polyline points="10 9 9 9 8 9" />
+                                            </svg>
+                                        </span>
+                                        <span>Files</span>
+                                    </div>
+                                    <svg viewBox="0 0 24 24" class="ref-context-arrow">
+                                        <path d="M9 18l6-6-6-6" />
+                                    </svg>
+                                </div>
+                                <div class="ref-context-items" id="ref-context-file-items">
+                                    <!-- File references populated here -->
+                                </div>
+                            </div>
+
+                            <!-- Directories Category (Renamed from Folders) -->
+                            <div class="ref-context-category" data-category="directories">
+                                <div class="ref-context-category-header" onclick="toggleContextCategory('directories')">
+                                    <div class="ref-context-category-title">
+                                        <span class="ref-context-icon">
+                                            <svg viewBox="0 0 24 24">
+                                                <path
+                                                    d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                                            </svg>
+                                        </span>
+                                        <span>Directories</span>
+                                    </div>
+                                    <svg viewBox="0 0 24 24" class="ref-context-arrow">
+                                        <path d="M9 18l6-6-6-6" />
+                                    </svg>
+                                </div>
+                                <div class="ref-context-items" id="ref-context-folder-items">
+                                    <!-- Folder references populated here -->
+                                </div>
+                            </div>
+
+                            <!-- MCP Servers Category -->
+                            <div class="ref-context-category" data-category="mcp">
+                                <div class="ref-context-category-header" onclick="toggleContextCategory('mcp')">
+                                    <div class="ref-context-category-title">
+                                        <span class="ref-context-icon">
+                                            <svg viewBox="0 0 24 24">
+                                                <path
+                                                    d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z">
+                                                </path>
+                                            </svg>
+                                        </span>
+                                        <span>MCP servers</span>
+                                    </div>
+                                    <svg viewBox="0 0 24 24" class="ref-context-arrow">
+                                        <path d="M9 18l6-6-6-6" />
+                                    </svg>
+                                </div>
+                                <div class="ref-context-items" id="ref-context-mcp-items">
+                                    <div class="ref-context-item-empty">No MCP servers connected</div>
+                                </div>
+                            </div>
+
+                            <!-- Rules Category -->
+                            <div class="ref-context-category" data-category="rules">
+                                <div class="ref-context-category-header" onclick="toggleContextCategory('rules')">
+                                    <div class="ref-context-category-title">
+                                        <span class="ref-context-icon">
+                                            <svg viewBox="0 0 24 24">
+                                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                                <path
+                                                    d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z">
+                                                </path>
+                                            </svg>
+                                        </span>
+                                        <span>Rules</span>
+                                    </div>
+                                    <svg viewBox="0 0 24 24" class="ref-context-arrow">
+                                        <path d="M9 18l6-6-6-6" />
+                                    </svg>
+                                </div>
+                                <div class="ref-context-items" id="ref-context-rule-items">
+                                    <div class="ref-context-item-empty">No rules configured</div>
+                                </div>
+                            </div>
+
+                            <!-- Terminal Category -->
+                            <div class="ref-context-category" data-category="terminal">
+                                <div class="ref-context-category-header" onclick="toggleContextCategory('terminal')">
+                                    <div class="ref-context-category-title">
+                                        <span class="ref-context-icon">
+                                            <svg viewBox="0 0 24 24">
+                                                <polyline points="4 17 10 11 4 5" />
+                                                <line x1="12" y1="19" x2="20" y2="19" />
+                                            </svg>
+                                        </span>
+                                        <span>Terminal</span>
+                                    </div>
+                                    <svg viewBox="0 0 24 24" class="ref-context-arrow">
+                                        <path d="M9 18l6-6-6-6" />
+                                    </svg>
+                                </div>
+                                <div class="ref-context-items" id="ref-context-terminal-items">
+                                    <!-- Terminal outputs populated here -->
+                                </div>
+                            </div>
+
+                            <!-- Images Category -->
+                            <div class="ref-context-category" data-category="images">
+                                <div class="ref-context-category-header" onclick="toggleContextCategory('images')">
+                                    <div class="ref-context-category-title">
+                                        <span class="ref-context-icon">
+                                            <svg viewBox="0 0 24 24">
+                                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                                <circle cx="8.5" cy="8.5" r="1.5" />
+                                                <polyline points="21 15 16 10 5 21" />
+                                            </svg>
+                                        </span>
+                                        <span>Images</span>
+                                    </div>
+                                    <svg viewBox="0 0 24 24" class="ref-context-arrow">
+                                        <path d="M9 18l6-6-6-6" />
+                                    </svg>
+                                </div>
+                                <div class="ref-context-items" id="ref-context-image-items">
+                                    <!-- Image references populated here -->
+                                </div>
+                            </div>
+
+                            <!-- Code Context Items Category -->
+                            <div class="ref-context-category" data-category="code">
+                                <div class="ref-context-category-header" onclick="toggleContextCategory('code')">
+                                    <div class="ref-context-category-title">
+                                        <span class="ref-context-icon">
+                                            <svg viewBox="0 0 24 24">
+                                                <polyline points="16 18 22 12 16 6" />
+                                                <polyline points="8 6 2 12 8 18" />
+                                            </svg>
+                                        </span>
+                                        <span>Code Context Items</span>
+                                    </div>
+                                    <svg viewBox="0 0 24 24" class="ref-context-arrow">
+                                        <path d="M9 18l6-6-6-6" />
+                                    </svg>
+                                </div>
+                                <div class="ref-context-items" id="ref-context-code-items">
+                                    <!-- Code blocks, JSON, etc populated here -->
+                                </div>
+                            </div>
+
+                            <!-- Tables Category -->
+                            <div class="ref-context-category" data-category="tables">
+                                <div class="ref-context-category-header" onclick="toggleContextCategory('tables')">
+                                    <div class="ref-context-category-title">
+                                        <span class="ref-context-icon">
+                                            <svg viewBox="0 0 24 24">
+                                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                                <line x1="3" y1="9" x2="21" y2="9" />
+                                                <line x1="3" y1="15" x2="21" y2="15" />
+                                                <line x1="9" y1="3" x2="9" y2="21" />
+                                                <line x1="15" y1="3" x2="15" y2="21" />
+                                            </svg>
+                                        </span>
+                                        <span>Tables</span>
+                                    </div>
+                                    <svg viewBox="0 0 24 24" class="ref-context-arrow">
+                                        <path d="M9 18l6-6-6-6" />
+                                    </svg>
+                                </div>
+                                <div class="ref-context-items" id="ref-context-table-items">
+                                    <!-- Tables populated here -->
+                                </div>
+                            </div>
+
+                            <!-- Sessions/Conversations Category -->
+                            <div class="ref-context-category" data-category="sessions">
+                                <div class="ref-context-category-header" onclick="toggleContextCategory('sessions')">
+                                    <div class="ref-context-category-title">
+                                        <span class="ref-context-icon">
+                                            <svg viewBox="0 0 24 24">
+                                                <path
+                                                    d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                            </svg>
+                                        </span>
+                                        <span>Conversations</span>
+                                    </div>
+                                    <svg viewBox="0 0 24 24" class="ref-context-arrow">
+                                        <path d="M9 18l6-6-6-6" />
+                                    </svg>
+                                </div>
+                                <div class="ref-context-items" id="ref-context-session-items">
+                                    <div class="ref-context-item-empty">Current session context</div>
+                                </div>
+                            </div>
+
+                            <!-- Content Blocks Category -->
+                            <div class="ref-context-category" data-category="content">
+                                <div class="ref-context-category-header" onclick="toggleContextCategory('content')">
+                                    <div class="ref-context-category-title">
+                                        <span class="ref-context-icon">
+                                            <svg viewBox="0 0 24 24">
+                                                <line x1="8" y1="6" x2="21" y2="6" />
+                                                <line x1="8" y1="12" x2="21" y2="12" />
+                                                <line x1="8" y1="18" x2="21" y2="18" />
+                                                <line x1="3" y1="6" x2="3.01" y2="6" />
+                                                <line x1="3" y1="12" x2="3.01" y2="12" />
+                                                <line x1="3" y1="18" x2="3.01" y2="18" />
+                                            </svg>
+                                        </span>
+                                        <span>Content Blocks</span>
+                                    </div>
+                                    <svg viewBox="0 0 24 24" class="ref-context-arrow">
+                                        <path d="M9 18l6-6-6-6" />
+                                    </svg>
+                                </div>
+                                <div class="ref-context-items" id="ref-context-content-items">
+                                    <!-- Lists, quotes, headings populated here -->
+                                </div>
+                            </div>
+                        </div>
+                        <!-- End Scrollable Categories Container -->
+
+                        <!-- Keyboard Hints -->
+                        <div class="ref-context-footer">
+                            <span>
+                                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <polyline points="18 15 12 9 6 15" />
+                                    <polyline points="18 20 12 14 6 20" />
+                                </svg>
+                                Navigate
+                            </span>
+                            <span>
+                                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <polyline points="9 10 4 15 9 20" />
+                                    <path d="M20 4v7a4 4 0 0 1-4 4H4" />
+                                </svg>
+                                Select
+                            </span>
+                            <span>
+                                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                                Close
+                            </span>
+                        </div>
+                    </div>
                     <button class="send-btn" id="send-btn" disabled>➤</button>
                 </div>
             </div>
@@ -7483,6 +8465,12 @@
             emptyState.style.display = 'flex';
             messagesContainer.appendChild(emptyState);
             document.getElementById('chat-title').textContent = '';
+
+            // Reset component registry for new chat
+            if (window.componentRegistry) {
+                window.componentRegistry.reset();
+                console.log('[RefSystem] Component registry reset for new chat');
+            }
         }
 
         function hideEmptyState() {
@@ -8247,6 +9235,12 @@
         function renderSessionMessages(messages) {
             messagesContainer.innerHTML = '';
 
+            // Reset component registry for session load
+            if (window.componentRegistry) {
+                window.componentRegistry.reset();
+                console.log('[RefSystem] Component registry reset for session load');
+            }
+
             if (!messages || messages.length === 0) {
                 messagesContainer.appendChild(emptyState);
                 emptyState.style.display = 'flex';
@@ -8485,6 +9479,136 @@
             return div.innerHTML;
         }
 
+        // ===== Component Reference System =====
+        // Global registry for referencing components in messages
+        const componentRegistry = {
+            components: new Map(),  // id -> { type, content, preview, element, messageId }
+            counters: {             // Sequential counters per type
+                code: 0,
+                table: 0,
+                json: 0,
+                list: 0,
+                quote: 0,
+                heading: 0
+            },
+            currentMessageId: null,  // Track current message being rendered
+
+            // Reset counters for new session
+            reset() {
+                this.components.clear();
+                this.counters = { code: 0, table: 0, json: 0, list: 0, quote: 0, heading: 0 };
+                this.currentMessageId = null;
+            },
+
+            // Register a new component and return its reference ID
+            register(type, content, preview = '') {
+                this.counters[type] = (this.counters[type] || 0) + 1;
+                const refId = `@${type}-${this.counters[type]}`;
+
+                this.components.set(refId, {
+                    type,
+                    content,
+                    preview: preview.substring(0, 100),
+                    messageId: this.currentMessageId,
+                    timestamp: Date.now()
+                });
+
+                return refId;
+            },
+
+            // Get component by reference ID
+            get(refId) {
+                return this.components.get(refId);
+            },
+
+            // Get all components of a type
+            getByType(type) {
+                const result = [];
+                this.components.forEach((value, key) => {
+                    if (value.type === type) {
+                        result.push({ id: key, ...value });
+                    }
+                });
+                return result;
+            },
+
+            // Get all components as array for autocomplete
+            getAll() {
+                const result = [];
+                this.components.forEach((value, key) => {
+                    result.push({ id: key, ...value });
+                });
+                return result;
+            },
+
+            // Search components
+            search(query) {
+                const lowerQuery = query.toLowerCase();
+                const result = [];
+                this.components.forEach((value, key) => {
+                    if (key.toLowerCase().includes(lowerQuery) ||
+                        value.preview.toLowerCase().includes(lowerQuery) ||
+                        value.type.toLowerCase().includes(lowerQuery)) {
+                        result.push({ id: key, ...value });
+                    }
+                });
+                return result;
+            }
+        };
+
+        // Make registry globally accessible for backend integration
+        window.componentRegistry = componentRegistry;
+
+        // Generate reference badge HTML
+        function getRefBadgeHtml(refId, tooltip = 'Click to copy reference') {
+            return `
+                <span class="component-ref-badge" data-ref-id="${refId}" onclick="copyComponentRef('${refId}')" title="${tooltip}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                        <circle cx="12" cy="17" r="0.5" fill="currentColor"></circle>
+                    </svg>
+                    ${refId}
+                    <span class="ref-tooltip">${tooltip}</span>
+                </span>
+            `;
+        }
+
+        // Copy component reference to clipboard
+        async function copyComponentRef(refId) {
+            try {
+                await navigator.clipboard.writeText(refId);
+
+                // Find the badge and show feedback
+                const badge = document.querySelector(`.component-ref-badge[data-ref-id="${refId}"]`);
+                if (badge) {
+                    badge.classList.add('copied');
+                    const originalText = badge.innerHTML;
+
+                    setTimeout(() => {
+                        badge.classList.remove('copied');
+                    }, 1500);
+                }
+
+                console.log(`[RefSystem] Copied reference: ${refId}`);
+            } catch (err) {
+                console.error('Failed to copy reference:', err);
+            }
+        }
+
+        // Insert reference into message input
+        function insertReference(refId) {
+            const input = document.getElementById('message-input');
+            if (input) {
+                const cursorPos = input.selectionStart;
+                const textBefore = input.value.substring(0, cursorPos);
+                const textAfter = input.value.substring(cursorPos);
+                input.value = textBefore + refId + ' ' + textAfter;
+                input.focus();
+                input.setSelectionRange(cursorPos + refId.length + 1, cursorPos + refId.length + 1);
+            }
+        }
+
         function formatMessage(content) {
             if (!content) return '';
 
@@ -8507,10 +9631,10 @@
             const text = content;
             if (typeof text !== 'string') return '';
 
-            // Create custom renderer to wrap code blocks and tables with copy buttons
+            // Create custom renderer to wrap code blocks and tables with copy buttons and refs
             const renderer = new marked.Renderer();
 
-            // Custom code block renderer - handles both marked v4+ (object) and legacy (separate params)
+            // Custom code block renderer with reference system
             renderer.code = function (codeOrToken, language, escaped) {
                 // Handle marked.js v4+ where first param is a token object
                 let code, lang;
@@ -8524,6 +9648,15 @@
 
                 const displayLang = lang === 'plaintext' ? 'text' : lang;
 
+                // Determine if this is a JSON block
+                const isJson = lang === 'json' || (lang === 'plaintext' && code.trim().startsWith('{'));
+                const componentType = isJson ? 'json' : 'code';
+
+                // Register component and get reference ID
+                const preview = code.split('\n')[0].substring(0, 50);
+                const refId = componentRegistry.register(componentType, code, preview);
+                const blockId = refId.replace('@', '');
+
                 let highlightedCode;
                 try {
                     const validLang = highlight.getLanguage(lang) ? lang : 'plaintext';
@@ -8532,69 +9665,80 @@
                     highlightedCode = escapeHtml(code);
                 }
 
-                // Create unique ID for this code block
-                const blockId = 'code-' + Math.random().toString(36).substr(2, 9);
+                // Generate the reference badge
+                const refBadge = getRefBadgeHtml(refId, `Reference this ${componentType} block`);
 
                 return `
-                    <div class="code-block-container" data-block-id="${blockId}">
+                    <div class="code-block-container ref-component" data-block-id="${blockId}" data-ref-id="${refId}">
                         <div class="code-block-header">
                             <span class="code-block-language">${escapeHtml(displayLang)}</span>
-                            <button class="copy-block-btn" onclick="copyCodeBlock(this, '${blockId}')" title="Copy code">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                </svg>
-                                <span>Copy</span>
-                            </button>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                ${refBadge}
+                                <button class="copy-block-btn" onclick="copyCodeBlock(this, '${blockId}')" title="Copy code">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                    </svg>
+                                    <span>Copy</span>
+                                </button>
+                            </div>
                         </div>
                         <pre><code class="hljs language-${lang}" data-code="${btoa(unescape(encodeURIComponent(code)))}">${highlightedCode}</code></pre>
                     </div>
                 `;
             };
 
-            // Custom table renderer - handles both marked v4+ (object) and legacy (separate params)
+            // Custom table renderer with reference system
             renderer.table = function (headerOrToken, body) {
-                let header, tableBody;
+                let header, tableBody, rawContent = '';
+
                 // Handle marked.js v4+ where first param is a token object
                 if (typeof headerOrToken === 'object' && headerOrToken !== null && headerOrToken.header) {
-                    // v4+ format: token object with header and rows arrays
                     const token = headerOrToken;
 
-                    // Build header HTML - use parseInline for markdown rendering
+                    // Build header HTML
                     header = '<tr>' + token.header.map(cell => {
                         const rawText = cell.text || (cell.tokens ? cell.tokens.map(t => t.raw || t.text || '').join('') : '');
-                        // Parse inline markdown (bold, italic, code, etc.)
+                        rawContent += rawText + ' | ';
                         const parsedText = marked.parseInline ? marked.parseInline(rawText) : rawText;
                         return `<th>${parsedText}</th>`;
                     }).join('') + '</tr>';
 
-                    // Build body HTML - use parseInline for markdown rendering
+                    // Build body HTML
                     tableBody = token.rows.map(row => {
                         return '<tr>' + row.map(cell => {
                             const rawText = cell.text || (cell.tokens ? cell.tokens.map(t => t.raw || t.text || '').join('') : '');
-                            // Parse inline markdown (bold, italic, code, etc.)
+                            rawContent += rawText + ' | ';
                             const parsedText = marked.parseInline ? marked.parseInline(rawText) : rawText;
                             return `<td>${parsedText}</td>`;
                         }).join('') + '</tr>';
                     }).join('');
                 } else {
-                    // Legacy format: separate header and body strings
                     header = headerOrToken || '';
                     tableBody = body || '';
+                    rawContent = 'table data';
                 }
 
-                const blockId = 'table-' + Math.random().toString(36).substr(2, 9);
+                // Register table component
+                const preview = rawContent.substring(0, 50);
+                const refId = componentRegistry.register('table', rawContent, preview);
+                const blockId = refId.replace('@', '');
+                const refBadge = getRefBadgeHtml(refId, 'Reference this table');
+
                 return `
-                    <div class="table-container" data-block-id="${blockId}">
+                    <div class="table-container ref-component" data-block-id="${blockId}" data-ref-id="${refId}">
                         <div class="table-header">
                             <span class="table-header-label">table</span>
-                            <button class="copy-block-btn" onclick="copyTableBlock(this, '${blockId}')" title="Copy table">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                </svg>
-                                <span>Copy</span>
-                            </button>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                ${refBadge}
+                                <button class="copy-block-btn" onclick="copyTableBlock(this, '${blockId}')" title="Copy table">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                    </svg>
+                                    <span>Copy</span>
+                                </button>
+                            </div>
                         </div>
                         <div class="table-scroll-wrapper">
                             <table>
@@ -8604,6 +9748,126 @@
                         </div>
                     </div>
                 `;
+            };
+
+            // Custom list renderer with reference system
+            renderer.list = function (bodyOrToken, ordered, start) {
+                let body, items = [];
+
+                // Handle marked.js v4+ token object
+                if (typeof bodyOrToken === 'object' && bodyOrToken !== null && bodyOrToken.items) {
+                    const token = bodyOrToken;
+                    ordered = token.ordered;
+                    start = token.start;
+
+                    items = token.items.map(item => {
+                        const text = item.text || (item.tokens ? item.tokens.map(t => t.raw || t.text || '').join('') : '');
+                        return text;
+                    });
+
+                    body = token.items.map(item => {
+                        const text = item.text || (item.tokens ? item.tokens.map(t => t.raw || t.text || '').join('') : '');
+                        const parsedText = marked.parseInline ? marked.parseInline(text) : text;
+                        return `<li>${parsedText}</li>`;
+                    }).join('\n');
+                } else {
+                    body = bodyOrToken || '';
+                    items = body.split('</li>').filter(i => i.trim()).map(i => i.replace(/<li>/g, '').trim());
+                }
+
+                // Only register lists with 3+ items (significant lists)
+                if (items.length >= 3) {
+                    const preview = items.slice(0, 2).join(', ').substring(0, 50);
+                    const rawContent = items.join('\n');
+                    const refId = componentRegistry.register('list', rawContent, preview);
+                    const refBadge = getRefBadgeHtml(refId, 'Reference this list');
+
+                    const tag = ordered ? 'ol' : 'ul';
+                    const startAttr = ordered && start !== 1 ? ` start="${start}"` : '';
+
+                    return `
+                        <div class="list-block-container ref-component" data-ref-id="${refId}">
+                            <div class="list-block-header">
+                                <span class="list-block-label">${ordered ? 'Ordered' : 'Unordered'} List (${items.length} items)</span>
+                                ${refBadge}
+                            </div>
+                            <${tag}${startAttr}>${body}</${tag}>
+                        </div>
+                    `;
+                }
+
+                // For smaller lists, render normally without container
+                const tag = ordered ? 'ol' : 'ul';
+                const startAttr = ordered && start !== 1 ? ` start="${start}"` : '';
+                return `<${tag}${startAttr}>${body}</${tag}>`;
+            };
+
+            // Custom blockquote renderer with reference system
+            renderer.blockquote = function (quoteOrToken) {
+                let quote;
+
+                // Handle marked.js v4+ token object
+                if (typeof quoteOrToken === 'object' && quoteOrToken !== null) {
+                    quote = quoteOrToken.text || (quoteOrToken.tokens ? quoteOrToken.tokens.map(t => t.raw || t.text || '').join('') : '');
+                } else {
+                    quote = quoteOrToken || '';
+                }
+
+                // Strip HTML and get plain text for storage
+                const plainQuote = quote.replace(/<[^>]*>/g, '').trim();
+
+                // Only register quotes with meaningful content (30+ chars)
+                if (plainQuote.length >= 30) {
+                    const preview = plainQuote.substring(0, 50);
+                    const refId = componentRegistry.register('quote', plainQuote, preview);
+                    const refBadge = getRefBadgeHtml(refId, 'Reference this quote');
+
+                    return `
+                        <div class="quote-block-container ref-component" data-ref-id="${refId}">
+                            <div class="quote-block-header">
+                                ${refBadge}
+                            </div>
+                            <blockquote>${quote}</blockquote>
+                        </div>
+                    `;
+                }
+
+                // For short quotes, render normally
+                return `<blockquote>${quote}</blockquote>`;
+            };
+
+            // Custom heading renderer with reference system (for H1-H3 only)
+            renderer.heading = function (textOrToken, level, raw) {
+                let text;
+
+                // Handle marked.js v4+ token object
+                if (typeof textOrToken === 'object' && textOrToken !== null) {
+                    text = textOrToken.text || (textOrToken.tokens ? textOrToken.tokens.map(t => t.raw || t.text || '').join('') : '');
+                    level = textOrToken.depth || level;
+                } else {
+                    text = textOrToken || '';
+                }
+
+                // Only register H1-H3 headings
+                if (level <= 3) {
+                    const preview = text.substring(0, 50);
+                    const refId = componentRegistry.register('heading', text, preview);
+
+                    // Create slug for anchor
+                    const slug = text.toLowerCase().replace(/[^\w]+/g, '-');
+
+                    return `
+                        <h${level} id="${slug}" class="ref-component" data-ref-id="${refId}">
+                            ${text}
+                            <span class="component-ref-badge heading-badge" data-ref-id="${refId}" onclick="copyComponentRef('${refId}')" title="Reference this heading">
+                                ${refId}
+                            </span>
+                        </h${level}>
+                    `;
+                }
+
+                // For H4-H6, render normally
+                return `<h${level}>${text}</h${level}>`;
             };
 
             // Configure marked options
@@ -8626,6 +9890,47 @@
                 return text;
             }
         }
+
+        // Resolve references in user message content before sending
+        function resolveReferences(content) {
+            // Find all @type-N references in the content
+            const refPattern = /@(code|table|json|list|quote|heading)-(\d+)/g;
+            let resolvedContent = content;
+            let hasReferences = false;
+            const referencedComponents = [];
+
+            let match;
+            while ((match = refPattern.exec(content)) !== null) {
+                const refId = match[0];
+                const component = componentRegistry.get(refId);
+
+                if (component) {
+                    hasReferences = true;
+                    referencedComponents.push({
+                        refId,
+                        type: component.type,
+                        content: component.content
+                    });
+                }
+            }
+
+            // If references found, append context
+            if (hasReferences && referencedComponents.length > 0) {
+                resolvedContent += '\n\n---\n**Referenced Components:**\n';
+                referencedComponents.forEach(ref => {
+                    resolvedContent += `\n**${ref.refId}** (${ref.type}):\n\`\`\`\n${ref.content}\n\`\`\`\n`;
+                });
+            }
+
+            return {
+                content: resolvedContent,
+                hasReferences,
+                references: referencedComponents
+            };
+        }
+
+        // Make resolve function globally accessible
+        window.resolveReferences = resolveReferences;
 
         // Copy code block content
         async function copyCodeBlock(btn, blockId) {
@@ -8784,15 +10089,24 @@
         }
 
         function sendToWebSocket(content, images = []) {
+            // Resolve any component references in the content
+            const resolved = resolveReferences(content);
+
             const payload = {
                 type: 'message',
-                content: content,
+                content: resolved.content,  // Use resolved content with expanded references
                 session_id: currentSessionId
             };
 
             // Add images data if present
             if (images && images.length > 0) {
                 payload.images = images;
+            }
+
+            // If there were references, add metadata for logging
+            if (resolved.hasReferences) {
+                payload.referenced_components = resolved.references.map(r => r.refId);
+                console.log('[RefSystem] Resolved references:', resolved.references.map(r => r.refId));
             }
 
             ws.send(JSON.stringify(payload));
@@ -8812,6 +10126,429 @@
             messageInput.style.height = 'auto';
             messageInput.style.height = Math.min(messageInput.scrollHeight, 150) + 'px';
             updateSendButtonState();  // Update send button based on content
+
+            // Check for @ reference autocomplete trigger
+            checkRefAutocomplete();
+        });
+
+        // ===== Antigravity-style Context Menu System =====
+        let contextMenuVisible = false;
+        let contextMenuSelectedIndex = 0;
+        let contextMenuQuery = '';
+        let contextMenuStartPosition = -1;
+        let contextMenuItems = [];
+
+        function checkRefAutocomplete() {
+            const input = messageInput;
+            const value = input.value;
+            const cursorPos = input.selectionStart;
+
+            // Find the last @ before cursor
+            const textBeforeCursor = value.substring(0, cursorPos);
+            const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+
+            if (lastAtIndex === -1) {
+                hideContextMenu();
+                return;
+            }
+
+            // Check if there's a space between @ and cursor (means completed)
+            const textAfterAt = textBeforeCursor.substring(lastAtIndex + 1);
+            if (textAfterAt.includes(' ')) {
+                hideContextMenu();
+                return;
+            }
+
+            // Show context menu with search query
+            contextMenuQuery = textAfterAt.toLowerCase();
+            contextMenuStartPosition = lastAtIndex;
+            showContextMenu(contextMenuQuery);
+        }
+
+        // Context Menu Data Cache
+        let cachedContextData = {
+            files: [],
+            directories: [],
+            sessions: [],
+            mcp: [],
+            rules: []
+        };
+
+        // Helper: Get file icon based on extension
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            const iconBase = 'viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"';
+
+            const icons = {
+                // Python - Two circles representing Python logo
+                'py': `<svg ${iconBase}><circle cx="9" cy="8" r="3"></circle><circle cx="15" cy="16" r="3"></circle><path d="M9 11v5c0 2 1 3 3 3M15 13V8c0-2-1-3-3-3"></path></svg>`,
+
+                // JavaScript/TypeScript - JS/TS in square
+                'js': `<svg ${iconBase}><rect x="2" y="2" width="20" height="20" rx="2"></rect><path d="M7 14c0 2 1 3 2.5 3s2.5-1 2.5-2.5V9M13 14c0 2 1 3 2.5 3s2.5-1 2.5-3-1-2-2.5-2-2.5-.5-2.5-2 1-2 2.5-2"></path></svg>`,
+                'ts': `<svg ${iconBase}><rect x="2" y="2" width="20" height="20" rx="2"></rect><path d="M8 8h4M10 8v9M14 12h2c1.5 0 2 1 2 2.5S17.5 17 16 17h-2z"></path></svg>`,
+                'jsx': `<svg ${iconBase}><rect x="2" y="2" width="20" height="20" rx="2"></rect><path d="M7 14c0 2 1 3 2.5 3s2.5-1 2.5-2.5V9M13 14c0 2 1 3 2.5 3s2.5-1 2.5-3-1-2-2.5-2-2.5-.5-2.5-2 1-2 2.5-2"></path></svg>`,
+                'tsx': `<svg ${iconBase}><rect x="2" y="2" width="20" height="20" rx="2"></rect><path d="M8 8h4M10 8v9M14 12h2c1.5 0 2 1 2 2.5S17.5 17 16 17h-2z"></path></svg>`,
+
+                // HTML
+                'html': `<svg ${iconBase}><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>`,
+                'htm': `<svg ${iconBase}><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>`,
+
+                // CSS - Hash symbol
+                'css': `<svg ${iconBase}><path d="M9 3v18M15 3v18M4 9h16M4 15h16"></path></svg>`,
+                'scss': `<svg ${iconBase}><path d="M9 3v18M15 3v18M4 9h16M4 15h16"></path></svg>`,
+                'sass': `<svg ${iconBase}><path d="M9 3v18M15 3v18M4 9h16M4 15h16"></path></svg>`,
+
+                // JSON - Curly braces
+                'json': `<svg ${iconBase}><path d="M6 4h3a2 2 0 0 1 2 2v3a2 2 0 0 0 2 2 2 2 0 0 0-2 2v3a2 2 0 0 1-2 2H6M18 4h-3a2 2 0 0 0-2 2v3a2 2 0 0 1-2 2 2 2 0 0 1 2 2v3a2 2 0 0 0 2 2h3"></path></svg>`,
+
+                // Markdown - M with #
+                'md': `<svg ${iconBase}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M9 13l1.5 2 1.5-2M10.5 15v-3"></path></svg>`,
+                'markdown': `<svg ${iconBase}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M9 13l1.5 2 1.5-2M10.5 15v-3"></path></svg>`,
+
+                // Java - Coffee cup
+                'java': `<svg ${iconBase}><path d="M17 8h3a2 2 0 0 1 2 2c0 2-1 3-2 3h-3M6 8v8c0 2 2 4 5 4h2c3 0 5-2 5-4V8H6z"></path><path d="M8 5c0-1 1-2 2-2h4c1 0 2 1 2 2"></path></svg>`,
+
+                // Ruby - Diamond
+                'rb': `<svg ${iconBase}><path d="M6 9l6-6 6 6-6 12-6-12z"></path><path d="M6 9h12M12 3v18"></path></svg>`,
+
+                // Go - Gopher
+                'go': `<svg ${iconBase}><circle cx="12" cy="12" r="8"></circle><circle cx="9" cy="10" r="1"></circle><circle cx="15" cy="10" r="1"></circle><path d="M8 14c1 2 3 3 4 3s3-1 4-3"></path></svg>`,
+
+                // Rust - Gear
+                'rs': `<svg ${iconBase}><circle cx="12" cy="12" r="3"></circle><path d="M12 1v4m0 14v4M4.22 4.22l2.83 2.83m9.9 9.9l2.83 2.83M1 12h4m14 0h4M4.22 19.78l2.83-2.83m9.9-9.9l2.83-2.83"></path></svg>`,
+
+                // PHP - Elephant
+                'php': `<svg ${iconBase}><path d="M12 6c-4 0-8 2-8 6s4 6 8 6 8-2 8-6-4-6-8-6z"></path><circle cx="9" cy="11" r="1"></circle><path d="M16 10v4"></path></svg>`,
+
+                // Docker
+                'dockerfile': `<svg ${iconBase}><rect x="3" y="8" width="18" height="11" rx="1"></rect><path d="M7 8V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2M7 12h2M11 12h2M15 12h2M7 15h2M11 15h2M15 15h2"></path></svg>`,
+
+                // Special files
+                'license': `<svg ${iconBase}><path d="M12 3v18"></path><path d="M5 9h6M13 9h6M5 9v3c0 3 3 3 3 3s3 0 3-3V9M13 9v3c0 3 3 3 3 3s3 0 3-3V9M5 21h14"></path></svg>`,
+                'readme': `<svg ${iconBase}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`,
+                'lock': `<svg ${iconBase}><rect x="5" y="11" width="14" height="10" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>`,
+
+                // Text
+                'txt': `<svg ${iconBase}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>`,
+                'log': `<svg ${iconBase}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>`,
+
+                // Config - YAML with bullets  
+                'yaml': `<svg ${iconBase}><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><circle cx="4" cy="6" r="1.5"></circle><circle cx="4" cy="12" r="1.5"></circle><circle cx="4" cy="18" r="1.5"></circle></svg>`,
+                'yml': `<svg ${iconBase}><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><circle cx="4" cy="6" r="1.5"></circle><circle cx="4" cy="12" r="1.5"></circle><circle cx="4" cy="18" r="1.5"></circle></svg>`,
+                'toml': `<svg ${iconBase}><path d="M8 6v12M16 6v12M6 6h4M6 18h4M14 6h4M14 18h4"></path></svg>`,
+                'ini': `<svg ${iconBase}><line x1="4" y1="7" x2="10" y2="7"></line><line x1="14" y1="7" x2="20" y2="7"></line><line x1="12" y1="7" x2="12" y2="7.01"></line><line x1="4" y1="12" x2="10" y2="12"></line><line x1="14" y1="12" x2="20" y2="12"></line><line x1="12" y1="12" x2="12" y2="12.01"></line><line x1="4" y1="17" x2="10" y2="17"></line><line x1="14" y1="17" x2="20" y2="17"></line><line x1="12" y1="17" x2="12" y2="17.01"></line></svg>`,
+                'env': `<svg ${iconBase}><circle cx="8" cy="8" r="4"></circle><path d="M12 8h8M16 6v4M20 6v4"></path></svg>`,
+
+                //  Git files
+                'gitignore': `<svg ${iconBase}><circle cx="6" cy="6" r="3"></circle><circle cx="18" cy="18" r="3"></circle><circle cx="18" cy="6" r="3"></circle><path d="M18 9v6M6 9c0 6 6 6 12 6"></path></svg>`,
+                'gitattributes': `<svg ${iconBase}><circle cx="6" cy="6" r="3"></circle><circle cx="18" cy="18" r="3"></circle><circle cx="18" cy="6" r="3"></circle><path d="M18 9v6M6 9c0 6 6 6 12 6"></path></svg>`,
+
+                // Database
+                'sql': `<svg ${iconBase}><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>`,
+                'db': `<svg ${iconBase}><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>`,
+
+                // Images
+                'png': `<svg ${iconBase}><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>`,
+                'jpg': `<svg ${iconBase}><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>`,
+                'jpeg': `<svg ${iconBase}><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>`,
+                'svg': `<svg ${iconBase}><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>`,
+                'gif': `<svg ${iconBase}><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>`,
+                'webp': `<svg ${iconBase}><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>`,
+
+                // Excel/Spreadsheet - Grid
+                'xlsx': `<svg ${iconBase}><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>`,
+                'xls': `<svg ${iconBase}><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>`,
+                'csv': `<svg ${iconBase}><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>`,
+
+                // Shell scripts
+                'sh': `<svg ${iconBase}><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>`,
+                'bash': `<svg ${iconBase}><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>`,
+                'ps1': `<svg ${iconBase}><polyline points="4 17 10 11 4 5"></polyline><polyline points="13 17 20 17"></polyline></svg>`,
+            };
+
+            // Check extension first, then full filename (for Dockerfile, LICENSE, etc.), then default
+            const name = filename.toLowerCase();
+            return icons[ext] || icons[name] || `<svg ${iconBase}><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>`;
+        }
+
+        async function fetchContextData() {
+            if (!token) return;
+            try {
+                // Fetch Files & Directories
+                const fileRes = await fetch(`${API_BASE}/api/files/list`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (fileRes.ok) {
+                    const data = await fileRes.json();
+
+                    cachedContextData.files = (data.files || []).map(f => ({
+                        id: `@file:${f.path}`,
+                        type: 'file',
+                        preview: f.name,
+                        path: f.path,
+                        icon: getFileIcon(f.name)
+                    }));
+
+                    cachedContextData.directories = (data.folders || []).map(f => ({
+                        id: `@folder:${f.path}`,
+                        type: 'directory',
+                        preview: f.name,
+                        path: f.path,
+                        icon: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>'
+                    }));
+                }
+
+                // Fetch Sessions
+                const sessRes = await fetch(`${API_BASE}/api/sessions`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (sessRes.ok) {
+                    const data = await sessRes.json();
+                    cachedContextData.sessions = (data.sessions || []).map(s => ({
+                        id: `@session:${s.id}`,
+                        type: 'session',
+                        preview: s.title || `Session ${s.id.substring(0, 8)}...`,
+                        path: new Date(s.updated_at).toLocaleString(),
+                        icon: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>'
+                    }));
+                }
+
+                // Mock MCP & Rules
+                cachedContextData.mcp = [
+                    { id: '@mcp:excel', type: 'mcp', preview: 'Excel', path: 'Reading/Writing Excel files', icon: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>' },
+                    { id: '@mcp:filesystem', type: 'mcp', preview: 'FileSystem', path: 'Access local files', icon: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>' }
+                ];
+                cachedContextData.rules = [
+                    { id: '@rule:agent', type: 'rule', preview: 'Agent Behavior', path: '.agent/rules.md', icon: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>' }
+                ];
+            } catch (e) { console.error("Ctx fetch error", e); }
+        }
+
+        function showContextMenu(query = '') {
+            const menu = document.getElementById('ref-context-menu');
+            if (!menu) return;
+
+            // Trigger fetch if empty (lazy load)
+            if (cachedContextData.files.length === 0 && cachedContextData.sessions.length === 0) {
+                fetchContextData().then(() => {
+                    if (contextMenuVisible) showContextMenu(query);
+                });
+            }
+
+            // Get component items (legacy)
+            const components = componentRegistry.getAll();
+            // Wrap legacy items with generic icons
+            const codeItems = components.filter(c => c.type === 'code' || c.type === 'json').map(c => ({
+                ...c, icon: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>'
+            }));
+            const tableItems = components.filter(c => c.type === 'table').map(c => ({
+                ...c, icon: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="3" x2="9" y2="21"></line></svg>'
+            }));
+            const contentItems = components.filter(c => c.type === 'list' || c.type === 'quote' || c.type === 'heading').map(c => ({
+                ...c, icon: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line></svg>'
+            }));
+
+            // Filter function
+            const filterItems = (items) => {
+                if (!query) return items;
+                const q = query.toLowerCase();
+                return items.filter(c =>
+                    c.id.toLowerCase().includes(q) ||
+                    (c.preview && c.preview.toLowerCase().includes(q)) ||
+                    (c.path && c.path.toLowerCase().includes(q))
+                );
+            };
+
+            const filteredFiles = filterItems(cachedContextData.files);
+            const filteredDirectories = filterItems(cachedContextData.directories);
+            const filteredSessions = filterItems(cachedContextData.sessions);
+            const filteredMCP = filterItems(cachedContextData.mcp);
+            const filteredRules = filterItems(cachedContextData.rules);
+            const filteredCode = filterItems(codeItems);
+            const filteredTables = filterItems(tableItems);
+            const filteredContent = filterItems(contentItems);
+
+            // Updated Render Items using Clean Layout (Icon - Name - Path)
+            const renderItems = (containerId, items, emptyMsg) => {
+                const container = document.getElementById(containerId);
+                if (!container) return;
+
+                if (items.length === 0) {
+                    container.innerHTML = `<div class="ref-context-item-empty">${emptyMsg}</div>`;
+                } else {
+                    container.innerHTML = items.map(c => `
+                        <div class="ref-context-item" data-ref-id="${c.id}">
+                            <div class="ref-context-item-icon">${c.icon || ''}</div>
+                            <div class="ref-context-item-details">
+                                <span class="ref-context-item-name">${escapeHtml(c.preview)}</span>
+                                <span class="ref-context-item-path">${escapeHtml(c.path || '')}</span>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            };
+
+            // Render all sections
+            renderItems('ref-context-file-items', filteredFiles, 'No files found');
+            renderItems('ref-context-folder-items', filteredDirectories, 'No directories found');
+            renderItems('ref-context-mcp-items', filteredMCP, 'No MCP servers');
+            renderItems('ref-context-rule-items', filteredRules, 'No rules');
+            renderItems('ref-context-session-items', filteredSessions, 'No conversations');
+            renderItems('ref-context-code-items', filteredCode, 'No code blocks');
+            renderItems('ref-context-table-items', filteredTables, 'No tables');
+            renderItems('ref-context-content-items', filteredContent, 'No content blocks');
+
+            // Collect all items for navigation
+            contextMenuItems = [
+                ...filteredFiles,
+                ...filteredDirectories,
+                ...filteredMCP,
+                ...filteredRules,
+                ...filteredSessions,
+                ...filteredCode,
+                ...filteredTables,
+                ...filteredContent
+            ];
+
+            // Add click handlers
+            menu.querySelectorAll('.ref-context-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    selectContextMenuItem(item.dataset.refId);
+                });
+            });
+
+            // Expand categories only when searching
+            const categories = [
+                { id: 'files', count: filteredFiles.length },
+                { id: 'directories', count: filteredDirectories.length },
+                { id: 'mcp', count: filteredMCP.length },
+                { id: 'rules', count: filteredRules.length },
+                { id: 'sessions', count: filteredSessions.length },
+                { id: 'code', count: filteredCode.length },
+                { id: 'tables', count: filteredTables.length },
+                { id: 'content', count: filteredContent.length }
+            ];
+
+            categories.forEach(cat => {
+                const catEl = menu.querySelector(`[data-category="${cat.id}"]`);
+                if (catEl) {
+                    // Only auto-expand if there's a search query AND the category has matching items
+                    if (query && cat.count > 0) {
+                        catEl.classList.add('expanded');
+                    } else if (!query) {
+                        // Keep collapsed by default when no search
+                        catEl.classList.remove('expanded');
+                    }
+                }
+            });
+
+            const searchInput = document.getElementById('ref-context-search-input');
+            if (searchInput) {
+                searchInput.value = query;
+                if (document.activeElement !== searchInput) {
+                    setTimeout(() => searchInput.focus(), 50);
+                }
+            }
+
+            menu.classList.add('visible');
+            contextMenuVisible = true;
+        }
+
+        function hideContextMenu() {
+            const menu = document.getElementById('ref-context-menu');
+            if (menu) {
+                menu.classList.remove('visible');
+                // Collapse all categories
+                menu.querySelectorAll('.ref-context-category').forEach(cat => {
+                    cat.classList.remove('expanded');
+                });
+            }
+            contextMenuVisible = false;
+            contextMenuSelectedIndex = 0;
+            contextMenuQuery = '';
+            contextMenuStartPosition = -1;
+            contextMenuItems = [];
+        }
+
+        function toggleContextCategory(category) {
+            const catEl = document.querySelector(`[data-category="${category}"]`);
+            if (catEl) {
+                catEl.classList.toggle('expanded');
+            }
+        }
+
+        function selectContextMenuItem(refId) {
+            if (contextMenuStartPosition === -1) return;
+
+            const input = messageInput;
+            const value = input.value;
+            const cursorPos = input.selectionStart;
+
+            // Replace from @ to cursor with the reference
+            const before = value.substring(0, contextMenuStartPosition);
+            const after = value.substring(cursorPos);
+
+            input.value = before + refId + ' ' + after;
+
+            // Move cursor after the inserted reference
+            const newCursorPos = before.length + refId.length + 1;
+            input.setSelectionRange(newCursorPos, newCursorPos);
+            input.focus();
+
+            hideContextMenu();
+            updateSendButtonState();
+        }
+
+        // Search input handler for context menu
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchInput = document.getElementById('ref-context-search-input');
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    contextMenuQuery = e.target.value.toLowerCase();
+                    showContextMenu(contextMenuQuery);
+                });
+
+                searchInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        e.preventDefault();
+                        hideContextMenu();
+                        messageInput.focus();
+                    } else if (e.key === 'Enter') {
+                        e.preventDefault();
+                        // Select first visible item
+                        const firstItem = document.querySelector('.ref-context-item');
+                        if (firstItem) {
+                            selectContextMenuItem(firstItem.dataset.refId);
+                        }
+                    }
+                });
+            }
+        });
+
+        // Keyboard navigation for context menu
+        messageInput.addEventListener('keydown', (e) => {
+            if (!contextMenuVisible) return;
+
+            switch (e.key) {
+                case 'Escape':
+                    e.preventDefault();
+                    hideContextMenu();
+                    break;
+
+                case 'Enter':
+                    if (contextMenuItems.length > 0) {
+                        e.preventDefault();
+                        selectContextMenuItem(contextMenuItems[0].id);
+                    }
+                    break;
+            }
+        });
+
+        // Close context menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#message-input') && !e.target.closest('#ref-context-menu')) {
+                hideContextMenu();
+            }
         });
 
         // Logout
@@ -9367,6 +11104,13 @@
             }
         }
 
+
+
+
+        // Ensure categories are collapsed on page load
+        document.querySelectorAll('.ref-context-category').forEach(cat => {
+            cat.classList.remove('expanded');
+        });
 
         // Initialize
         init();

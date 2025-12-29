@@ -102,73 +102,154 @@ class AzureProvider(LLMProvider):
     async def _chat_anthropic(self, messages: List[Dict[str, Any]], tools: Optional[List[Dict[str, Any]]] = None) -> Any:
         """Handle chat with Anthropic Claude models on Azure using AnthropicFoundry SDK."""
         import asyncio
+        import json
         from .utils import extract_content
         
-        # Separate system message from other messages
+        # --- Helper: Convert Tools ---
+        anthropic_tools = []
+        if tools:
+            for t in tools:
+                if t.get("type") == "function":
+                    func = t.get("function", {})
+                    anthropic_tools.append({
+                        "name": func.get("name"),
+                        "description": func.get("description"),
+                        "input_schema": func.get("parameters")
+                    })
+
+        # --- Helper: Convert Messages ---
+        anthropic_messages = []
         system_content = None
-        chat_messages = []
         
         for msg in messages:
-            if msg["role"] == "system":
-                # Anthropic wants system as top-level param
-                system_content = msg["content"] if isinstance(msg["content"], str) else str(msg["content"])
-            else:
-                # Parse content for potential multimodal (text + images)
-                raw_content = msg.get("content", "")
-                text_content, images = extract_content(raw_content)
+            role = msg.get("role")
+            content = msg.get("content")
+            
+            if role == "system":
+                # System message
+                system_content = content if isinstance(content, str) else str(content)
+                continue
                 
-                # Build content blocks for Claude API
-                if images:
-                    # Multimodal message with images
-                    content_blocks = []
-                    print(f"[AzureProvider] Found {len(images)} images in message")
-                    
-                    # Add images first (Claude recommends images before text)
-                    for idx, img in enumerate(images):
-                        # Ensure data is base64 string, not bytes
-                        img_data = img["data"]
-                        if isinstance(img_data, bytes):
-                            img_data = base64.b64encode(img_data).decode('utf-8')
-                        
-                        media_type = img.get("mime_type") or "image/png"
-                        print(f"[AzureProvider] Processing image {idx+1}: {media_type} (data len: {len(img_data) if img_data else 0})")
-                        
-                        content_blocks.append({
-                            "type": "image",
-                            "source": {
-                                "type": "base64",
-                                "media_type": media_type,
-                                "data": img_data
-                            }
-                        })
-                    
-                    # Add text content after images
-                    if text_content and text_content.strip():
-                        content_blocks.append({
+            if role == "tool":
+                # Convert OpenAI "tool" role -> Anthropic "user" role with "tool_result" content
+                tool_call_id = msg.get("tool_call_id")
+                tool_content = content
+                
+                # Check if we can merge with previous user message? 
+                # Anthropic allows sequence of user messages, but usually prefers alternating.
+                # Ideally, a tool_result follows an assistant tool_use.
+                # We'll create a new user message for the result.
+                anthropic_messages.append({
+                    "role": "user",
+                    "content": [{
+                        "type": "tool_result",
+                        "tool_use_id": tool_call_id,
+                        "content": str(tool_content)
+                    }]
+                })
+                continue
+            
+            if role == "assistant":
+                # Check for tool_calls
+                tool_calls = msg.get("tool_calls")
+                assistant_content_blocks = []
+                
+                # specific text content?
+                if content:
+                    # Strip trailing whitespace to avoid Azure Anthropic validation errors
+                    text_content = str(content).strip()
+                    if text_content:  # Only add if non-empty after stripping
+                        assistant_content_blocks.append({
                             "type": "text",
                             "text": text_content
                         })
+                
+                if tool_calls:
+                    print(f"[AzureProvider] Processing {len(tool_calls)} tool calls")
+                    for tc in tool_calls:
+                        # Debug info
+                        # print(f"[AzureProvider] Tool Call: {tc}")
+                        
+                        func = tc.get("function", {})
+                        try:
+                            args = json.loads(func.get("arguments", "{}"))
+                        except:
+                            args = {}
+                        
+                        # Ensure ID is present and string
+                        tc_id = tc.get("id")
+                        if not tc_id:
+                            print("[AzureProvider] Warning: Tool call missing ID, generating one")
+                            import uuid
+                            tc_id = f"call_{str(uuid.uuid4())[:8]}"
+                        else:
+                            tc_id = str(tc_id)
+                        
+                        assistant_content_blocks.append({
+                            "type": "tool_use",
+                            "id": tc_id,
+                            "name": func.get("name"),
+                            "input": args
+                        })
+                
+                if assistant_content_blocks:
+                    anthropic_messages.append({
+                        "role": "assistant",
+                        "content": assistant_content_blocks
+                    })
+                continue
+            
+            # User messages (generic)
+            # Parse content for potential multimodal (text + images)
+            raw_content = content or ""
+            text_content, images = extract_content(raw_content)
+            
+            # Build content blocks for Claude API
+            user_blocks = []
+            
+            if images:
+                print(f"[AzureProvider] Found {len(images)} images in message")
+                for idx, img in enumerate(images):
+                    img_data = img["data"]
+                    if isinstance(img_data, bytes):
+                        img_data = base64.b64encode(img_data).decode('utf-8')
                     
-                    chat_messages.append({
-                        "role": msg["role"],
-                        "content": content_blocks
+                    media_type = img.get("mime_type") or "image/png"
+                    user_blocks.append({
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": media_type,
+                            "data": img_data
+                        }
                     })
-                else:
-                    # Text-only message
-                    chat_messages.append({
-                        "role": msg["role"],
-                        "content": text_content if text_content else ""
-                    })
-        
-        # Build kwargs for Anthropic API
+            
+            if text_content and text_content.strip():
+                user_blocks.append({
+                    "type": "text",
+                    "text": text_content
+                })
+            elif not user_blocks:
+                # Empty message?
+                user_blocks.append({"type": "text", "text": " "})
+                
+            anthropic_messages.append({
+                "role": msg.get("role", "user"),
+                "content": user_blocks
+            })
+
+        # --- Execute Call ---
         kwargs = {
             "model": self.model_name,
-            "messages": chat_messages,
+            "messages": anthropic_messages,
             "max_tokens": 4096
         }
         
         if system_content:
             kwargs["system"] = system_content
+            
+        if anthropic_tools:
+            kwargs["tools"] = anthropic_tools
         
         try:
             # AnthropicFoundry is sync, run in executor
@@ -178,17 +259,40 @@ class AzureProvider(LLMProvider):
                 lambda: self.client.messages.create(**kwargs)
             )
             
-            # Extract text content from response
-            text_content = ""
-            for block in response.content:
-                if hasattr(block, 'text'):
-                    text_content += block.text
+            # --- Convert Response to OpenAI format ---
+            # The response is an Anthropic Message object
             
-            # Return MockMessage compatible with agentry
-            return MockMessage(content=text_content, role="assistant")
+            final_text = ""
+            final_tool_calls = []
+            
+            for block in response.content:
+                if block.type == "text":
+                    final_text += block.text
+                elif block.type == "tool_use":
+                    final_tool_calls.append({
+                        "id": block.id,
+                        "type": "function",
+                        "function": {
+                            "name": block.name,
+                            "arguments": json.dumps(block.input)
+                        }
+                    })
+            
+            # Strip trailing whitespace to prevent validation errors in subsequent API calls
+            # This is critical because Azure Anthropic rejects messages ending with whitespace
+            final_text = final_text.rstrip() if final_text else ""
+            
+            # Return Object mimicking OpenAI Message
+            msg_obj = MockMessage(content=final_text, role="assistant")
+            if final_tool_calls:
+                msg_obj.tool_calls = final_tool_calls
+            
+            return msg_obj
             
         except Exception as e:
-            raise ValueError(f"Azure Anthropic Error: {str(e)}")
+            # Log full error for debugging
+             print(f"Azure Anthropic Error Details: {str(e)}")
+             raise ValueError(f"Azure Anthropic Error: {str(e)}")
     
     async def _chat_openai(self, messages: List[Dict[str, Any]], tools: Optional[List[Dict[str, Any]]] = None) -> Any:
         """Handle chat with OpenAI models on Azure."""

@@ -422,6 +422,52 @@ async def get_user_media(user: Dict = Depends(get_current_user)):
     
     return {"media": media}
 
+@app.get("/api/files/list")
+async def list_files(path: str = ".", user: Dict = Depends(get_current_user)):
+    """List files in the project directory."""
+    try:
+        # parent_dir is defined at top of file as project root
+        target_path = os.path.abspath(os.path.join(parent_dir, path))
+        
+        # Security: ensure target_path is within parent_dir
+        if not target_path.startswith(os.path.abspath(parent_dir)):
+            # Fallback to root if traversal attempted
+            target_path = os.path.abspath(parent_dir)
+            
+        files = []
+        folders = []
+        
+        items = os.listdir(target_path)
+        # Sort: folders first, then files
+        items.sort(key=lambda x: (not os.path.isdir(os.path.join(target_path, x)), x.lower()))
+        
+        for item in items:
+            if item.startswith('.') or item == "__pycache__":
+                continue
+                
+            full_path = os.path.join(target_path, item)
+            rel_path = os.path.relpath(full_path, parent_dir)
+            # Use forward slashes for cross-platform consistency in UI
+            rel_path = rel_path.replace("\\", "/")
+            
+            if os.path.isdir(full_path):
+                folders.append({
+                    "name": item,
+                    "path": rel_path,
+                    "type": "folder"
+                })
+            else:
+                files.append({
+                    "name": item,
+                    "path": rel_path,
+                    "type": "file"
+                })
+                
+        return {"files": files, "folders": folders, "current_path": path}
+    except Exception as e:
+        print(f"Error listing files: {e}")
+        return {"files": [], "folders": [], "error": str(e)}
+
 @app.delete("/api/media/{media_id}")
 async def delete_user_media(media_id: int, user: Dict = Depends(get_current_user)):
     """Delete a media file by ID (only if owned by the user)."""
