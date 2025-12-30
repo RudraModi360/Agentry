@@ -656,6 +656,101 @@
             }
         }
 
+        /* Thinking Indicator Styles (Enhanced) */
+        @keyframes thinking-pulse {
+            0% {
+                opacity: 0.6;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.6;
+            }
+        }
+
+        .thinking-indicator {
+            margin: 12px 0;
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+            background: var(--bg-tertiary);
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .thinking-indicator:not(.completed) {
+            border-color: var(--accent);
+            box-shadow: 0 0 10px rgba(var(--accent-rgb, 99, 102, 241), 0.1);
+        }
+
+        .thinking-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s ease;
+        }
+
+        .thinking-header:hover {
+            background: rgba(var(--accent-rgb, 99, 102, 241), 0.05);
+        }
+
+        .thinking-text {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .thinking-indicator:not(.completed) .thinking-text {
+            animation: thinking-pulse 1.5s infinite ease-in-out;
+        }
+
+        .thinking-text::before {
+            content: "💭";
+            font-size: 16px;
+        }
+
+        .thinking-toggle {
+            font-size: 12px;
+            color: var(--text-secondary);
+            transition: transform 0.2s ease;
+        }
+
+        .thinking-content {
+            padding: 12px 14px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+            background: rgba(var(--accent-rgb, 99, 102, 241), 0.02);
+            border-top: 1px solid var(--card-border);
+        }
+
+        .thinking-indicator.collapsed .thinking-content {
+            display: none;
+        }
+
+        .thinking-indicator.completed .thinking-text {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .thinking-indicator.completed .thinking-text::before {
+            content: "✓";
+            color: var(--success);
+        }
+
 
 
         /* Scroll to Bottom Button */
@@ -7110,6 +7205,8 @@
         // Handle WebSocket messages
         let currentAssistantMessage = null;
         let currentAssistantText = '';
+        let thinkingContainer = null; // Container for thinking content
+        let thinkingText = ''; // Accumulated thinking text
 
         function handleWebSocketMessage(data) {
             switch (data.type) {
@@ -7121,6 +7218,67 @@
                         window.modelCapabilities = data.capabilities;
                         updateCapabilityStatus(data.capabilities);
                     }
+                    break;
+
+                case 'thinking_start':
+                    // Create assistant message if not exists
+                    if (!currentAssistantMessage) {
+                        currentAssistantMessage = createAssistantMessage();
+                        currentAssistantText = '';
+                    }
+                    // Remove any processing indicator
+                    removeLoadingIndicators(currentAssistantMessage);
+
+                    // Create thinking container
+                    const contentDiv = currentAssistantMessage.querySelector('.message-content');
+                    thinkingContainer = document.createElement('div');
+                    thinkingContainer.className = 'thinking-indicator';
+                    thinkingContainer.dataset.startTime = Date.now();
+                    thinkingContainer.innerHTML = `
+                        <div class="thinking-header">
+                            <span class="thinking-text">Thinking...</span>
+                            <span class="thinking-toggle">▼</span>
+                        </div>
+                        <div class="thinking-content"></div>
+                    `;
+
+                    // Add click handler to toggle thinking content
+                    const header = thinkingContainer.querySelector('.thinking-header');
+                    header.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        thinkingContainer.classList.toggle('collapsed');
+                        const toggle = thinkingContainer.querySelector('.thinking-toggle');
+                        if (toggle) {
+                            toggle.textContent = thinkingContainer.classList.contains('collapsed') ? '▶' : '▼';
+                        }
+                    });
+
+                    // Add to message (Always at the top)
+                    contentDiv.prepend(thinkingContainer);
+
+                    thinkingText = '';
+                    scrollToBottom();
+                    break;
+
+                case 'thinking_delta':
+                    if (thinkingContainer && data.content) {
+                        thinkingText += data.content;
+                        const thinkingContentDiv = thinkingContainer.querySelector('.thinking-content');
+                        if (thinkingContentDiv) {
+                            // Update thinking content (plain text, no markdown)
+                            thinkingContentDiv.textContent = thinkingText;
+                        }
+                        scrollToBottom();
+                    }
+                    break;
+
+                case 'thinking_end':
+                    if (currentAssistantMessage) {
+                        completeThinkingExpander(currentAssistantMessage);
+                        thinkingContainer = null;
+                        thinkingText = '';
+                    }
+                    scrollToBottom();
                     break;
 
                 case 'message_deleted':
@@ -7244,6 +7402,8 @@
                     // Reset state for next interaction
                     currentAssistantMessage = null;
                     currentAssistantText = '';
+                    thinkingContainer = null;
+                    thinkingText = '';
                     isProcessing = false;
                     sendBtn.disabled = false;
                     loadSessions(); // Refresh session list
@@ -7960,13 +8120,11 @@
             const startTime = parseInt(indicator.dataset.startTime || Date.now());
             const duration = Math.round((Date.now() - startTime) / 1000);
 
-            // If duration is 0, hide the indicator entirely
-            if (duration <= 0) {
-                indicator.style.display = 'none';
-                return;
-            }
+            // Format duration
+            const durationText = duration <= 0 ? '< 1s' : (duration < 60 ? `${duration}s` : `${Math.floor(duration / 60)}m ${duration % 60}s`);
 
-            const durationText = duration < 60 ? `${duration}s` : `${Math.floor(duration / 60)}m ${duration % 60}s`;
+            // Ensure visible behavior
+            indicator.style.display = '';
 
             // Mark as completed
             indicator.classList.add('completed');

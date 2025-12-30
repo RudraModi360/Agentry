@@ -13,6 +13,8 @@ from scratchy.tools.agent_tools import (
     DateTimeTool, NotesTool, MemoryTool, SmartBashTool, ThinkTool
 )
 from scratchy.config.prompts import get_system_prompt
+from scratchy.intelligence.query_analyzer import QueryAnalyzer, QueryType
+from scratchy.intelligence.reasoning import ReasoningEngine, ReasoningStrategy
 
 
 class SmartAgentMode:
@@ -64,6 +66,10 @@ class SmartAgent(Agent):
         self.project_memory = get_project_memory()
         self.project_context: Optional[ProjectContext] = None
         
+        # Intelligence components (NEW)
+        self.query_analyzer = QueryAnalyzer(debug=debug)
+        self.reasoning_engine = ReasoningEngine(debug=debug)
+        
         # Load project context if in project mode
         if mode == SmartAgentMode.PROJECT and project_id:
             self.project_context = self.project_memory.get_project(project_id)
@@ -79,95 +85,20 @@ class SmartAgent(Agent):
         model_name = getattr(self.provider, "model_name", "Unknown")
         
         if self.mode == SmartAgentMode.PROJECT and self.project_context:
+            # Use production-grade project prompt
             self.default_system_message = self._get_project_system_prompt(model_name)
         else:
-            self.default_system_message = self._get_solo_system_prompt(model_name)
+            # Use production-grade solo prompt from prompts.py
+            self.default_system_message = get_system_prompt(
+                model_name,
+                role="smart_solo"
+            )
     
     def _get_solo_system_prompt(self, model_name: str) -> str:
-        """Get system prompt for solo chat mode - Claude-style sophisticated prompt."""
-        return f"""You are SmartAgent, an AI assistant created by the Agentry team. You are powered by {model_name}.
-
-<identity>
-You are a highly capable, thoughtful AI assistant designed for general-purpose reasoning and task completion. You combine strong analytical abilities with practical tool access to help users effectively.
-
-Your core traits:
-- **Thoughtful**: You think carefully before responding, considering multiple angles
-- **Honest**: You acknowledge uncertainty and limitations rather than guessing
-- **Helpful**: You genuinely try to understand and address what users need
-- **Adaptive**: You match your communication style to the user's preferences
-</identity>
-
-<tools>
-You have access to exactly 5 tools. Use them judiciously:
-
-1. **web_search** - Search the internet for current information
-   - Use when: You need facts, current events, or information you don't have
-   - Don't use when: The question is about reasoning, opinions, or you already know the answer
-
-2. **memory** - Store and retrieve learnings, patterns, and approaches
-   - Use when: You discover something valuable worth remembering, or need to recall past context
-   - Actions: store (save new), search (find relevant), list (show recent), export (get all)
-
-3. **notes** - Personal note-taking for temporary information
-   - Use when: You need to track information within a session, make quick reminders
-   - Actions: add, list, search, get, delete
-
-4. **datetime** - Get current date and time
-   - Use when: User asks about time, or you need to timestamp something
-
-5. **bash** - Execute shell commands
-   - Use when: User needs system operations, file manipulation, or command execution
-   - Always explain what a command will do before running potentially impactful ones
-</tools>
-
-<thinking_approach>
-When presented with a task or question:
-
-1. **Parse the request**: What is the user actually asking for? What's the underlying need?
-
-2. **Assess your knowledge**: Can you answer this directly, or do you need tools?
-   - If confident in your knowledge → respond directly
-   - If uncertain or needs current info → use web_search
-   - If it involves system operations → use bash
-
-3. **Consider the scope**: Is this a simple question or a complex multi-step task?
-   - Simple → give a direct, concise answer
-   - Complex → break it down, explain your approach, proceed step by step
-
-4. **Maintain context**: Remember what happened earlier in the conversation. Use the memory tool to capture important insights for future reference.
-</thinking_approach>
-
-<communication_style>
-- **Be direct**: Lead with the answer or action, not preamble
-- **Be concise**: Respect the user's time; don't over-explain simple things
-- **Be thorough**: For complex topics, provide comprehensive coverage
-- **Use structure**: Lists, headers, and formatting help readability
-- **Match tone**: Mirror the user's formality level and communication style
-- **Show your work**: For reasoning tasks, explain your thought process
-</communication_style>
-
-<important_guidelines>
-1. **Accuracy over speed**: Take time to get things right. It's better to say "I'm not sure" than to give wrong information.
-
-2. **Clarify ambiguity**: If a request is unclear, ask a targeted clarifying question rather than guessing.
-
-3. **Admit limitations**: Be upfront about what you can't do or don't know.
-
-4. **Be safe with bash**: When executing commands, especially ones that modify the system, explain what you're doing and why.
-
-5. **Learn and remember**: Use the memory tool to capture valuable patterns and insights that could help in future interactions.
-
-6. **Stay on task**: Focus on what the user needs. Avoid tangents unless they add value.
-</important_guidelines>
-
-<current_context>
-- Current time: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
-- Working directory: {__import__('os').getcwd()}
-- Session: Active
-</current_context>
-
-You are ready to help. Respond thoughtfully and effectively.
-"""
+        """Get system prompt for solo chat mode - production-grade."""
+        # Now uses production prompts from prompts.py
+        return get_system_prompt(model_name, role="smart_solo")
+    
     
     def _get_project_system_prompt(self, model_name: str) -> str:
         """Get system prompt for project mode - Claude-style context-aware."""
@@ -360,8 +291,34 @@ You are ready to help with {project.title}. Focus on the project goal and build 
     async def chat(self, user_input: Union[str, List[Dict[str, Any]]], 
                    session_id: str = "default") -> str:
         """
-        Enhanced chat with automatic learning capture.
+        Enhanced chat with automatic query analysis, tool suggestion, and learning capture.
         """
+        # === INTELLIGENCE LAYER: Query Analysis ===
+        if isinstance(user_input, str) and len(user_input) > 0:
+            # Analyze the query
+            analysis = self.query_analyzer.analyze(user_input)
+            
+            if self.debug:
+                print(f"[Agentry Intelligence] 🔍 Query Analysis:")
+                print(f"   Type: {analysis.query_type.value}")
+                print(f"   Complexity: {analysis.complexity_score:.2f}")
+                print(f"   Web Search Required: {'✅ YES' if analysis.needs_web_search else '❌ NO'}")
+                if analysis.suggested_tools:
+                    print(f"   Suggested Tools: {', '.join(analysis.suggested_tools)}")
+                print(f"   Reasoning: {analysis.reasoning}")
+            
+            # Inject mandatory web_search hint for factual queries
+            if analysis.needs_web_search and 'web_search' in analysis.suggested_tools:
+                hint = (f"\n\n[SYSTEM DIRECTIVE: This is a '{analysis.query_type.value}' query "
+                       f"requiring current factual information. You MUST use the web_search "
+                       f"tool FIRST before answering. This is mandatory for queries containing "
+                       f"keywords like 'best', 'latest', 'download', 'how to', 'compare'. "
+                       f"Call web_search now.]")
+                user_input = user_input + hint
+                
+                if self.debug:
+                    print(f"[Agentry Intelligence] 💡 Injected mandatory web_search directive")
+        
         # Get project memories if in project mode
         if self.mode == SmartAgentMode.PROJECT and self.project_id:
             # Inject project context into session
@@ -373,6 +330,34 @@ You are ready to help with {project.title}. Focus on the project goal and build 
                 if session.messages[0]['role'] == 'system':
                     base = self.default_system_message
                     session.messages[0]['content'] = base + "\n\n" + project_context
+            
+            # Select and apply reasoning strategy if needed
+            if isinstance(user_input, str) and len(user_input) > 0:
+                # Calculate complexity if not already done
+                if 'analysis' not in locals():
+                    analysis = self.query_analyzer.analyze(user_input)
+                
+                strategy = self.reasoning_engine.select_strategy(user_input, analysis.complexity_score)
+                
+                if self.debug:
+                    description = self.reasoning_engine.get_strategy_description(strategy)
+                    print(f"[Agentry Intelligence] 🧠 Reasoning Strategy: {strategy.value}")
+                    print(f"   {description}")
+
+                from scratchy.intelligence.reasoning import ReasoningStrategy
+                if strategy == ReasoningStrategy.CHAIN_OF_THOUGHT:
+                    # STRICT tag enforcement - simplified and focused on the persistence of the tag
+                    cot_context = "\n\n[REASONING MODE: Start your response with <thinking>. Keep this tag OPEN while you plan and analyze. Do NOT close </thinking> until you are ready to output the final answer or call a tool. ABSOLUTELY NO reasoning text allowed outside these tags.]"
+                    user_input = user_input + cot_context
+                    if self.debug:
+                        print(f"[Agentry Intelligence] 🔗 Applied Chain of Thought enhancement")
+                
+                elif strategy == ReasoningStrategy.TREE_OF_THOUGHTS:
+                    # STRICT tag enforcement
+                    tot_context = "\n\n[REASONING MODE: Start with <thinking>. Explore multiple solution paths inside. Do NOT close </thinking> until you have synthesized the best approach and are ready to act. NO reasoning outside tags.]"
+                    user_input = user_input + tot_context
+                    if self.debug:
+                        print(f"[Agentry Intelligence] 🌳 Applied Tree of Thoughts enhancement")
         
         # Call parent chat
         response = await super().chat(user_input, session_id)

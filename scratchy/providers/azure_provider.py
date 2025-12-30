@@ -99,6 +99,350 @@ class AzureProvider(LLMProvider):
         else:
             return await self._chat_openai(messages, tools)
     
+    async def chat_stream(self, messages: List[Dict[str, Any]], tools: Optional[List[Dict[str, Any]]] = None, on_token: Optional[Any] = None) -> Any:
+        """Streaming version of chat."""
+        if self.model_type == self.MODEL_TYPE_ANTHROPIC:
+            return await self._chat_anthropic_stream(messages, tools, on_token)
+        else:
+            return await self._chat_openai_stream(messages, tools, on_token)
+            
+    def _convert_to_anthropic_messages(self, messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Convert generic messages to Anthropic format, handling tool/user role mapping."""
+        from .utils import extract_content
+        import base64
+        
+        anthropic_messages = []
+        current_tool_results = []
+        
+        for msg in messages:
+            role = msg.get("role")
+            content = msg.get("content", "")
+            
+            # Handle Tool Results (Generic 'tool' role -> Anthropic 'user' role with tool_result)
+            if role == "tool":
+                # Only add if we have an ID (which we should)
+                tool_call_id = msg.get("tool_call_id")
+                # If no ID, we might need a fallback or skip. 
+                # Agent typically ensures ID is present.
+                
+                current_tool_results.append({
+                    "type": "tool_result",
+                    "tool_use_id": tool_call_id,
+                    "content": content if content else ""
+                })
+                continue
+            
+            # Flush any pending tool results before processing next non-tool message
+            if current_tool_results:
+                anthropic_messages.append({
+                    "role": "user",
+                    "content": current_tool_results
+                })
+                current_tool_results = []
+            
+            # Skip system messages here (they are handled at top level)
+            if role == "system":
+                # We typically preserve them in list for extraction later, 
+                # but this method is specifically for the 'messages' array.
+                # Use a placeholder or just return it? 
+                # Better to include it so the caller can extract it, 
+                # but caller of this method filters it out.
+                anthropic_messages.append(msg) 
+                continue
+                
+            # Handle Assistant Messages with Tool Calls
+            if role == "assistant":
+                tool_calls = msg.get("tool_calls")
+                
+                # Base content (text)
+                text_content = content if isinstance(content, str) else str(content)
+                blocks = []
+                
+                if text_content:
+                    blocks.append({"type": "text", "text": text_content})
+                
+                # Add tool_use blocks
+                if tool_calls:
+                    for tc in tool_calls:
+                        # Parse args if string
+                        args = tc.get("function", {}).get("arguments", "{}")
+                        # tc structure from Agent: {id, type, function: {name, arguments}}
+                        # Anthropic wants: {type: tool_use, id, name, input}
+                        
+                        # Ensure input is dict
+                        if isinstance(args, str):
+                            try:
+                                import json
+                                input_json = json.loads(args)
+                            except:
+                                input_json = {} # Error
+                        else:
+                            input_json = args
+                            
+                        blocks.append({
+                            "type": "tool_use",
+                            "id": tc.get("id"),
+                            "name": tc.get("function", {}).get("name"),
+                            "input": input_json
+                        })
+                
+                # If we have blocks (tool uses or text), use list content
+                if blocks:
+                    anthropic_messages.append({
+                        "role": "assistant",
+                        "content": blocks
+                    })
+                else:
+                    # Fallback for empty assistant message?
+                    anthropic_messages.append({"role": "assistant", "content": ""})
+                continue
+                
+            # Handle User Messages (Text/Image)
+            if role == "user":
+                extracted_text, images = extract_content(content)
+                
+                if images:
+                    blocks = []
+                    # Add images
+                    for img in images:
+                        data = img["data"]
+                        if isinstance(data, bytes):
+                            data = base64.b64encode(data).decode('utf-8')
+                        
+                        blocks.append({
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": img.get("mime_type", "image/png"),
+                                "data": data
+                            }
+                        })
+                    # Add text
+                    if extracted_text:
+                        blocks.append({"type": "text", "text": extracted_text})
+                        
+                    anthropic_messages.append({
+                        "role": "user",
+                        "content": blocks
+                    })
+                else:
+                    # Plain text
+                    anthropic_messages.append({
+                        "role": "user",
+                        "content": extracted_text
+                    })
+                continue
+                
+            # Fallback for other roles (function, etc - older OpenAI)
+            # Just pass through?
+            anthropic_messages.append(msg)
+            
+        # Flush any trailing tool results at end
+        if current_tool_results:
+            anthropic_messages.append({
+                "role": "user",
+                "content": current_tool_results
+            })
+            
+        return anthropic_messages
+    
+    async def _chat_anthropic_stream(self, messages: List[Dict[str, Any]], tools: Optional[List[Dict[str, Any]]] = None, on_token: Optional[Any] = None) -> Any:
+        """Handle streaming chat with Anthropic Claude models on Azure."""
+        import asyncio
+        from .utils import extract_content
+        
+        # Convert messages to Anthropic format (handling tool roles)
+        chat_messages = self._convert_to_anthropic_messages(messages)
+        
+        # System message is handled via kwargs in Anthropic
+        system_content = None
+        # Extract system message if present in original (it might have been filtered out or needs checking)
+        for msg in messages:
+            if msg["role"] == "system":
+                system_content = msg["content"]
+                break
+        
+        # Filter out system messages from chat_messages as they go into top-level param
+        chat_messages = [m for m in chat_messages if m["role"] != "system"]
+        
+        # Build kwargs for Anthropic API
+        kwargs = {
+            "model": self.model_name,
+            "messages": chat_messages,
+            "max_tokens": 4096
+        }
+        
+        if system_content:
+            kwargs["system"] = system_content
+
+        # Convert and add tools if present
+        if tools:
+            anthropic_tools = []
+            for tool in tools:
+                anthropic_tools.append(self._convert_tool_to_anthropic(tool))
+            kwargs["tools"] = anthropic_tools
+        
+        try:
+            # Stream the response in real-time
+            accumulated_text = ""
+            accumulated_tool_calls = []
+            
+            # Create stream in a thread-safe way
+            import concurrent.futures
+            import queue
+            import threading
+            
+            q = queue.Queue()
+            
+            def stream_worker():
+                """Worker thread to handle synchronous streaming."""
+                try:
+                    with self.client.messages.stream(**kwargs) as stream:
+                        for event in stream:
+                            q.put(('event', event))
+                    q.put(('done', None))
+                except Exception as e:
+                    q.put(('error', e))
+            
+            # Start streaming in background thread
+            thread = threading.Thread(target=stream_worker, daemon=True)
+            thread.start()
+            
+            # Process chunks as they arrive
+            while True:
+                try:
+                    msg_type, data = q.get(timeout=60)
+                    
+                    if msg_type == 'event':
+                        event = data
+                        # Handle Text Delta
+                        if event.type == 'content_block_delta' and hasattr(event.delta, 'text'):
+                            text = event.delta.text
+                            accumulated_text += text
+                            if on_token:
+                                await on_token(text)
+                                await asyncio.sleep(0)
+                        
+                        # Handle Tool Use Start
+                        elif event.type == 'content_block_start' and event.content_block.type == 'tool_use':
+                            accumulated_tool_calls.append({
+                                "id": event.content_block.id,
+                                "name": event.content_block.name,
+                                "input_json": ""
+                            })
+                            
+                        # Handle Tool Input JSON Delta
+                        elif event.type == 'content_block_delta' and hasattr(event.delta, 'partial_json'):
+                            if accumulated_tool_calls:
+                                accumulated_tool_calls[-1]["input_json"] += event.delta.partial_json
+                                
+                    elif msg_type == 'done':
+                        break
+                    elif msg_type == 'error':
+                        raise data
+                except queue.Empty:
+                    raise TimeoutError("Streaming timeout")
+            
+            thread.join(timeout=5)
+            
+            # Finalize tool calls
+            final_tool_calls = []
+            for tc in accumulated_tool_calls:
+                # Anthropic sends partial JSON, we need to ensure it's valid, but we store it as string for Agent
+                # Agent parses it later.
+                final_tool_calls.append(ToolCall(
+                    id=tc["id"],
+                    name=tc["name"],
+                    arguments=tc["input_json"]
+                ))
+            
+            # Return final message
+            return MockMessage(
+                content=accumulated_text, 
+                role="assistant",
+                tool_calls=final_tool_calls if final_tool_calls else None
+            )
+            
+        except Exception as e:
+            raise ValueError(f"Azure Anthropic Streaming Error: {str(e)}")
+    
+    async def _chat_openai_stream(self, messages: List[Dict[str, Any]], tools: Optional[List[Dict[str, Any]]] = None, on_token: Optional[Any] = None) -> Any:
+        """Handle streaming chat with OpenAI models on Azure."""
+        
+        # Pre-process messages to convert generic image format to OpenAI format
+        processed_messages = []
+        
+        for msg in messages:
+            content = msg.get("content")
+            if isinstance(content, list):
+                new_content = []
+                for part in content:
+                    if isinstance(part, dict) and part.get("type") == "image":
+                        b64_data = part.get("data", "")
+                        
+                        if isinstance(b64_data, str) and b64_data.startswith('data:'):
+                            new_content.append({
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": b64_data
+                                }
+                            })
+                        else:
+                            mime_type = "image/png"
+                            if isinstance(b64_data, str):
+                                if b64_data.startswith("/9j/"): mime_type = "image/jpeg"
+                                elif b64_data.startswith("R0lGOD"): mime_type = "image/gif"
+                                elif b64_data.startswith("UklGR"): mime_type = "image/webp"
+                            
+                            new_content.append({
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:{mime_type};base64,{b64_data}"
+                                }
+                            })
+                    else:
+                        new_content.append(part)
+                
+                processed_messages.append({**msg, "content": new_content})
+            else:
+                processed_messages.append(msg)
+
+        kwargs = {
+            "model": self.model_name,
+            "messages": processed_messages,
+            "stream": True
+        }
+        
+        if tools:
+            kwargs["tools"] = tools
+            kwargs["tool_choice"] = "auto"
+        
+        try:
+            stream = self.client.chat.completions.create(**kwargs)
+            accumulated_content = ""
+            
+            for chunk in stream:
+                if chunk.choices[0].delta.content:
+                    content = chunk.choices[0].delta.content
+                    accumulated_content += content
+                    if on_token:
+                        await on_token(content)
+            
+            # Create final message object
+            class StreamedMessage:
+                def __init__(self, content):
+                    self.content = content
+                    self.role = "assistant"
+                    self.tool_calls = None
+            
+            return StreamedMessage(accumulated_content)
+            
+        except Exception as e:
+            error_msg = str(e)
+            if "content management policy" in error_msg.lower():
+                raise ValueError("Azure Content Filter triggered. Please refine your prompt.") from e
+            raise e
+    
     async def _chat_anthropic(self, messages: List[Dict[str, Any]], tools: Optional[List[Dict[str, Any]]] = None) -> Any:
         """Handle chat with Anthropic Claude models on Azure using AnthropicFoundry SDK."""
         import asyncio
@@ -169,6 +513,13 @@ class AzureProvider(LLMProvider):
         
         if system_content:
             kwargs["system"] = system_content
+            
+        # Convert and add tools if present
+        if tools:
+            anthropic_tools = []
+            for tool in tools:
+                anthropic_tools.append(self._convert_tool_to_anthropic(tool))
+            kwargs["tools"] = anthropic_tools
         
         try:
             # AnthropicFoundry is sync, run in executor
@@ -178,17 +529,39 @@ class AzureProvider(LLMProvider):
                 lambda: self.client.messages.create(**kwargs)
             )
             
-            # Extract text content from response
+            # Extract content and tool calls
             text_content = ""
+            tool_calls = []
+            
             for block in response.content:
-                if hasattr(block, 'text'):
+                if block.type == "text":
                     text_content += block.text
+                elif block.type == "tool_use":
+                    import json
+                    # Create ToolCall compatible with Agent
+                    tool_calls.append(ToolCall(
+                        id=block.id,
+                        name=block.name,
+                        arguments=json.dumps(block.input)
+                    ))
             
             # Return MockMessage compatible with agentry
-            return MockMessage(content=text_content, role="assistant")
+            return MockMessage(content=text_content, role="assistant", tool_calls=tool_calls if tool_calls else None)
             
         except Exception as e:
             raise ValueError(f"Azure Anthropic Error: {str(e)}")
+            
+    def _convert_tool_to_anthropic(self, tool_schema: Dict[str, Any]) -> Dict[str, Any]:
+        """Convert OpenAI tool schema to Anthropic format."""
+        if tool_schema.get("type") != "function":
+            return tool_schema
+            
+        func = tool_schema.get("function", {})
+        return {
+            "name": func.get("name"),
+            "description": func.get("description"),
+            "input_schema": func.get("parameters")
+        }
     
     async def _chat_openai(self, messages: List[Dict[str, Any]], tools: Optional[List[Dict[str, Any]]] = None) -> Any:
         """Handle chat with OpenAI models on Azure."""
@@ -257,9 +630,22 @@ class AzureProvider(LLMProvider):
         return self.model_name
 
 
+
+class Function:
+    def __init__(self, name, arguments):
+        self.name = name
+        self.arguments = arguments
+
+class ToolCall:
+    def __init__(self, id, name, arguments):
+        self.id = id
+        self.function = Function(name, arguments)
+        self.type = "function"
+
 class MockMessage:
     """Mock message class to mimic OpenAI response structure."""
-    def __init__(self, content: str, role: str = "assistant"):
+    def __init__(self, content: str, role: str = "assistant", tool_calls: List[ToolCall] = None):
         self.content = content
         self.role = role
-        self.tool_calls = None
+        self.tool_calls = tool_calls
+

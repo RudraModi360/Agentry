@@ -2018,21 +2018,129 @@ async def websocket_chat(websocket: WebSocket):
                 # Track connection state
                 ws_connected = True
                 
+                # Track thinking state
+                in_thinking = False
+                stream_buffer = "" # Buffer for handling split tags
+                
                 # Define callbacks for streaming
                 async def on_token(token_text: str):
-                    nonlocal ws_connected
+                    nonlocal ws_connected, in_thinking, stream_buffer
+                    
+                    # Log to terminal for debugging
+                    print(token_text, end="", flush=True)
+                    
                     if not ws_connected:
                         return
+                        
                     try:
-                        await websocket.send_json({
-                            "type": "token",
-                            "content": token_text
-                        })
-                    except Exception:
+                        # Add new token to buffer
+                        stream_buffer += token_text
+                        
+                        # Process buffer
+                        while stream_buffer:
+                            # 1. If we are NOT in thinking mode, look for start tag
+                            if not in_thinking:
+                                # Check if buffer *starts* with tag
+                                if stream_buffer.startswith("<thinking>"):
+                                    in_thinking = True
+                                    await websocket.send_json({"type": "thinking_start"})
+                                    stream_buffer = stream_buffer[len("<thinking>"):]
+                                    continue
+                                
+                                # Check if buffer contains tag later (send preceding text)
+                                start_idx = stream_buffer.find("<thinking>")
+                                if start_idx != -1:
+                                    # Send text before tag
+                                    text_chunk = stream_buffer[:start_idx]
+                                    await websocket.send_json({
+                                        "type": "token",
+                                        "content": text_chunk
+                                    })
+                                    stream_buffer = stream_buffer[start_idx:]
+                                    continue
+                                
+                                # Check for PARTIAL tag at end of buffer
+                                # We only want to hold back distinct characters that could start the tag
+                                partial_match = False
+                                for i in range(1, len("<thinking>")):
+                                    suffix = stream_buffer[-i:]
+                                    if "<thinking>".startswith(suffix):
+                                        partial_match = True
+                                        # Send everything up to the partial match
+                                        if len(stream_buffer) > i:
+                                            safe_chunk = stream_buffer[:-i]
+                                            await websocket.send_json({
+                                                "type": "token",
+                                                "content": safe_chunk
+                                            })
+                                            stream_buffer = suffix
+                                        break
+                                
+                                if partial_match:
+                                    break # Wait for more tokens
+                                
+                                # No tag found, send all
+                                await websocket.send_json({
+                                    "type": "token",
+                                    "content": stream_buffer
+                                })
+                                stream_buffer = ""
+                                
+                            # 2. If we ARE in thinking mode, look for end tag
+                            else:
+                                # Check if buffer starts with end tag
+                                if stream_buffer.startswith("</thinking>"):
+                                    in_thinking = False
+                                    await websocket.send_json({"type": "thinking_end"})
+                                    stream_buffer = stream_buffer[len("</thinking>"):]
+                                    continue
+                                    
+                                # Check if buffer contains end tag later
+                                end_idx = stream_buffer.find("</thinking>")
+                                if end_idx != -1:
+                                    # Send thought content before tag
+                                    thought_chunk = stream_buffer[:end_idx]
+                                    await websocket.send_json({
+                                        "type": "thinking_delta",
+                                        "content": thought_chunk
+                                    })
+                                    stream_buffer = stream_buffer[end_idx:]
+                                    continue
+                                
+                                # Check for PARTIAL end tag
+                                partial_match = False
+                                for i in range(1, len("</thinking>")):
+                                    suffix = stream_buffer[-i:]
+                                    if "</thinking>".startswith(suffix):
+                                        partial_match = True
+                                        # Send everything up to partial match
+                                        if len(stream_buffer) > i:
+                                            safe_chunk = stream_buffer[:-i]
+                                            await websocket.send_json({
+                                                "type": "thinking_delta",
+                                                "content": safe_chunk
+                                            })
+                                            stream_buffer = suffix
+                                        break
+                                
+                                if partial_match:
+                                    break # Wait for more tokens
+                                    
+                                # No end tag, send all as thought
+                                await websocket.send_json({
+                                    "type": "thinking_delta",
+                                    "content": stream_buffer
+                                })
+                                stream_buffer = ""
+
+                    except Exception as e:
+                        print(f"[Server] Error in on_token: {e}")
                         ws_connected = False
                 
                 async def on_tool_start(sess, name: str, args: dict):
                     nonlocal ws_connected
+                    # Log tool start to terminal
+                    print(f"\n[Server] 🛠️ Executing Tool: {name} (Args: {str(args)[:100]}...)")
                     if not ws_connected:
                         return
                     try:
@@ -2046,6 +2154,8 @@ async def websocket_chat(websocket: WebSocket):
                 
                 async def on_tool_end(sess, name: str, result):
                     nonlocal ws_connected
+                    # Log tool end to terminal
+                    print(f"[Server] ✅ Tool Finished: {name}")
                     if not ws_connected:
                         return
                     try:
@@ -2083,6 +2193,7 @@ async def websocket_chat(websocket: WebSocket):
                         print(f"[Server] Content is plain text.")
                         
                     response = await agent.chat(content, session_id=session_id)
+                    print() # Ensure newline after streaming
                     
                     # Get updated messages and save
                     session = agent.get_session(session_id)

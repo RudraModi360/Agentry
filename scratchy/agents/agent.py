@@ -351,8 +351,7 @@ class Agent:
 
         
         for i in range(self.max_iterations):
-            if self.debug:
-                print(f"[Agent] Iteration {i+1}/{self.max_iterations}")
+            # Don't show iteration count - show what's happening instead
             
             # 1. Get response from LLM
             response = None
@@ -372,8 +371,15 @@ class Agent:
                 # Use streaming if on_token callback is set and provider supports it
                 on_token = self.callbacks.get("on_token")
                 if on_token and hasattr(self.provider, 'chat_stream'):
+                    if self.debug:
+                        model_name = getattr(self.provider, 'model_name', 'LLM')
+                        print(f"[Agent] Streaming response from {model_name}...")
                     response = await self.provider.chat_stream(llm_messages, tools=all_tools, on_token=on_token)
                 else:
+                    if self.debug:
+                        model_name = getattr(self.provider, 'model_name', 'LLM')
+                        has_tools = " (with tools)" if all_tools else ""
+                        print(f"[Agent] Generating response from {model_name}{has_tools}...")
                     response = await self.provider.chat(llm_messages, tools=all_tools)
             except Exception as e:
                 # Error handling & Retry logic
@@ -392,31 +398,34 @@ class Agent:
                     or "status code: 500" in error_str
                 ):
                     if self.debug or "internal server error" in error_str: 
-                        print(f"[Agent] ⚠️  Response/Provider error: {error_str}. Retrying...")
+                        print(f"[Agent] Provider error encountered: {error_str}")
+                        print(f"[Agent] Retrying...")
                     
                     # Retry loop with tools
                     retry_success = False
                     for attempt in range(3):
                         try:
-                            if self.debug: print(f"[Agent] Retry attempt {attempt+1} with tools...")
+                            if self.debug: print(f"[Agent] Retry attempt {attempt+1}/3...")
                             await asyncio.sleep(1) # Short delay
                             response = await self.provider.chat(session.messages, tools=all_tools)
                             retry_success = True
+                            if self.debug: print(f"[Agent] Retry successful!")
                             break
                         except Exception as retry_error:
                             retry_error_str = str(retry_error).lower()
                             if "does not support tools" in retry_error_str:
-                                if self.debug: print(f"[Agent] Model doesn't support tools. Aborting tool retries.")
+                                if self.debug: print(f"[Agent] Model doesn't support tools. Disabling tools...")
                                 break # Stop retrying with tools immediately
                             
                             if self.debug: print(f"[Agent] Retry {attempt+1} failed: {retry_error}")
                     
                     if not retry_success:
                         # Fallback to no tools as a last resort
-                        if self.debug: print(f"[Agent] Falling back to no tools...")
+                        if self.debug: print(f"[Agent] Falling back to no-tools mode...")
                         try:
                             await asyncio.sleep(1)
                             response = await self.provider.chat(session.messages, tools=None)
+                            if self.debug: print(f"[Agent] Fallback successful!")
                         except Exception as fallback_error:
                             # Last resort: return friendly error message
                             error_msg = f"I encountered an error from the model: {str(fallback_error)}. Please try again."
@@ -427,7 +436,7 @@ class Agent:
                             return error_msg
                 else:
                     # Different error
-                    print(f"\n[Agent] ⚠️  Runtime Error: {e}")
+                    print(f"\n[Agent] Runtime Error: {e}")
                     # Don't crash, just break or continue?
                     # User asked to continue session chat.
                     # We will return the error as a message to the user so they know something happened.
@@ -459,7 +468,7 @@ class Agent:
                                      json.dumps(tc)
                                      serialized_tool_calls.append(tc)
                                  except:
-                                     if self.debug: print(f"[Agent] ⚠️ Skipping non-serializable tool call: {tc}")
+                                     if self.debug: print(f"[Agent] Skipping non-serializable tool call: {tc}")
                                      pass
                          response['tool_calls'] = serialized_tool_calls
                          
@@ -482,7 +491,7 @@ class Agent:
                         ]
                     session.add_message(msg_dict)
             except Exception as parse_error:
-                print(f"[Agent] ⚠️  Response Parsing Error (Ignored): {parse_error}")
+                print(f"[Agent] Response Parsing Error (Ignored): {parse_error}")
                 # We can try to recover by adding a text message only
                 try:
                      content_safe = getattr(response, 'content', str(response))
@@ -492,8 +501,10 @@ class Agent:
 
             # 3. Handle Final Response
             if not tool_calls:
+                if self.debug: 
+                    print(f"[Agent] Response complete. Processing memory...")
+                
                 # --- Memory Middleware: Process Agent Output ---
-                if self.debug: print(f"[Agent] Middleware: Processing agent output for memory...")
                 # We use create_task to not block the response, or await if we want to ensure it's saved?
                 # The user wants it "added to memory", implying it's part of the flow.
                 # Awaiting ensures it's saved before the next turn.
@@ -503,8 +514,12 @@ class Agent:
                     self.callbacks["on_final_message"](session_id, content)
                 return content
 
-            # 4. Execute Tools
-            for tc in tool_calls:
+            # 4. Execute Tools - Show what tools are being called
+            if self.debug:
+                tool_names = [tc['function']['name'] if isinstance(tc, dict) else tc.function.name for tc in tool_calls]
+                print(f"\n[Agent] Executing {len(tool_calls)} tool(s): {', '.join(tool_names)}")
+            
+            for tool_idx, tc in enumerate(tool_calls, 1):
                 # Extract details
                 if isinstance(tc, dict):
                     name = tc['function']['name']
@@ -516,6 +531,16 @@ class Agent:
                     if isinstance(args, str): args = json.loads(args)
                     tc_id = getattr(tc, 'id', None)
 
+                # Show detailed tool call info
+                if self.debug:
+                    print(f"[Agent] Tool {tool_idx}/{len(tool_calls)}: {name}")
+                    # Show formatted arguments
+                    for arg_name, arg_value in args.items():
+                        arg_preview = str(arg_value)
+                        if len(arg_preview) > 100:
+                            arg_preview = arg_preview[:97] + "..."
+                        print(f"[Agent]   - {arg_name}: {arg_preview}")
+
                 if self.callbacks["on_tool_start"]:
                     callback = self.callbacks["on_tool_start"]
                     if inspect.iscoroutinefunction(callback):
@@ -526,6 +551,9 @@ class Agent:
                 # Approval
                 approved = True
                 if self._requires_approval(name):
+                    if self.debug:
+                        print(f"[Agent]   Waiting for approval...")
+                    
                     if self.callbacks["on_tool_approval"]:
                         approval_result = await self.callbacks["on_tool_approval"](session_id, name, args)
                         
@@ -533,17 +561,34 @@ class Agent:
                             # User modified arguments
                             args = approval_result
                             approved = True
+                            if self.debug:
+                                print(f"[Agent]   Approved with modified arguments")
                         else:
                             # Boolean or None
                             approved = bool(approval_result)
+                            if self.debug:
+                                status = "Approved" if approved else "Denied"
+                                print(f"[Agent]   {status}")
                     else:
                         # If no callback is set but approval is required, we pass (backward compatibility)
                         pass
 
                 if not approved:
                     result = {"error": "Denied by user"}
+                    if self.debug:
+                        print(f"[Agent]   Status: DENIED by user")
                 else:
                     result = await self._execute_tool(name, args, session_id)
+                    if self.debug:
+                        # Check if error
+                        if isinstance(result, dict) and "error" in result:
+                            print(f"[Agent]   Status: ERROR - {result.get('error', 'Unknown error')}")
+                        else:
+                            result_preview = str(result)
+                            if len(result_preview) > 200:
+                                result_preview = result_preview[:197] + "..."
+                            print(f"[Agent]   Status: SUCCESS")
+                            print(f"[Agent]   Result: {result_preview}")
 
                 if self.callbacks["on_tool_end"]:
                     callback = self.callbacks["on_tool_end"]
