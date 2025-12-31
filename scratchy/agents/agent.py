@@ -520,82 +520,113 @@ class Agent:
                 print(f"\n[Agent] Executing {len(tool_calls)} tool(s): {', '.join(tool_names)}")
             
             for tool_idx, tc in enumerate(tool_calls, 1):
-                # Extract details
-                if isinstance(tc, dict):
-                    name = tc['function']['name']
-                    args = tc['function']['arguments']
-                    tc_id = tc.get('id')
-                else:
-                    name = tc.function.name
-                    args = tc.function.arguments
-                    if isinstance(args, str): args = json.loads(args)
-                    tc_id = getattr(tc, 'id', None)
-
-                # Show detailed tool call info
-                if self.debug:
-                    print(f"[Agent] Tool {tool_idx}/{len(tool_calls)}: {name}")
-                    # Show formatted arguments
-                    for arg_name, arg_value in args.items():
-                        arg_preview = str(arg_value)
-                        if len(arg_preview) > 100:
-                            arg_preview = arg_preview[:97] + "..."
-                        print(f"[Agent]   - {arg_name}: {arg_preview}")
-
-                if self.callbacks["on_tool_start"]:
-                    callback = self.callbacks["on_tool_start"]
-                    if inspect.iscoroutinefunction(callback):
-                        await callback(session_id, name, args)
+                try:
+                    # Extract details
+                    if isinstance(tc, dict):
+                        name = tc['function']['name']
+                        args = tc['function']['arguments']
+                        tc_id = tc.get('id')
                     else:
-                        callback(session_id, name, args)
-
-                # Approval
-                approved = True
-                if self._requires_approval(name):
-                    if self.debug:
-                        print(f"[Agent]   Waiting for approval...")
-                    
-                    if self.callbacks["on_tool_approval"]:
-                        approval_result = await self.callbacks["on_tool_approval"](session_id, name, args)
+                        name = tc.function.name
+                        # Move ID extraction BEFORE arg parsing to ensure we have it for error reporting
+                        tc_id = getattr(tc, 'id', None)
                         
-                        if isinstance(approval_result, dict):
-                            # User modified arguments
-                            args = approval_result
-                            approved = True
-                            if self.debug:
-                                print(f"[Agent]   Approved with modified arguments")
-                        else:
-                            # Boolean or None
-                            approved = bool(approval_result)
-                            if self.debug:
-                                status = "Approved" if approved else "Denied"
-                                print(f"[Agent]   {status}")
-                    else:
-                        # If no callback is set but approval is required, we pass (backward compatibility)
-                        pass
+                        args = tc.function.arguments
+                        if isinstance(args, str): 
+                            try:
+                                args = json.loads(args)
+                            except json.JSONDecodeError as json_err:
+                                # Provide raw content context to help the model fix its JSON
+                                raw_snippet = args[:500] + "..." if len(args) > 500 else args
+                                raise ValueError(f"Invalid JSON arguments: {str(json_err)}. Check for unescaped quotes or newlines. Raw input: {raw_snippet}")
 
-                if not approved:
-                    result = {"error": "Denied by user"}
+                    # Show detailed tool call info
                     if self.debug:
-                        print(f"[Agent]   Status: DENIED by user")
-                else:
-                    result = await self._execute_tool(name, args, session_id)
-                    if self.debug:
-                        # Check if error
-                        if isinstance(result, dict) and "error" in result:
-                            print(f"[Agent]   Status: ERROR - {result.get('error', 'Unknown error')}")
+                        print(f"[Agent] Tool {tool_idx}/{len(tool_calls)}: {name}")
+                        # Show formatted arguments
+                        if isinstance(args, dict):
+                            for arg_name, arg_value in args.items():
+                                arg_preview = str(arg_value)
+                                if len(arg_preview) > 100:
+                                    arg_preview = arg_preview[:97] + "..."
+                                print(f"[Agent]   - {arg_name}: {arg_preview}")
                         else:
-                            result_preview = str(result)
-                            if len(result_preview) > 200:
-                                result_preview = result_preview[:197] + "..."
-                            print(f"[Agent]   Status: SUCCESS")
-                            print(f"[Agent]   Result: {result_preview}")
+                            print(f"[Agent]   - args: {str(args)[:100]}")
 
-                if self.callbacks["on_tool_end"]:
-                    callback = self.callbacks["on_tool_end"]
-                    if inspect.iscoroutinefunction(callback):
-                        await callback(session_id, name, result)
+                    if self.callbacks["on_tool_start"]:
+                        callback = self.callbacks["on_tool_start"]
+                        if inspect.iscoroutinefunction(callback):
+                            await callback(session_id, name, args)
+                        else:
+                            callback(session_id, name, args)
+
+                    # Approval
+                    approved = True
+                    if self._requires_approval(name):
+                        if self.debug:
+                            print(f"[Agent]   Waiting for approval...")
+                        
+                        if self.callbacks["on_tool_approval"]:
+                            try:
+                                approval_result = await self.callbacks["on_tool_approval"](session_id, name, args)
+                                
+                                if isinstance(approval_result, dict):
+                                    # User modified arguments
+                                    args = approval_result
+                                    approved = True
+                                    if self.debug:
+                                        print(f"[Agent]   Approved with modified arguments")
+                                else:
+                                    # Boolean or None
+                                    approved = bool(approval_result)
+                                    if self.debug:
+                                        status = "Approved" if approved else "Denied"
+                                        print(f"[Agent]   {status}")
+                            except Exception as app_err:
+                                print(f"[Agent] Approval Callback Error: {app_err}")
+                                approved = False # default to deny on error
+                        else:
+                            # If no callback is set but approval is required, we pass (backward compatibility)
+                            pass
+
+                    if not approved:
+                        result = {"status": "failed", "error": "Denied by user"}
+                        if self.debug:
+                            print(f"[Agent]   Status: DENIED by user")
                     else:
-                        callback(session_id, name, result)
+                        result = await self._execute_tool(name, args, session_id)
+                        if self.debug:
+                            # Check if error
+                            if isinstance(result, dict) and "error" in result:
+                                print(f"[Agent]   Status: ERROR - {result.get('error', 'Unknown error')}")
+                            else:
+                                result_preview = str(result)
+                                if len(result_preview) > 200:
+                                    result_preview = result_preview[:197] + "..."
+                                print(f"[Agent]   Status: SUCCESS")
+                                print(f"[Agent]   Result: {result_preview}")
+
+                    if self.callbacks["on_tool_end"]:
+                        callback = self.callbacks["on_tool_end"]
+                        if inspect.iscoroutinefunction(callback):
+                            await callback(session_id, name, result)
+                        else:
+                            callback(session_id, name, result)
+                            
+                except Exception as tool_exec_err:
+                    error_msg = f"Error executing tool '{name if 'name' in locals() else 'unknown'}': {str(tool_exec_err)}"
+                    print(f"[Agent] Tool Loop Error: {error_msg}")
+                    
+                    # Return structured failure so the model knows it failed
+                    result = {"status": "failed", "error": error_msg}
+                    
+                    # Ensure we have a name and id to report back
+                    if 'name' not in locals(): name = "unknown_tool"
+                    
+                    # Try to recover ID if we lost it (e.g. error in getattr)
+                    if 'tc_id' not in locals() or tc_id is None:
+                        if isinstance(tc, dict): tc_id = tc.get('id')
+                        else: tc_id = getattr(tc, 'id', None)
 
 
                 # Add result to history
@@ -629,25 +660,34 @@ class Agent:
         return True
 
     async def _execute_tool(self, name: str, args: Dict, session_id: str) -> Any:
-        # 0. VFS Tools
-        if name in ["write_virtual_file", "read_virtual_file", "list_virtual_files"]:
-            session = self.get_session(session_id)
-            return self.vfs.execute_tool(session.files, session_id, name, args)
+        try:
+            # 0. VFS Tools
+            if name in ["write_virtual_file", "read_virtual_file", "list_virtual_files"]:
+                session = self.get_session(session_id)
+                return self.vfs.execute_tool(session.files, session_id, name, args)
 
-        # 1. Custom Tools
-        if name in self.custom_tool_executors:
-            return self.custom_tool_executors[name](**args)
-        
-        # 2. MCP Tools
-        for manager in self.mcp_managers:
-            if name in manager.server_tools_map:
-                try:
-                    return await manager.execute_tool(name, args)
-                except Exception as e:
-                    return {"error": str(e)}
+            # 1. Custom Tools
+            if name in self.custom_tool_executors:
+                result = self.custom_tool_executors[name](**args)
+                if inspect.iscoroutine(result):
+                    return await result
+                return result
+            
+            # 2. MCP Tools
+            for manager in self.mcp_managers:
+                if name in manager.server_tools_map:
+                    try:
+                        return await manager.execute_tool(name, args)
+                    except Exception as e:
+                        return {"error": str(e)}
 
-        # 3. Internal Default Tools
-        return execute_tool(name, args)
+            # 3. Internal Default Tools
+            return execute_tool(name, args)
+
+        except Exception as e:
+            if self.debug:
+                print(f"[Agent] Tool Execution Error: {e}")
+            return {"error": f"Tool execution failed: {str(e)}"}
 
     async def cleanup(self):
         for manager in self.mcp_managers:

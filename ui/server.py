@@ -131,6 +131,7 @@ def save_media_to_disk(user_id: int, image_data: str, filename: str = None) -> d
         return None
     
     # Save to database
+    media_id = None
     try:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
@@ -138,12 +139,14 @@ def save_media_to_disk(user_id: int, image_data: str, filename: str = None) -> d
             INSERT INTO user_media (user_id, filename, filepath, content_type)
             VALUES (?, ?, ?, ?)
         """, (user_id, filename, f"/media/{filename}", mime_type))
+        media_id = cursor.lastrowid
         conn.commit()
         conn.close()
     except Exception as e:
         print(f"[Server] Error saving media record to DB: {e}")
     
     return {
+        "id": media_id,
         "filename": filename,
         "url": f"/media/{filename}",
         "mime_type": mime_type,
@@ -159,6 +162,15 @@ media_dir = os.path.join(current_dir, "media")
 if not os.path.exists(media_dir):
     os.makedirs(media_dir)
 app.mount("/media", StaticFiles(directory=media_dir), name="media")
+
+# Serve modular UI assets
+css_dir = os.path.join(current_dir, "css")
+if os.path.exists(css_dir):
+    app.mount("/css", StaticFiles(directory=css_dir), name="css")
+
+js_dir = os.path.join(current_dir, "js")
+if os.path.exists(js_dir):
+    app.mount("/js", StaticFiles(directory=js_dir), name="js")
 
 # ============== Database Setup ==============
 DB_PATH = os.path.join(current_dir, "scratchy_users.db")
@@ -1270,6 +1282,55 @@ async def get_model_capabilities(
             "vision": False
         }
     }
+
+# --- Auto-Correction ---
+class AutoCorrectRequest(BaseModel):
+    text: str
+
+@app.post("/api/autocorrect")
+async def autocorrect_text(request: AutoCorrectRequest, user: Dict = Depends(get_current_user)):
+    """Automatically correct spelling and grammar of the provided text."""
+    user_id = user["id"]
+    text = request.text.strip()
+    
+    if not text:
+        return {"corrected": ""}
+    
+    # 1. Get current agent/provider
+    if user_id not in agent_cache:
+        # If no agent, we can't really correct easily without full config
+        return {"corrected": text, "error": "No active provider configured"}
+    
+    cached = agent_cache[user_id]
+    provider = cached.get("provider")
+    
+    if not provider:
+        return {"corrected": text, "error": "Provider not available"}
+    
+    # 2. Build correction prompt
+    prompt = (
+        "You are a spelling and grammar correction assistant. "
+        "Correct the following text for any spelling or grammar errors while preserving the original meaning and tone. "
+        "Return ONLY the corrected text, with no preamble, no quotes, no explanations, and no markdown formatting. "
+        "If the text is already correct, return it exactly as it is.\n\n"
+        f"Text to correct:\n{text}"
+    )
+    
+    # 3. Call LLM for correction (use non-streaming for simplicity here)
+    try:
+        # Check if provider has a simple generate
+        if hasattr(provider, 'generate'):
+            corrected = await provider.generate(prompt)
+        else:
+            # Fallback to chat completion
+            messages = [{"role": "user", "content": prompt}]
+            response = await provider.chat_completion(messages)
+            corrected = response.get("content", text)
+            
+        return {"corrected": corrected.strip()}
+    except Exception as e:
+        print(f"[Server] Auto-correction failed: {e}")
+        return {"corrected": text, "error": str(e)}
 
 # --- Tools Management ---
 class DisabledToolsRequest(BaseModel):

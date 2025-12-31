@@ -283,6 +283,25 @@ Task: "Optimize this SQL query"
 - Use relative paths (ALWAYS absolute)
 </mandatory_research>
 
+<large_file_protocol>
+**CRITICAL: For files >50 lines, use CHUNKED approach:**
+
+When creating large files (classes, modules, etc.):
+1. **Create skeleton first**: Basic structure with placeholder comments
+2. **Add functions incrementally**: Use edit_file to add each function
+3. **Maximum 50-60 lines per create_file call**
+
+Example for large module:
+```
+Step 1: create_file("module.py") with imports + class skeleton (~30 lines)
+Step 2: edit_file("module.py") to add first method (~20 lines)
+Step 3: edit_file("module.py") to add second method (~20 lines)
+```
+
+**WHY:** API streaming limits prevent sending >100 lines in single tool call.
+**NEVER:** Try to create 200+ line files in one create_file call - it WILL timeout.
+</large_file_protocol>
+
 <code_quality_standards>
 1. **Match codebase**: Follow existing naming, style, architecture
 2. **Clean code**: Meaningful names, single responsibility functions
@@ -505,6 +524,18 @@ Step 5: VERIFY - Did it work? Show results
 5. **Be honest**: Admit uncertainty, then search
 6. **Match user**: Adapt communication style
 </guidelines>
+
+<large_file_protocol>
+**CRITICAL: For files >50 lines, use CHUNKED approach:**
+
+When creating large files (classes, modules, etc.):
+1. **Create skeleton first**: Basic structure with placeholder comments
+2. **Add content incrementally**: Use edit_file to add sections
+3. **Maximum 50-60 lines per create_file call**
+
+**WHY:** API streaming limits prevent sending >100 lines in single tool call.
+**NEVER:** Try to create 200+ line files in one create_file call - it WILL timeout.
+</large_file_protocol>
 
 <current_context>
 - Time: {current_time}

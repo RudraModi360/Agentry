@@ -1,0 +1,12 @@
+/**
+ * ============================================================
+ * AGENTRY UI - Main CSS Entry Point
+ * ============================================================
+ * 
+ * Using the complete original styles from chat-original-backup.html
+ * for exact visual fidelity. The modular JS components work with
+ * these original CSS classes.
+ */
+
+/* Import the complete original styles */
+@import url('./original-styles.css');

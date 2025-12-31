@@ -269,7 +269,7 @@ class AzureProvider(LLMProvider):
         kwargs = {
             "model": self.model_name,
             "messages": chat_messages,
-            "max_tokens": 4096
+            "max_tokens": 16384
         }
         
         if system_content:
@@ -302,6 +302,7 @@ class AzureProvider(LLMProvider):
                             q.put(('event', event))
                     q.put(('done', None))
                 except Exception as e:
+                    print(f"[AzureAnthropic] Stream Worker Error: {e}")
                     q.put(('error', e))
             
             # Start streaming in background thread
@@ -311,45 +312,59 @@ class AzureProvider(LLMProvider):
             # Process chunks as they arrive
             while True:
                 try:
-                    msg_type, data = q.get(timeout=60)
+                    msg_type, data = q.get(timeout=120)  # 2 minutes for large content
                     
                     if msg_type == 'event':
                         event = data
-                        # Handle Text Delta
+                        
+                        # Handle Text Delta - print raw text like ChatGPT
                         if event.type == 'content_block_delta' and hasattr(event.delta, 'text'):
                             text = event.delta.text
                             accumulated_text += text
+                            # Only use on_token for UI streaming, print for terminal debugging
                             if on_token:
                                 await on_token(text)
                                 await asyncio.sleep(0)
+                            else:
+                                print(text, end='', flush=True)
                         
                         # Handle Tool Use Start
                         elif event.type == 'content_block_start' and event.content_block.type == 'tool_use':
+                            print(f"\n\n>>> TOOL: {event.content_block.name} <<<\n", flush=True)
                             accumulated_tool_calls.append({
                                 "id": event.content_block.id,
                                 "name": event.content_block.name,
                                 "input_json": ""
                             })
                             
-                        # Handle Tool Input JSON Delta
+                        # Handle Tool Input JSON Delta - print raw JSON chunks
                         elif event.type == 'content_block_delta' and hasattr(event.delta, 'partial_json'):
+                            chunk = event.delta.partial_json
+                            print(chunk, end='', flush=True)
                             if accumulated_tool_calls:
-                                accumulated_tool_calls[-1]["input_json"] += event.delta.partial_json
+                                accumulated_tool_calls[-1]["input_json"] += chunk
                                 
                     elif msg_type == 'done':
+                        print("\n\n>>> STREAM END <<<\n", flush=True)
                         break
                     elif msg_type == 'error':
+                        print(f"\n\n>>> ERROR: {data} <<<\n", flush=True)
                         raise data
                 except queue.Empty:
-                    raise TimeoutError("Streaming timeout")
+                    # Timeout - check if we have partial tool calls
+                    print("\n\n>>> STREAM TIMEOUT <<<\n", flush=True)
+                    if accumulated_tool_calls:
+                        # We have incomplete tool calls - this is the Azure truncation bug
+                        print(f"[Timeout with {len(accumulated_tool_calls)} incomplete tool call(s)]")
+                        for tc in accumulated_tool_calls:
+                            print(f"  - {tc['name']}: {len(tc['input_json'])} chars (incomplete)")
+                    raise TimeoutError("Stream timeout - Azure may be limiting large tool outputs. Try smaller file content.")
             
             thread.join(timeout=5)
             
             # Finalize tool calls
             final_tool_calls = []
             for tc in accumulated_tool_calls:
-                # Anthropic sends partial JSON, we need to ensure it's valid, but we store it as string for Agent
-                # Agent parses it later.
                 final_tool_calls.append(ToolCall(
                     id=tc["id"],
                     name=tc["name"],
@@ -420,22 +435,59 @@ class AzureProvider(LLMProvider):
         try:
             stream = self.client.chat.completions.create(**kwargs)
             accumulated_content = ""
-            
+            accumulated_tool_calls_data = [] # List of dicts: {index, id, name, arguments}
+
             for chunk in stream:
-                if chunk.choices[0].delta.content:
-                    content = chunk.choices[0].delta.content
+                delta = chunk.choices[0].delta
+                
+                # 1. Handle Content
+                if delta.content:
+                    content = delta.content
                     accumulated_content += content
                     if on_token:
                         await on_token(content)
+                
+                # 2. Handle Tool Calls
+                if delta.tool_calls:
+                    for tc in delta.tool_calls:
+                        idx = tc.index
+                        
+                        # Ensure list is long enough
+                        while len(accumulated_tool_calls_data) <= idx:
+                            accumulated_tool_calls_data.append({
+                                "id": "", 
+                                "function": {"name": "", "arguments": ""}
+                            })
+                        
+                        # Append data
+                        if tc.id:
+                            accumulated_tool_calls_data[idx]["id"] += tc.id
+                        
+                        if tc.function:
+                            if tc.function.name:
+                                accumulated_tool_calls_data[idx]["function"]["name"] += tc.function.name
+                            if tc.function.arguments:
+                                accumulated_tool_calls_data[idx]["function"]["arguments"] += tc.function.arguments
             
-            # Create final message object
-            class StreamedMessage:
-                def __init__(self, content):
-                    self.content = content
-                    self.role = "assistant"
-                    self.tool_calls = None
-            
-            return StreamedMessage(accumulated_content)
+            # Construct Final Tool Calls
+            final_tool_calls = None
+            if accumulated_tool_calls_data:
+                final_tool_calls = []
+                for tc_data in accumulated_tool_calls_data:
+                    # Only add if it looks complete
+                    if tc_data["function"]["name"]:
+                         final_tool_calls.append(ToolCall(
+                             id=tc_data["id"],
+                             name=tc_data["function"]["name"],
+                             arguments=tc_data["function"]["arguments"]
+                         ))
+
+            # Use MockMessage which is already defined and compatible with Agent
+            return MockMessage(
+                content=accumulated_content, 
+                role="assistant", 
+                tool_calls=final_tool_calls
+            )
             
         except Exception as e:
             error_msg = str(e)
@@ -508,7 +560,7 @@ class AzureProvider(LLMProvider):
         kwargs = {
             "model": self.model_name,
             "messages": chat_messages,
-            "max_tokens": 4096
+            "max_tokens": 16384
         }
         
         if system_content:
