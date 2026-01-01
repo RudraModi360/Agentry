@@ -25,10 +25,14 @@
 }
 
 /* Unified Content Area */
+
 .sidebar-content {
     flex: 1;
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
+    /* Restores vertical scrollbar */
+    scrollbar-width: thin;
 }
 
 /* Mobile: Hidden by default, slide in when open */
@@ -65,29 +69,6 @@
     justify-content: space-between;
 }
 
-/* Logo Button with Text */
-.sidebar-logo-btn {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: transparent;
-    border: none;
-    color: var(--text-primary);
-    cursor: pointer;
-    padding: 8px;
-    border-radius: 8px;
-    transition: background 0.15s ease;
-}
-
-.sidebar-logo-btn:hover {
-    background: rgba(255, 255, 255, 0.08);
-}
-
-.sidebar-logo-btn svg {
-    width: 24px;
-    height: 24px;
-    flex-shrink: 0;
-}
 
 /* Logo Button - Icon only since text moved to header */
 .sidebar-logo-btn {
@@ -107,30 +88,37 @@
 
 /* ==================== Navigation Menu ==================== */
 
+/* Navigation Menu */
 .sidebar-nav-menu {
     display: flex;
     flex-direction: column;
-    gap: 1px;
-    padding: 4px 12px;
+    gap: 2px;
+    /* Tight spacing */
+    padding: 8px 8px 4px 8px;
+    /* Reduced outer padding */
 }
 
 /* Menu Item - Icon + Text (Flowbite style) */
 .sidebar-menu-item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 8px 12px;
+    gap: 10px;
+    padding: 8px 10px;
+    /* Compact padding */
     background: transparent;
     border: none;
-    border-radius: 8px;
+    border-radius: 6px;
     color: rgba(255, 255, 255, 0.7);
-    font-size: 14px;
+    font-size: 13.5px;
+    /* Slightly smaller text */
     font-weight: 500;
     cursor: pointer;
     transition: all 0.15s ease;
     text-align: left;
     white-space: nowrap;
     width: 100%;
+    min-height: 36px;
+    /* Reduced height to match sessions */
 }
 
 .sidebar-menu-item:hover {
@@ -184,24 +172,7 @@
 }
 
 /* Sidebar Toggle Button */
-.sidebar-header-toggle {
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    border-radius: var(--radius-default);
-    cursor: pointer;
-    transition: all var(--transition-default);
-}
 
-.sidebar-header-toggle:hover {
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-}
 
 /* Legacy Nav list removed to avoid conflicts */
 .sidebar-nav,
@@ -238,14 +209,16 @@
 .session-item {
     display: flex;
     align-items: center;
-    padding: 4px 8px;
+    padding: 6px 8px;
+    padding-right: 28px;
+    /* Space for absolute button */
     margin-bottom: 0px;
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.15s ease;
-    gap: 8px;
+    gap: 10px;
     min-height: 42px;
-    /* Ensure consistent height */
+    position: relative;
 }
 
 .session-item:hover {
@@ -259,8 +232,13 @@
 }
 
 .session-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     flex: 1;
     min-width: 0;
+    margin-right: 4px;
+    /* Extra safety */
 }
 
 .session-title {
@@ -270,7 +248,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    margin-bottom: 0px;
+    margin-bottom: 2px;
     line-height: 1.2;
 }
 
@@ -279,10 +257,17 @@
     color: rgba(255, 255, 255, 0.4) !important;
     line-height: 1;
     display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Menu button (three dots) */
 .session-menu-btn {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
     padding: 4px;
     background: transparent;
     border: none;
@@ -291,6 +276,10 @@
     cursor: pointer;
     transition: all 0.15s ease;
     opacity: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .session-item:hover .session-menu-btn {
@@ -299,208 +288,11 @@
 
 .session-menu-btn:hover {
     background: rgba(255, 255, 255, 0.1);
-    color: var(--text-primary);
-}
-
-
-/* ==================== Sidebar Footer ==================== */
-
-.sidebar-footer {
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    margin-top: auto;
-    border-top: 1px solid var(--card-border);
-    position: sticky;
-    bottom: 0;
-    background: var(--bg-secondary);
-    z-index: 10;
-}
-
-.sidebar-footer-item {
-    margin-top: 8px;
-}
-
-/* User Profile Button */
-.sidebar-user-profile {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-    padding: 10px 12px;
-    background: transparent;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    text-align: left;
-}
-
-.sidebar-user-profile:hover {
-    background: rgba(255, 255, 255, 0.08);
-}
-
-/* User Avatar Circle */
-.user-avatar-circle {
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #6b7280;
-    border-radius: var(--radius-full);
-    font-size: 12px;
-    font-weight: var(--font-bold);
-    color: white;
-    text-transform: uppercase;
-    flex-shrink: 0;
-}
-
-.user-avatar-square {
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #6b7280;
-    border-radius: 4px;
-    font-size: 14px;
-    font-weight: 600;
-    color: white;
-    text-transform: uppercase;
-    flex-shrink: 0;
-}
-
-/* User Info */
-.user-info {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    flex: 1;
-    min-width: 0;
-}
-
-.user-name {
-    font-size: var(--text-sm);
-    font-weight: var(--font-medium);
-    color: var(--text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.user-plan {
-    font-size: 11px;
-    color: var(--text-muted);
+    color: #fff;
 }
 
 
 
-
-.provider-icon-small {
-    width: 32px;
-    height: 32px;
-    background: linear-gradient(135deg, var(--color-primary-600), var(--color-primary-800));
-    border-radius: var(--radius-lg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.provider-icon-small svg {
-    width: 16px;
-    height: 16px;
-    stroke: white;
-}
-
-.provider-details {
-    flex: 1;
-    min-width: 0;
-}
-
-.provider-name-small {
-    font-size: 11px;
-    font-weight: var(--font-bold);
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 2px;
-}
-
-.model-info-row {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-}
-
-.model-name-small {
-    font-size: var(--text-xs);
-    font-weight: var(--font-semibold);
-    color: var(--text-primary);
-}
-
-.change-btn {
-    font-size: 10px;
-    color: var(--accent);
-    background: var(--accent-light);
-    padding: 2px 6px;
-    border-radius: var(--radius-full);
-    font-weight: var(--font-bold);
-}
-
-/* User Menu */
-.user-menu {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    padding: var(--space-2);
-}
-
-.user-avatar {
-    width: 32px;
-    height: 32px;
-    background: linear-gradient(135deg, var(--color-emerald), var(--color-cyan));
-    border-radius: var(--radius-full);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: var(--text-sm);
-    font-weight: var(--font-semibold);
-    color: white;
-    flex-shrink: 0;
-}
-
-.user-name {
-    flex: 1;
-    font-size: var(--text-sm);
-    font-weight: var(--font-medium);
-    color: var(--text-primary);
-}
-
-.logout-btn {
-    padding: var(--space-1-5) var(--space-3);
-    background: var(--bg-primary);
-    border: 1px solid var(--card-border);
-    border-radius: var(--radius-lg);
-    color: var(--text-muted);
-    font-size: 11px;
-    font-weight: var(--font-bold);
-    cursor: pointer;
-    transition: all var(--transition-default);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.logout-btn:hover {
-    background: var(--color-error-light);
-    border-color: var(--error);
-    color: var(--error);
-    transform: scale(1.05);
-}
-
-/* ==================== Sidebar Resizer ==================== */
 
 
 
@@ -901,30 +693,7 @@
     margin: -4px;
 }
 
-/* Sidebar Collapsed tweaks */
-.sidebar.collapsed .footer-info-text,
-.sidebar.collapsed .footer-action-btn,
-.sidebar.collapsed .footer-separator,
-.sidebar.collapsed .capabilities-popup {
-    display: none;
-}
 
-.sidebar.collapsed .footer-compact-item {
-    justify-content: center;
-    padding: 8px 4px;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.sidebar.collapsed .footer-section {
-    width: 32px;
-    height: 32px;
-    justify-content: center;
-}
-
-.sidebar.collapsed .footer-compact-item.combined-footer {
-    padding: 12px 0;
-}
 
 @media screen and (max-width: 768px) {
     .sidebar {
@@ -956,4 +725,113 @@
     .sidebar-overlay {
         display: none;
     }
+}
+
+/* ==================== Sidebar Toggle & Collapsed State ==================== */
+
+.sidebar {
+    width: 260px;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+}
+
+.sidebar-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+/* Collapsed State (Rail Mode) */
+.sidebar.collapsed {
+    width: 68px;
+}
+
+/* Hide text elements in collapsed mode */
+.sidebar.collapsed .menu-item-text,
+.sidebar.collapsed .sessions-header,
+.sidebar.collapsed .session-title,
+.sidebar.collapsed .session-meta,
+.sidebar.collapsed .footer-info-text,
+.sidebar.collapsed .media-library-title span,
+.sidebar.collapsed .media-view-all span,
+.sidebar.collapsed .media-header-delete-btn span,
+.sidebar.collapsed .footer-action-btn,
+.sidebar.collapsed .media-view-all svg:last-child {
+    display: none !important;
+}
+
+/* Center icons in collapsed mode */
+.sidebar.collapsed .sidebar-menu-item,
+.sidebar.collapsed .session-item,
+.sidebar.collapsed .footer-compact-item,
+.sidebar.collapsed .media-library-header,
+.sidebar.collapsed .media-view-all {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.sidebar.collapsed .sidebar-header-row {
+    padding: 0 4px;
+}
+
+/* Adjust margins/gaps */
+.sidebar.collapsed .sidebar-menu-item svg {
+    margin: 0;
+}
+
+.sidebar.collapsed .session-item {
+    margin-bottom: 2px;
+}
+
+/* Hide session menu button (dots) in collapsed mode */
+.sidebar.collapsed .session-menu-btn {
+    display: none;
+}
+
+/* Adjust footer elements */
+.sidebar.collapsed .footer-compact-item {
+    padding: 10px 0;
+    background: transparent;
+    border: none;
+}
+
+.sidebar.collapsed .footer-section {
+    justify-content: center;
+    width: 100%;
+}
+
+.sidebar.collapsed .user-section {
+    display: none;
+}
+
+.sidebar.collapsed .footer-separator {
+    display: none;
+}
+
+.sidebar.collapsed .media-library-title {
+    justify-content: center;
+}
+
+.sidebar.collapsed .media-header-delete-btn {
+    padding: 4px;
+}
+
+/* In collapsed mode, we hide the logo to make space for the toggle button, 
+   or we can flip them. Let's hide the logo or make it very small?
+   Better: Hide the logo, show only the toggle button centered.
+*/
+.sidebar.collapsed .sidebar-logo-btn {
+    display: none;
 }

@@ -50,18 +50,12 @@ const Media = {
         const closeGalleryBtn = DOM.byId('close-media-gallery');
         const galleryOverlay = DOM.byId('media-gallery-overlay');
 
-        // Sidebar Toggle
-        if (mediaToggle && mediaWrapper) {
+        // Sidebar Toggle - Changed to open Gallery directly
+        if (mediaToggle) {
             DOM.on(mediaToggle, 'click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                const isVisible = mediaWrapper.style.display !== 'none';
-                mediaWrapper.style.display = isVisible ? 'none' : 'block';
-                mediaToggle.classList.toggle('active', !isVisible);
-
-                if (!isVisible) {
-                    this.loadRecentMedia();
-                }
+                this.openGallery();
             });
         }
 
