@@ -10,3 +10,9 @@
 
 /* Import the complete original styles */
 @import url('./original-styles.css');
+@import url('./legacy-compat.css');
+
+/* Import component styles */
+@import url('./components/navbar.css');
+@import url('./components/sidebar.css');
+@import url('./components/header-refinement.css');

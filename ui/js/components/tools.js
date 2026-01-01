@@ -243,19 +243,21 @@ const Tools = {
             html += `
                 <div class="tools-section-group ${builtinExpanded ? 'expanded' : ''}" id="builtin-tools-group">
                     <div class="tools-section-header-expandable" data-group="builtin-tools-group">
-                        <svg class="tools-section-expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg class="tools-section-main-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
                         </svg>
                         <span class="tools-section-title">Built-in Tools</span>
-                        <span class="tools-section-count">${enabledBuiltinCount}</span>
-                        <div class="tools-toggle-wrapper" onclick="event.stopPropagation()">
-                            <label class="tools-switch">
-                                <input type="checkbox" id="builtin-tools-toggle" ${this.isBuiltinEnabled() ? 'checked' : ''}>
-                                <span class="tools-slider"></span>
-                            </label>
+                        <div class="tools-header-actions">
+                            <span class="tools-section-count">${enabledBuiltinCount}</span>
+                            <div class="tools-toggle-wrapper" onclick="event.stopPropagation()">
+                                <label class="tools-switch">
+                                    <input type="checkbox" id="builtin-tools-toggle" ${this.isBuiltinEnabled() ? 'checked' : ''}>
+                                    <span class="tools-slider"></span>
+                                </label>
+                            </div>
+                            <svg class="tools-section-expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
                         </div>
                     </div>
                     <div class="tools-section-content">
@@ -274,20 +276,22 @@ const Tools = {
             html += `
                 <div class="tools-section-group ${mcpExpanded ? 'expanded' : ''}" id="mcp-tools-group">
                     <div class="tools-section-header-expandable" data-group="mcp-tools-group">
-                        <svg class="tools-section-expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg class="tools-section-main-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
                             <circle cx="12" cy="12" r="3"></circle>
                         </svg>
                         <span class="tools-section-title">MCP Tools</span>
-                        <span class="tools-section-count">${enabledMcpCount}</span>
-                        <div class="tools-toggle-wrapper" onclick="event.stopPropagation()">
-                            <label class="tools-switch">
-                                <input type="checkbox" id="mcp-section-toggle" ${this.isMcpEnabled() ? 'checked' : ''}>
-                                <span class="tools-slider"></span>
-                            </label>
+                        <div class="tools-header-actions">
+                            <span class="tools-section-count">${enabledMcpCount}</span>
+                            <div class="tools-toggle-wrapper" onclick="event.stopPropagation()">
+                                <label class="tools-switch">
+                                    <input type="checkbox" id="mcp-section-toggle" ${this.isMcpEnabled() ? 'checked' : ''}>
+                                    <span class="tools-slider"></span>
+                                </label>
+                            </div>
+                            <svg class="tools-section-expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
                         </div>
                     </div>
                     <div class="tools-section-content">
@@ -384,17 +388,19 @@ const Tools = {
             html += `
                 <div class="mcp-server-group ${serverExpanded ? 'expanded' : ''} ${allDisabled ? 'disabled-server' : ''}" data-server="${DOM.escapeHtml(serverName)}">
                     <div class="mcp-server-group-header">
-                        <svg class="mcp-server-expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
                         <div class="mcp-server-status ${status}"></div>
                         <span class="mcp-server-name">${DOM.escapeHtml(serverName)}</span>
-                        <span class="mcp-server-tools-count">${enabledCount} / ${tools.length}</span>
-                        <div class="tools-toggle-wrapper" onclick="event.stopPropagation()">
-                            <label class="tools-switch">
-                                <input type="checkbox" class="mcp-server-toggle" data-server="${DOM.escapeHtml(serverName)}" ${!allDisabled ? 'checked' : ''}>
-                                <span class="tools-slider"></span>
-                            </label>
+                        <div class="tools-header-actions">
+                            <span class="mcp-server-tools-count">${tools.length} tools</span>
+                            <div class="tools-toggle-wrapper" onclick="event.stopPropagation()">
+                                <label class="tools-switch">
+                                    <input type="checkbox" class="mcp-server-toggle" data-server="${DOM.escapeHtml(serverName)}" ${!allDisabled ? 'checked' : ''}>
+                                    <span class="tools-slider"></span>
+                                </label>
+                            </div>
+                            <svg class="mcp-server-expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
                         </div>
                     </div>
                     <div class="mcp-server-tools">
@@ -413,6 +419,7 @@ const Tools = {
      * Check if builtin section is enabled (at least one tool enabled)
      */
     isBuiltinEnabled() {
+        if (this.disabledTools.has('builtin_section')) return false;
         if (this.availableTools.length === 0) return true;
         return this.availableTools.some(t => !this.disabledTools.has(`builtin:${t.name}`));
     },
@@ -421,11 +428,13 @@ const Tools = {
      * Check if MCP section is enabled (at least one tool enabled across all servers)
      */
     isMcpEnabled() {
+        if (this.disabledTools.has('mcp_section')) return false;
         const serverNames = Object.keys(this.mcpServers);
         let totalTools = 0;
         let enabledCount = 0;
 
         serverNames.forEach(server => {
+            if (this.disabledTools.has(`mcp_server:${server}`)) return;
             const tools = this.mcpServers[server] || [];
             totalTools += tools.length;
             enabledCount += tools.filter(t => !this.disabledTools.has(`mcp:${server}:${t.name}`)).length;
@@ -444,6 +453,13 @@ const Tools = {
             DOM.on(builtinToggle, 'change', (e) => {
                 e.stopPropagation();
                 const enable = builtinToggle.checked;
+
+                if (enable) {
+                    this.disabledTools.delete('builtin_section');
+                } else {
+                    this.disabledTools.add('builtin_section');
+                }
+
                 this.availableTools.forEach(t => {
                     const toolId = `builtin:${t.name}`;
                     if (enable) {
@@ -453,7 +469,8 @@ const Tools = {
                     }
                 });
                 this.saveDisabledTools();
-                this.renderToolsList();
+                this.updateToolCounts();
+                this.syncToolToggleStates();
             });
         }
 
@@ -462,7 +479,19 @@ const Tools = {
             DOM.on(mcpToggle, 'change', (e) => {
                 e.stopPropagation();
                 const enable = mcpToggle.checked;
+
+                if (enable) {
+                    this.disabledTools.delete('mcp_section');
+                } else {
+                    this.disabledTools.add('mcp_section');
+                }
+
                 Object.keys(this.mcpServers).forEach(server => {
+                    if (enable) {
+                        this.disabledTools.delete(`mcp_server:${server}`);
+                    } else {
+                        this.disabledTools.add(`mcp_server:${server}`);
+                    }
                     (this.mcpServers[server] || []).forEach(t => {
                         const toolId = `mcp:${server}:${t.name}`;
                         if (enable) {
@@ -473,7 +502,8 @@ const Tools = {
                     });
                 });
                 this.saveDisabledTools();
-                this.renderToolsList();
+                this.updateToolCounts();
+                this.syncToolToggleStates();
             });
         }
 
@@ -483,8 +513,14 @@ const Tools = {
                 e.stopPropagation();
                 const serverName = input.dataset.server;
                 const enable = input.checked;
-                const serverTools = this.mcpServers[serverName] || [];
 
+                if (enable) {
+                    this.disabledTools.delete(`mcp_server:${serverName}`);
+                } else {
+                    this.disabledTools.add(`mcp_server:${serverName}`);
+                }
+
+                const serverTools = this.mcpServers[serverName] || [];
                 serverTools.forEach(t => {
                     const toolId = `mcp:${serverName}:${t.name}`;
                     if (enable) {
@@ -494,7 +530,8 @@ const Tools = {
                     }
                 });
                 this.saveDisabledTools();
-                this.renderToolsList();
+                this.updateToolCounts();
+                this.syncToolToggleStates();
             });
         });
 
@@ -509,8 +546,90 @@ const Tools = {
                     this.disabledTools.add(toolId);
                 }
                 this.saveDisabledTools();
-                this.renderToolsList();
+                this.updateToolCounts();
             });
+        });
+    },
+
+    /**
+     * Update tool counts without re-rendering the entire list
+     */
+    updateToolCounts() {
+        // Update header badge
+        this.updateHeaderBadge();
+
+        // Update Built-in section count
+        const enabledBuiltinCount = this.availableTools.filter(t => !this.disabledTools.has(`builtin:${t.name}`)).length;
+        const builtinCountEl = document.querySelector('#builtin-tools-group .tools-section-count');
+        if (builtinCountEl) builtinCountEl.textContent = enabledBuiltinCount;
+
+        // Update MCP section count
+        let enabledMcpTotal = 0;
+        const mcpSectionDisabled = this.disabledTools.has('mcp_section');
+
+        Object.keys(this.mcpServers).forEach(server => {
+            const serverDisabled = this.disabledTools.has(`mcp_server:${server}`);
+            const tools = this.mcpServers[server] || [];
+
+            let enabledCount = 0;
+            if (!mcpSectionDisabled && !serverDisabled) {
+                enabledCount = tools.filter(t => !this.disabledTools.has(`mcp:${server}:${t.name}`)).length;
+            }
+            enabledMcpTotal += enabledCount;
+
+            // Update per-server count
+            const serverGroup = document.querySelector(`.mcp-server-group[data-server="${server}"]`);
+            if (serverGroup) {
+                const countEl = serverGroup.querySelector('.mcp-server-tools-count');
+                if (countEl) countEl.textContent = `${enabledCount}/${tools.length} active`;
+            }
+        });
+        const mcpCountEl = document.querySelector('#mcp-tools-group .tools-section-count');
+        if (mcpCountEl) mcpCountEl.textContent = enabledMcpTotal;
+
+        // Update total count in header
+        const totalEnabled = enabledBuiltinCount + enabledMcpTotal;
+        const totalCountEl = document.querySelector('.tools-section-static-header .tools-section-count');
+        if (totalCountEl) totalCountEl.textContent = totalEnabled;
+    },
+
+    /**
+     * Sync toggle states without re-rendering
+     */
+    syncToolToggleStates() {
+        // Sync all individual tool toggles
+        DOM.$$('.tool-toggle input[data-tool]').forEach(input => {
+            const toolId = input.dataset.tool;
+            input.checked = !this.disabledTools.has(toolId);
+
+            // Update visual state
+            const toolItem = input.closest('.tool-item');
+            if (toolItem) {
+                toolItem.classList.toggle('disabled', !input.checked);
+            }
+        });
+
+        // Sync section toggles
+        const builtinToggle = DOM.byId('builtin-tools-toggle');
+        if (builtinToggle) {
+            builtinToggle.checked = this.isBuiltinEnabled();
+        }
+
+        const mcpToggle = DOM.byId('mcp-section-toggle');
+        if (mcpToggle) {
+            mcpToggle.checked = this.isMcpEnabled();
+        }
+
+        // Sync server toggles
+        DOM.$$('.mcp-server-toggle').forEach(input => {
+            const serverName = input.dataset.server;
+            input.checked = !this.disabledTools.has(`mcp_server:${serverName}`);
+
+            // Sync visual state of group
+            const group = input.closest('.mcp-server-group');
+            if (group) {
+                group.classList.toggle('disabled-server', !input.checked);
+            }
         });
     },
 

@@ -159,8 +159,15 @@ const App = {
             // Update provider info
             if (response.provider_config) {
                 const provider = response.provider_config.provider;
+                const model = response.provider_config.model || 'Default';
+
+                // Sync with new ModelSelector component
+                const modelDisplay = DOM.byId('current-model-display');
+                if (modelDisplay) modelDisplay.textContent = model;
+
+                // Legacy IDs for compatibility
                 DOM.text('provider-name', provider.charAt(0).toUpperCase() + provider.slice(1));
-                DOM.text('model-name', response.provider_config.model || 'Default');
+                DOM.text('model-name', model);
 
                 // Update provider icon
                 this.updateProviderIcon(provider);
@@ -188,7 +195,7 @@ const App = {
         const iconEl = DOM.byId('provider-icon');
         if (!iconEl) return;
 
-        iconEl.className = `provider-icon-small ${provider}`;
+        iconEl.className = `footer-icon-box ${provider}`;
 
         const icons = {
             ollama: '<img src="https://github.com/ollama.png" alt="Ollama">',
@@ -358,7 +365,7 @@ const App = {
         }
 
         // Logout button
-        const logoutBtn = DOM.byId('logout-btn');
+        const logoutBtn = DOM.byId('header-logout-btn');
         if (logoutBtn) {
             DOM.on(logoutBtn, 'click', async () => {
                 try {
@@ -393,6 +400,11 @@ const App = {
         input.value = '';
         input.style.height = 'auto';
         ImageUpload.clear();
+
+        // Hide autocorrect button since input is now empty
+        if (typeof AutoCorrect !== 'undefined' && AutoCorrect.updateButtonVisibility) {
+            AutoCorrect.updateButtonVisibility();
+        }
 
         // Show thinking spinner
         Messages.currentAssistantMessage = Messages.createAssistantMessage();

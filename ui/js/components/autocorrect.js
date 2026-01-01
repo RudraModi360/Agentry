@@ -10,9 +10,10 @@ const AutoCorrect = {
      * Initialize the component
      */
     init() {
-        this.injectButton();
-        this.setupEventListeners();
-        AppConfig.log('AutoCorrect', 'Initialized');
+        // Autocorrect button disabled - not needed
+        // this.injectButton();
+        // this.setupEventListeners();
+        AppConfig.log('AutoCorrect', 'Disabled');
     },
 
     /**

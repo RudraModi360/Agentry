@@ -68,14 +68,53 @@
     color: var(--text-muted) !important;
     text-transform: capitalize !important;
     letter-spacing: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
 }
 
-/* Sessions Container */
+/* Clickable Sessions Header */
+.sessions-header.clickable {
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    user-select: none !important;
+}
+
+.sessions-header.clickable:hover {
+    background: var(--bg-tertiary) !important;
+    border-radius: 6px !important;
+}
+
+/* Sessions Expand Icon */
+.sessions-expand-icon {
+    width: 14px !important;
+    height: 14px !important;
+    stroke: var(--text-muted) !important;
+    transition: transform 0.25s ease !important;
+    flex-shrink: 0 !important;
+}
+
+/* Collapsed state - rotate chevron */
+.sessions-header.collapsed .sessions-expand-icon {
+    transform: rotate(-90deg) !important;
+}
+
+/* Sessions Container Collapsible */
 .sessions-container {
     flex: 1 !important;
     overflow-y: auto !important;
     padding: 4px 8px !important;
+    transition: max-height 0.3s ease-out, opacity 0.2s ease !important;
 }
+
+.sessions-container.collapsed {
+    max-height: 0 !important;
+    opacity: 0 !important;
+    padding: 0 8px !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+}
+
 
 /* Session Items - Block layout (title on top, date below) */
 .session-item {
@@ -152,128 +191,13 @@
     color: white !important;
 }
 
-/* Sidebar Footer & Provider Info */
+/* Sidebar Footer removed from legacy compat to allow modular styles */
 .sidebar-footer {
-    padding: 8px 10px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    padding: 12px 10px !important;
     border-top: 1px solid var(--card-border) !important;
-}
-
-.provider-info {
-    display: flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-    padding: 8px 10px !important;
-    background: transparent !important;
-    border: none !important;
-    border-radius: 8px !important;
-    cursor: pointer !important;
-    transition: all 0.15s ease !important;
-    margin-bottom: 0 !important;
-}
-
-.provider-info:hover {
-    background: var(--bg-secondary) !important;
-}
-
-.provider-icon-small {
-    width: 24px !important;
-    height: 24px !important;
-    border-radius: 6px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    overflow: hidden !important;
-    background: transparent !important;
-    flex-shrink: 0 !important;
-}
-
-.provider-icon-small img {
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: contain !important;
-}
-
-.provider-details {
-    flex: 1 !important;
-    min-width: 0 !important;
-}
-
-.provider-name-small {
-    font-size: 13px !important;
-    font-weight: 500 !important;
-}
-
-.model-name-small {
-    font-size: 10px !important;
-    color: var(--text-muted) !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-}
-
-.model-info-row {
-    display: flex !important;
-    align-items: center !important;
-    gap: 4px !important;
-}
-
-.change-btn {
-    font-size: 11px !important;
-    color: var(--accent) !important;
-    font-weight: 500 !important;
-    padding: 4px 8px !important;
-    border-radius: 4px !important;
-    background: transparent !important;
-    border: none !important;
-    cursor: pointer !important;
-}
-
-.change-btn:hover {
-    background: var(--accent-light) !important;
-}
-
-/* User Menu */
-.user-menu {
-    display: flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-    padding: 8px 10px !important;
-}
-
-.user-avatar {
-    width: 28px !important;
-    height: 28px !important;
-    border-radius: 50% !important;
-    background: linear-gradient(135deg, var(--accent), var(--color-violet)) !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-size: 12px !important;
-    font-weight: 600 !important;
-    color: white !important;
-    flex-shrink: 0 !important;
-}
-
-.user-name {
-    flex: 1 !important;
-    font-size: 13px !important;
-    font-weight: 500 !important;
-}
-
-.logout-btn {
-    font-size: 11px !important;
-    color: var(--text-secondary) !important;
-    padding: 4px 8px !important;
-    border-radius: 4px !important;
-    background: transparent !important;
-    border: 1px solid var(--card-border) !important;
-    cursor: pointer !important;
-}
-
-.logout-btn:hover {
-    background: var(--error-color) !important;
-    color: white !important;
-    border-color: var(--error-color) !important;
 }
 
 /* ==================== Clock Widget (Original Style) ==================== */
@@ -1208,4 +1132,121 @@ body {
 .app-container {
     display: flex;
     height: 100vh;
+}
+
+/* ==================== Rail Mode (Collapsed Sidebar) ==================== */
+/* Ensure sidebar rail is 68px and hides text */
+.sidebar.collapsed {
+    width: 68px !important;
+    min-width: 68px !important;
+    max-width: 68px !important;
+    overflow: hidden !important;
+}
+
+/* Hide all text and labels in rail mode */
+.sidebar.collapsed .logo-text,
+.sidebar.collapsed .sidebar-actions-row span,
+.sidebar.collapsed .sessions-header span,
+.sidebar.collapsed .session-info,
+.sidebar.collapsed .provider-details,
+.sidebar.collapsed .user-name,
+.sidebar.collapsed .logout-btn,
+.sidebar.collapsed .change-btn,
+.sidebar.collapsed .media-library-wrapper,
+.sidebar.collapsed .sidebar-resizer,
+.sidebar.collapsed .session-delete {
+    display: none !important;
+}
+
+/* Center elements in rail mode */
+.sidebar.collapsed .logo {
+    justify-content: center !important;
+    margin: 0 !important;
+}
+
+.sidebar.collapsed .logo-header-wrapper {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 16px !important;
+    justify-content: center !important;
+    margin-bottom: 20px !important;
+}
+
+.sidebar.collapsed .sidebar-header {
+    padding: 20px 0 !important;
+    border-bottom: 1px solid var(--card-border) !important;
+}
+
+.sidebar.collapsed .sidebar-actions-row {
+    padding: 12px 0 !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.sidebar.collapsed .sidebar-action-btn {
+    padding: 12px 0 !important;
+    justify-content: center !important;
+    width: 100% !important;
+    border-radius: 0 !important;
+}
+
+.sidebar.collapsed .btn-icon-wrapper {
+    width: 100% !important;
+    justify-content: center !important;
+}
+
+.sidebar.collapsed .sessions-header {
+    padding: 20px 0 !important;
+    justify-content: center !important;
+    border-top: 1px solid var(--card-border) !important;
+}
+
+.sidebar.collapsed .session-item {
+    justify-content: center !important;
+    padding: 12px 0 !important;
+    border-radius: 0 !important;
+}
+
+.sidebar.collapsed .session-icon {
+    margin: 0 !important;
+}
+
+.sidebar.collapsed .sidebar-footer {
+    padding: 20px 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 20px !important;
+}
+
+.sidebar.collapsed .provider-info {
+    padding: 0 !important;
+    margin: 0 !important;
+    justify-content: center !important;
+    background: transparent !important;
+    width: 100% !important;
+}
+
+.sidebar.collapsed .provider-icon-small {
+    margin: 0 !important;
+    width: 32px !important;
+    height: 32px !important;
+}
+
+.sidebar.collapsed .user-menu {
+    padding: 0 !important;
+    margin: 0 !important;
+    justify-content: center !important;
+    width: 100% !important;
+}
+
+.sidebar.collapsed .user-avatar {
+    margin: 0 !important;
+    width: 32px !important;
+    height: 32px !important;
+}
+
+/* Hide floating expand button when rail is visible */
+.sidebar.collapsed~.chat-main .sidebar-toggle-area {
+    display: none !important;
 }

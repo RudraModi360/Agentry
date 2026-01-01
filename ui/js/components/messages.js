@@ -383,9 +383,11 @@ const Messages = {
      * Render session messages
      */
     renderSessionMessages(messages) {
+        AppConfig.log('Messages', 'Rendering', messages ? messages.length : 0, 'messages');
         this.container.innerHTML = '';
 
         if (!messages || messages.length === 0) {
+            console.log('[Messages] No messages to render, showing empty state');
             if (this.emptyState) {
                 this.container.appendChild(this.emptyState);
                 this.emptyState.style.display = 'flex';

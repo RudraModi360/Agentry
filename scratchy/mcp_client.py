@@ -22,6 +22,7 @@ class MCPClientManager:
         # Task management
         self.server_tasks: Dict[str, asyncio.Task] = {}
         self.server_stop_events: Dict[str, asyncio.Event] = {}
+        self.server_tools_cache: Dict[str, List[Dict[str, Any]]] = {} # server_name -> list of tools
         
     async def load_config(self) -> Dict[str, Any]:
         """Load configuration from memory or mcp.json."""
@@ -46,6 +47,23 @@ class MCPClientManager:
                     await session.initialize()
                     self.sessions[server_name] = session
                     
+                    # List tools and map them immediately upon connection
+                    try:
+                        result = await session.list_tools()
+                        self.server_tools_cache[server_name] = [
+                            {
+                                "name": tool.name,
+                                "description": tool.description,
+                                "parameters": tool.inputSchema
+                            }
+                            for tool in result.tools
+                        ]
+                        for tool in result.tools:
+                            self.server_tools_map[tool.name] = server_name
+                        print(f"[MCP Client] Background connection ready: {server_name} ({len(result.tools)} tools cached)")
+                    except Exception as e:
+                        print(f"[MCP Client] Error listing tools in background for {server_name}: {e}")
+
                     # Signal that connection is ready
                     ready_event.set()
                     
@@ -136,8 +154,12 @@ class MCPClientManager:
         
         for server_name, session in self.sessions.items():
             try:
+                # Refresh cache
                 result = await session.list_tools()
+                server_tools = []
                 for tool in result.tools:
+                    self.server_tools_map[tool.name] = server_name
+                    
                     agentry_tool = {
                         "type": "function",
                         "function": {
@@ -147,14 +169,38 @@ class MCPClientManager:
                         }
                     }
                     all_tools.append(agentry_tool)
+                    server_tools.append({
+                        "name": tool.name,
+                        "description": tool.description,
+                        "parameters": tool.inputSchema
+                    })
+                self.server_tools_cache[server_name] = server_tools
+                
             except Exception as e:
                 print(f"[MCP Client] Error listing tools from {server_name}: {e}")
+                # Fallback to cache if session listing fails
+                if server_name in self.server_tools_cache:
+                    print(f"[MCP Client] Using cached tools for {server_name}")
+                    for tool in self.server_tools_cache[server_name]:
+                        all_tools.append({
+                            "type": "function",
+                            "function": {
+                                "name": tool["name"],
+                                "description": tool["description"],
+                                "parameters": tool["parameters"]
+                            }
+                        })
                 
         return all_tools
 
     async def execute_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Any:
         """Execute a tool on the appropriate external server."""
         server_name = self.server_tools_map.get(tool_name)
+        if not server_name:
+            # Try to refresh map if tool not found
+            await self.get_tools()
+            server_name = self.server_tools_map.get(tool_name)
+            
         if not server_name:
             raise ValueError(f"Tool {tool_name} not found in external servers")
             

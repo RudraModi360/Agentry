@@ -36,8 +36,17 @@ const Clock = {
             });
 
             const elementId = index === 0 ? 'clock-time-india' : 'clock-time-usa';
-            DOM.text(elementId, time);
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = time;
+            }
         });
+
+        // Debug logging like remote
+        console.log('Clock update:',
+            document.getElementById('clock-time-india')?.textContent,
+            document.getElementById('clock-time-usa')?.textContent
+        );
 
         // Update greeting based on local time
         let greeting;

@@ -369,7 +369,26 @@ const Modals = {
             // Refresh list
             await this.refreshMCPStatus();
 
+            saveBtn.textContent = 'Connecting servers...';
+
+            // Wait for MCP servers to connect (they connect async in background)
+            // Give servers time to connect before refreshing tools
+            await new Promise(resolve => setTimeout(resolve, 3000));
+
+            saveBtn.textContent = 'Loading tools...';
+
+            // Reload tools to reflect new MCP servers in Tools popup
+            if (typeof Tools !== 'undefined' && Tools.loadTools) {
+                console.log('[MCP] Reloading tools after config save...');
+                await Tools.loadTools();
+
+                // Check if new servers appeared - if not, retry after a longer wait
+                const serverNames = Object.keys(Tools.mcpServers || {});
+                console.log('[MCP] Loaded servers:', serverNames);
+            }
+
             saveBtn.textContent = 'Saved!';
+
             setTimeout(() => {
                 saveBtn.disabled = false;
                 saveBtn.textContent = 'Save Configuration';
@@ -416,6 +435,11 @@ const Modals = {
             });
 
             this.renderMCPServerList(serverList);
+
+            // Also reload tools to update the Tools popup with new MCP tools
+            if (typeof Tools !== 'undefined' && Tools.loadTools) {
+                await Tools.loadTools();
+            }
 
         } catch (error) {
             console.error('Failed to refresh MCP:', error);

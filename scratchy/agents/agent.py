@@ -235,31 +235,55 @@ class Agent:
         """Aggregate all tools (Internal + MCP), filtering out disabled ones."""
         filtered_tools = []
         
+        if self.debug:
+            print(f"[Agent] get_all_tools: disabled_tools has {len(self.disabled_tools)} entries: {self.disabled_tools}")
+        
         # Process Internal Tools
-        for tool in self.internal_tools:
-            name = tool.get("function", {}).get("name")
-            # We check both the name and a 'builtin:name' prefix for clarity
-            if name and name not in self.disabled_tools and f"builtin:{name}" not in self.disabled_tools:
-                filtered_tools.append(tool)
+        if "builtin_section" not in self.disabled_tools:
+            for tool in self.internal_tools:
+                name = tool.get("function", {}).get("name")
+                if name and name not in self.disabled_tools and f"builtin:{name}" not in self.disabled_tools:
+                    filtered_tools.append(tool)
+                elif self.debug and name:
+                    print(f"[Agent] Filtered out builtin tool: {name}")
+        elif self.debug:
+            print("[Agent] Filtered out entire builtin section")
         
         # Process MCP Tools
-        for manager in self.mcp_managers:
-            mcp_tools = await manager.get_tools()
-            for tool in mcp_tools:
-                name = tool.get("function", {}).get("name")
-                # Find which server this tool belongs to (manager should know)
-                server_name = "unknown"
-                if hasattr(manager, 'server_tools_map'):
-                    server_name = manager.server_tools_map.get(name, "unknown")
-                
-                # Check server-level disabling and tool-level disabling
-                if server_name not in self.disabled_tools and \
-                   f"mcp_server:{server_name}" not in self.disabled_tools:
+        if "mcp_section" not in self.disabled_tools:
+            for manager in self.mcp_managers:
+                # Get tools (this refreshes the manager's map)
+                mcp_tools = await manager.get_tools()
+                for tool in mcp_tools:
+                    func = tool.get("function", {})
+                    name = func.get("name")
                     
-                    tool_id = f"mcp:{server_name}:{name}"
-                    if tool_id not in self.disabled_tools and name not in self.disabled_tools:
+                    # Robust server identification
+                    server_name = "unknown"
+                    if hasattr(manager, 'server_tools_map'):
+                        server_name = manager.server_tools_map.get(name, "unknown")
+                    
+                    # If it's still unknown, we can't reliably filter by server, 
+                    # but we can still filter by specific tool ID or name
+                    is_enabled = True
+                    if server_name != "unknown":
+                        if f"mcp_server:{server_name}" in self.disabled_tools or server_name in self.disabled_tools:
+                            is_enabled = False
+                            if self.debug: print(f"[Agent] Filtered out MCP server: {server_name}")
+                    
+                    if is_enabled:
+                        tool_id = f"mcp:{server_name}:{name}"
+                        if tool_id in self.disabled_tools or name in self.disabled_tools:
+                            is_enabled = False
+                            if self.debug: print(f"[Agent] Filtered out MCP tool: {tool_id}")
+                    
+                    if is_enabled:
                         filtered_tools.append(tool)
+        elif self.debug:
+            print("[Agent] Filtered out entire MCP section")
             
+        if self.debug:
+            print(f"[Agent] get_all_tools returning {len(filtered_tools)} tools")
         return filtered_tools
 
     # --- Session Management ---

@@ -1,11 +1,12 @@
 /**
- * AGENTRY UI - Sidebar Component
+ * AGENTRY UI - Sidebar Component (Flowbite Style)
+ * Fixed sidebar always visible
  */
 
 const Sidebar = {
     isCollapsed: false,
     isResizing: false,
-    currentWidth: 280,
+    currentWidth: 256,
 
     elements: {},
 
@@ -18,8 +19,22 @@ const Sidebar = {
         this.setupEventListeners();
         this.setupResizer();
 
+        // Clear any inline styles from previous code
+        this.clearInlineStyles();
+
         AppConfig.log('Sidebar', 'Initialized');
     },
+
+    /**
+     * Clear inline styles that may have been set by previous code
+     */
+    clearInlineStyles() {
+        const allElements = document.querySelectorAll('.sidebar-logo-text, .menu-item-text, .footer-info-text, .footer-title, .footer-subtitle, .sidebar-toggle-btn-header');
+        allElements.forEach(el => {
+            el.style.display = '';  // Remove inline style, let CSS handle it
+        });
+    },
+
 
     /**
      * Cache DOM elements
@@ -31,8 +46,9 @@ const Sidebar = {
             collapseBtn: DOM.byId('sidebar-collapse-btn'),
             expandBtn: DOM.byId('sidebar-expand-btn'),
             resizer: DOM.byId('sidebar-resizer'),
-            menuBtn: DOM.byId('menu-btn'),
-            sessionsContainer: DOM.byId('sessions-container')
+            menuBtn: DOM.byId('mobile-menu-btn'),
+            sessionsContainer: DOM.byId('sessions-container'),
+            logoNewChatBtn: DOM.byId('logo-new-chat-btn')
         };
     },
 
@@ -51,6 +67,10 @@ const Sidebar = {
             this.collapse(false);
         } else {
             this.updateWidth();
+            // Ensure logo tooltip is correct for expanded state
+            if (this.elements.logoNewChatBtn) {
+                this.elements.logoNewChatBtn.title = "New chat";
+            }
         }
     },
 
@@ -86,6 +106,19 @@ const Sidebar = {
         // Overlay click to close on mobile
         if (this.elements.overlay) {
             DOM.on(this.elements.overlay, 'click', () => this.closeMobile());
+        }
+
+        // Logo click behavior: expand sidebar if collapsed, else create new chat
+        if (this.elements.logoNewChatBtn) {
+            DOM.on(this.elements.logoNewChatBtn, 'click', () => {
+                if (this.isCollapsed) {
+                    this.expand();
+                } else {
+                    if (typeof Sessions !== 'undefined' && Sessions.createNew) {
+                        Sessions.createNew();
+                    }
+                }
+            });
         }
 
         // ESC key to close on mobile
@@ -137,8 +170,12 @@ const Sidebar = {
      * Update sidebar width
      */
     updateWidth() {
-        if (this.elements.sidebar && !this.isCollapsed) {
-            this.elements.sidebar.style.width = `${this.currentWidth}px`;
+        if (this.elements.sidebar) {
+            if (this.isCollapsed) {
+                this.elements.sidebar.style.width = '68px';
+            } else {
+                this.elements.sidebar.style.width = `${this.currentWidth}px`;
+            }
         }
     },
 
@@ -150,6 +187,13 @@ const Sidebar = {
 
         if (this.elements.sidebar) {
             DOM.addClass(this.elements.sidebar, 'collapsed');
+            this.updateWidth();
+
+            // Update logo tooltip
+            if (this.elements.logoNewChatBtn) {
+                this.elements.logoNewChatBtn.title = "Open sidebar";
+            }
+
             if (!animate) {
                 this.elements.sidebar.style.transition = 'none';
                 requestAnimationFrame(() => {
@@ -171,6 +215,11 @@ const Sidebar = {
         if (this.elements.sidebar) {
             DOM.removeClass(this.elements.sidebar, 'collapsed');
             this.updateWidth();
+
+            // Restore logo tooltip
+            if (this.elements.logoNewChatBtn) {
+                this.elements.logoNewChatBtn.title = "New chat";
+            }
         }
 
         DOM.removeClass(document.body, 'sidebar-collapsed');

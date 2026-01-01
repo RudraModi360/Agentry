@@ -5,13 +5,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Agentry - Your AI Assistant">
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
     <title>Agentry Chat</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap"
         rel="stylesheet">
 
     <!-- Code Highlighting -->
@@ -32,58 +33,64 @@
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <div class="logo-header-wrapper">
-                    <div class="logo">
-                        <div class="logo-icon">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                            </svg>
-                        </div>
-                        <span class="logo-text shiny-text">Agentry</span>
-                    </div>
-                    <button class="sidebar-header-toggle" id="sidebar-collapse-btn" title="Collapse Sidebar">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                <!-- Top Row: Logo + Sidebar Toggle -->
+                <div class="sidebar-header-row">
+                    <button class="sidebar-logo-btn" id="logo-new-chat-btn" title="Agentry">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+                        </svg>
+                    </button>
+                    <button class="sidebar-toggle-btn-header" id="sidebar-collapse-btn" title="Close sidebar">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M11 17l-5-5 5-5" />
-                            <path d="M18 17l-5-5 5-5" />
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="9" y1="3" x2="9" y2="21"></line>
+                            <path d="M14 14l-3-2 3-2" />
                         </svg>
                     </button>
                 </div>
+            </div>
 
-                <!-- Action Buttons -->
-                <div class="sidebar-actions-row">
-                    <button class="sidebar-action-btn" id="new-chat-btn" title="New Chat">
-                        <div class="btn-icon-wrapper">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16"
-                                height="16">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                            </svg>
-                        </div>
-                        <span>New chat</span>
+            <!-- Sidebar Content Area (Scrollable) -->
+            <div class="sidebar-content" id="sidebar-content">
+                <!-- Navigation Menu -->
+                <nav class="sidebar-nav-menu">
+                    <button class="sidebar-menu-item" id="new-chat-btn" title="New chat">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 20h9"></path>
+                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                        </svg>
+                        <span class="menu-item-text">New chat</span>
                     </button>
-                    <button class="sidebar-action-btn" id="search-toggle-btn" title="Search chats">
-                        <div class="btn-icon-wrapper">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16"
-                                height="16">
-                                <circle cx="11" cy="11" r="8"></circle>
-                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                            </svg>
-                        </div>
-                        <span>Search chats</span>
+                    <button class="sidebar-menu-item" id="search-toggle-btn" title="Search chats">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <span class="menu-item-text">Search chats</span>
                     </button>
-                    <button class="sidebar-action-btn" id="media-gallery-btn" title="Media Library">
-                        <div class="btn-icon-wrapper">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16"
-                                height="16">
-                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                                <polyline points="21 15 16 10 5 21"></polyline>
-                            </svg>
-                        </div>
-                        <span>Media</span>
+                    <button class="sidebar-menu-item" id="media-gallery-btn" title="Images">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                        <span class="menu-item-text">Images</span>
                     </button>
-                </div>
+                    <!-- Projects Button -->
+                    <button class="sidebar-menu-item" id="projects-sidebar-btn" title="Projects">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z">
+                            </path>
+                        </svg>
+                        <span class="menu-item-text">Projects</span>
+                    </button>
+                </nav>
 
                 <!-- Media Library Section -->
                 <div class="media-library-wrapper" id="media-library-wrapper"
@@ -95,14 +102,21 @@
                                 <circle cx="8.5" cy="8.5" r="1.5"></circle>
                                 <polyline points="21 15 16 10 5 21"></polyline>
                             </svg>
-                            <span>Recent Media</span>
+                            <span>Media Library</span>
                         </div>
+                        <button class="media-header-delete-btn" id="clear-recent-media" title="Clear recent items">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path
+                                    d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                                </path>
+                            </svg>
+                            <span>Delete</span>
+                        </button>
                     </div>
                     <div class="media-container" id="media-container" style="max-height: 180px;">
-                        <!-- Recent media files will be loaded here (limited to 4) -->
                         <div class="no-media-text">No media uploaded yet</div>
                     </div>
-                    <!-- View All Button -->
                     <button class="media-view-all" id="media-view-all-btn" title="View all media">
                         <span>View All Media</span>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -112,54 +126,57 @@
                     </button>
                 </div>
 
+                <!-- Sessions Header -->
+                <div class="sessions-header" id="sessions-header">
+                    <span>Your chats</span>
+                </div>
+
+                <!-- Sessions Container -->
+                <div class="sessions-container" id="sessions-container">
+                    <!-- Sessions will be loaded here dynamically -->
+                </div>
             </div>
 
-            <!-- Sidebar Resizer -->
-            <div class="sidebar-resizer" id="sidebar-resizer"></div>
 
-            <!-- Sessions Header -->
-            <div class="sessions-header">
-                <span>Your chats</span>
-            </div>
-
-            <!-- Sessions Container -->
-            <div class="sessions-container" id="sessions-container">
-                <!-- Sessions will be loaded here dynamically -->
-            </div>
 
             <!-- Sidebar Footer -->
             <div class="sidebar-footer">
-                <div class="provider-info" id="provider-info" onclick="window.location.href='/setup'">
-                    <div class="provider-icon-small" id="provider-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" width="18" height="18">
-                            <rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect>
-                            <rect x="9" y="9" width="6" height="6"></rect>
-                        </svg>
+                <!-- Combined Account & Provider Card -->
+                <div class="footer-compact-item combined-footer">
+                    <!-- Left: User Profile -->
+                    <div class="footer-section user-section">
+                        <div class="footer-icon-box user-avatar-box" id="user-avatar">?</div>
+                        <div class="footer-info-text">
+                            <div class="footer-title" id="user-name">User</div>
+                        </div>
                     </div>
-                    <div class="provider-details">
-                        <div class="provider-name-small" id="provider-name">Loading...</div>
-                        <div class="model-info-row">
-                            <div class="model-name-small" id="model-name">-</div>
-                            <div class="capabilities-info-btn" id="capabilities-info-btn"
-                                onclick="event.stopPropagation();">
-                                <span></span>
-                                <div class="capabilities-tooltip" id="capabilities-tooltip">
-                                    <div class="capabilities-tooltip-title">Model Capabilities</div>
-                                    <ul class="capabilities-list" id="capabilities-list">
-                                        <li class="capability-item not-supported" id="cap-tools">Tools</li>
-                                        <li class="capability-item not-supported" id="cap-vision">Vision</li>
-                                    </ul>
-                                </div>
+
+                    <div class="footer-separator"></div>
+
+                    <!-- Right: Provider Info -->
+                    <div class="footer-section provider-section" id="provider-compact-link">
+                        <div class="footer-icon-box" id="provider-icon">
+                            <!-- Icon injected by JS -->
+                        </div>
+                        <div class="footer-info-text">
+                            <div class="footer-title" id="provider-name">...</div>
+                            <div class="footer-subtitle" id="model-name">...</div>
+                        </div>
+                        <button class="footer-action-btn" onclick="window.location.href='/setup'">Change</button>
+
+                        <!-- Capabilities popup attached to provider section -->
+                        <div class="capabilities-popup">
+                            <div class="capabilities-popup-header">Model Capabilities</div>
+                            <div class="capability-item" id="cap-tools">
+                                <span class="cap-status-icon">🛠️</span>
+                                <span>Tools Support</span>
+                            </div>
+                            <div class="capability-item" id="cap-vision">
+                                <span class="cap-status-icon">👁️</span>
+                                <span>Vision Support</span>
                             </div>
                         </div>
                     </div>
-                    <span class="change-btn">Change</span>
-                </div>
-
-                <div class="user-menu">
-                    <div class="user-avatar" id="user-avatar"></div>
-                    <span class="user-name" id="user-name">Loading...</span>
-                    <button class="logout-btn" id="logout-btn">Logout</button>
                 </div>
             </div>
         </aside>
@@ -174,9 +191,11 @@
             <!-- Sidebar Toggle (Visible when collapsed) -->
             <div class="sidebar-toggle-area">
                 <button class="sidebar-toggle-btn" id="sidebar-expand-btn" title="Expand Sidebar">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M13 17l5-5-5-5" />
-                        <path d="M6 17l5-5-5-5" />
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                        <line x1="9" y1="3" x2="9" y2="21" />
+                        <path d="M12 10l3 2-3 2" />
                     </svg>
                 </button>
             </div>
@@ -184,72 +203,59 @@
             <!-- Chat Header -->
             <div class="chat-header">
                 <div class="chat-header-left">
-                    <!-- Logo removed - already in sidebar -->
+                    <span class="header-brand-text">Agentry</span>
                 </div>
 
                 <!-- Agent Type Selector -->
                 <div class="chat-header-center">
+                    <div class="model-selector" id="model-selector">
+                        <button class="model-selector-btn" id="model-selector-btn" title="Change Model">
+                            <span id="current-model-display">GPT-4o</span>
+                            <svg viewBox="0 0 24 24" class="chevron">
+                                <polyline points="6 9 12 15 18 9" />
+                            </svg>
+                        </button>
+                        <div class="model-dropdown" id="model-dropdown">
+                            <div class="provider-list" id="provider-list"></div>
+                            <div class="model-list" id="model-list" style="display: none;">
+                                <div class="model-list-header">
+                                    <button class="back-to-providers" id="back-to-providers">
+                                        <svg viewBox="0 0 24 24" width="14" height="14">
+                                            <polyline points="15 18 9 12 15 6" />
+                                        </svg>
+                                        <span>Back</span>
+                                    </button>
+                                    <span id="selected-provider-label">Provider</span>
+                                </div>
+                                <div class="model-options" id="model-options"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-header-right">
+                    <!-- Agent Type Selector -->
                     <div class="agent-type-selector" id="agent-type-selector">
-                        <button class="agent-type-button" id="agent-type-button" title="Change Agent Type">
+                        <button class="agent-type-button" id="agent-type-button" title="Agent Type">
                             <svg viewBox="0 0 24 24" class="agent-icon-current" id="agent-icon-current">
                                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                             </svg>
-                            <span id="agent-type-label">Default Agent</span>
+                            <span id="agent-type-label">Default</span>
                             <svg viewBox="0 0 24 24" class="chevron">
                                 <polyline points="6 9 12 15 18 9" />
                             </svg>
                         </button>
                         <div class="agent-type-dropdown" id="agent-type-dropdown">
                             <div class="agent-type-option selected" data-agent="default">
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                                    <path d="M2 17l10 5 10-5" />
-                                    <path d="M2 12l10 5 10-5" />
-                                </svg>
-                                <div class="agent-type-option-info">
-                                    <div class="agent-type-option-name">Default Agent</div>
-                                    <div class="agent-type-option-desc">All tools + MCP servers</div>
-                                </div>
-                                <svg viewBox="0 0 24 24" class="check-icon">
-                                    <polyline points="20 6 9 17 4 12" />
-                                </svg>
+                                <div class="agent-type-option-name">Default Agent</div>
                             </div>
                             <div class="agent-type-option" data-agent="copilot">
-                                <svg viewBox="0 0 24 24">
-                                    <polyline points="16 18 22 12 16 6" />
-                                    <polyline points="8 6 2 12 8 18" />
-                                </svg>
-                                <div class="agent-type-option-info">
-                                    <div class="agent-type-option-name">Copilot Agent</div>
-                                    <div class="agent-type-option-desc">Coding focused</div>
-                                </div>
-                                <svg viewBox="0 0 24 24" class="check-icon">
-                                    <polyline points="20 6 9 17 4 12" />
-                                </svg>
-                            </div>
-                            <div class="agent-type-option" data-agent="smart">
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M9 18h6" />
-                                    <path d="M10 22h4" />
-                                    <path
-                                        d="M12 2a7 7 0 017 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 01-1 1H9a1 1 0 01-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 017-7z" />
-                                </svg>
-                                <div class="agent-type-option-info">
-                                    <div class="agent-type-option-name">Smart Agent</div>
-                                    <div class="agent-type-option-desc">Enhanced reasoning</div>
-                                </div>
-                                <svg viewBox="0 0 24 24" class="check-icon">
-                                    <polyline points="20 6 9 17 4 12" />
-                                </svg>
+                                <div class="agent-type-option-name">Copilot</div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Right side controls -->
-                <div class="chat-header-right">
                     <!-- MCP Config Button -->
-                    <button id="mcp-config-btn" class="mcp-config-btn tooltip-container">
+                    <button id="mcp-config-btn" class="header-action-btn tooltip-container">
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <path
@@ -257,15 +263,15 @@
                             <circle cx="12" cy="12" r="3" />
                         </svg>
                         <span id="mcp-header-status" class="mcp-status-badge none"></span>
-                        <span class="tooltip-text">MCP Configuration</span>
                     </button>
 
                     <!-- Theme Toggle -->
-                    <button id="theme-toggle-btn" class="theme-toggle-btn" title="Toggle theme">
+                    <button id="theme-toggle-btn" class="header-action-btn" title="Toggle theme">
                         <svg class="sun-icon" viewBox="0 0 24 24" width="20" height="20" fill="none"
                             stroke="currentColor" stroke-width="2">
                             <circle cx="12" cy="12" r="5"></circle>
                             <line x1="12" y1="1" x2="12" y2="3"></line>
+
                             <line x1="12" y1="21" x2="12" y2="23"></line>
                             <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
                             <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
@@ -285,6 +291,14 @@
                         <div class="status-dot disconnected" id="status-dot"></div>
                         <span id="status-text">Connecting...</span>
                     </div>
+
+                    <!-- Logout Button -->
+                    <button id="header-logout-btn" class="header-action-btn" title="Logout">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
+                        </svg>
+                    </button>
                 </div>
             </div>
 
@@ -296,11 +310,11 @@
                         <div class="clock-row">
                             <div class="clock-card">
                                 <div class="clock-label">India (IST)</div>
-                                <div class="clock-time" id="clock-time-india">00:00:00</div>
+                                <div class="clock-time" id="clock-time-india">00:00</div>
                             </div>
                             <div class="clock-card">
                                 <div class="clock-label">California (PST)</div>
-                                <div class="clock-time" id="clock-time-usa">00:00:00</div>
+                                <div class="clock-time" id="clock-time-usa">00:00</div>
                             </div>
                         </div>
                         <div class="clock-date" id="clock-date">Wednesday, December 31</div>
@@ -469,7 +483,7 @@
                 </div>
             </div>
             <div class="mcp-modal-footer">
-                <button id="mcp-save-btn" class="mcp-save-btn">Save Configuration</button>
+                <button id="mcp-save-btn" class="mcp-modal-btn save">Save Configuration</button>
             </div>
         </div>
     </div>
@@ -516,6 +530,8 @@
     <script src="js/components/sessions.js"></script>
     <script src="js/components/upload.js"></script>
     <script src="js/components/autocorrect.js"></script>
+    <script src="js/components/media.js"></script>
+    <script src="js/components/model-selector.js"></script>
     <script src="js/main.js"></script>
 </body>
 

@@ -150,7 +150,7 @@ def save_media_to_disk(user_id: int, image_data: str, filename: str = None) -> d
         "filename": filename,
         "url": f"/media/{filename}",
         "mime_type": mime_type,
-        "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        "created_at": datetime.now().isoformat()
     }
 
 # Serve static files
@@ -1108,6 +1108,21 @@ async def configure_provider(config: ProviderConfig, user: Dict = Depends(get_cu
                 conn.close()
             except Exception as e:
                 print(f"[Server] Failed to load MCP config: {e}")
+            
+            # Load disabled tools from database
+            try:
+                conn = sqlite3.connect(DB_PATH)
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                cursor.execute("SELECT disabled_tools_json FROM user_disabled_tools WHERE user_id = ?", (user_id,))
+                row = cursor.fetchone()
+                if row:
+                    disabled_list = json.loads(row["disabled_tools_json"])
+                    agent.disabled_tools = set(disabled_list)
+                    print(f"[Server] Loaded {len(disabled_list)} disabled tools for user {user_id}")
+                conn.close()
+            except Exception as e:
+                print(f"[Server] Failed to load disabled tools: {e}")
         else:
             print(f"[Server] Skipping tool loading - model {config.model} does not support tools")
         
@@ -1166,14 +1181,41 @@ async def save_mcp_config(request: MCPConfigRequest, user: Dict = Depends(get_cu
     if user_id in agent_cache:
         try:
             agent = agent_cache[user_id]["agent"]
-            # Only hot-reload if it's a default Agent, SmartAgent might handle it differently
-            # For now assume Agent class has the method
-            if hasattr(agent, 'clear_mcp_servers'):
-                print(f"[Server] Reloading MCP config for active agent user {user_id}")
+            # Hot-reload MCP servers for the active agent
+            if hasattr(agent, 'clear_mcp_servers') and hasattr(agent, 'add_mcp_server'):
+                print(f"[Server] Hot-reloading MCP config for user {user_id}")
+                
+                # Log current state before clear
+                old_manager_count = len(agent.mcp_managers) if hasattr(agent, 'mcp_managers') else 0
+                print(f"[Server]   Before clear: {old_manager_count} managers")
+                
                 await agent.clear_mcp_servers()
+                
+                # Add new MCP servers - this awaits connection completion
+                print(f"[Server]   Adding MCP servers from config...")
                 await agent.add_mcp_server(config=request.config)
+                
+                # Log details about connected servers
+                new_manager_count = len(agent.mcp_managers) if hasattr(agent, 'mcp_managers') else 0
+                print(f"[Server]   After add: {new_manager_count} managers")
+                
+                for idx, manager in enumerate(agent.mcp_managers):
+                    session_names = list(manager.sessions.keys()) if hasattr(manager, 'sessions') else []
+                    tool_count = len(manager.server_tools_map) if hasattr(manager, 'server_tools_map') else 0
+                    print(f"[Server]   Manager {idx}: sessions={session_names}, tools={tool_count}")
+                
+                print(f"[Server] MCP hot-reload complete.")
+            else:
+                # Fallback: invalidate cache to force full reload on next WebSocket connect
+                print(f"[Server] Agent doesn't support hot-reload, invalidating cache for user {user_id}")
+                del agent_cache[user_id]
         except Exception as e:
+            import traceback
             print(f"[Server] Failed to hot-reload MCP config: {e}")
+            traceback.print_exc()
+            # Invalidate cache on error to force fresh agent on next connect
+            if user_id in agent_cache:
+                del agent_cache[user_id]
 
     return {"message": "Configuration saved"}
 
@@ -1401,40 +1443,33 @@ async def get_available_tools(user: Dict = Depends(get_current_user)):
                         "name": tool_name,
                         "description": description[:100] if description else "No description"
                     })
-        
-        # Get MCP tools from agent's mcp_managers
-        if agent and hasattr(agent, 'mcp_managers'):
-            for manager in agent.mcp_managers:
-                # Use server_tools_map to get tools per server
-                if hasattr(manager, 'server_tools_map') and hasattr(manager, 'sessions'):
-                    # Group tools by server
-                    server_tool_names = {}
-                    for tool_name, server_name in manager.server_tools_map.items():
-                        if server_name not in server_tool_names:
-                            server_tool_names[server_name] = []
-                        server_tool_names[server_name].append(tool_name)
+                # Get MCP tools (if any managers are configured)
+            if hasattr(agent, 'mcp_managers'):
+                for manager in agent.mcp_managers:
+                    # Use the cache if available for descriptions
+                    if hasattr(manager, 'server_tools_cache') and manager.server_tools_cache:
+                        for server_name, tools in manager.server_tools_cache.items():
+                            if server_name not in mcp_tools:
+                                mcp_tools[server_name] = []
+                            for tool in tools:
+                                # Avoid duplicate names if they appear in multiple managers
+                                if not any(t["name"] == tool["name"] for t in mcp_tools[server_name]):
+                                    description = tool.get('description', 'No description')
+                                    mcp_tools[server_name].append({
+                                        "name": tool["name"],
+                                        "description": description[:100] if description else "No description"
+                                    })
                     
-                    # For each server, try to get tool details
-                    for server_name, tool_names in server_tool_names.items():
-                        session = manager.sessions.get(server_name)
-                        if session:
-                            try:
-                                # Call list_tools() to get full tool information
-                                result = await session.list_tools()
-                                mcp_tools[server_name] = [
-                                    {
-                                        "name": tool.name,
-                                        "description": (tool.description[:100] if tool.description else "No description")
-                                    }
-                                    for tool in result.tools
-                                ]
-                            except Exception as e:
-                                print(f"[Server] Error listing tools from {server_name}: {e}")
-                                # Fallback to just tool names
-                                mcp_tools[server_name] = [
-                                    {"name": tn, "description": "Tool from MCP server"}
-                                    for tn in tool_names
-                                ]
+                    # Also check for any tools in the map that might not be in cache yet (unlikely)
+                    elif hasattr(manager, 'server_tools_map'):
+                        for tool_name, server_name in manager.server_tools_map.items():
+                            if server_name not in mcp_tools:
+                                mcp_tools[server_name] = []
+                            if not any(t["name"] == tool_name for t in mcp_tools[server_name]):
+                                mcp_tools[server_name].append({
+                                    "name": tool_name,
+                                    "description": "Consolidating tool info..."
+                                })
     
     # If no agent cached, return default built-in tools list
     if not builtin_tools:
@@ -1911,6 +1946,22 @@ async def websocket_chat(websocket: WebSocket):
         # Get or create agent from cache
         if user_id in agent_cache:
             agent = agent_cache[user_id]["agent"]
+            
+            # Always refresh disabled tools from database to ensure sync
+            try:
+                conn = sqlite3.connect(DB_PATH)
+                cursor = conn.cursor()
+                cursor.execute("SELECT disabled_tools_json FROM user_disabled_tools WHERE user_id = ?", (user_id,))
+                row = cursor.fetchone()
+                if row:
+                    disabled_tools_list = json.loads(row[0])
+                    agent.disabled_tools = set(disabled_tools_list)
+                    print(f"[Server WS] Refreshed {len(disabled_tools_list)} disabled tools for cached agent")
+                else:
+                    agent.disabled_tools = set()
+                conn.close()
+            except Exception as e:
+                print(f"[Server WS] Error refreshing disabled tools: {e}")
         else:
             # Load config and create agent
             config = get_current_active_settings(user_id)
@@ -1988,9 +2039,10 @@ async def websocket_chat(websocket: WebSocket):
                     row = cursor.fetchone()
                     if row:
                         disabled_tools_list = json.loads(row[0])
+                        print(f"[Server WS] Loaded {len(disabled_tools_list)} disabled tools for user {user_id}")
                     conn.close()
-                except:
-                    pass
+                except Exception as e:
+                    print(f"[Server WS] Error loading disabled tools: {e}")
 
                 # Create the appropriate agent type
                 if agent_type_config and agent_type_config.get("agent_type") == "smart":
@@ -2017,6 +2069,7 @@ async def websocket_chat(websocket: WebSocket):
                     # Apply granular tool disabling
                     if disabled_tools_list:
                         agent.disabled_tools = set(disabled_tools_list)
+                        print(f"[Server WS] Applied {len(agent.disabled_tools)} disabled tools to agent")
 
                     # Check if tools are enabled by user AND supported by model
                     tools_enabled_by_user = config.get("tools_enabled", True)
