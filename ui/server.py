@@ -686,6 +686,15 @@ async def get_current_user_info(user: Dict = Depends(get_current_user)):
         active_key = get_api_key(user["id"], config["provider"])
         active_endpoint = get_provider_endpoint_helper(user["id"], config["provider"])
 
+    # Get agent config
+    agent_config = await get_agent_config(user)
+    agent_type = agent_config.get("agent_type", "default")
+
+    # Force tools_enabled to True for Smart Agent in the response
+    tools_enabled = True
+    if agent_type != "smart":
+        tools_enabled = bool(config["tools_enabled"]) if (config and "tools_enabled" in config) else True
+
     return {
         "user": {
             "id": user["id"],
@@ -699,7 +708,10 @@ async def get_current_user_info(user: Dict = Depends(get_current_user)):
             "model": config["model"] if config else None,
             "api_key": active_key,
             "endpoint": active_endpoint,
-            "tools_enabled": bool(config["tools_enabled"]) if (config and "tools_enabled" in config) else True
+            "tools_enabled": tools_enabled,
+            "agent_type": agent_type,
+            "agent_mode": agent_config.get("mode"),
+            "project_id": agent_config.get("project_id")
         } if config else None,
         "stored_keys": stored_keys
     }
@@ -760,6 +772,22 @@ async def get_providers():
 @app.post("/api/provider/toggle-tools")
 async def toggle_tools(enabled: bool, user: dict = Depends(get_current_user)):
     user_id = user["id"]
+    
+    # Check if user is using a Smart Agent
+    current_agent_type = "default"
+    if user_id in agent_cache:
+        current_agent_type = agent_cache[user_id].get("agent_type", "default")
+    else:
+        # Check DB if not in cache
+        config = await get_agent_config(user)
+        current_agent_type = config.get("agent_type", "default")
+
+    if current_agent_type == "smart":
+        raise HTTPException(
+            status_code=400, 
+            detail="Tools cannot be disabled for Smart Agent as they are essential for its operation."
+        )
+
     conn = sqlite3.connect(DB_PATH)
     try:
         cursor = conn.cursor()
@@ -1436,9 +1464,27 @@ async def get_available_tools(user: Dict = Depends(get_current_user)):
         finally:
             conn.close()
     
+    # Determine if tools are locked
+    tools_locked = False
+    if user_id in agent_cache:
+        tools_locked = agent_cache[user_id].get("agent_type") == "smart"
+    else:
+        # Fallback to DB check if agent not cached yet
+        try:
+            conn = sqlite3.connect(DB_PATH)
+            cursor = conn.cursor()
+            cursor.execute("SELECT agent_type FROM user_agent_config WHERE user_id = ?", (user_id,))
+            row = cursor.fetchone()
+            if row and row[0] == "smart":
+                tools_locked = True
+            conn.close()
+        except:
+            pass
+
     return {
         "builtin": builtin_tools,
-        "mcp": mcp_tools
+        "mcp": mcp_tools,
+        "tools_locked": tools_locked
     }
 
 
@@ -1447,6 +1493,21 @@ async def save_disabled_tools(request: DisabledToolsRequest, user: Dict = Depend
     """Save the list of disabled tools for the user."""
     user_id = user["id"]
     disabled_tools = request.disabled_tools
+
+    # Check if user is using a Smart Agent
+    current_agent_type = "default"
+    if user_id in agent_cache:
+        current_agent_type = agent_cache[user_id].get("agent_type", "default")
+    else:
+        # Check DB if not in cache
+        config = await get_agent_config(user)
+        current_agent_type = config.get("agent_type", "default")
+
+    if current_agent_type == "smart":
+        raise HTTPException(
+            status_code=400, 
+            detail="Granular tool disabling is not available for Smart Agent. All 5 essential tools are locked."
+        )
     
     # Store in database
     conn = sqlite3.connect(DB_PATH)
@@ -1947,12 +2008,8 @@ async def websocket_chat(websocket: WebSocket):
                     print(f"[Server WS] Created SmartAgent in {mode} mode" + 
                           (f" for project {project_id}" if project_id else ""))
                     
-                    # Apply granular tool disabling
-                    if disabled_tools_list:
-                        agent.disabled_tools = set(disabled_tools_list)
-                    
                     # Smart agent always uses its tools as they are integral to its reasoning mode
-                    # However, we respect granular disabling if user explicitly turned them off
+                    # Granular disabling is ignored for Smart Agent
                 else:
                     # Use default Agent
                     agent = Agent(llm=provider, debug=True, capabilities=capabilities)

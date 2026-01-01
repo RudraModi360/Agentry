@@ -9,6 +9,7 @@ const Tools = {
     mcpServerStatuses: {},
     disabledTools: new Set(),
     isPopupOpen: false,
+    toolsLocked: false,
 
     /**
      * Initialize tools component
@@ -121,9 +122,10 @@ const Tools = {
                 API.get('/api/mcp/status')
             ]);
 
-            // API returns { builtin: [...], mcp: {...} }
+            // API returns { builtin: [...], mcp: {...}, tools_locked: boolean }
             this.availableTools = toolsRes.builtin || [];
             this.mcpServers = toolsRes.mcp || {};
+            this.toolsLocked = toolsRes.tools_locked === true;
             this.mcpServerStatuses = statusRes.statuses || {};
 
             // Load disabled tools from backend
@@ -330,20 +332,21 @@ const Tools = {
     createToolItemHTML(tool, type) {
         const toolId = type === 'mcp' ? `mcp:${tool.server}:${tool.name}` : `builtin:${tool.name}`;
         const isDisabled = this.disabledTools.has(toolId);
+        const isLocked = this.toolsLocked;
 
         return `
-            <div class="tool-item ${isDisabled ? 'disabled' : ''}">
+            <div class="tool-item ${isDisabled ? 'disabled' : ''} ${isLocked ? 'locked' : ''}">
                 <div class="tool-item-icon ${type === 'mcp' ? 'mcp' : ''}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
                     </svg>
                 </div>
                 <div class="tool-item-info">
-                    <div class="tool-item-name">${DOM.escapeHtml(tool.name)}</div>
+                    <div class="tool-item-name">${DOM.escapeHtml(tool.name)} ${isLocked ? '<span class="locked-badge" style="font-size: 10px; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 10px; margin-left: 8px; vertical-align: middle; border: 1px solid rgba(255,255,255,0.2);">Locked</span>' : ''}</div>
                     <div class="tool-item-desc">${DOM.escapeHtml(tool.description || 'No description')}</div>
                 </div>
-                <label class="tool-toggle">
-                    <input type="checkbox" data-tool="${toolId}" ${!isDisabled ? 'checked' : ''}>
+                <label class="tool-toggle ${isLocked ? 'disabled' : ''}">
+                    <input type="checkbox" data-tool="${toolId}" ${!isDisabled ? 'checked' : ''} ${isLocked ? 'disabled' : ''}>
                     <span class="tool-toggle-slider"></span>
                 </label>
             </div>

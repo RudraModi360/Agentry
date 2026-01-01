@@ -5369,26 +5369,56 @@
                 }
             });
 
-            // Handle option click
-            options.forEach(option => {
-                option.addEventListener('click', async () => {
-                    const agentType = option.dataset.agent;
+                    // Handle option click
+                    options.forEach(option => {
+                        option.addEventListener('click', async () => {
+                            const agentType = option.dataset.agent;
 
-                    // Save to localStorage
-                    localStorage.setItem('agentry-agent-type', agentType);
+                            // Save to localStorage
+                            localStorage.setItem('agentry-agent-type', agentType);
 
-                    // Update UI
-                    updateAgentTypeUI(agentType);
+                            // Update UI
+                            updateAgentTypeUI(agentType);
+                            
+                            // Save to Backend
+                            await saveAgentType(agentType);
 
-                    // Close dropdown
-                    button?.classList.remove('open');
-                    dropdown?.classList.remove('open');
+                            // Close dropdown
+                            button?.classList.remove('open');
+                            dropdown?.classList.remove('open');
 
-                    // Show notification
-                    showNotification(`Switched to ${agentTypes[agentType].name}`, 'success');
-                });
-            });
-        }
+                            // Show notification
+                            showNotification(`Switched to ${agentTypes[agentType].name}`, 'success');
+                        });
+                    });
+                }
+
+                async function saveAgentType(agentType, mode = 'solo', projectId = null) {
+                    try {
+                        const response = await fetch(`${API_BASE}/api/agent/configure`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                agent_type: agentType,
+                                mode: mode,
+                                project_id: projectId
+                            })
+                        });
+
+                        if (response.ok) {
+                            console.log('Agent type updated in backend');
+                            // Reload available tools to reflect new toolset and lock status
+                            if (typeof loadAvailableTools === 'function') {
+                                loadAvailableTools();
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Failed to save agent type:', error);
+                    }
+                }
 
         function updateAgentTypeUI(agentType) {
             const currentIcon = document.getElementById('agent-icon-current');
@@ -5980,25 +6010,22 @@
         function createToolItemHTML(tool, type) {
             const toolId = type === 'mcp' ? `mcp:${tool.server}:${tool.name}` : `builtin:${tool.name}`;
             const isDisabled = disabledTools.has(toolId);
-            const iconClass = type === 'mcp' ? 'mcp' : '';
-
+            const isLocked = availableTools.tools_locked === true;
+            
             return `
-                <div class="tool-item ${isDisabled ? 'disabled' : ''}" data-tool-id="${toolId}">
-                    <div class="tool-item-icon ${iconClass}">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
-                        </svg>
-                    </div>
-                    <div class="tool-item-info">
-                        <div class="tool-item-name">${escapeHtml(tool.name)}</div>
-                        <div class="tool-item-desc">${escapeHtml(tool.description || 'No description')}</div>
-                    </div>
-                    <label class="tool-toggle">
-                        <input type="checkbox" data-tool-id="${toolId}" ${isDisabled ? '' : 'checked'}>
-                        <span class="tool-toggle-slider"></span>
-                    </label>
+            <div class="tool-item ${isDisabled ? 'disabled' : ''} ${isLocked ? 'locked' : ''}" data-tool-id="${toolId}">
+                <div class="tool-item-icon ${type === 'mcp' ? 'mcp' : ''}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
                 </div>
-            `;
+                <div class="tool-item-info">
+                    <div class="tool-item-name">${escapeHtml(tool.name)} ${isLocked ? '<span class="locked-badge" style="font-size: 10px; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 10px; margin-left: 8px; vertical-align: middle; border: 1px solid rgba(255,255,255,0.2);">Locked</span>' : ''}</div>
+                    <div class="tool-item-desc">${escapeHtml(tool.description || 'No description')}</div>
+                </div>
+                <label class="tool-toggle ${isLocked ? 'disabled' : ''}">
+                    <input type="checkbox" data-tool-id="${toolId}" ${isDisabled ? '' : 'checked'} ${isLocked ? 'disabled' : ''}>
+                    <span class="tool-toggle-slider"></span>
+                </label>
+            </div>`;
         }
 
         function renderToolsListFallback() {
@@ -6127,6 +6154,18 @@
                     } else {
                         // Default Fallback
                         providerIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect></svg>`;
+                    }
+
+                    // Set tools enabled state
+                    const globalToolsToggle = document.getElementById('global-tools-toggle');
+                    if (globalToolsToggle && data.provider_config.tools_enabled !== undefined) {
+                        globalToolsToggle.checked = data.provider_config.tools_enabled;
+                    }
+
+                    // Sync agent type from backend
+                    if (data.provider_config.agent_type) {
+                        localStorage.setItem('agentry-agent-type', data.provider_config.agent_type);
+                        updateAgentTypeUI(data.provider_config.agent_type);
                     }
                 }
             } catch (error) {

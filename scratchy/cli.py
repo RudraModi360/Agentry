@@ -276,17 +276,17 @@ async def run_main():
                 llm=args.provider,
                 model=args.model,
                 api_key=api_key,
-                endpoint=endpoint,
                 debug=debug
             )
             agent.load_default_tools()
-        
-        if os.path.exists(mcp_path):
-            status.update(f"[bold green]Connecting to MCP servers...[/]")
-            try:
-                await agent.add_mcp_server(mcp_path)
-            except Exception as e:
-                console.print(f"[bold red]⚠️  Failed to connect MCP servers: {e}[/]")
+            
+            # Load MCP tools only for the default agent
+            if os.path.exists(mcp_path):
+                status.update(f"[bold green]Connecting to MCP servers...[/]")
+                try:
+                    await agent.add_mcp_server(mcp_path)
+                except Exception as e:
+                    console.print(f"[bold red]⚠️  Failed to connect MCP servers: {e}[/]")
         
         status.update("[bold green]Starting Hot Reloader...[/]")
         import scratchy

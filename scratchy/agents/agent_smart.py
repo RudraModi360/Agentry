@@ -1,6 +1,6 @@
 import json
 import asyncio
-from typing import List, Dict, Any, Optional, Union
+from typing import List, Dict, Any, Optional, Union, Callable
 from datetime import datetime
 from scratchy.providers.base import LLMProvider
 from scratchy.agents.agent import Agent, AgentSession
@@ -224,6 +224,40 @@ You are ready to help with {project.title}. Focus on the project goal and build 
         if self.debug:
             tool_names = [t.get("function", {}).get("name") for t in self.internal_tools]
             print(f"[SmartAgent] Loaded tools: {tool_names}")
+
+    async def get_all_tools(self) -> List[Dict[str, Any]]:
+        """
+        Return all Smart Agent tools. 
+        Smart Agent tools are integral to its operation and cannot be disabled.
+        """
+        # Return all internal tools without filtering by disabled_tools
+        return self.internal_tools
+
+    def disable_tools(self, reason: str = None):
+        """Smart Agent tools are fundamental and cannot be disabled."""
+        if self.debug:
+            print(f"[SmartAgent] Ignored request to disable tools: {reason}")
+        # We keep self.supports_tools = True
+    
+    def load_default_tools(self):
+        """Smart Agent uses a fixed set of essential tools and ignores default tools."""
+        if self.debug:
+            print("[SmartAgent] Ignoring request to load default tools.")
+
+    async def add_mcp_server(self, config_path: str = "mcp.json", config: Dict[str, Any] = None):
+        """Smart Agent does not support external MCP tools to maintain focus."""
+        if self.debug:
+            print("[SmartAgent] Ignoring request to add MCP server.")
+
+    def add_custom_tool(self, schema: Dict[str, Any], executor: Callable):
+        """Smart Agent uses a fixed set of essential tools and ignores custom tools."""
+        if self.debug:
+            print(f"[SmartAgent] Ignoring request to add custom tool: {schema.get('function', {}).get('name')}")
+
+    def register_tool_from_function(self, func: Callable):
+        """Smart Agent uses a fixed set of essential tools and ignores function-based tools."""
+        if self.debug:
+            print(f"[SmartAgent] Ignoring request to register tool from function: {func.__name__}")
     
     def set_mode(self, mode: str, project_id: str = None):
         """Switch agent mode."""

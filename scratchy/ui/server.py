@@ -24,7 +24,7 @@ if parent_dir not in sys.path:
     sys.path.insert(0, parent_dir)
 
 # Import from existing scratchy modules
-from scratchy import Agent
+from scratchy import Agent, CopilotAgent
 from scratchy.agents import SmartAgent, SmartAgentMode
 from scratchy.session_manager import SessionManager
 from scratchy.providers.ollama_provider import OllamaProvider
@@ -232,6 +232,27 @@ def init_users_db():
         CREATE TABLE IF NOT EXISTS user_mcp_config (
             user_id INTEGER PRIMARY KEY,
             config_json TEXT NOT NULL,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        )
+    """)
+    # Granular Tools Disabling
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_disabled_tools (
+            user_id INTEGER PRIMARY KEY,
+            disabled_tools_json TEXT NOT NULL,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        )
+    """)
+
+    # User Agent Type Preference
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_agent_config (
+            user_id INTEGER PRIMARY KEY,
+            agent_type TEXT NOT NULL,
+            mode TEXT,
+            project_id TEXT,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(user_id) REFERENCES users(id)
         )
@@ -656,6 +677,10 @@ async def get_current_user_info(user: Dict = Depends(get_current_user)):
         active_key = get_api_key(user["id"], config["provider"])
         active_endpoint = get_provider_endpoint_helper(user["id"], config["provider"])
 
+    # Get agent config
+    agent_config = await get_agent_config(user)
+    agent_type = agent_config.get("agent_type", "default")
+
     return {
         "user": {
             "id": user["id"],
@@ -668,7 +693,10 @@ async def get_current_user_info(user: Dict = Depends(get_current_user)):
             "mode": config["mode"] if config else None,
             "model": config["model"] if config else None,
             "api_key": active_key,
-            "endpoint": active_endpoint
+            "endpoint": active_endpoint,
+            "agent_type": agent_type,
+            "agent_mode": agent_config.get("mode"),
+            "project_id": agent_config.get("project_id")
         } if config else None,
         "stored_keys": stored_keys
     }
@@ -990,31 +1018,67 @@ async def configure_provider(config: ProviderConfig, user: Dict = Depends(get_cu
         print(f"[Server] Clearing old agent cache for user {user_id}")
         del agent_cache[user_id]
     
+    # 3. Create the appropriate agent type based on user config
+    agent_type = "default"
+    agent_mode = "solo"
+    project_id = None
+    
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("SELECT agent_type, mode, project_id FROM user_agent_config WHERE user_id = ?", (user_id,))
+        row = cursor.fetchone()
+        if row:
+            agent_type = row["agent_type"]
+            agent_mode = row["mode"]
+            project_id = row["project_id"]
+        conn.close()
+    except Exception:
+        pass
+
     # Create agent and cache it
     try:
-        agent = Agent(llm=provider, debug=True)
-        
-        # Only load tools if the model supports them
-        if capabilities.supports_tools:
-            agent.load_default_tools()
-            print(f"[Server] Loaded default tools for {config.model}")
-            
-            # Load MCP Configuration
-            try:
-                conn = sqlite3.connect(DB_PATH)
-                conn.row_factory = sqlite3.Row
-                cursor = conn.cursor()
-                cursor.execute("SELECT config_json FROM user_mcp_config WHERE user_id = ?", (user_id,))
-                row = cursor.fetchone()
-                if row:
-                    mcp_config = json.loads(row["config_json"])
-                    await agent.add_mcp_server(config=mcp_config)
-                    print(f"[Server] Loaded MCP tools for user {user_id}")
-                conn.close()
-            except Exception as e:
-                print(f"[Server] Failed to load MCP config: {e}")
+        if agent_type == "smart":
+            agent = SmartAgent(
+                llm=provider,
+                mode=agent_mode or SmartAgentMode.SOLO,
+                project_id=project_id,
+                debug=True,
+                capabilities=capabilities
+            )
+            # SmartAgent loads its own tools
+        elif agent_type == "copilot":
+            agent = CopilotAgent(
+                llm=provider,
+                debug=True,
+                capabilities=capabilities
+            )
+            # CopilotAgent loads default tools in its __init__
         else:
-            print(f"[Server] Skipping tool loading - model {config.model} does not support tools")
+            agent = Agent(llm=provider, debug=True, capabilities=capabilities)
+            
+            # Only load tools if the model supports them
+            if capabilities.supports_tools:
+                agent.load_default_tools()
+                print(f"[Server] Loaded default tools for {config.model}")
+                
+                # Load MCP Configuration (Only for Default Agent)
+                try:
+                    conn = sqlite3.connect(DB_PATH)
+                    conn.row_factory = sqlite3.Row
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT config_json FROM user_mcp_config WHERE user_id = ?", (user_id,))
+                    row = cursor.fetchone()
+                    if row:
+                        mcp_config = json.loads(row["config_json"])
+                        await agent.add_mcp_server(config=mcp_config)
+                        print(f"[Server] Loaded MCP tools for user {user_id}")
+                    conn.close()
+                except Exception as e:
+                    print(f"[Server] Failed to load MCP config: {e}")
+            else:
+                print(f"[Server] Skipping tool loading - model {config.model} does not support tools")
         
         agent_cache[user_id] = {
             "agent": agent,
@@ -1256,9 +1320,15 @@ async def get_available_tools(user: Dict = Depends(get_current_user)):
         finally:
             conn.close()
     
+    # Determine if tools are locked
+    tools_locked = False
+    if user_id in agent_cache:
+        tools_locked = agent_cache[user_id].get("agent_type") == "smart"
+
     return {
         "builtin": builtin_tools,
-        "mcp": mcp_tools
+        "mcp": mcp_tools,
+        "tools_locked": tools_locked
     }
 
 
@@ -1267,6 +1337,21 @@ async def save_disabled_tools(request: DisabledToolsRequest, user: Dict = Depend
     """Save the list of disabled tools for the user."""
     user_id = user["id"]
     disabled_tools = request.disabled_tools
+
+    # Check if user is using a Smart Agent
+    current_agent_type = "default"
+    if user_id in agent_cache:
+        current_agent_type = agent_cache[user_id].get("agent_type", "default")
+    else:
+        # Check DB if not in cache
+        config = await get_agent_config(user)
+        current_agent_type = config.get("agent_type", "default")
+
+    if current_agent_type == "smart":
+        raise HTTPException(
+            status_code=400, 
+            detail="Granular tool disabling is not available for Smart Agent. All 5 essential tools are locked."
+        )
     
     # Store in database
     conn = sqlite3.connect(DB_PATH)
@@ -1734,7 +1819,8 @@ async def websocket_chat(websocket: WebSocket):
                         llm=provider,
                         mode=mode,
                         project_id=project_id,
-                        debug=True
+                        debug=True,
+                        capabilities=capabilities
                     )
                     print(f"[Server WS] Created SmartAgent in {mode} mode" + 
                           (f" for project {project_id}" if project_id else ""))

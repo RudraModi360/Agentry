@@ -164,6 +164,12 @@ const App = {
 
                 // Update provider icon
                 this.updateProviderIcon(provider);
+
+                // Sync agent type from backend
+                if (response.provider_config.agent_type) {
+                    Storage.set(AppConfig.agents.storageKey, response.provider_config.agent_type);
+                    this.updateAgentTypeUI(response.provider_config.agent_type);
+                }
             }
 
         } catch (error) {
@@ -256,14 +262,46 @@ const App = {
 
         // Handle option click
         options.forEach(option => {
-            DOM.on(option, 'click', () => {
+            DOM.on(option, 'click', async () => {
                 const type = option.dataset.agent;
                 Storage.set(AppConfig.agents.storageKey, type);
                 this.updateAgentTypeUI(type);
+
+                // Save to backend
+                await this.saveAgentType(type);
+
                 if (button) DOM.removeClass(button, 'open');
                 if (dropdown) DOM.removeClass(dropdown, 'open');
             });
         });
+    },
+
+    /**
+     * Save agent type to backend
+     */
+    async saveAgentType(type, mode = 'solo', projectId = null) {
+        try {
+            await API.post('/api/agent/configure', {
+                agent_type: type,
+                mode: mode,
+                project_id: projectId
+            });
+            console.log(`[Agentry] Agent type saved: ${type}`);
+
+            // Reload tools to reflect locked status
+            if (typeof Tools !== 'undefined' && Tools.loadTools) {
+                await Tools.loadTools();
+            }
+
+            // Reconnect WebSocket to ensure new agent is instantiated with correct type
+            if (typeof WebSocketManager !== 'undefined') {
+                console.log('[Agentry] Reconnecting WebSocket for new agent type...');
+                WebSocketManager.close();
+                setTimeout(() => WebSocketManager.init(), 500);
+            }
+        } catch (error) {
+            console.error('[Agentry] Failed to save agent type:', error);
+        }
     },
 
     /**
