@@ -15,4 +15,5 @@
 /* Import component styles */
 @import url('./components/navbar.css');
 @import url('./components/sidebar.css');
+@import url('./components/input-editor.css');
 @import url('./components/header-refinement.css');

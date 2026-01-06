@@ -165,12 +165,9 @@ const App = {
                 const modelDisplay = DOM.byId('current-model-display');
                 if (modelDisplay) modelDisplay.textContent = model;
 
-                // Legacy IDs for compatibility
-                DOM.text('provider-name', provider.charAt(0).toUpperCase() + provider.slice(1));
-                DOM.text('model-name', model);
-
-                // Update provider icon
-                this.updateProviderIcon(provider);
+                // Update header model label (from ModelSelector logic)
+                const headerModelLabel = DOM.byId('header-model-label');
+                if (headerModelLabel) headerModelLabel.textContent = model;
 
                 // Sync agent type from backend
                 if (response.provider_config.agent_type) {
@@ -188,29 +185,7 @@ const App = {
         }
     },
 
-    /**
-     * Update provider icon
-     */
-    updateProviderIcon(provider) {
-        const iconEl = DOM.byId('provider-icon');
-        if (!iconEl) return;
 
-        iconEl.className = `footer-icon-box ${provider}`;
-
-        const icons = {
-            ollama: '<img src="https://github.com/ollama.png" alt="Ollama">',
-            groq: '<img src="https://github.com/groq.png" alt="Groq">',
-            gemini: '<img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg" alt="Gemini">',
-            azure: '<img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Microsoft_Azure.svg" alt="Azure" style="width: 18px; height: 18px;">'
-        };
-
-        if (icons[provider]) {
-            if (provider === 'azure') iconEl.style.background = 'white';
-            iconEl.innerHTML = icons[provider];
-        } else {
-            iconEl.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/></svg>`;
-        }
-    },
 
     /**
      * Load session (public method)
@@ -344,20 +319,10 @@ const App = {
 
         if (!input) return;
 
-        // Auto-resize textarea
-        DOM.on(input, 'input', () => {
-            input.style.height = 'auto';
-            input.style.height = Math.min(input.scrollHeight, 150) + 'px';
-            ImageUpload.updateSendButton();
-        });
-
-        // Send on Enter (without Shift)
-        DOM.on(input, 'keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                this.sendMessage();
-            }
-        });
+        // Initialize Input Editor
+        if (typeof InputEditor !== 'undefined') {
+            InputEditor.init();
+        }
 
         // Send button click
         if (sendBtn) {
@@ -381,8 +346,15 @@ const App = {
      * Send a message
      */
     async sendMessage() {
-        const input = DOM.byId('message-input');
-        const content = input?.value.trim();
+        // Use InputEditor if available, otherwise fallback (though HTML changed)
+        let content = '';
+        if (typeof InputEditor !== 'undefined') {
+            content = InputEditor.getValue().trim();
+        } else {
+            const input = DOM.byId('message-input');
+            content = input?.value.trim();
+        }
+
         const images = ImageUpload.getImages();
         const hasImages = images.length > 0;
 
@@ -397,8 +369,11 @@ const App = {
         Messages.addUserMessage(content, null, null, images);
 
         // Clear input
-        input.value = '';
-        input.style.height = 'auto';
+        if (typeof InputEditor !== 'undefined') {
+            InputEditor.clear();
+        } else {
+            DOM.byId('message-input').value = '';
+        }
         ImageUpload.clear();
 
         // Hide autocorrect button since input is now empty

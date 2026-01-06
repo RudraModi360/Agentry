@@ -163,7 +163,15 @@ const ImageUpload = {
 
         if (!messageInput || !sendBtn) return;
 
-        const hasText = messageInput.value.trim().length > 0;
+        let hasText = false;
+        if (typeof InputEditor !== 'undefined' && InputEditor.element === messageInput) {
+            hasText = InputEditor.getValue().trim().length > 0;
+        } else if (messageInput.value !== undefined) {
+            hasText = messageInput.value.trim().length > 0;
+        } else {
+            hasText = messageInput.innerText.trim().length > 0;
+        }
+
         const hasImages = this.selectedImages.length > 0;
         const isSendable = (hasText || hasImages) && App.state.isConnected;
 

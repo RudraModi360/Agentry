@@ -56,10 +56,19 @@
 /* ==================== Sidebar Header ==================== */
 
 .sidebar-header {
-    padding: 12px 12px 8px 12px;
+    /* Match navbar height exactly (64px from header-refinement.css) */
+    height: 64px;
+    min-height: 64px;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
     position: sticky;
     top: 0;
-    background: var(--bg-secondary);
+    /* Match navbar background */
+    background: rgba(18, 18, 23, 0.8);
+    backdrop-filter: blur(12px);
+    /* Match navbar border */
+    border-bottom: 1px solid var(--card-border);
     z-index: 10;
 }
 
@@ -67,7 +76,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 36px;
+    width: 100%;
+    height: 100%;
 }
 
 
@@ -134,8 +144,8 @@
 .sidebar-nav-menu {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    padding: 8px 10px;
+    gap: 2px;
+    padding: 8px 10px 8px 11px;
 }
 
 /* Menu Item - ChatGPT Style */
@@ -143,7 +153,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 10px 12px;
+    padding: 8px 12px;
     background: transparent;
     border: none;
     border-radius: 10px;
@@ -155,7 +165,7 @@
     text-align: left;
     white-space: nowrap;
     width: 100%;
-    min-height: 40px;
+    min-height: 36px;
 }
 
 .sidebar-menu-item:hover {
@@ -177,7 +187,10 @@
 /* Menu item text */
 .menu-item-text {
     flex: 1;
-    transition: opacity 0.2s ease, visibility 0.2s ease;
+    transition: opacity 0.3s ease, width 0.3s ease, transform 0.3s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    opacity: 1;
 }
 
 /* NEW Badge */
@@ -242,7 +255,11 @@
     color: rgba(255, 255, 255, 0.5) !important;
     text-transform: none !important;
     letter-spacing: 0 !important;
-    transition: opacity 0.2s ease;
+    transition: all 0.3s ease;
+    opacity: 1;
+    max-height: 30px;
+    /* Approximate height */
+    overflow: hidden;
 }
 
 
@@ -300,6 +317,7 @@
     text-overflow: ellipsis;
     margin-bottom: 2px;
     line-height: 1.2;
+    transition: opacity 0.3s ease;
 }
 
 .session-meta {
@@ -310,6 +328,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    transition: opacity 0.3s ease;
 }
 
 /* Menu button (three dots) */
@@ -540,7 +559,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 8px 12px;
+    padding: 8px 12px 8px 6px;
     border-radius: 10px;
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.03);
@@ -579,7 +598,6 @@
     font-weight: 700;
     color: #fff;
     border-radius: 6px;
-    /* Square with rounded corners like provider icon */
 }
 
 .footer-info-text {
@@ -588,6 +606,10 @@
     display: flex;
     flex-direction: column;
     gap: 1px;
+    transition: opacity 0.3s ease, width 0.3s ease;
+    opacity: 1;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 .footer-title {
@@ -647,67 +669,82 @@
     color: #404040;
 }
 
-/* Capabilities Hover State */
-.capabilities-popup {
-    position: absolute;
-    bottom: calc(100% + 10px);
-    left: 0;
-    right: 0;
-    background: #1e1e24;
-    border: 1px solid var(--card-border);
-    border-radius: 12px;
+
+
+
+/* ==================== Sidebar Footer ==================== */
+.sidebar-footer {
     padding: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(10px);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 100;
-    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: auto;
+    border-top: 1px solid var(--card-border);
+    background: rgba(0, 0, 0, 0.2);
 }
 
-.footer-compact-item:hover .capabilities-popup {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-}
-
-.capabilities-popup-header {
-    font-size: 11px;
-    font-weight: 700;
-    color: rgba(255, 255, 255, 0.5);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 8px;
-}
-
-.capability-item {
+.footer-compact-item {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+    padding: 8px 12px 8px 6px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: default;
+    position: relative;
+    width: 100%;
+}
+
+.footer-compact-item:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.footer-icon-box {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.user-avatar-box {
+    background: linear-gradient(135deg, #404040, #737373);
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.8);
-    padding: 4px 0;
-    opacity: 0.4;
-    filter: grayscale(1);
+    font-weight: 700;
+    color: #fff;
+    border-radius: 6px;
 }
 
-.capability-item.supported {
-    opacity: 1;
-    filter: none;
-}
-
-.cap-status-icon {
-    font-size: 14px;
-}
-
-/* Combined Footer Layout */
-.combined-footer {
+.footer-info-text {
+    flex: 1;
+    min-width: 0;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 8px 12px;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.footer-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.footer-subtitle {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.4);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .footer-section {
@@ -719,29 +756,29 @@
 
 .user-section {
     flex-shrink: 0;
+    opacity: 1;
+    width: auto;
+    overflow: hidden;
 }
 
-.provider-section {
-    flex: 1;
-    justify-content: flex-end;
-    min-width: 0;
-    transition: all 0.2s ease;
+/* Collapsed state adjustments for footer handled in main collapsed section */
+.sidebar.collapsed .footer-info-text,
+.sidebar.collapsed .footer-subtitle,
+.sidebar.collapsed .footer-title,
+.sidebar.collapsed .footer-separator,
+.sidebar.collapsed .footer-action-btn {
+    display: none !important;
 }
 
-.footer-separator {
-    width: 1px;
-    height: 24px;
-    background: rgba(255, 255, 255, 0.08);
-    flex-shrink: 0;
-    margin: 0 4px;
+.sidebar.collapsed .user-section,
+.sidebar.collapsed .provider-section {
+    justify-content: center !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
 }
 
-.provider-section:hover {
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 8px;
-    padding: 4px;
-    margin: -4px;
-}
+
 
 
 
@@ -811,33 +848,57 @@
 }
 
 /* Hide text elements in collapsed mode */
+/* Hide text elements in collapsed mode with animation */
 .sidebar.collapsed .menu-item-text,
 .sidebar.collapsed .menu-item-badge,
 .sidebar.collapsed .sessions-header,
+.sidebar.collapsed .sessions-container,
+.sidebar.collapsed .media-library-wrapper,
 .sidebar.collapsed .session-title,
 .sidebar.collapsed .session-meta,
 .sidebar.collapsed .footer-info-text,
+.sidebar.collapsed .footer-action-btn,
+.sidebar.collapsed .footer-separator,
 .sidebar.collapsed .media-library-title span,
 .sidebar.collapsed .media-view-all span,
 .sidebar.collapsed .media-header-delete-btn span,
-.sidebar.collapsed .footer-action-btn,
 .sidebar.collapsed .media-view-all svg:last-child {
     display: none !important;
 }
 
+.sidebar.collapsed .sessions-header {
+    height: 0 !important;
+    max-height: 0 !important;
+}
+
 /* Center icons in collapsed mode */
+.sidebar.collapsed .sidebar-header,
+.sidebar.collapsed .sidebar-nav-menu,
+.sidebar.collapsed .sidebar-footer {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+}
+
+.sidebar.collapsed .sidebar-header-row,
 .sidebar.collapsed .sidebar-menu-item,
-.sidebar.collapsed .session-item,
 .sidebar.collapsed .footer-compact-item,
-.sidebar.collapsed .media-library-header,
-.sidebar.collapsed .media-view-all {
-    justify-content: center;
-    padding-left: 0;
-    padding-right: 0;
+.sidebar.collapsed .footer-section {
+    justify-content: center !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    gap: 0 !important;
 }
 
 .sidebar.collapsed .sidebar-header-row {
-    padding: 0 4px;
+    justify-content: center !important;
+    padding: 0 !important;
 }
 
 /* Adjust margins/gaps */
@@ -845,34 +906,12 @@
     margin: 0;
 }
 
-.sidebar.collapsed .session-item {
-    margin-bottom: 2px;
-}
-
 /* Hide session menu button (dots) in collapsed mode */
 .sidebar.collapsed .session-menu-btn {
     display: none;
 }
 
-/* Adjust footer elements */
-.sidebar.collapsed .footer-compact-item {
-    padding: 10px 0;
-    background: transparent;
-    border: none;
-}
 
-.sidebar.collapsed .footer-section {
-    justify-content: center;
-    width: 100%;
-}
-
-.sidebar.collapsed .user-section {
-    display: none;
-}
-
-.sidebar.collapsed .footer-separator {
-    display: none;
-}
 
 .sidebar.collapsed .media-library-title {
     justify-content: center;
@@ -890,17 +929,22 @@
 
 .sidebar.collapsed .sidebar-logo-btn {
     display: flex;
-    padding: 12px;
+    justify-content: center;
+    align-items: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    margin: 0 auto;
 }
 
 .sidebar.collapsed .sidebar-toggle-btn {
-    display: none;
+    display: none !important;
 }
 
 /* Collapsed menu items - centered icons only */
 .sidebar.collapsed .sidebar-menu-item {
     justify-content: center;
-    padding: 14px;
+    padding: 10px;
     border-radius: 10px;
 }
 
@@ -910,8 +954,8 @@
 }
 
 .sidebar.collapsed .sidebar-nav-menu {
-    padding: 8px;
-    gap: 6px;
+    padding: 8px 0;
+    gap: 2px;
 }
 
 /* Hide scrollbar/slider when sidebar is collapsed */

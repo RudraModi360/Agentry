@@ -271,6 +271,12 @@ def init_users_db():
     except sqlite3.OperationalError:
         cursor.execute("ALTER TABLE user_active_settings ADD COLUMN tools_enabled INTEGER DEFAULT 1")
 
+    # Check if 'model_type' column exists in user_active_settings, if not add it
+    try:
+        cursor.execute("SELECT model_type FROM user_active_settings LIMIT 1")
+    except sqlite3.OperationalError:
+        cursor.execute("ALTER TABLE user_active_settings ADD COLUMN model_type TEXT")
+
     conn.commit()
     conn.close()
 
@@ -366,15 +372,16 @@ def save_active_settings(user_id: int, config: ProviderConfig):
     try:
         # 1. Update active settings
         cursor.execute("""
-            INSERT INTO user_active_settings (user_id, provider, mode, model, tools_enabled, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO user_active_settings (user_id, provider, mode, model, model_type, tools_enabled, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(user_id) DO UPDATE SET
                 provider = excluded.provider,
                 mode = excluded.mode,
                 model = excluded.model,
+                model_type = excluded.model_type,
                 tools_enabled = excluded.tools_enabled,
                 updated_at = excluded.updated_at
-        """, (user_id, config.provider, config.mode, config.model, 1 if config.tools_enabled else 0, datetime.now()))
+        """, (user_id, config.provider, config.mode, config.model, config.model_type, 1 if config.tools_enabled else 0, datetime.now()))
 
         # 2. Update API Key and Endpoint if provided
         # We need to fetch existing values to merge if partial update? 
@@ -1022,13 +1029,25 @@ async def configure_provider(config: ProviderConfig, user: Dict = Depends(get_cu
             if not endpoint:
                  raise ValueError("Azure requires an Endpoint.")
                  
+            # Infer model_type from model name if not provided
+            final_model_type = config.model_type
+            if not final_model_type and config.model:
+                model_name_lower = config.model.lower()
+                if "claude" in model_name_lower:
+                    final_model_type = "anthropic"
+                else:
+                    final_model_type = "openai"
+            
+            # Update config object so it's saved with inferred type
+            config.model_type = final_model_type
+
             # Note: For Azure, 'model_name' corresponds to the Deployment Name
             # model_type can be 'openai' or 'anthropic' for Azure AI Foundry
             provider = AzureProvider(
                 model_name=config.model or "gpt-4", 
                 api_key=final_api_key, 
                 endpoint=endpoint,
-                model_type=config.model_type  # Pass model type (openai/anthropic)
+                model_type=final_model_type
             )
             
             # Save endpoint to DB if provided in config
@@ -1617,7 +1636,8 @@ async def get_current_provider(user: Dict = Depends(get_current_user)):
         "config": {
             "provider": config["provider"],
             "mode": config.get("mode"),
-            "model": config["model"]
+            "model": config["model"],
+            "model_type": config.get("model_type")
         },
         "capabilities": capabilities
     }
@@ -1703,7 +1723,10 @@ async def get_sessions(user: Dict = Depends(get_current_user)):
             "title": s.get("title") or "New Chat",
             "created_at": s.get("created_at"),
             "updated_at": s.get("last_activity"),
-            "message_count": s.get("message_count", 0)
+            "message_count": s.get("message_count", 0),
+            "provider": s.get("provider"),
+            "model": s.get("model"),
+            "model_type": s.get("model_type")
         }
         for s in sessions
         if s["session_id"].startswith(user_prefix)
@@ -2368,7 +2391,18 @@ async def websocket_chat(websocket: WebSocket):
                     
                     # Get updated messages and save
                     session = agent.get_session(session_id)
-                    session_manager.save_session(session_id, session.messages)
+                    
+                    # Prepare metadata with current provider info
+                    save_metadata = None
+                    if user_id in agent_cache:
+                        conf = agent_cache[user_id].get("config", {})
+                        save_metadata = {
+                            "provider": conf.get("provider"),
+                            "model": conf.get("model"),
+                            "model_type": conf.get("model_type")
+                        }
+                    
+                    session_manager.save_session(session_id, session.messages, metadata=save_metadata)
                     
                     if ws_connected:
                         await websocket.send_json({

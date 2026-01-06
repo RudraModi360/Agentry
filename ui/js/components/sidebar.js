@@ -24,7 +24,7 @@ const Sidebar = {
      * Clear inline styles that may have been set by previous code
      */
     clearInlineStyles() {
-        const allElements = document.querySelectorAll('.sidebar-logo-text, .menu-item-text, .footer-info-text, .footer-title, .footer-subtitle');
+        const allElements = document.querySelectorAll('.sidebar-logo-text, .menu-item-text');
         allElements.forEach(el => {
             el.style.display = '';  // Remove inline style, let CSS handle it
         });

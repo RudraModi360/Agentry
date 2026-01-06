@@ -203,56 +203,70 @@
 /* ==================== Clock Widget (Original Style) ==================== */
 /* Override modular cards.css gradient with original simple white text */
 
+/* Clock Styles matching Agent_Types branch */
 .clock-widget {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
     text-align: center !important;
-    padding: 40px 20px !important;
+    gap: 24px !important;
+    padding: 0 !important;
 }
 
 .clock-greeting {
     font-size: 24px !important;
     font-weight: 600 !important;
     color: var(--text-primary) !important;
-    margin-bottom: 24px !important;
-    /* Remove gradient effect from modular CSS */
-    background: none !important;
-    -webkit-background-clip: unset !important;
-    -webkit-text-fill-color: unset !important;
-    background-clip: unset !important;
+    margin-bottom: 0 !important;
+    text-shadow: none !important;
+    font-family: inherit !important;
 }
 
 .clock-row {
     display: flex !important;
-    justify-content: center !important;
-    gap: 24px !important;
-    margin-bottom: 16px !important;
+    gap: 48px !important;
+    align-items: center !important;
 }
 
 .clock-card {
-    background: var(--dark-card) !important;
-    border: 1px solid var(--dark-border) !important;
-    border-radius: 12px !important;
-    padding: 16px 24px !important;
-    min-width: 140px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    padding: 20px 32px !important;
+    background: var(--card-bg) !important;
+    border: 1px solid var(--card-border) !important;
+    border-radius: 16px !important;
+    backdrop-filter: blur(10px) !important;
+    min-width: 160px !important;
 }
 
 .clock-label {
-    font-size: 10px !important;
-    color: var(--text-muted) !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
     text-transform: uppercase !important;
     letter-spacing: 0.1em !important;
+    color: var(--text-muted) !important;
     margin-bottom: 8px !important;
+    font-family: inherit !important;
 }
 
 .clock-time {
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 32px !important;
-    font-weight: 600 !important;
+    font-size: 40px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.02em !important;
     color: var(--text-primary) !important;
+    line-height: 1 !important;
+    font-variant-numeric: tabular-nums !important;
+    font-family: inherit !important;
+    text-shadow: none !important;
 }
 
 .clock-date {
     font-size: 14px !important;
-    color: var(--text-secondary) !important;
+    font-weight: 500 !important;
+    color: var(--text-muted) !important;
+    font-family: inherit !important;
 }
 
 /* ==================== Search Modal (Original Style) ==================== */
