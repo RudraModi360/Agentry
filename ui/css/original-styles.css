@@ -286,7 +286,7 @@
 }
 
 :root {
-    /* Modern Minimal Theme - Light (default to match landing page) */
+    /* Modern Minimal Theme - Black & White (Light Mode) */
     /* Colors - Using common.css naming conventions */
     --bg-primary: #fafafa;
     --bg-secondary: #ffffff;
@@ -300,26 +300,26 @@
     --card-border: rgba(0, 0, 0, 0.08);
     --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 
-    /* Accent */
-    --accent: #6366f1;
-    --accent-glow: rgba(99, 102, 241, 0.4);
-    --accent-light: rgba(99, 102, 241, 0.1);
+    /* Accent - Black & White */
+    --accent: #404040;
+    --accent-glow: rgba(64, 64, 64, 0.4);
+    --accent-light: rgba(64, 64, 64, 0.1);
 
-    /* Status */
-    --success: #22c55e;
-    --error: #ef4444;
-    --warning: #f59e0b;
+    /* Status - Grayscale */
+    --success: #525252;
+    --error: #404040;
+    --warning: #737373;
 
     /* Input */
     --input-bg: #ffffff;
     --input-border: rgba(0, 0, 0, 0.12);
     --input-focus: var(--accent);
 
-    /* Backwards compatibility aliases */
+    /* Backwards compatibility aliases - Grayscale */
     --gradient-start: var(--accent);
-    --gradient-end: #8b5cf6;
+    --gradient-end: #737373;
     --accent-cyan: var(--accent);
-    --accent-pink: #ec4899;
+    --accent-pink: #a3a3a3;
     --dark-bg: var(--bg-primary);
     --dark-card: var(--bg-secondary);
     --dark-sidebar: var(--bg-tertiary);
@@ -331,7 +331,7 @@
 }
 
 [data-theme="dark"] {
-    /* Dark Theme */
+    /* Dark Theme - Black & White */
     --bg-primary: #09090b;
     --bg-secondary: #18181b;
     --bg-tertiary: #27272a;
@@ -343,9 +343,10 @@
     --card-border: rgba(255, 255, 255, 0.08);
     --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 
-    --accent: #818cf8;
-    --accent-glow: rgba(129, 140, 248, 0.5);
-    --accent-light: rgba(129, 140, 248, 0.15);
+    /* Accent - Black & White */
+    --accent: #a3a3a3;
+    --accent-glow: rgba(163, 163, 163, 0.5);
+    --accent-light: rgba(163, 163, 163, 0.15);
 
     --input-bg: #18181b;
     --input-border: rgba(255, 255, 255, 0.1);
@@ -415,7 +416,7 @@ body {
     height: 32px;
     border-radius: 50%;
     border: 2px solid transparent;
-    border-top-color: #3b82f6;
+    border-top-color: #737373;
     /* Blue-500 */
     animation: spin-quantum 1s linear infinite;
     position: relative;
@@ -431,7 +432,7 @@ body {
     bottom: 2px;
     border-radius: 50%;
     border: 2px solid transparent;
-    border-top-color: #8b5cf6;
+    border-top-color: #a3a3a3;
     /* Violet-500 */
     animation: spin-quantum 2s linear infinite reverse;
 }
@@ -445,7 +446,7 @@ body {
     bottom: 6px;
     border-radius: 50%;
     border: 2px solid transparent;
-    border-top-color: #10b981;
+    border-top-color: #525252;
     /* Emerald-500 */
     animation: spin-quantum 1.5s linear infinite;
 }
@@ -473,7 +474,7 @@ body {
 .spinner-wave div {
     width: 3px;
     height: 100%;
-    background: linear-gradient(to top, #3b82f6, #60a5fa);
+    background: linear-gradient(to top, #737373, #a3a3a3);
     animation: wave 1s ease-in-out infinite;
     border-radius: 2px;
 }
@@ -505,7 +506,7 @@ body {
     50% {
         height: 100%;
         opacity: 1;
-        box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
+        box-shadow: 0 0 5px rgba(115, 115, 115, 0.5);
     }
 }
 
@@ -513,7 +514,7 @@ body {
 .spinner-retro {
     font-family: 'Courier New', Courier, monospace;
     font-size: 14px;
-    color: #10b981;
+    color: #737373;
     margin: 12px;
     display: flex;
     align-items: center;
@@ -523,7 +524,7 @@ body {
 .spinner-retro-cursor {
     width: 8px;
     height: 16px;
-    background-color: #10b981;
+    background-color: #737373;
     animation: blink 1s step-end infinite;
 }
 
@@ -548,7 +549,7 @@ body {
     display: inline-block;
     position: absolute;
     top: 0;
-    background-color: #3b82f6;
+    background-color: #737373;
     border-radius: 100%;
     animation: spin-orbital-bounce 2s infinite ease-in-out;
 }
@@ -557,7 +558,7 @@ body {
     top: auto;
     bottom: 0;
     animation-delay: -1.0s;
-    background-color: #8b5cf6;
+    background-color: #a3a3a3;
 }
 
 @keyframes spin-orbital {
@@ -583,7 +584,7 @@ body {
     width: 32px;
     height: 32px;
     margin: 10px;
-    background-color: #3b82f6;
+    background-color: #737373;
     border-radius: 100%;
     animation: scaleout 1.0s infinite ease-in-out;
 }
@@ -612,7 +613,7 @@ body {
 .spinner-bars div {
     width: 6px;
     height: 32px;
-    background-color: #10b981;
+    background-color: #525252;
     animation: bars-shuffle 1.2s infinite ease-in-out;
     border-radius: 2px;
 }
@@ -1515,7 +1516,7 @@ body {
 }
 
 .capability-item.supported {
-    color: #22c55e;
+    color: #525252;
     font-weight: 600;
 }
 
@@ -1752,13 +1753,13 @@ body {
 
 .agent-type-button:hover {
     background: var(--bg-tertiary);
-    border-color: var(--accent);
+    border-color: var(--text-secondary);
 }
 
 .agent-type-button svg {
     width: 16px;
     height: 16px;
-    stroke: var(--accent);
+    stroke: var(--text-primary);
     fill: none;
     stroke-width: 2;
 }
@@ -1819,13 +1820,13 @@ body {
 }
 
 .agent-type-option.selected {
-    background: rgba(99, 102, 241, 0.12);
+    background: rgba(115, 115, 115, 0.12);
 }
 
 .agent-type-option svg {
     width: 20px;
     height: 20px;
-    stroke: var(--accent);
+    stroke: var(--text-primary);
     fill: none;
     stroke-width: 2;
     flex-shrink: 0;
@@ -2723,12 +2724,12 @@ body {
 
 /* User Initial Avatar */
 .user-initial {
-    background: linear-gradient(135deg, var(--accent-cyan), var(--gradient-start)) !important;
+    background: linear-gradient(135deg, #404040, #262626) !important;
     color: white;
     font-weight: 700;
     font-size: 14px;
     text-transform: uppercase;
-    box-shadow: 0 4px 10px rgba(0, 212, 255, 0.3);
+    box-shadow: 0 4px 10px rgba(64, 64, 64, 0.3);
 }
 
 /* Input Area */
@@ -3825,28 +3826,39 @@ tr:nth-child(even) {
 }
 
 .theme-toggle-btn:hover {
-    background: var(--bg-secondary);
+    background: var(--bg-tertiary);
 }
 
 .theme-toggle-btn svg {
+    width: 20px;
+    height: 20px;
     color: var(--text-primary);
     fill: var(--text-primary);
+    stroke: var(--text-primary);
+    stroke-width: 1.5;
 }
 
+/* Light theme: show sun (filled), hide moon */
 .theme-toggle-btn .sun-icon {
     display: block;
+    fill: var(--text-primary) !important;
+    stroke: none !important;
 }
 
 .theme-toggle-btn .moon-icon {
     display: none;
 }
 
+/* Dark theme: hide sun, show moon */
 [data-theme="dark"] .theme-toggle-btn .sun-icon {
     display: none;
 }
 
 [data-theme="dark"] .theme-toggle-btn .moon-icon {
     display: block !important;
+    fill: none !important;
+    stroke: var(--text-primary) !important;
+    stroke-width: 2 !important;
 }
 
 /* Empty State Logo */

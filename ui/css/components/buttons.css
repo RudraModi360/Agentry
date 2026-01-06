@@ -198,41 +198,48 @@
 }
 
 .theme-toggle-btn:hover {
-    background-color: var(--bg-secondary);
+    background-color: var(--bg-tertiary);
 }
 
 .theme-toggle-btn svg {
     width: 20px;
     height: 20px;
     stroke: var(--text-primary);
-    fill: none;
+    fill: var(--text-primary);
     stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
 }
 
+/* Light theme: sun icon visible, filled */
 .theme-toggle-btn .sun-icon {
     display: block;
+    fill: var(--text-primary) !important;
+    stroke: none !important;
 }
 
 .theme-toggle-btn .moon-icon {
     display: none;
 }
 
+/* Dark theme: moon icon visible, outline style */
 [data-theme="dark"] .theme-toggle-btn .sun-icon {
     display: none;
 }
 
 [data-theme="dark"] .theme-toggle-btn .moon-icon {
     display: block;
+    fill: none !important;
+    stroke: var(--text-primary) !important;
+    stroke-width: 2 !important;
 }
 
-/* Send Button */
+/* Send Button - Grayscale */
 .send-btn {
     width: 48px;
     height: 48px;
     padding: 0;
-    background: linear-gradient(135deg, var(--accent), var(--color-violet));
+    background: linear-gradient(135deg, #404040, #262626);
     color: white;
     border: none;
     border-radius: var(--radius-lg);
@@ -245,7 +252,7 @@
 
 .send-btn:hover:not(:disabled) {
     transform: scale(1.05);
-    box-shadow: var(--shadow-glow);
+    box-shadow: 0 0 15px rgba(64, 64, 64, 0.4);
 }
 
 .send-btn:disabled {

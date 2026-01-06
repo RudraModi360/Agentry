@@ -3,25 +3,192 @@
  * Includes Brand Text and Model Selector styles
  */
 
-/* Brand Text in Main Header - Shiny/Theme Colored */
+/* ==================== Agentry Dropdown (ChatGPT Style) ==================== */
+.agentry-dropdown {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.agentry-dropdown-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.agentry-dropdown-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.agentry-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+}
+
+.agentry-dropdown-btn .chevron-icon {
+    color: rgba(255, 255, 255, 0.5);
+    transition: transform 0.2s ease;
+}
+
+.agentry-dropdown.open .chevron-icon {
+    transform: rotate(180deg);
+}
+
+/* Current Model Label (next to Agentry) */
+.current-model-label {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 500;
+    padding-left: 8px;
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    margin-left: 8px;
+}
+
+/* Provider Selection Popup */
+.provider-popup {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    min-width: 280px;
+    background: #1e1e24;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    display: none !important;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+
+.agentry-dropdown.open .provider-popup {
+    display: block !important;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.provider-popup-header {
+    padding: 12px 16px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(255, 255, 255, 0.4);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.provider-popup-list {
+    padding: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.provider-popup-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    color: var(--text-primary);
+}
+
+.provider-popup-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.provider-popup-item.active {
+    background: rgba(139, 92, 246, 0.15);
+}
+
+.provider-popup-item-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.provider-popup-item-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.provider-popup-item-info {
+    flex: 1;
+}
+
+.provider-popup-item-name {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.provider-popup-item-model {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.4);
+    margin-top: 2px;
+}
+
+.provider-popup-item-check {
+    width: 18px;
+    height: 18px;
+    color: var(--accent);
+    opacity: 0;
+}
+
+.provider-popup-item.active .provider-popup-item-check {
+    opacity: 1;
+}
+
+.provider-popup-footer {
+    padding: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.provider-popup-settings-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.provider-popup-settings-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-primary);
+}
+
+.provider-popup-settings-btn svg {
+    opacity: 0.6;
+}
+
+/* Legacy Brand Text (kept for backwards compatibility) */
 .header-brand-text {
     font-size: 20px;
     font-weight: 800;
     letter-spacing: -0.03em;
     user-select: none;
-
-    /* Shiny Text Effect */
-    background: linear-gradient(120deg,
-            #fff 0%,
-            #fff 40%,
-            var(--accent) 50%,
-            #fff 60%,
-            #fff 100%);
-    background-size: 200% 100%;
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: shimmer 3s infinite linear;
+    color: var(--text-primary);
 }
 
 /* Model Selector (Expander Style) */
@@ -66,8 +233,8 @@
 .model-dropdown {
     position: absolute;
     top: calc(100% + 8px);
-    left: 50%;
-    transform: translateX(-50%) translateY(-10px);
+    left: 0;
+    transform: translateY(-10px);
     width: 280px;
     background: #1e1e24;
     border: 1px solid var(--card-border);
@@ -83,7 +250,7 @@
 .model-dropdown.open {
     opacity: 1;
     visibility: visible;
-    transform: translateX(-50%) translateY(0);
+    transform: translateY(0);
 }
 
 /* Views (Provider List vs Model List) */
@@ -229,6 +396,19 @@
     display: flex !important;
     align-items: center !important;
     gap: 12px !important;
+}
+
+.chat-header-left {
+    flex: 1;
+}
+
+.chat-header-center {
+    flex: 0 0 auto;
+}
+
+.chat-header-right {
+    flex: 1;
+    justify-content: flex-end !important;
 }
 
 .header-brand-text {

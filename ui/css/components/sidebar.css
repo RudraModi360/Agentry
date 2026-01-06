@@ -31,6 +31,7 @@
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+    overflow-x: hidden;
     /* Restores vertical scrollbar */
     scrollbar-width: thin;
 }
@@ -55,8 +56,7 @@
 /* ==================== Sidebar Header ==================== */
 
 .sidebar-header {
-    padding: 8px 12px 4px 12px;
-    border-bottom: 1px solid var(--card-border);
+    padding: 12px 12px 8px 12px;
     position: sticky;
     top: 0;
     background: var(--bg-secondary);
@@ -67,10 +67,11 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    height: 36px;
 }
 
 
-/* Logo Button - Icon only since text moved to header */
+/* Logo Button - Agentry icon */
 .sidebar-logo-btn {
     display: flex;
     align-items: center;
@@ -84,6 +85,47 @@
     transition: background 0.15s ease;
 }
 
+.sidebar-logo-btn svg {
+    width: 24px !important;
+    height: 24px !important;
+    stroke: currentColor !important;
+    fill: none !important;
+    stroke-width: 1.5 !important;
+    stroke-linecap: round !important;
+    stroke-linejoin: round !important;
+}
+
+.sidebar-logo-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+/* Sidebar Toggle Button */
+.sidebar-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.15s ease;
+}
+
+.sidebar-toggle-btn svg {
+    width: 18px !important;
+    height: 18px !important;
+    stroke: currentColor !important;
+    fill: none !important;
+    stroke-width: 1.5 !important;
+}
+
+.sidebar-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-primary);
+}
+
 
 
 /* ==================== Navigation Menu ==================== */
@@ -92,49 +134,44 @@
 .sidebar-nav-menu {
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    /* Tight spacing */
-    padding: 8px 8px 4px 8px;
-    /* Reduced outer padding */
+    gap: 4px;
+    padding: 8px 10px;
 }
 
-/* Menu Item - Icon + Text (Flowbite style) */
+/* Menu Item - ChatGPT Style */
 .sidebar-menu-item {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 10px;
-    /* Compact padding */
+    gap: 12px;
+    padding: 10px 12px;
     background: transparent;
     border: none;
-    border-radius: 6px;
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 13.5px;
-    /* Slightly smaller text */
+    border-radius: 10px;
+    color: var(--text-primary);
+    font-size: 13px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.15s ease;
     text-align: left;
     white-space: nowrap;
     width: 100%;
-    min-height: 36px;
-    /* Reduced height to match sessions */
+    min-height: 40px;
 }
 
 .sidebar-menu-item:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: #fff;
+    background: rgba(255, 255, 255, 0.06);
 }
 
 .sidebar-menu-item svg {
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
-    opacity: 0.8;
-}
-
-.sidebar-menu-item:hover svg {
-    opacity: 1;
+    width: 18px !important;
+    height: 18px !important;
+    flex-shrink: 0 !important;
+    stroke: currentColor !important;
+    fill: none !important;
+    stroke-width: 1.8 !important;
+    stroke-linecap: round !important;
+    stroke-linejoin: round !important;
+    opacity: 1 !important;
 }
 
 /* Menu item text */
@@ -143,15 +180,28 @@
     transition: opacity 0.2s ease, visibility 0.2s ease;
 }
 
+/* NEW Badge */
+.menu-item-badge {
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.7);
+}
 
 
 
-/* Shiny Text Effect */
+
+/* Shiny Text Effect - Grayscale */
 .shiny-text {
     background: linear-gradient(120deg,
             var(--text-primary) 0%,
             var(--text-primary) 40%,
-            var(--accent) 50%,
+            #a3a3a3 50%,
             var(--text-primary) 60%,
             var(--text-primary) 100%);
     background-size: 200% 100%;
@@ -187,7 +237,7 @@
 .sessions-header {
     display: block !important;
     padding: 8px 12px 4px 12px !important;
-    font-size: 12px !important;
+    font-size: 11px !important;
     font-weight: 600 !important;
     color: rgba(255, 255, 255, 0.5) !important;
     text-transform: none !important;
@@ -216,8 +266,8 @@
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.15s ease;
-    gap: 10px;
-    min-height: 42px;
+    gap: 8px;
+    min-height: 36px;
     position: relative;
 }
 
@@ -226,8 +276,8 @@
 }
 
 .session-item.active {
-    background: rgba(139, 92, 246, 0.15);
-    border-left: 3px solid var(--accent, #8b5cf6);
+    background: rgba(163, 163, 163, 0.15);
+    border-left: 3px solid #a3a3a3;
     padding-left: 9px;
 }
 
@@ -242,7 +292,7 @@
 }
 
 .session-title {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
     color: var(--text-primary, #ffffff) !important;
     white-space: nowrap;
@@ -253,7 +303,7 @@
 }
 
 .session-meta {
-    font-size: 10px;
+    font-size: 9px;
     color: rgba(255, 255, 255, 0.4) !important;
     line-height: 1;
     display: block;
@@ -489,9 +539,9 @@
 .footer-compact-item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 10px 14px;
-    border-radius: 12px;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 10px;
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.03);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -506,9 +556,9 @@
 }
 
 .footer-icon-box {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -518,17 +568,17 @@
 }
 
 .footer-icon-box img {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     object-fit: contain;
 }
 
 .user-avatar-box {
-    background: linear-gradient(135deg, #6366f1, #a855f7);
-    font-size: 14px;
+    background: linear-gradient(135deg, #404040, #737373);
+    font-size: 12px;
     font-weight: 700;
     color: #fff;
-    border-radius: 8px;
+    border-radius: 6px;
     /* Square with rounded corners like provider icon */
 }
 
@@ -541,7 +591,7 @@
 }
 
 .footer-title {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     color: #fff;
     white-space: nowrap;
@@ -550,7 +600,7 @@
 }
 
 .footer-subtitle {
-    font-size: 11px;
+    font-size: 10px;
     color: rgba(255, 255, 255, 0.4);
     white-space: nowrap;
     overflow: hidden;
@@ -558,10 +608,10 @@
 }
 
 .footer-action-btn {
-    padding: 6px 12px;
-    font-size: 11px;
+    padding: 5px 10px;
+    font-size: 10px;
     font-weight: 700;
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s ease;
     background: rgba(255, 255, 255, 0.05);
@@ -593,8 +643,8 @@
 }
 
 .header-action-btn:hover {
-    background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
+    background: rgba(64, 64, 64, 0.2);
+    color: #404040;
 }
 
 /* Capabilities Hover State */
@@ -732,6 +782,7 @@
 .sidebar {
     width: 260px;
     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-x: hidden;
 }
 
 .sidebar-toggle-btn {
@@ -754,11 +805,14 @@
 
 /* Collapsed State (Rail Mode) */
 .sidebar.collapsed {
-    width: 68px;
+    width: 68px !important;
+    min-width: 68px !important;
+    overflow: visible !important;
 }
 
 /* Hide text elements in collapsed mode */
 .sidebar.collapsed .menu-item-text,
+.sidebar.collapsed .menu-item-badge,
 .sidebar.collapsed .sessions-header,
 .sidebar.collapsed .session-title,
 .sidebar.collapsed .session-meta,
@@ -828,10 +882,90 @@
     padding: 4px;
 }
 
-/* In collapsed mode, we hide the logo to make space for the toggle button, 
-   or we can flip them. Let's hide the logo or make it very small?
-   Better: Hide the logo, show only the toggle button centered.
-*/
+/* In collapsed mode, show the Agentry logo icon centered and hide the toggle button */
+.sidebar.collapsed .sidebar-header-row {
+    justify-content: center;
+    padding: 0;
+}
+
 .sidebar.collapsed .sidebar-logo-btn {
+    display: flex;
+    padding: 12px;
+}
+
+.sidebar.collapsed .sidebar-toggle-btn {
     display: none;
+}
+
+/* Collapsed menu items - centered icons only */
+.sidebar.collapsed .sidebar-menu-item {
+    justify-content: center;
+    padding: 14px;
+    border-radius: 10px;
+}
+
+.sidebar.collapsed .sidebar-menu-item svg {
+    width: 24px;
+    height: 24px;
+}
+
+.sidebar.collapsed .sidebar-nav-menu {
+    padding: 8px;
+    gap: 6px;
+}
+
+/* Hide scrollbar/slider when sidebar is collapsed */
+.sidebar.collapsed .sidebar-content {
+    overflow-y: hidden !important;
+    scrollbar-width: none !important;
+}
+
+.sidebar.collapsed .sidebar-content::-webkit-scrollbar {
+    width: 0 !important;
+    display: none !important;
+}
+
+.sidebar.collapsed::-webkit-scrollbar {
+    width: 0 !important;
+    display: none !important;
+}
+
+.sidebar.collapsed {
+    overflow-y: hidden !important;
+    scrollbar-width: none !important;
+}
+
+/* ==================== FORCE ICON VISIBILITY ==================== */
+/* These rules use high specificity to override legacy styles */
+
+.sidebar .sidebar-nav-menu .sidebar-menu-item svg,
+.sidebar .sidebar-nav-menu .sidebar-menu-item svg path,
+.sidebar .sidebar-nav-menu .sidebar-menu-item svg circle,
+.sidebar .sidebar-nav-menu .sidebar-menu-item svg line,
+.sidebar .sidebar-nav-menu .sidebar-menu-item svg polyline,
+.sidebar .sidebar-nav-menu .sidebar-menu-item svg rect {
+    stroke: #ffffff !important;
+    stroke-width: 1.8 !important;
+    stroke-linecap: round !important;
+    stroke-linejoin: round !important;
+    fill: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.sidebar .sidebar-header .sidebar-logo-btn svg,
+.sidebar .sidebar-header .sidebar-logo-btn svg path {
+    stroke: #ffffff !important;
+    stroke-width: 1.5 !important;
+    fill: none !important;
+    opacity: 1 !important;
+}
+
+.sidebar .sidebar-header .sidebar-toggle-btn svg,
+.sidebar .sidebar-header .sidebar-toggle-btn svg rect,
+.sidebar .sidebar-header .sidebar-toggle-btn svg line {
+    stroke: rgba(255, 255, 255, 0.6) !important;
+    stroke-width: 1.5 !important;
+    fill: none !important;
+    opacity: 1 !important;
 }

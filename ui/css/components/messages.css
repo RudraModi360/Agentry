@@ -53,12 +53,12 @@
 }
 
 .message.user .message-avatar {
-    background: linear-gradient(135deg, var(--color-emerald), var(--color-cyan));
+    background: linear-gradient(135deg, #525252, #737373);
     color: white;
 }
 
 .message.assistant .message-avatar {
-    background: linear-gradient(135deg, var(--accent), var(--color-violet));
+    background: linear-gradient(135deg, #404040, #262626);
     color: white;
 }
 
@@ -97,7 +97,7 @@
 }
 
 .message.user .message-bubble {
-    background: linear-gradient(135deg, var(--accent), var(--color-violet));
+    background: linear-gradient(135deg, #404040, #262626);
     color: white;
     border-bottom-right-radius: var(--radius-sm);
 }
@@ -129,7 +129,7 @@
 .message-text h3 {
     margin-top: var(--space-4);
     margin-bottom: var(--space-2);
-    color: var(--accent);
+    color: var(--text-primary);
     font-weight: var(--font-bold);
 }
 
@@ -174,10 +174,10 @@
 /* Inline Code */
 .message-text p code,
 .message-text li code {
-    background: rgba(212, 175, 55, 0.15);
+    background: rgba(115, 115, 115, 0.15);
     padding: 2px 5px;
     border-radius: var(--radius-sm);
-    color: var(--accent);
+    color: var(--text-primary);
     font-family: var(--font-mono);
     font-size: var(--text-sm);
 }
@@ -190,7 +190,7 @@
 
 /* Blockquote */
 .message-text blockquote {
-    border-left: 4px solid var(--accent);
+    border-left: 4px solid var(--text-secondary);
     margin: var(--space-3) 0;
     padding-left: var(--space-3);
     color: var(--text-secondary);
@@ -262,7 +262,7 @@
 .copy-block-btn:hover {
     background: rgba(255, 255, 255, 0.1);
     color: var(--text-primary);
-    border-color: var(--accent);
+    border-color: var(--text-secondary);
 }
 
 .copy-block-btn.copied {

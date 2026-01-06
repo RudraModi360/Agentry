@@ -80,6 +80,7 @@
                             <polyline points="21 15 16 10 5 21"></polyline>
                         </svg>
                         <span class="menu-item-text">Images</span>
+                        <span class="menu-item-badge">NEW</span>
                     </button>
                     <!-- Projects Button -->
                     <button class="sidebar-menu-item" id="projects-sidebar-btn" title="Projects">
@@ -193,43 +194,49 @@
             <!-- Chat Header -->
             <div class="chat-header">
                 <div class="chat-header-left">
-                    <span class="header-brand-text">Agentry</span>
-                </div>
-
-                <!-- Agent Type Selector -->
-                <div class="chat-header-center">
-                    <div class="model-selector" id="model-selector">
-                        <button class="model-selector-btn" id="model-selector-btn" title="Change Model">
-                            <span id="current-model-display">GPT-4o</span>
-                            <svg viewBox="0 0 24 24" class="chevron">
-                                <polyline points="6 9 12 15 18 9" />
+                    <!-- Agentry Title with Provider Dropdown (ChatGPT style) -->
+                    <div class="agentry-dropdown" id="agentry-dropdown">
+                        <button class="agentry-dropdown-btn" id="agentry-dropdown-btn" title="Select Provider & Model">
+                            <span class="agentry-title">Agentry</span>
+                            <svg viewBox="0 0 24 24" class="chevron-icon" width="16" height="16">
+                                <polyline points="6 9 12 15 18 9" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
                         </button>
-                        <div class="model-dropdown" id="model-dropdown">
-                            <div class="provider-list" id="provider-list"></div>
-                            <div class="model-list" id="model-list" style="display: none;">
-                                <div class="model-list-header">
-                                    <button class="back-to-providers" id="back-to-providers">
-                                        <svg viewBox="0 0 24 24" width="14" height="14">
-                                            <polyline points="15 18 9 12 15 6" />
-                                        </svg>
-                                        <span>Back</span>
-                                    </button>
-                                    <span id="selected-provider-label">Provider</span>
-                                </div>
-                                <div class="model-options" id="model-options"></div>
+                        <!-- Provider Selection Popup -->
+                        <div class="provider-popup" id="provider-popup">
+                            <div class="provider-popup-header">
+                                <span>Select Provider</span>
+                            </div>
+                            <div class="provider-popup-list" id="provider-popup-list">
+                                <!-- Providers will be loaded dynamically -->
+                            </div>
+                            <div class="provider-popup-footer">
+                                <button class="provider-popup-settings-btn" id="provider-goto-settings">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                        <path
+                                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                                        </path>
+                                    </svg>
+                                    <span>Manage Providers & Models</span>
+                                </button>
                             </div>
                         </div>
                     </div>
+                    <!-- Current Model Display (small text) -->
+                    <span class="current-model-label" id="header-model-label">claude-opus-4-5</span>
                 </div>
-                <div class="chat-header-right">
-                    <!-- Agent Type Selector -->
+
+                <!-- Agent Type Selector in Center -->
+                <div class="chat-header-center">
                     <div class="agent-type-selector" id="agent-type-selector">
                         <button class="agent-type-button" id="agent-type-button" title="Agent Type">
                             <svg viewBox="0 0 24 24" class="agent-icon-current" id="agent-icon-current">
                                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                             </svg>
-                            <span id="agent-type-label">Default</span>
+                            <span id="agent-type-label">Default Agent</span>
                             <svg viewBox="0 0 24 24" class="chevron">
                                 <polyline points="6 9 12 15 18 9" />
                             </svg>
@@ -243,6 +250,8 @@
                             </div>
                         </div>
                     </div>
+                </div>
+                <div class="chat-header-right">
 
                     <!-- MCP Config Button -->
                     <button id="mcp-config-btn" class="header-action-btn tooltip-container">

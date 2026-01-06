@@ -290,11 +290,11 @@
 }
 
 .tool-item-icon.mcp {
-    background: rgba(139, 92, 246, 0.15);
+    background: rgba(115, 115, 115, 0.15);
 }
 
 .tool-item-icon.mcp svg {
-    stroke: #8b5cf6;
+    stroke: #737373;
 }
 
 .tool-item-info {

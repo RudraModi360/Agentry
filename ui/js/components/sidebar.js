@@ -79,11 +79,18 @@ const Sidebar = {
             DOM.on(this.elements.overlay, 'click', () => this.closeMobile());
         }
 
-        // Logo click behavior: create new chat
+        // Logo click behavior: toggle sidebar when collapsed, create new chat when expanded
         if (this.elements.logoNewChatBtn) {
             DOM.on(this.elements.logoNewChatBtn, 'click', () => {
-                if (typeof Sessions !== 'undefined' && Sessions.createNew) {
-                    Sessions.createNew();
+                // If sidebar is collapsed, expand it instead of creating new chat
+                if (DOM.hasClass(this.elements.sidebar, 'collapsed')) {
+                    DOM.removeClass(this.elements.sidebar, 'collapsed');
+                    Storage.set('sidebar-collapsed', false);
+                } else {
+                    // Sidebar is expanded, create new chat
+                    if (typeof Sessions !== 'undefined' && Sessions.createNew) {
+                        Sessions.createNew();
+                    }
                 }
             });
         }

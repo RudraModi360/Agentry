@@ -11,55 +11,55 @@
  */
 
 :root {
-    /* ==================== Color Palette ==================== */
+    /* ==================== Color Palette (Black & White) ==================== */
 
-    /* Primary Colors */
-    --color-primary-50: #eef2ff;
-    --color-primary-100: #e0e7ff;
-    --color-primary-200: #c7d2fe;
-    --color-primary-300: #a5b4fc;
-    --color-primary-400: #818cf8;
-    --color-primary-500: #6366f1;
-    --color-primary-600: #4f46e5;
-    --color-primary-700: #4338ca;
-    --color-primary-800: #3730a3;
-    --color-primary-900: #312e81;
+    /* Primary Colors - Grayscale */
+    --color-primary-50: #ffffff;
+    --color-primary-100: #f5f5f5;
+    --color-primary-200: #e5e5e5;
+    --color-primary-300: #d4d4d4;
+    --color-primary-400: #a3a3a3;
+    --color-primary-500: #737373;
+    --color-primary-600: #525252;
+    --color-primary-700: #404040;
+    --color-primary-800: #262626;
+    --color-primary-900: #171717;
 
-    /* Neutral Colors (Zinc scale) */
-    --color-neutral-50: #fafafa;
-    --color-neutral-100: #f4f4f5;
-    --color-neutral-200: #e4e4e7;
-    --color-neutral-300: #d4d4d8;
-    --color-neutral-400: #a1a1aa;
-    --color-neutral-500: #71717a;
-    --color-neutral-600: #52525b;
-    --color-neutral-700: #3f3f46;
-    --color-neutral-800: #27272a;
-    --color-neutral-900: #18181b;
-    --color-neutral-950: #09090b;
+    /* Neutral Colors (Pure Grayscale) */
+    --color-neutral-50: #ffffff;
+    --color-neutral-100: #f5f5f5;
+    --color-neutral-200: #e5e5e5;
+    --color-neutral-300: #d4d4d4;
+    --color-neutral-400: #a3a3a3;
+    --color-neutral-500: #737373;
+    --color-neutral-600: #525252;
+    --color-neutral-700: #404040;
+    --color-neutral-800: #262626;
+    --color-neutral-900: #171717;
+    --color-neutral-950: #0a0a0a;
 
-    /* Status Colors */
-    --color-success-light: #dcfce7;
-    --color-success: #22c55e;
-    --color-success-dark: #16a34a;
+    /* Status Colors - Grayscale */
+    --color-success-light: #e5e5e5;
+    --color-success: #525252;
+    --color-success-dark: #404040;
 
-    --color-warning-light: #fef3c7;
-    --color-warning: #f59e0b;
-    --color-warning-dark: #d97706;
+    --color-warning-light: #e5e5e5;
+    --color-warning: #737373;
+    --color-warning-dark: #525252;
 
-    --color-error-light: #fee2e2;
-    --color-error: #ef4444;
-    --color-error-dark: #dc2626;
+    --color-error-light: #e5e5e5;
+    --color-error: #404040;
+    --color-error-dark: #262626;
 
-    --color-info-light: #dbeafe;
-    --color-info: #3b82f6;
-    --color-info-dark: #2563eb;
+    --color-info-light: #e5e5e5;
+    --color-info: #525252;
+    --color-info-dark: #404040;
 
-    /* Accent Colors */
-    --color-cyan: #06b6d4;
-    --color-pink: #ec4899;
-    --color-violet: #8b5cf6;
-    --color-emerald: #10b981;
+    /* Accent Colors - Grayscale */
+    --color-cyan: #737373;
+    --color-pink: #a3a3a3;
+    --color-violet: #525252;
+    --color-emerald: #737373;
 
     /* ==================== Semantic Colors (Light Mode) ==================== */
 
@@ -87,16 +87,16 @@
     --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
     --card-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 
-    /* Accent */
-    --accent: var(--color-primary-500);
-    --accent-hover: var(--color-primary-600);
-    --accent-active: var(--color-primary-700);
-    --accent-light: rgba(99, 102, 241, 0.1);
-    --accent-glow: rgba(99, 102, 241, 0.4);
+    /* Accent - Black & White */
+    --accent: #404040;
+    --accent-hover: #262626;
+    --accent-active: #171717;
+    --accent-light: rgba(64, 64, 64, 0.1);
+    --accent-glow: rgba(64, 64, 64, 0.4);
 
     /* Input */
     --input-bg: #ffffff;
-    --input-border: rgba(0, 0, 0, 0.12);
+    --input-border: rgba(0, 0, 0, 0.2);
     --input-focus-ring: rgba(99, 102, 241, 0.25);
     --input-placeholder: var(--color-neutral-400);
 
@@ -343,17 +343,17 @@
     --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
     --card-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
 
-    /* Accent (slightly brighter for dark mode) */
-    --accent: var(--color-primary-400);
-    --accent-hover: var(--color-primary-300);
-    --accent-active: var(--color-primary-500);
-    --accent-light: rgba(129, 140, 248, 0.15);
-    --accent-glow: rgba(129, 140, 248, 0.5);
+    /* Accent - Black & White (brighter for dark mode) */
+    --accent: #a3a3a3;
+    --accent-hover: #d4d4d4;
+    --accent-active: #737373;
+    --accent-light: rgba(163, 163, 163, 0.15);
+    --accent-glow: rgba(163, 163, 163, 0.5);
 
     /* Input */
     --input-bg: var(--color-neutral-900);
-    --input-border: rgba(255, 255, 255, 0.1);
-    --input-focus-ring: rgba(129, 140, 248, 0.25);
+    --input-border: rgba(255, 255, 255, 0.15);
+    --input-focus-ring: rgba(163, 163, 163, 0.25);
     --input-placeholder: var(--color-neutral-600);
 
     /* Legacy Compatibility Aliases for Dark Theme */

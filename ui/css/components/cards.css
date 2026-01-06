@@ -69,8 +69,8 @@
 }
 
 .card-interactive:hover {
-    border-color: var(--accent);
-    box-shadow: var(--shadow-glow);
+    border-color: var(--text-secondary);
+    box-shadow: 0 0 10px rgba(115, 115, 115, 0.2);
 }
 
 /* ==================== Alert Cards ==================== */
@@ -273,7 +273,7 @@
     font-size: var(--text-3xl);
     font-weight: var(--font-bold);
     margin-bottom: var(--space-6);
-    background: linear-gradient(135deg, var(--accent), var(--color-violet));
+    background: linear-gradient(135deg, #404040, #737373);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;

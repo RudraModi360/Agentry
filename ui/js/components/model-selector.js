@@ -1,139 +1,162 @@
 /**
  * AGENTRY UI - Model Selector Component
- * Handles the dual-view dropdown for selecting providers and models.
+ * Handles the ChatGPT-style Agentry dropdown for provider/model selection.
  */
 
 const ModelSelector = (function () {
     'use strict';
 
-    // Model Data
+    // Provider Data - Same 4 providers as setup page
     const PROVIDERS = [
+        {
+            id: 'ollama',
+            name: 'Ollama',
+            icon: 'https://github.com/ollama.png',
+            description: 'Local + Cloud',
+            models: []
+        },
         {
             id: 'groq',
             name: 'Groq',
             icon: 'https://github.com/groq.png',
-            models: [
-                { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B' },
-                { id: 'llama-3.1-70b-versatile', name: 'Llama 3.1 70B' },
-                { id: 'mixtral-8x7b-32768', name: 'Mixtral 8x7b' }
-            ]
+            description: 'Cloud API',
+            models: []
         },
         {
             id: 'gemini',
             name: 'Gemini',
             icon: 'https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg',
-            models: [
-                { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash' },
-                { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro' },
-                { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash' }
-            ]
+            description: 'Cloud API',
+            models: []
         },
         {
             id: 'azure',
-            name: 'Azure',
+            name: 'Azure OpenAI',
             icon: 'https://upload.wikimedia.org/wikipedia/commons/f/fa/Microsoft_Azure.svg',
-            models: [
-                { id: 'gpt-4o', name: 'GPT-4o' },
-                { id: 'gpt-4-turbo', name: 'GPT-4 Turbo' },
-                { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet' }
-            ]
-        },
-        {
-            id: 'ollama',
-            name: 'Ollama',
-            icon: 'https://github.com/ollama.png',
-            models: [
-                { id: 'llama3.2', name: 'Llama 3.2' },
-                { id: 'llama3.1', name: 'Llama 3.1' },
-                { id: 'phi3', name: 'Phi-3' },
-                { id: 'mistral', name: 'Mistral' }
-            ]
+            description: 'Cloud API',
+            models: []
         }
     ];
 
     // State
     const state = {
         isOpen: false,
-        selectedProvider: null,
-        currentModel: 'gpt-4o'
+        currentModel: 'claude-opus-4-5',
+        currentProvider: 'anthropic'
     };
 
-    // DOM Elements
-    const elements = {
-        selectorBtn: null,
-        dropdown: null,
-        providerList: null,
-        modelList: null,
-        modelOptions: null,
-        backBtn: null,
-        providerLabel: null,
-        currentModelText: null
-    };
+    // DOM Elements cache
+    const elements = {};
 
     /**
      * Initialize the component
      */
     function init() {
+        console.log('[ModelSelector] Initializing...');
         cacheElements();
-        if (!elements.selectorBtn) return;
-
-        renderProviders();
+        console.log('[ModelSelector] Elements cached:', elements);
+        renderProviderPopup();
         setupEventListeners();
-
-        // Initial UI sync
         syncCurrentModel();
+        console.log('[ModelSelector] Initialization complete');
     }
 
     /**
      * Cache DOM elements
      */
     function cacheElements() {
-        elements.selectorBtn = document.getElementById('model-selector-btn');
-        elements.dropdown = document.getElementById('model-dropdown');
-        elements.providerList = document.getElementById('provider-list');
-        elements.modelList = document.getElementById('model-list');
-        elements.modelOptions = document.getElementById('model-options');
-        elements.backBtn = document.getElementById('back-to-providers');
-        elements.providerLabel = document.getElementById('selected-provider-label');
-        elements.currentModelText = document.getElementById('current-model-display');
+        elements.agentryDropdown = document.getElementById('agentry-dropdown');
+        elements.agentryBtn = document.getElementById('agentry-dropdown-btn');
+        elements.providerPopup = document.getElementById('provider-popup');
+        elements.providerPopupList = document.getElementById('provider-popup-list');
+        elements.gotoSettings = document.getElementById('provider-goto-settings');
+        elements.headerModelLabel = document.getElementById('header-model-label');
+    }
+
+    /**
+     * Render provider items in the popup
+     */
+    function renderProviderPopup() {
+        if (!elements.providerPopupList) return;
+
+        elements.providerPopupList.innerHTML = PROVIDERS.map(provider => `
+            <div class="provider-popup-item ${state.currentProvider === provider.id ? 'active' : ''}" data-provider-id="${provider.id}">
+                <div class="provider-popup-item-icon">
+                    <img src="${provider.icon}" alt="${provider.name}" onerror="this.style.display='none'">
+                </div>
+                <div class="provider-popup-item-info">
+                    <div class="provider-popup-item-name">${provider.name}</div>
+                    <div class="provider-popup-item-model">${provider.description}</div>
+                </div>
+                <svg class="provider-popup-item-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+            </div>
+        `).join('');
+
+        // Attach click handlers - redirect to setup page for model selection
+        elements.providerPopupList.querySelectorAll('.provider-popup-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const providerId = item.dataset.providerId;
+                selectProviderAndRedirect(providerId);
+            });
+        });
+    }
+
+    /**
+     * Select provider and redirect to setup page for model configuration
+     */
+    function selectProviderAndRedirect(providerId) {
+        closeDropdown();
+        // Redirect to setup page step 1 with the provider pre-selected
+        // The setup page will handle the provider config workflow
+        window.location.href = `/setup?provider=${providerId}`;
     }
 
     /**
      * Setup Event Listeners
      */
     function setupEventListeners() {
-        // Toggle Dropdown
-        elements.selectorBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            toggleDropdown();
-        });
+        // Agentry dropdown toggle
+        if (elements.agentryBtn) {
+            elements.agentryBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleDropdown();
+            });
+        }
 
-        // Close on outside click
+        // Go to settings button
+        if (elements.gotoSettings) {
+            elements.gotoSettings.addEventListener('click', (e) => {
+                e.stopPropagation();
+                closeDropdown();
+                window.location.href = '/setup?step=model';
+            });
+        }
+
+        // Close dropdown on outside click
         document.addEventListener('click', (e) => {
-            if (state.isOpen && !elements.dropdown.contains(e.target) && !elements.selectorBtn.contains(e.target)) {
+            if (elements.agentryDropdown && !elements.agentryDropdown.contains(e.target)) {
                 closeDropdown();
             }
         });
 
-        // Back to providers view
-        if (elements.backBtn) {
-            elements.backBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                showProviderView();
-            });
-        }
+        // Close on ESC key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeDropdown();
+            }
+        });
     }
 
     /**
-     * Toggle dropdown open/closed
+     * Toggle dropdown
      */
     function toggleDropdown() {
         state.isOpen = !state.isOpen;
-        elements.dropdown.classList.toggle('open', state.isOpen);
-        elements.selectorBtn.classList.toggle('open', state.isOpen);
-
-        if (state.isOpen) {
-            showProviderView(); // Reset to provider view when opening
+        if (elements.agentryDropdown) {
+            elements.agentryDropdown.classList.toggle('open', state.isOpen);
         }
     }
 
@@ -142,113 +165,8 @@ const ModelSelector = (function () {
      */
     function closeDropdown() {
         state.isOpen = false;
-        elements.dropdown.classList.remove('open');
-        elements.selectorBtn.classList.remove('open');
-    }
-
-    /**
-     * Render the provider selection view
-     */
-    function renderProviders() {
-        if (!elements.providerList) return;
-
-        elements.providerList.innerHTML = PROVIDERS.map(provider => `
-            <div class="provider-option" data-provider-id="${provider.id}">
-                <div class="provider-item-content">
-                    <img src="${provider.icon}" alt="${provider.name}" class="provider-icon-mini">
-                    <span>${provider.name}</span>
-                </div>
-                <svg viewBox="0 0 24 24" class="provider-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="9 18 15 12 9 6" />
-                </svg>
-            </div>
-        `).join('');
-
-        // Attach clicks
-        elements.providerList.querySelectorAll('.provider-option').forEach(opt => {
-            opt.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const providerId = opt.dataset.providerId;
-                showModelView(providerId);
-            });
-        });
-    }
-
-    /**
-     * Show Provider View
-     */
-    function showProviderView() {
-        elements.providerList.style.display = 'block';
-        elements.modelList.style.display = 'none';
-        elements.providerList.classList.add('view-fade-in');
-    }
-
-    /**
-     * Show Model View for a specific provider
-     */
-    function showModelView(providerId) {
-        const provider = PROVIDERS.find(p => p.id === providerId);
-        if (!provider) return;
-
-        state.selectedProvider = provider;
-        elements.providerLabel.textContent = provider.name;
-
-        // Render models
-        elements.modelOptions.innerHTML = provider.models.map(model => `
-            <div class="model-option ${state.currentModel === model.id ? 'selected' : ''}" data-model-id="${model.id}">
-                ${model.name}
-            </div>
-        `).join('');
-
-        // Attach clicks
-        elements.modelOptions.querySelectorAll('.model-option').forEach(opt => {
-            opt.addEventListener('click', (e) => {
-                e.stopPropagation();
-                selectModel(opt.dataset.modelId);
-            });
-        });
-
-        elements.providerList.style.display = 'none';
-        elements.modelList.style.display = 'block';
-        elements.modelList.classList.add('view-fade-in');
-    }
-
-    /**
-     * Select a model and update backend
-     */
-    async function selectModel(modelId) {
-        state.currentModel = modelId;
-        elements.currentModelText.textContent = getModelName(modelId);
-
-        // Close dropdown
-        closeDropdown();
-
-        // Update Backend
-        if (window.App && window.App.saveAgentType) {
-            // Reusing saveAgentType or similar API call logic
-            // In a real app, this would be API.post('/api/model/switch', ...)
-            try {
-                const config = {
-                    provider: state.selectedProvider.id,
-                    model: modelId
-                };
-
-                // Show loading in main header if needed
-                console.log('[ModelSelector] Switching to:', config);
-
-                // Call the actual backend update
-                await API.post('/api/agent/configure', {
-                    provider: config.provider,
-                    model: config.model
-                });
-
-                // Reset WebSocket to apply changes
-                WebSocketManager.close();
-                setTimeout(() => WebSocketManager.init(), 500);
-
-            } catch (err) {
-                console.error('[ModelSelector] Failed to switch model:', err);
-            }
+        if (elements.agentryDropdown) {
+            elements.agentryDropdown.classList.remove('open');
         }
     }
 
@@ -267,18 +185,43 @@ const ModelSelector = (function () {
      * Sync UI with current backend state
      */
     function syncCurrentModel() {
-        // This will be called after App.loadUserInfo completes 
-        // Or we can check storage
-        const currentModel = localStorage.getItem('agentry-active-model') || 'gpt-4o';
-        state.currentModel = currentModel;
-        if (elements.currentModelText) {
-            elements.currentModelText.textContent = getModelName(currentModel);
+        const storedModel = localStorage.getItem('agentry-active-model') || 'claude-opus-4-5';
+        const storedProvider = localStorage.getItem('agentry-active-provider') || 'anthropic';
+
+        state.currentModel = storedModel;
+        state.currentProvider = storedProvider;
+
+        // Update header model label
+        if (elements.headerModelLabel) {
+            elements.headerModelLabel.textContent = storedModel;
         }
+
+        // Re-render popup to show active state
+        renderProviderPopup();
+    }
+
+    /**
+     * Update model display from external source
+     */
+    function updateCurrentModel(provider, model) {
+        state.currentProvider = provider;
+        state.currentModel = model;
+
+        localStorage.setItem('agentry-active-provider', provider);
+        localStorage.setItem('agentry-active-model', model);
+
+        if (elements.headerModelLabel) {
+            elements.headerModelLabel.textContent = model;
+        }
+
+        renderProviderPopup();
     }
 
     return {
         init,
-        PROVIDERS
+        PROVIDERS,
+        updateCurrentModel,
+        syncCurrentModel
     };
 })();
 

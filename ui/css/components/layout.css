@@ -89,18 +89,18 @@
 }
 
 .agent-type-button:hover {
-    border-color: var(--accent);
+    border-color: var(--text-secondary);
 }
 
 .agent-type-button.open {
-    border-color: var(--accent);
-    box-shadow: var(--shadow-glow);
+    border-color: var(--text-secondary);
+    box-shadow: 0 0 8px rgba(115, 115, 115, 0.2);
 }
 
 .agent-type-button svg {
     width: 18px;
     height: 18px;
-    stroke: var(--accent);
+    stroke: var(--text-primary);
     fill: none;
     stroke-width: 2;
 }
@@ -154,13 +154,13 @@
 }
 
 .agent-type-option.selected {
-    background: var(--accent-light);
+    background: rgba(115, 115, 115, 0.12);
 }
 
 .agent-type-option svg:first-child {
     width: 20px;
     height: 20px;
-    stroke: var(--accent);
+    stroke: var(--text-primary);
     fill: none;
     stroke-width: 2;
     flex-shrink: 0;
@@ -222,8 +222,8 @@
 }
 
 .input-wrapper:focus-within {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--input-focus-ring);
+    border-color: var(--text-secondary);
+    box-shadow: 0 0 0 3px rgba(115, 115, 115, 0.15);
 }
 
 /* Mobile Header */

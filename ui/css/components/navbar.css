@@ -250,9 +250,9 @@
         0 1px 0 rgba(255, 255, 255, 0.1) inset;
 }
 
-/* Gradient Button */
+/* Gradient Button - Grayscale */
 .navbar-btn.gradient {
-    background: linear-gradient(to bottom, #3b82f6, #1d4ed8);
+    background: linear-gradient(to bottom, #525252, #262626);
     color: #ffffff;
     box-shadow: 0px 2px 0px 0px rgba(255, 255, 255, 0.3) inset;
 }

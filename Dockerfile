@@ -29,4 +29,4 @@ RUN useradd -m -u 1000 agent && \
 USER agent
 
 # Set the entrypoint
-ENTRYPOINT ["uv", "run", "python", "src/main.py"]
+ENTRYPOINT ["uv", "run", "python", "ui/server.py"]
