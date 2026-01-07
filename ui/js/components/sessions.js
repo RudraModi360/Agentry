@@ -65,6 +65,11 @@ const Sessions = {
                 this.render(this.allSessions);
             }
 
+            // Refresh ModelSelector to show recent models from history
+            if (typeof ModelSelector !== 'undefined' && ModelSelector.refresh) {
+                ModelSelector.refresh();
+            }
+
         } catch (error) {
             console.error('[Sessions] Failed to load sessions:', error);
         }

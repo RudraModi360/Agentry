@@ -16,7 +16,7 @@ class SessionManager:
         else:
             self.storage = storage
             
-    def save_session(self, session_id: str, messages: List[Dict[str, Any]]):
+    def save_session(self, session_id: str, messages: List[Dict[str, Any]], metadata: Dict[str, Any] = None):
         """Save session messages to persistent storage."""
         # Validation: Only store sessions that contain messages
         if not messages:
@@ -25,10 +25,14 @@ class SessionManager:
         # Ensure session exists in registry
         if not self.storage.load_state(session_id, "messages"):
              # If it's the first time saving, create the session entry
-             self.storage.create_session(session_id, metadata={"source": "agentry_cli"})
+             self.storage.create_session(session_id, metadata=metadata or {"source": "agentry_cli"})
              
         # Update activity timestamp
         self.storage.update_session_activity(session_id)
+        
+        # Update metadata if provided (includes provider, model, model_type)
+        if metadata:
+            self.storage.update_session_metadata(session_id, metadata)
         
         # Save messages as state
         # We store the full message list. For massive histories, we might want to optimize later.
@@ -45,12 +49,15 @@ class SessionManager:
         """List all available sessions from the DB."""
         sessions = self.storage.list_sessions()
         
-        # Parse metadata to extract title
+        # Parse metadata to extract title, provider, model
         for s in sessions:
             if s.get('metadata'):
                 try:
                     meta = json.loads(s['metadata'])
                     s['title'] = meta.get('title')
+                    s['provider'] = meta.get('provider')
+                    s['model'] = meta.get('model')
+                    s['model_type'] = meta.get('model_type')
                 except:
                     pass
         

@@ -244,7 +244,8 @@ const App = {
 
         // Handle option click
         options.forEach(option => {
-            DOM.on(option, 'click', async () => {
+            DOM.on(option, 'click', async (e) => {
+                e.stopPropagation(); // Prevent event from bubbling to button
                 const type = option.dataset.agent;
                 Storage.set(AppConfig.agents.storageKey, type);
                 this.updateAgentTypeUI(type);
@@ -306,7 +307,7 @@ const App = {
         const attachBtn = DOM.byId('attach-image-btn');
 
         if (mcpBtn) DOM.toggle(mcpBtn, config.features.mcp, 'flex');
-        if (toolsContainer) DOM.toggle(toolsContainer, config.features.tools, 'relative');
+        if (toolsContainer) DOM.toggle(toolsContainer, config.features.tools, 'flex');
         if (attachBtn) DOM.toggle(attachBtn, config.features.vision, 'flex');
     },
 

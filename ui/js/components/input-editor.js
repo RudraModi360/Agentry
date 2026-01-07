@@ -12,17 +12,8 @@ const InputEditor = {
      * Initialize the editor
      */
     init() {
-        // We'll replace the textarea with a contenteditable div if strictly needed, 
-        // OR we just assume the HTML has been updated to use a div.
-        // For safety, let's try to grab the element assuming it's the right one.
         this.element = document.getElementById('message-input');
-
         if (!this.element) return;
-
-        // If it's still a textarea, we might need to replace it dynamically or warn.
-        // But the plan is to update HTML too. 
-        // Let's assume we are working with the contenteditable div.
-
         this.setupEvents();
     },
 
@@ -55,13 +46,6 @@ const InputEditor = {
             if (e.key === 'Enter' && !e.shiftKey) {
                 // Check if we are in a list
                 if (document.queryCommandState('insertUnorderedList') || document.queryCommandState('insertOrderedList')) {
-                    // If empty list item, break out of list
-                    // Browser default often handles this (double enter), but for chat send:
-                    // We want Enter to send, Shift+Enter to new line.
-                    // BUT in a list, Enter usually creates a new item.
-                    // We need to decide: does Enter ALWAYS send?
-                    // User expectation in chat: Enter sends.
-                    // Exception: If likely typing a list? NO, usually Shift+Enter for new line/item.
                     e.preventDefault();
 
                     // If the text is empty/whitespace, don't send
@@ -79,8 +63,6 @@ const InputEditor = {
                 }
             }
         });
-
-        // Placeholder handling (CSS should handle empty:before)
     },
 
     /**
@@ -97,36 +79,104 @@ const InputEditor = {
         if (node.nodeType !== Node.TEXT_NODE) return;
 
         const text = node.textContent;
-        // Check for "- " pattern
-        // We only care if it's at the start of the block or after a newline
-        // But in contenteditable, lines are often <div>s or <p>s.
-        // So we check if text starts with "- "
 
-        // Simple trigger: if user typed space, and previous chars were "- "
-        if (e.inputType === 'insertText' && e.data === ' ') {
-            if (text.endsWith('- ')) {
-                // Check if it's the start of the line/block
-                // This is tricky. simpler: regex replacing
-                // If text is literally "- ", convert to list
+        // Triggers for Lists and Inline Formatting
+        // We check on every relevant input char or space
+        if (e.inputType === 'insertText' && (e.data === ' ' || e.data === '*' || e.data === '_' || e.data === '`' || e.data === '~' || e.data === '>')) {
 
-                // Let's try detection of the specific pattern at caret
-                // Actually, document.execCommand('insertUnorderedList') works on selection.
+            // --- Block Triggers (only if space typed) ---
+            if (e.data === ' ') {
+                if (text.endsWith('- ') || text.endsWith('* ')) {
+                    const trimmed = text.trim();
+                    if (trimmed === '-' || trimmed === '*') {
+                        const newText = text.substring(0, text.length - 2);
+                        node.textContent = newText;
+                        document.execCommand('insertUnorderedList');
+                        return; // Stop processing to avoid conflicts
+                    }
+                }
 
-                if (text.trim() === '- ') {
-                    // Delete the "- "
-                    // We need to select it first?
-                    // Actually, easiest valid way:
-                    // 1. Remove the "- " text
-                    // 2. execCommand('insertUnorderedList')
-
-                    // Remove last 2 chars
-                    const newText = text.substring(0, text.length - 2);
-                    node.textContent = newText;
-
-                    document.execCommand('insertUnorderedList');
+                if (text.endsWith('1. ')) {
+                    const trimmed = text.trim();
+                    if (trimmed === '1.') {
+                        const newText = text.substring(0, text.length - 3);
+                        node.textContent = newText;
+                        document.execCommand('insertOrderedList');
+                        return;
+                    }
                 }
             }
+
+            // --- Inline Triggers ---
+            this.handleInlineMarkdown(node);
         }
+    },
+
+    /**
+     * Handle inline markdown conversion
+     */
+    handleInlineMarkdown(node) {
+        if (node.nodeType !== Node.TEXT_NODE) return;
+
+        const text = node.textContent;
+        let match;
+
+        // Bold: **text**
+        match = /\*\*([^*]+)\*\*$/.exec(text);
+        if (match) {
+            this.applyFormatting(node, match, 'bold');
+            return;
+        }
+
+        // Italic: *text* (avoiding * at start of line which is list)
+        // We ensure it's not the start of the string or preceded by space/char if needed, 
+        // strictly matching *text*
+        match = /(?<!^)(?<!\*)\*([^*]+)\*$/.exec(text);
+        if (match) {
+            this.applyFormatting(node, match, 'italic');
+            return;
+        }
+
+        // Code: `text`
+        match = /`([^`]+)`$/.exec(text);
+        if (match) {
+            this.applyFormatting(node, match, 'code');
+            return;
+        }
+
+        // Strike: ~~text~~
+        match = /~~([^~]+)~~$/.exec(text);
+        if (match) {
+            this.applyFormatting(node, match, 'strikethrough');
+            return;
+        }
+    },
+
+    /**
+     * Apply formatting command
+     */
+    applyFormatting(node, match, command) {
+        const fullMatch = match[0];
+        const content = match[1];
+        const startOffset = node.textContent.length - fullMatch.length;
+        const endOffset = node.textContent.length;
+
+        const range = document.createRange();
+        range.setStart(node, startOffset);
+        range.setEnd(node, endOffset);
+
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+
+        let htmlNode = '';
+        if (command === 'bold') htmlNode = `<b>${content}</b>`;
+        else if (command === 'italic') htmlNode = `<i>${content}</i>`;
+        else if (command === 'strikethrough') htmlNode = `<s>${content}</s>`;
+        else if (command === 'code') htmlNode = `<code>${content}</code>`;
+
+        // Insert and add space to escape the format
+        document.execCommand('insertHTML', false, htmlNode + '&nbsp;');
     },
 
     /**
@@ -134,9 +184,6 @@ const InputEditor = {
      */
     getValue() {
         if (!this.element) return '';
-
-        // Clone to not mess up UI? No, parsing structure is fine.
-        // We need a custom parser from HTML to Markdown
         return this.htmlToMarkdown(this.element.innerHTML);
     },
 
@@ -146,9 +193,6 @@ const InputEditor = {
     setValue(text) {
         if (!this.element) return;
         this.element.innerText = text;
-        // Optional: Render it? 
-        // If we want to restore history, maybe rendered. 
-        // But usually setting value clears input.
     },
 
     /**
@@ -163,11 +207,8 @@ const InputEditor = {
      * Convert HTML to Markdown (Simplified for Chat)
      */
     htmlToMarkdown(html) {
-        // Create a temporary element to parse HTML
         const temp = document.createElement('div');
         temp.innerHTML = html;
-
-        let markdown = '';
 
         // Recursive function to traverse nodes
         const traverse = (node) => {
@@ -182,13 +223,10 @@ const InputEditor = {
                     switch (tag) {
                         case 'div':
                         case 'p':
-                            // Block elements imply new lines usually
-                            // Special case: <div><br></div> is often a newline
                             const inner = traverse(child);
                             if (result.length > 0 && !result.endsWith('\n')) result += '\n';
                             result += inner;
-                            // Add newline after block unless it's the last one?
-                            if (!result.endsWith('\n')) result += '\n';
+                            if (!result.endsWith('\n') && child.nextSibling) result += '\n';
                             break;
 
                         case 'br':
@@ -196,6 +234,7 @@ const InputEditor = {
                             break;
 
                         case 'ul':
+                        case 'ol':
                             const listContent = traverse(child);
                             if (result.length > 0 && !result.endsWith('\n')) result += '\n';
                             result += listContent;
@@ -203,8 +242,10 @@ const InputEditor = {
                             break;
 
                         case 'li':
-                            // Assuming unordered list for now
-                            result += '- ' + traverse(child).trim() + '\n';
+                            // Check parent for ol/ul
+                            const parentTag = child.parentElement ? child.parentElement.tagName.toLowerCase() : 'ul';
+                            const prefix = parentTag === 'ol' ? '1. ' : '- ';
+                            result += prefix + traverse(child).trim() + '\n';
                             break;
 
                         case 'b':
@@ -217,6 +258,16 @@ const InputEditor = {
                             result += '*' + traverse(child) + '*';
                             break;
 
+                        case 'code':
+                            result += '`' + traverse(child) + '`';
+                            break;
+
+                        case 's':
+                        case 'strike':
+                        case 'del':
+                            result += '~~' + traverse(child) + '~~';
+                            break;
+
                         default:
                             result += traverse(child);
                     }
@@ -226,13 +277,11 @@ const InputEditor = {
             return result;
         };
 
-        markdown = traverse(temp);
-        return markdown.trim();
+        return traverse(temp).trim();
     },
 
     autoResize() {
-        // For contenteditable, height auto-grows.
-        // We might want to cap it via CSS (max-height)
+        // contenteditable handles auto-height natively
     }
 };
 

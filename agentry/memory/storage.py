@@ -179,9 +179,6 @@ class PersistentMemoryStore:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         try:
-            # Join with agent_state to roughly estimate message count if stored there
-            # Since we store messages as a JSON blob in agent_state, we can't easily count them without parsing.
-            # But we can just return the metadata.
             cursor.execute("SELECT * FROM sessions ORDER BY last_activity DESC")
             rows = cursor.fetchall()
             
@@ -189,6 +186,20 @@ class PersistentMemoryStore:
             for row in rows:
                 data = dict(row)
                 data['id'] = data['session_id']  # Map session_id to id for compatibility
+                
+                # Parse and merge metadata fields into the session dict
+                metadata_str = data.get('metadata')
+                if metadata_str:
+                    try:
+                        metadata = json.loads(metadata_str)
+                        # Merge metadata fields into the session dict
+                        data['title'] = metadata.get('title')
+                        data['provider'] = metadata.get('provider')
+                        data['model'] = metadata.get('model')
+                        data['model_type'] = metadata.get('model_type')
+                    except:
+                        pass
+                
                 # Try to get message count from agent_state
                 msg_row = cursor.execute("SELECT value FROM agent_state WHERE session_id = ? AND key = 'messages'", (data['session_id'],)).fetchone()
                 msg_count = 0
@@ -196,7 +207,6 @@ class PersistentMemoryStore:
                     try:
                         msgs = json.loads(msg_row[0])
                         # Count conversation turns: only count user messages
-                        # This gives a more accurate "conversation count"
                         msg_count = sum(1 for m in msgs if m.get('role') == 'user')
                     except: pass
                 

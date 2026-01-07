@@ -161,13 +161,13 @@ const ModelSelector = (function () {
      * Get recent models from session history
      */
     function getRecentModelsFromHistory() {
-        if (!window.Sessions || !window.Sessions.allSessions) return [];
+        console.log('[ModelSelector] getRecentModelsFromHistory called');
+        console.log('[ModelSelector] Current state:', state.currentProvider, state.currentModel);
 
-        const sessions = window.Sessions.allSessions;
         const unique = [];
         const seen = new Set();
 
-        // Add current model first if it exists
+        // ALWAYS add current model first if it exists (regardless of session availability)
         if (state.currentProvider && state.currentModel) {
             const key = `${state.currentProvider}:${state.currentModel}`;
             seen.add(key);
@@ -179,25 +179,37 @@ const ModelSelector = (function () {
                 providerName: providerInfo ? providerInfo.name : state.currentProvider,
                 icon: providerInfo ? providerInfo.icon : ''
             });
+            console.log('[ModelSelector] Added current model:', state.currentProvider, state.currentModel);
         }
 
-        for (const s of sessions) {
-            if (s.provider && s.model) {
-                const key = `${s.provider}:${s.model}`;
-                if (!seen.has(key)) {
-                    seen.add(key);
-                    const providerInfo = getProviderInfo(s.provider);
-                    unique.push({
-                        provider: s.provider,
-                        model: s.model,
-                        model_type: s.model_type,
-                        providerName: providerInfo ? providerInfo.name : s.provider,
-                        icon: providerInfo ? providerInfo.icon : ''
-                    });
+        // Then add models from session history if available
+        if (window.Sessions && window.Sessions.allSessions) {
+            const sessions = window.Sessions.allSessions;
+            console.log('[ModelSelector] Processing', sessions.length, 'sessions');
+
+            for (const s of sessions) {
+                if (s.provider && s.model) {
+                    const key = `${s.provider}:${s.model}`;
+                    if (!seen.has(key)) {
+                        seen.add(key);
+                        const providerInfo = getProviderInfo(s.provider);
+                        unique.push({
+                            provider: s.provider,
+                            model: s.model,
+                            model_type: s.model_type,
+                            providerName: providerInfo ? providerInfo.name : s.provider,
+                            icon: providerInfo ? providerInfo.icon : ''
+                        });
+                        console.log('[ModelSelector] Added history model:', s.provider, s.model);
+                    }
                 }
+                if (unique.length >= 5) break;
             }
-            if (unique.length >= 5) break;
+        } else {
+            console.log('[ModelSelector] No sessions available yet, showing only current model');
         }
+
+        console.log('[ModelSelector] Final unique models:', unique.length);
         return unique;
     }
 
@@ -235,9 +247,15 @@ const ModelSelector = (function () {
                 if (session) modelType = session.model_type;
             }
 
+            // Get auth token for authenticated request
+            const token = AppConfig.getAuthToken();
+
             const response = await fetch('/api/provider/switch', {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
                 body: JSON.stringify({
                     provider: providerId,
                     model: modelId,
@@ -348,7 +366,15 @@ const ModelSelector = (function () {
      */
     async function syncCurrentModel() {
         try {
-            const response = await fetch('/api/provider/current');
+            // Get auth token for authenticated request
+            const token = AppConfig.getAuthToken();
+
+            const response = await fetch('/api/provider/current', {
+                headers: token ? {
+                    'Authorization': `Bearer ${token}`
+                } : {}
+            });
+
             if (response.ok) {
                 const data = await response.json();
                 if (data.config) {
@@ -362,8 +388,10 @@ const ModelSelector = (function () {
                     if (state.currentModelType) {
                         localStorage.setItem('agentry-active-model-type', state.currentModelType);
                     }
+                    console.log('[ModelSelector] Synced current model:', state.currentProvider, state.currentModel);
                 }
             } else {
+                console.warn('[ModelSelector] API returned', response.status, '- falling back to localStorage');
                 // Fallback to localStorage if API fails
                 state.currentModel = localStorage.getItem('agentry-active-model') || 'llama3-70b';
                 state.currentProvider = localStorage.getItem('agentry-active-provider') || 'groq';
@@ -406,11 +434,20 @@ const ModelSelector = (function () {
         renderProviderPopup();
     }
 
+    /**
+     * Refresh the popup (call when sessions change)
+     */
+    function refresh() {
+        console.log('[ModelSelector] Refreshing popup with latest session data...');
+        renderProviderPopup();
+    }
+
     return {
         init,
         PROVIDERS,
         updateCurrentModel,
-        syncCurrentModel
+        syncCurrentModel,
+        refresh
     };
 })();
 

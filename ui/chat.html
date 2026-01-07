@@ -193,7 +193,7 @@
                 <!-- Agent Type Selector in Center -->
                 <div class="chat-header-center">
                     <div class="agent-type-selector" id="agent-type-selector">
-                        <button class="agent-type-button" id="agent-type-button" title="Agent Type">
+                        <button class="agent-type-button" id="agent-type-button" title="Change Agent Type">
                             <svg viewBox="0 0 24 24" class="agent-icon-current" id="agent-icon-current">
                                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                             </svg>
@@ -203,11 +203,48 @@
                             </svg>
                         </button>
                         <div class="agent-type-dropdown" id="agent-type-dropdown">
-                            <div class="agent-type-option selected" data-agent="default">
-                                <div class="agent-type-option-name">Default Agent</div>
+                            <div class="agent-type-option" data-agent="default">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                                    <path d="M2 17l10 5 10-5" />
+                                    <path d="M2 12l10 5 10-5" />
+                                </svg>
+                                <div class="agent-type-option-info">
+                                    <div class="agent-type-option-name">Default Agent</div>
+                                    <div class="agent-type-option-desc">All tools + MCP servers for complex workflows
+                                    </div>
+                                </div>
+                                <svg viewBox="0 0 24 24" class="check-icon">
+                                    <polyline points="20 6 9 17 4 12" />
+                                </svg>
                             </div>
                             <div class="agent-type-option" data-agent="copilot">
-                                <div class="agent-type-option-name">Copilot</div>
+                                <svg viewBox="0 0 24 24">
+                                    <polyline points="16 18 22 12 16 6" />
+                                    <polyline points="8 6 2 12 8 18" />
+                                </svg>
+                                <div class="agent-type-option-info">
+                                    <div class="agent-type-option-name">Copilot Agent</div>
+                                    <div class="agent-type-option-desc">Coding focused with file & execution tools</div>
+                                </div>
+                                <svg viewBox="0 0 24 24" class="check-icon">
+                                    <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                            </div>
+                            <div class="agent-type-option" data-agent="smart">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M9 18h6" />
+                                    <path d="M10 22h4" />
+                                    <path
+                                        d="M12 2a7 7 0 017 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 01-1 1H9a1 1 0 01-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 017-7z" />
+                                </svg>
+                                <div class="agent-type-option-info">
+                                    <div class="agent-type-option-name">Smart Agent</div>
+                                    <div class="agent-type-option-desc">Enhanced reasoning & project context</div>
+                                </div>
+                                <svg viewBox="0 0 24 24" class="check-icon">
+                                    <polyline points="20 6 9 17 4 12" />
+                                </svg>
                             </div>
                         </div>
                     </div>
