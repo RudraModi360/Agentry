@@ -1079,7 +1079,7 @@
 <body>
     <!-- Header -->
     <header class="header">
-        <a href="/" class="logo">
+        <a href="/index.html" class="logo">
             <div class="logo-mark">
                 <!-- Simple geometric logo icon -->
                 <svg class="logo-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -1169,7 +1169,7 @@
                 </div>
             </div>
             <div class="button-row">
-                <button class="btn btn-secondary" id="step1-back" onclick="window.location.href='/login'">←
+                <button class="btn btn-secondary" id="step1-back" onclick="window.location.href='/login.html'">←
                     Logout</button>
                 <button class="btn btn-primary" id="step1-next" disabled>Continue →</button>
             </div>
@@ -1318,7 +1318,7 @@
         // Check auth
         const token = localStorage.getItem('scratchy_token');
         if (!token) {
-            window.location.href = '/login';
+            window.location.href = '/login.html';
         }
 
         // Initialize - load existing configuration
@@ -1332,7 +1332,7 @@
 
                 if (!response.ok) {
                     localStorage.removeItem('scratchy_token');
-                    window.location.href = '/login';
+                    window.location.href = '/login.html';
                     return;
                 }
 
@@ -1395,7 +1395,7 @@
                 skipBtn.className = 'btn btn-secondary';
                 skipBtn.textContent = 'Skip → Go to Chat';
                 skipBtn.addEventListener('click', () => {
-                    window.location.href = '/chat';
+                    window.location.href = '/chat.html';
                 });
                 buttonRow.insertBefore(skipBtn, buttonRow.firstChild);
             }
@@ -1602,7 +1602,7 @@
                 if (response.ok) {
                     showMessage('Setup complete! Redirecting...', 'success');
                     setTimeout(() => {
-                        window.location.href = '/chat';
+                        window.location.href = '/chat.html';
                     }, 1500);
                 } else {
                     showMessage(data.detail || 'Configuration failed. Please try again.');

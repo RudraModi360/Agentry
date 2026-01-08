@@ -8,14 +8,20 @@
  * without touching individual component files.
  */
 
+/**
+ * Runtime configuration can be set before loading this script:
+ * window.AGENTRY_API_URL = 'https://your-backend.azurewebsites.net';
+ */
+
 const AppConfig = {
     // ==================== API Configuration ====================
     api: {
-        // Base URL for the backend API (empty string = same origin)
-        baseUrl: '',
+        // Base URL for the backend API
+        // Priority: window.AGENTRY_API_URL > empty string (same origin)
+        baseUrl: window.AGENTRY_API_URL || '',
 
-        // WebSocket URL (will be constructed from window.location if empty)
-        wsUrl: '',
+        // WebSocket URL (will be constructed from baseUrl if not explicitly set)
+        wsUrl: window.AGENTRY_WS_URL || '',
 
         // Request timeout in milliseconds
         timeout: 30000,
@@ -31,10 +37,10 @@ const AppConfig = {
         tokenKey: 'scratchy_token',
 
         // Login redirect path
-        loginPath: '/login',
+        loginPath: '/login.html',
 
         // Default redirect after login
-        defaultRedirect: '/chat',
+        defaultRedirect: '/chat.html',
     },
 
     // ==================== Theme Configuration ====================
@@ -215,9 +221,19 @@ AppConfig.getApiUrl = function (endpoint) {
  * @returns {string} WebSocket URL
  */
 AppConfig.getWsUrl = function () {
+    // Explicit WS URL takes highest priority
     if (this.api.wsUrl) {
         return this.api.wsUrl;
     }
+
+    // Derive from API baseUrl if configured (for separate frontend/backend deployment)
+    if (this.api.baseUrl) {
+        const url = new URL(this.api.baseUrl);
+        const protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+        return `${protocol}//${url.host}`;
+    }
+
+    // Fallback to same origin
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     return `${protocol}//${window.location.host}`;
 };

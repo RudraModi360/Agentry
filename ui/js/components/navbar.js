@@ -245,7 +245,7 @@ const ResizableNavbar = (function () {
             <div class="resizable-navbar ${fixed ? 'fixed' : ''}">
                 <!-- Desktop Navigation -->
                 <nav class="nav-body">
-                    <a href="/" class="navbar-logo">
+                    <a href="/index.html" class="navbar-logo">
                         ${logoIcon}
                         <span class="navbar-logo-text">${logoText}</span>
                     </a>
@@ -260,7 +260,7 @@ const ResizableNavbar = (function () {
                 <!-- Mobile Navigation -->
                 <nav class="mobile-nav">
                     <div class="mobile-nav-header">
-                        <a href="/" class="navbar-logo">
+                        <a href="/index.html" class="navbar-logo">
                             ${logoIcon}
                             <span class="navbar-logo-text">${logoText}</span>
                         </a>

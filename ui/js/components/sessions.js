@@ -159,7 +159,7 @@ const Sessions = {
         App.state.currentSessionId = sessionId;
 
         // Update URL
-        window.history.pushState({}, '', `/chat?session=${sessionId}`);
+        window.history.pushState({}, '', `/chat.html?session=${sessionId}`);
 
         // Update active state
         DOM.$$('.session-item').forEach(item => {
@@ -190,7 +190,7 @@ const Sessions = {
             await this.load();
 
             // Update URL
-            window.history.pushState({}, '', `/chat?session=${response.session.id}`);
+            window.history.pushState({}, '', `/chat.html?session=${response.session.id}`);
 
         } catch (error) {
             console.error('Failed to create session:', error);
@@ -212,7 +212,7 @@ const Sessions = {
             if (sessionId === App.state.currentSessionId) {
                 App.state.currentSessionId = null;
                 Messages.clear();
-                window.history.pushState({}, '', '/chat');
+                window.history.pushState({}, '', '/chat.html');
             }
 
             await this.load();

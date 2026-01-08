@@ -145,7 +145,7 @@ const ModelSelector = (function () {
             manageBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 closeDropdown();
-                window.location.href = '/setup';
+                window.location.href = '/setup.html';
             });
         }
     }
@@ -277,7 +277,7 @@ const ModelSelector = (function () {
 
         } catch (e) {
             console.error('Failed to switch model', e);
-            window.location.href = `/setup?provider=${providerId}&model=${modelId}`;
+            window.location.href = `/setup.html?provider=${providerId}&model=${modelId}`;
         }
     }
 
@@ -287,7 +287,7 @@ const ModelSelector = (function () {
      */
     function selectProviderAndRedirect(providerId) {
         closeDropdown();
-        window.location.href = `/setup?provider=${providerId}`;
+        window.location.href = `/setup.html?provider=${providerId}`;
     }
 
     /**
@@ -307,7 +307,7 @@ const ModelSelector = (function () {
             elements.gotoSettings.addEventListener('click', (e) => {
                 e.stopPropagation();
                 closeDropdown();
-                window.location.href = '/setup?step=model';
+                window.location.href = '/setup.html?step=model';
             });
         }
 

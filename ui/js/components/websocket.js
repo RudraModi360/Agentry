@@ -21,8 +21,7 @@ const WebSocketManager = {
      * Connect to WebSocket server
      */
     connect() {
-        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${wsProtocol}//${window.location.host}/ws/chat`;
+        const wsUrl = `${AppConfig.getWsUrl()}/ws/chat`;
 
         try {
             this.ws = new WebSocket(wsUrl);
@@ -260,7 +259,7 @@ const WebSocketManager = {
                     Messages.currentAssistantMessage = null;
                 }
                 if (data.message.includes('Provider not configured')) {
-                    window.location.href = '/setup';
+                    window.location.href = '/setup.html';
                 } else {
                     Messages.addErrorMessage(data.message);
                 }

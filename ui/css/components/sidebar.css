@@ -249,17 +249,22 @@
 
 .sessions-header {
     display: block !important;
-    padding: 8px 12px 4px 12px !important;
+    padding: 12px 12px 6px 12px !important;
+    margin-top: 8px !important;
     font-size: 11px !important;
     font-weight: 600 !important;
     color: rgba(255, 255, 255, 0.5) !important;
-    text-transform: none !important;
-    letter-spacing: 0 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
     transition: all 0.3s ease;
     opacity: 1;
-    max-height: 30px;
-    /* Approximate height */
+    max-height: 40px;
     overflow: hidden;
+    border-top: 1px solid var(--card-border, rgba(255, 255, 255, 0.1));
+}
+
+.sessions-header span {
+    display: inline-block;
 }
 
 

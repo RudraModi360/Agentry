@@ -292,7 +292,7 @@
 
     <!-- Header -->
     <header class="header">
-        <a href="/" class="back-link">
+        <a href="/index.html" class="back-link">
             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
@@ -384,7 +384,7 @@
 
             <!-- Footer -->
             <div class="login-footer">
-                <a href="/" class="footer-link">← Back to Home</a>
+                <a href="/index.html" class="footer-link">← Back to Home</a>
             </div>
         </div>
     </div>
@@ -392,9 +392,13 @@
     <!-- Common JS -->
     <script src="/assets/common.js"></script>
 
+    <!-- Environment config for production deployment -->
+    <script src="/js/env.js"></script>
+
     <!-- Login JS -->
     <script>
-        const API_BASE = '';
+        // Use centralized API URL config, fallback to same-origin
+        const API_BASE = window.AGENTRY_API_URL || '';
 
         // Tab switching
         document.querySelectorAll('.auth-tab').forEach(tab => {
@@ -470,9 +474,9 @@
 
                     setTimeout(() => {
                         if (data.needs_setup) {
-                            window.location.href = '/setup';
+                            window.location.href = '/setup.html';
                         } else {
-                            window.location.href = '/chat';
+                            window.location.href = '/chat.html';
                         }
                     }, 1000);
                 } else {
@@ -526,7 +530,7 @@
                     showMessage('Account created! Redirecting...', 'success');
 
                     setTimeout(() => {
-                        window.location.href = '/setup';
+                        window.location.href = '/setup.html';
                     }, 1000);
                 } else {
                     showMessage(data.detail || 'Registration failed');
@@ -547,9 +551,9 @@
                 .then(r => r.ok ? r.json() : Promise.reject())
                 .then(data => {
                     if (data.provider_configured) {
-                        window.location.href = '/chat';
+                        window.location.href = '/chat.html';
                     } else {
-                        window.location.href = '/setup';
+                        window.location.href = '/setup.html';
                     }
                 })
                 .catch(() => {
