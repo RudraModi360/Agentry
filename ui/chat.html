@@ -147,7 +147,7 @@
                         <div class="footer-icon-box user-avatar-box" id="user-avatar">?</div>
                         <div class="footer-info-text">
                             <div class="footer-title" id="user-name">User</div>
-                            <div class="footer-subtitle">Free Plan</div>
+                            <div class="footer-subtitle" style="display: none;"></div>
                         </div>
                     </div>
                 </div>
@@ -497,6 +497,87 @@
         </div>
     </div>
 
+    <!-- User Profile Modal -->
+    <div class="profile-modal-overlay" id="profile-modal-overlay">
+        <div class="profile-modal">
+            <div class="profile-modal-header">
+                <h2>User Profile</h2>
+                <button class="profile-modal-close" id="profile-modal-close-btn">×</button>
+            </div>
+            <div class="profile-modal-tabs">
+                <button class="profile-tab active" data-tab="profile-info">Profile Info</button>
+                <button class="profile-tab" data-tab="security">Security</button>
+                <button class="profile-tab" data-tab="smtp">Email Settings</button>
+            </div>
+            <div class="profile-modal-content">
+                <!-- Profile Info Tab -->
+                <div class="profile-tab-content active" id="tab-profile-info">
+                    <div class="profile-field-group">
+                        <label>Username</label>
+                        <input type="text" id="profile-username" readonly>
+                    </div>
+                    <div class="profile-field-group">
+                        <label>Email Address</label>
+                        <input type="email" id="profile-email" placeholder="Enter your email">
+                    </div>
+                    <div class="profile-field-group">
+                        <label>Member Since</label>
+                        <input type="text" id="profile-created-at" readonly>
+                    </div>
+                    <button class="profile-action-btn" id="save-profile-btn">Save Profile</button>
+                </div>
+
+                <!-- Security Tab -->
+                <div class="profile-tab-content" id="tab-security">
+                    <div class="profile-field-group">
+                        <label>Current Password</label>
+                        <input type="password" id="security-current-password">
+                    </div>
+                    <div class="profile-field-group">
+                        <label>New Password</label>
+                        <input type="password" id="security-new-password">
+                    </div>
+                    <div class="profile-field-group">
+                        <label>Confirm New Password</label>
+                        <input type="password" id="security-confirm-password">
+                    </div>
+                    <button class="profile-action-btn" id="change-password-btn">Update Password</button>
+                </div>
+
+                <!-- SMTP Settings Tab -->
+                <div class="profile-tab-content" id="tab-smtp">
+                    <div class="smtp-info-box">
+                        Configure SMTP to enable email notifications for password resets and welcomes.
+                    </div>
+                    <div class="profile-field-group">
+                        <label>SMTP Host</label>
+                        <input type="text" id="smtp-host" placeholder="smtp.gmail.com">
+                    </div>
+                    <div class="profile-field-group">
+                        <label>SMTP Port</label>
+                        <input type="number" id="smtp-port" placeholder="587">
+                    </div>
+                    <div class="profile-field-group">
+                        <label>SMTP Username (Email)</label>
+                        <input type="email" id="smtp-username" placeholder="your-email@gmail.com">
+                    </div>
+                    <div class="profile-field-group">
+                        <label>SMTP Password (or App Password)</label>
+                        <input type="password" id="smtp-password" placeholder="App Password">
+                    </div>
+                    <div class="profile-field-group checkbox-group">
+                        <label>
+                            <input type="checkbox" id="smtp-use-tls" checked>
+                            Use TLS (Recommended)
+                        </label>
+                    </div>
+                    <button class="profile-action-btn" id="save-smtp-btn">Save SMTP Settings</button>
+                    <button class="profile-secondary-btn" id="test-smtp-btn">Test Email</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- JavaScript Files (load order matters) -->
     <!-- Environment config - set AGENTRY_API_URL for production -->
     <script src="js/env.js?v=2"></script>
@@ -510,6 +591,7 @@
     <script src="js/components/messages.js"></script>
     <script src="js/components/websocket.js"></script>
     <script src="js/components/modals.js"></script>
+    <script src="js/components/profile-modal.js"></script>
     <script src="js/components/tools.js"></script>
     <script src="js/components/sessions.js"></script>
     <script src="js/components/upload.js"></script>

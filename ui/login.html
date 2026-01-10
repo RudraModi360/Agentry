@@ -343,8 +343,14 @@
                     <input type="text" class="form-input" id="login-username" placeholder="Enter your username"
                         required>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Password</label>
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <label class="form-label" style="margin-bottom: 0;">Password</label>
+                        <a href="#" id="forgot-password-link"
+                            style="font-size: 13px; color: var(--text-secondary); text-decoration: none;">Forgot
+                            Password?</a>
+                    </div>
                     <input type="password" class="form-input" id="login-password" placeholder="Enter your password"
                         required>
                 </div>
@@ -356,12 +362,56 @@
                 </button>
             </form>
 
+            <!-- Forgot Password Form -->
+            <form id="forgot-password-form" class="auth-form">
+                <div id="forgot-step-1">
+                    <h3 style="margin: 0 0 16px 0; font-size: 18px; text-align: center;">Reset Password</h3>
+                    <p style="margin-bottom: 20px; font-size: 14px; color: var(--text-secondary); text-align: center;">
+                        Enter your email to receive a reset code.</p>
+                    <div class="form-group">
+                        <label class="form-label">Email Address</label>
+                        <input type="email" class="form-input" id="forgot-email" placeholder="Enter your email"
+                            required>
+                    </div>
+                    <button type="button" class="submit-btn" id="send-reset-btn">
+                        Send Reset Code
+                    </button>
+                    <button type="button" class="submit-btn" id="back-to-login-btn"
+                        style="background: transparent; color: var(--text-secondary); margin-top: 8px; border: 1px solid var(--card-border);">
+                        Back to Login
+                    </button>
+                </div>
+
+                <div id="forgot-step-2" style="display: none;">
+                    <h3 style="margin: 0 0 16px 0; font-size: 18px; text-align: center;">Set New Password</h3>
+                    <p style="margin-bottom: 20px; font-size: 14px; color: var(--text-secondary); text-align: center;">
+                        Enter the code from your email and your new password.</p>
+                    <div class="form-group">
+                        <label class="form-label">Reset Code</label>
+                        <input type="text" class="form-input" id="reset-token" placeholder="Enter code" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">New Password</label>
+                        <input type="password" class="form-input" id="reset-password" placeholder="New password"
+                            required minlength="6">
+                    </div>
+                    <button type="button" class="submit-btn" id="reset-confirm-btn">
+                        Reset & Login
+                    </button>
+                </div>
+            </form>
+
             <!-- Register Form -->
             <form id="register-form" class="auth-form">
                 <div class="form-group">
                     <label class="form-label">Username</label>
                     <input type="text" class="form-input" id="register-username" placeholder="Choose a username"
                         required minlength="3">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email (Optional)</label>
+                    <input type="email" class="form-input" id="register-email"
+                        placeholder="Enter your email for recovery">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Password</label>
@@ -431,15 +481,12 @@
 
         // Loading state
         function setLoading(btn, loading) {
+            btn.disabled = loading;
             if (loading) {
-                btn.disabled = true;
+                btn.dataset.originalText = btn.innerHTML;
                 btn.innerHTML = '<span class="spinner"></span> Please wait...';
             } else {
-                btn.disabled = false;
-                const isLogin = btn.id === 'login-btn';
-                btn.innerHTML = isLogin
-                    ? '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg> Sign In'
-                    : '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8zM20 8v6M23 11h-6"/></svg> Create Account';
+                btn.innerHTML = btn.dataset.originalText || btn.innerHTML;
             }
         }
 
@@ -473,6 +520,8 @@
                     showMessage('Login successful! Redirecting...', 'success');
 
                     setTimeout(() => {
+                        // Prioritize setup if needed, even if chat was requested?
+                        // User can navigate to chat from setup.
                         if (data.needs_setup) {
                             window.location.href = '/setup.html';
                         } else {
@@ -495,12 +544,13 @@
             hideMessage();
 
             const username = document.getElementById('register-username').value.trim();
+            const email = document.getElementById('register-email').value.trim();
             const password = document.getElementById('register-password').value;
             const confirm = document.getElementById('register-confirm').value;
             const btn = document.getElementById('register-btn');
 
             if (!username || !password || !confirm) {
-                showMessage('Please fill in all fields');
+                showMessage('Please fill in required fields');
                 return;
             }
 
@@ -520,7 +570,7 @@
                 const response = await fetch(`${API_BASE}/api/auth/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
+                    body: JSON.stringify({ username, password, email: email || null })
                 });
 
                 const data = await response.json();
@@ -539,6 +589,113 @@
                 showMessage('Connection error. Please try again.');
             } finally {
                 setLoading(btn, false);
+            }
+        });
+
+        // Forgot Password Logic
+        const forgotLink = document.getElementById('forgot-password-link');
+        const loginForm = document.getElementById('login-form');
+        const forgotForm = document.getElementById('forgot-password-form');
+        const backToLoginBtn = document.getElementById('back-to-login-btn');
+        const sendResetBtn = document.getElementById('send-reset-btn');
+        const resetConfirmBtn = document.getElementById('reset-confirm-btn');
+        const step1 = document.getElementById('forgot-step-1');
+        const step2 = document.getElementById('forgot-step-2');
+
+        let resetEmail = '';
+
+        forgotLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            hideMessage();
+            loginForm.classList.remove('active');
+            forgotForm.classList.add('active');
+            step1.style.display = 'block';
+            step2.style.display = 'none';
+        });
+
+        backToLoginBtn.addEventListener('click', () => {
+            hideMessage();
+            forgotForm.classList.remove('active');
+            loginForm.classList.add('active');
+        });
+
+        sendResetBtn.addEventListener('click', async () => {
+            hideMessage();
+            const email = document.getElementById('forgot-email').value.trim();
+
+            if (!email) {
+                showMessage('Please enter your email address');
+                return;
+            }
+
+            setLoading(sendResetBtn, true);
+
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/forgot-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                if (response.ok) {
+                    resetEmail = email;
+                    showMessage('If registered, a code has been sent to your email.', 'success');
+                    setTimeout(() => {
+                        step1.style.display = 'none';
+                        step2.style.display = 'block';
+                        hideMessage();
+                    }, 1500);
+                } else {
+                    const data = await response.json();
+                    showMessage(data.detail || 'Failed to send reset code');
+                }
+            } catch (error) {
+                showMessage('Connection error. Please try again.');
+            } finally {
+                setLoading(sendResetBtn, false);
+            }
+        });
+
+        resetConfirmBtn.addEventListener('click', async () => {
+            hideMessage();
+            const token = document.getElementById('reset-token').value.trim();
+            const newPassword = document.getElementById('reset-password').value;
+
+            if (!token || !newPassword) {
+                showMessage('Please fill in all fields');
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                showMessage('Password must be at least 6 characters');
+                return;
+            }
+
+            setLoading(resetConfirmBtn, true);
+
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/reset-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: resetEmail, token, new_password: newPassword })
+                });
+
+                if (response.ok) {
+                    showMessage('Password reset successfully. Please login.', 'success');
+                    setTimeout(() => {
+                        forgotForm.classList.remove('active');
+                        loginForm.classList.add('active');
+                        // Auto fill fields?
+                        document.getElementById('login-password').value = '';
+                    }, 2000);
+                } else {
+                    const data = await response.json();
+                    showMessage(data.detail || 'Reset failed');
+                }
+            } catch (error) {
+                showMessage('Connection error. Please try again.');
+            } finally {
+                setLoading(resetConfirmBtn, false);
             }
         });
 

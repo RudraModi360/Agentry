@@ -138,5 +138,37 @@ def init_db():
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_user_media_user ON user_media(user_id)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)")
 
+    # Check if 'email' column exists in users
+    try:
+        cursor.execute("SELECT email FROM users LIMIT 1")
+    except sqlite3.OperationalError:
+        cursor.execute("ALTER TABLE users ADD COLUMN email TEXT")
+        cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email)")
+
+    # SMTP Configuration (Single row enforced)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS smtp_config (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            host TEXT NOT NULL,
+            port INTEGER NOT NULL,
+            username TEXT NOT NULL,
+            password TEXT NOT NULL,
+            from_email TEXT,
+            use_tls INTEGER DEFAULT 1,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    # Password Resets
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS password_resets (
+            email TEXT NOT NULL,
+            token TEXT NOT NULL,
+            expires_at TIMESTAMP NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (email, token)
+        )
+    """)
+
     conn.commit()
     conn.close()

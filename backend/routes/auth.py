@@ -2,22 +2,27 @@
 Authentication routes.
 """
 import sqlite3
-from datetime import datetime
+import secrets
+from datetime import datetime, timedelta
 from typing import Dict, Optional
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, BackgroundTasks
 
 from backend.config import DB_PATH
 from backend.core.security import hash_password, verify_password, generate_token
 from backend.core.dependencies import get_current_user
-from backend.models.auth import UserCredentials
+from backend.models.auth import (
+    UserCredentials, UserRegistration, UserProfileUpdate, 
+    PasswordChange, ForgotPasswordRequest, ResetPasswordRequest, SmtpConfig
+)
 from backend.services.auth_service import AuthService
+from backend.services.email_service import EmailService
 
 router = APIRouter()
 
 
 @router.post("/register")
-async def register(credentials: UserCredentials):
+async def register(credentials: UserRegistration, background_tasks: BackgroundTasks):
     """Register a new user."""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -27,11 +32,17 @@ async def register(credentials: UserCredentials):
         if cursor.fetchone():
             raise HTTPException(status_code=400, detail="Username already exists")
         
+        # Check if email exists (if provided)
+        if credentials.email:
+            cursor.execute("SELECT id FROM users WHERE email = ?", (credentials.email,))
+            if cursor.fetchone():
+                raise HTTPException(status_code=400, detail="Email already registered")
+        
         # Create user
         password_hash = hash_password(credentials.password)
         cursor.execute(
-            "INSERT INTO users (username, password_hash, created_at) VALUES (?, ?, ?)",
-            (credentials.username, password_hash, datetime.now())
+            "INSERT INTO users (username, password_hash, email, created_at) VALUES (?, ?, ?, ?)",
+            (credentials.username, password_hash, credentials.email, datetime.now())
         )
         user_id = cursor.lastrowid
         
@@ -43,6 +54,12 @@ async def register(credentials: UserCredentials):
         )
         
         conn.commit()
+        
+        # Send Welcome Email
+        if credentials.email:
+            # We run this in background to not block the response
+            background_tasks.add_task(EmailService.send_welcome_email, credentials.username, credentials.email)
+        
         return {"token": token, "message": "Registration successful", "needs_setup": True}
     finally:
         conn.close()
@@ -55,6 +72,7 @@ async def login(credentials: UserCredentials):
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     try:
+        # Allow login by username OR email (if we wanted, but sticking to username for now based on request flow logic)
         cursor.execute("SELECT id, password_hash FROM users WHERE username = ?", (credentials.username,))
         row = cursor.fetchone()
         
@@ -136,6 +154,7 @@ async def get_current_user_info(user: Dict = Depends(get_current_user)):
         "user": {
             "id": user["id"],
             "username": user["username"],
+            "email": user.get("email"),  # Added email
             "created_at": user["created_at"]
         },
         "provider_configured": config is not None,
@@ -152,3 +171,149 @@ async def get_current_user_info(user: Dict = Depends(get_current_user)):
         } if config else None,
         "stored_keys": stored_keys
     }
+
+
+# === User Profile Management ===
+
+@router.post("/profile")
+async def update_profile(data: UserProfileUpdate, user: Dict = Depends(get_current_user)):
+    """Update user profile (email essentially)."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    try:
+        # Check if email is taken by another user
+        cursor.execute("SELECT id FROM users WHERE email = ? AND id != ?", (data.email, user["id"]))
+        if cursor.fetchone():
+            raise HTTPException(status_code=400, detail="Email already in use")
+        
+        cursor.execute("UPDATE users SET email = ? WHERE id = ?", (data.email, user["id"]))
+        conn.commit()
+        return {"message": "Profile updated successfully"}
+    finally:
+        conn.close()
+
+
+@router.post("/change-password")
+async def change_password(data: PasswordChange, user: Dict = Depends(get_current_user)):
+    """Change current user's password."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    try:
+        # Verify current password
+        cursor.execute("SELECT password_hash FROM users WHERE id = ?", (user["id"],))
+        row = cursor.fetchone()
+        if not verify_password(data.current_password, row[0]):
+            raise HTTPException(status_code=400, detail="Incorrect current password")
+        
+        # Update password
+        new_hash = hash_password(data.new_password)
+        cursor.execute("UPDATE users SET password_hash = ? WHERE id = ?", (new_hash, user["id"]))
+        conn.commit()
+        return {"message": "Password updated successfully"}
+    finally:
+        conn.close()
+
+
+# === SMTP & Password Reset ===
+
+@router.get("/smtp")
+async def get_smtp_config(user: Dict = Depends(get_current_user)):
+    """Get SMTP configuration."""
+    config = EmailService.get_smtp_config()
+    if not config:
+        return {} # Return empty to indicate not set
+    # Do not return real password for security? Or return it because it's the owner?
+    # For now, we return it but frontend should mask it. 
+    # Or better: return empty password and only update if user sends new one.
+    # But for "edit" functionality users usually expect to see it or see "******".
+    # We'll return it as is for simplicity in this MVP.
+    return config
+
+
+@router.post("/smtp")
+async def save_smtp_config(config: SmtpConfig, user: Dict = Depends(get_current_user)):
+    """Save SMTP configuration."""
+    EmailService.save_smtp_config(config.dict())
+    return {"message": "SMTP configuration saved"}
+
+
+@router.post("/smtp/test")
+async def test_smtp(data: Dict, user: Dict = Depends(get_current_user)):
+    """Test SMTP configuration by sending an email."""
+    to_email = data.get("to_email")
+    if notto_email:
+        raise HTTPException(status_code=400, detail="Target email required")
+    
+    success = EmailService.send_email(to_email, "SMTP Test", "This is a test email from Agentry.")
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to send test email. Check server logs.")
+    return {"message": "Test email sent"}
+
+
+@router.post("/forgot-password")
+async def forgot_password(data: ForgotPasswordRequest, background_tasks: BackgroundTasks):
+    """Initiate password reset flow."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT id FROM users WHERE email = ?", (data.email,))
+        row = cursor.fetchone()
+        if not row:
+            # Don't reveal if user exists
+             return {"message": "If the email is registered, you will receive a reset instructions."}
+        
+        # Generate generic token (6 digit code for simplicity?) 
+        # Or a secure UUID. The requirement says "password reset code".
+        # Let's use a 6-digit code for ease of typing if not clicking link.
+        token = secrets.token_hex(3).upper() # 6 chars
+        expires_at = datetime.now() + timedelta(minutes=15)
+        
+        cursor.execute(
+            "INSERT OR REPLACE INTO password_resets (email, token, expires_at) VALUES (?, ?, ?)",
+            (data.email, token, expires_at)
+        )
+        conn.commit()
+        
+        # Send Email
+        background_tasks.add_task(EmailService.send_password_reset_email, data.email, token)
+        
+        return {"message": "If the email is registered, you will receive a reset instructions."}
+    finally:
+        conn.close()
+
+
+@router.post("/reset-password")
+async def reset_password(data: ResetPasswordRequest, background_tasks: BackgroundTasks):
+    """Reset password using token."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    try:
+        # Verify token
+        cursor.execute(
+            "SELECT email FROM password_resets WHERE email = ? AND token = ? AND expires_at > ?",
+            (data.email, data.token, datetime.now())
+        )
+        if not cursor.fetchone():
+            raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+        
+        # Get user
+        cursor.execute("SELECT id, username FROM users WHERE email = ?", (data.email,))
+        user_row = cursor.fetchone()
+        if not user_row:
+             raise HTTPException(status_code=400, detail="User not found")
+        
+        # Update Password
+        new_hash = hash_password(data.new_password)
+        cursor.execute("UPDATE users SET password_hash = ? WHERE id = ?", (new_hash, user_row[0]))
+        
+        # Delete token
+        cursor.execute("DELETE FROM password_resets WHERE email = ?", (data.email,))
+        
+        conn.commit()
+        
+        # Send Confirmation Email
+        background_tasks.add_task(EmailService.send_password_changed_email, user_row[1], data.email)
+        
+        return {"message": "Password successfully reset"}
+    finally:
+        conn.close()

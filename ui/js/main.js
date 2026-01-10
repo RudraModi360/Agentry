@@ -90,6 +90,11 @@ const App = {
         // Modals
         Modals.init();
 
+        // Profile Modal
+        if (typeof ProfileModal !== 'undefined') {
+            ProfileModal.init();
+        }
+
         // Tools
         Tools.init();
 
@@ -155,6 +160,17 @@ const App = {
             DOM.text('user-name', response.user?.username || 'User');
             const initial = (response.user?.username || 'U')[0].toUpperCase();
             DOM.text('user-avatar', initial);
+
+            // Add click listener for profile modal
+            const userSection = document.querySelector('.user-profile-only');
+            if (userSection) {
+                userSection.style.cursor = 'pointer';
+                userSection.onclick = () => {
+                    if (typeof ProfileModal !== 'undefined') {
+                        ProfileModal.open();
+                    }
+                };
+            }
 
             // Update provider info
             if (response.provider_config) {
