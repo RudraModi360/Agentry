@@ -101,7 +101,6 @@ const ProfileModal = {
      */
     open() {
         this.loadProfileData();
-        this.loadSmtpSettings(); // Attempt to load SMTP settings
         DOM.addClass(this.elements.overlay, 'active');
         this.isOpen = true;
     },
@@ -113,9 +112,9 @@ const ProfileModal = {
         DOM.removeClass(this.elements.overlay, 'active');
         this.isOpen = false;
         // Clear sensitive inputs
-        this.elements.currentPassword.value = '';
-        this.elements.newPassword.value = '';
-        this.elements.confirmPassword.value = '';
+        if (this.elements.currentPassword) this.elements.currentPassword.value = '';
+        if (this.elements.newPassword) this.elements.newPassword.value = '';
+        if (this.elements.confirmPassword) this.elements.confirmPassword.value = '';
     },
 
     /**
@@ -146,11 +145,11 @@ const ProfileModal = {
      */
     async loadProfileData() {
         try {
-            const user = await API.get('/api/auth/me'); // We might need to update this endpoint to return more info
+            const user = await API.get('/api/auth/me');
             if (user && user.user) {
-                this.elements.usernameInput.value = user.user.username;
-                this.elements.emailInput.value = user.user.email || '';
-                this.elements.createdAtInput.value = new Date(user.user.created_at).toLocaleDateString();
+                if (this.elements.usernameInput) this.elements.usernameInput.value = user.user.username;
+                if (this.elements.emailInput) this.elements.emailInput.value = user.user.email || '';
+                if (this.elements.createdAtInput) this.elements.createdAtInput.value = new Date(user.user.created_at).toLocaleDateString();
             }
         } catch (error) {
             console.error('Failed to load profile:', error);
@@ -233,87 +232,6 @@ const ProfileModal = {
         } finally {
             const btn = this.elements.changePasswordBtn;
             btn.textContent = 'Update Password';
-            btn.disabled = false;
-        }
-    },
-
-    /**
-     * Load SMTP Settings
-     */
-    async loadSmtpSettings() {
-        try {
-            const settings = await API.get('/api/auth/smtp');
-            if (settings) {
-                this.elements.smtpHost.value = settings.host || '';
-                this.elements.smtpPort.value = settings.port || '';
-                this.elements.smtpUsername.value = settings.username || '';
-                this.elements.smtpPassword.value = settings.password || ''; // Might be hidden/masked
-                this.elements.smtpUseTls.checked = settings.use_tls !== false;
-            }
-        } catch (error) {
-            // Ignore error if settings not found
-        }
-    },
-
-    /**
-     * Save SMTP Settings
-     */
-    async saveSmtpSettings() {
-        const config = {
-            host: this.elements.smtpHost.value.trim(),
-            port: parseInt(this.elements.smtpPort.value.trim()) || 587,
-            username: this.elements.smtpUsername.value.trim(),
-            password: this.elements.smtpPassword.value.trim(),
-            use_tls: this.elements.smtpUseTls.checked
-        };
-
-        if (!config.host || !config.username || !config.password) {
-            Modals.showToast('Please fill in required SMTP fields', 'error');
-            return;
-        }
-
-        try {
-            const btn = this.elements.saveSmtpBtn;
-            btn.textContent = 'Saving...';
-            btn.disabled = true;
-
-            await API.post('/api/auth/smtp', config);
-
-            Modals.showToast('SMTP settings saved', 'success');
-        } catch (error) {
-            console.error('Failed to save SMTP settings:', error);
-            Modals.showToast(error.message || 'Failed to save settings', 'error');
-        } finally {
-            const btn = this.elements.saveSmtpBtn;
-            btn.textContent = 'Save SMTP Settings';
-            btn.disabled = false;
-        }
-    },
-
-    /**
-     * Test SMTP Settings
-     */
-    async testSmtp() {
-        try {
-            const btn = this.elements.testSmtpBtn;
-            btn.textContent = 'Testing...';
-            btn.disabled = true;
-
-            const email = this.elements.emailInput.value;
-            if (!email) {
-                Modals.showToast('Please save your profile email first', 'warning');
-                return;
-            }
-
-            await API.post('/api/auth/smtp/test', { to_email: email });
-
-            Modals.showToast(`Test email sent to ${email}`, 'success');
-        } catch (error) {
-            console.error('SMTP Test Failed:', error);
-            Modals.showToast(error.message || 'Failed to send test email', 'error');
-        } finally {
-            const btn = this.elements.testSmtpBtn;
-            btn.textContent = 'Test Email';
             btn.disabled = false;
         }
     }

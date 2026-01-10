@@ -12,7 +12,21 @@ from backend.core.db_pool import get_connection
 class EmailService:
     @staticmethod
     def get_smtp_config() -> Optional[Dict]:
-        """Fetch SMTP configuration from database."""
+        """Fetch SMTP configuration from Environment Variables or database."""
+        import os
+        
+        # Check Environment Variables first (System Configuration)
+        if os.getenv("SMTP_HOST") and os.getenv("SMTP_USER") and os.getenv("SMTP_PASSWORD"):
+            return {
+                "host": os.getenv("SMTP_HOST"),
+                "port": int(os.getenv("SMTP_PORT", 587)),
+                "username": os.getenv("SMTP_USER"),
+                "password": os.getenv("SMTP_PASSWORD"),
+                "from_email": os.getenv("SMTP_FROM_EMAIL") or os.getenv("SMTP_USER"),
+                "use_tls": os.getenv("SMTP_USE_TLS", "true").lower() == "true"
+            }
+
+        # Fallback to Database (if any, though we are moving away from this for system mail)
         conn = get_connection()
         try:
             cursor = conn.cursor()

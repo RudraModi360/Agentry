@@ -85,3 +85,4 @@ simple_agent.py
 test_azure_anthropic.py
 test_azure_connectivity.py
 ui/media/
+.env

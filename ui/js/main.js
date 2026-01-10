@@ -162,10 +162,12 @@ const App = {
             DOM.text('user-avatar', initial);
 
             // Add click listener for profile modal
-            const userSection = document.querySelector('.user-profile-only');
+            const userSection = document.querySelector('.footer-section.user-section');
             if (userSection) {
                 userSection.style.cursor = 'pointer';
-                userSection.onclick = () => {
+                userSection.setAttribute('title', 'Click to edit profile');
+                userSection.onclick = (e) => {
+                    e.stopPropagation(); // Prevent bubbling
                     if (typeof ProfileModal !== 'undefined') {
                         ProfileModal.open();
                     }
