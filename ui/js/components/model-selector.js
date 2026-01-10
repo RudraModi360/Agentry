@@ -38,11 +38,12 @@ const ModelSelector = (function () {
         }
     ];
 
-    // State
+    // State - populated from API/localStorage
     const state = {
         isOpen: false,
-        currentModel: 'claude-opus-4-5',
-        currentProvider: 'anthropic'
+        currentModel: null,
+        currentProvider: null,
+        currentModelType: null
     };
 
     // DOM Elements cache
@@ -229,16 +230,15 @@ const ModelSelector = (function () {
     }
 
     /**
-     * Switch to a model from history
+     * Switch to a model from history (quick switch using cached credentials)
      */
     async function selectModelFromHistory(providerId, modelId) {
-        // Here we would normally switch the provider/model via API
-        // For now, let's redirect to setup with pre-fill or just update local state if we had a quick-switch API
-        // Since the requirement is "manage options directly redirect to setup", 
-        // implies clicking a history item should probably SWITCH to it immediately.
-        // But we don't have a direct "switch" API endpoint in this file yet (it's in server.py PUT /api/provider/switch)
+        // Don't switch if already on this model
+        if (isCurrent(providerId, modelId)) {
+            closeDropdown();
+            return;
+        }
 
-        // Let's call the switch API
         try {
             // Find model_type from history if possible
             let modelType = null;
@@ -250,7 +250,13 @@ const ModelSelector = (function () {
             // Get auth token for authenticated request
             const token = AppConfig.getAuthToken();
 
-            const response = await fetch('/api/provider/switch', {
+            // Show loading state
+            if (elements.headerModelLabel) {
+                elements.headerModelLabel.textContent = 'Switching...';
+            }
+
+            // Use the new quick-switch endpoint that fetches stored credentials automatically
+            const response = await fetch(AppConfig.getApiUrl('/api/provider/switch-quick'), {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -264,20 +270,57 @@ const ModelSelector = (function () {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to switch provider');
+                const errorData = await response.json().catch(() => ({}));
+                const errorMessage = errorData.detail || 'Failed to switch provider';
+                throw new Error(errorMessage);
             }
 
             // Update state
             updateCurrentModel(providerId, modelId, modelType);
             closeDropdown();
 
-            // Reload page to ensure backend state is clean? Or just let it be.
-            // A reload is safer to ensure agent is re-initialized on backend
-            window.location.reload();
+            // Show success notification
+            if (window.Modals && window.Modals.toast) {
+                window.Modals.toast(`Switched to ${modelId}`, 'success');
+            }
+
+            // Reconnect WebSocket to use new agent (faster than full page reload)
+            if (typeof WebSocketManager !== 'undefined' && WebSocketManager.close) {
+                console.log('[ModelSelector] Reconnecting WebSocket for new model...');
+                WebSocketManager.close();
+                setTimeout(() => {
+                    WebSocketManager.init();
+                    // Reload tools list to reflect new capabilities
+                    if (typeof Tools !== 'undefined' && Tools.loadTools) {
+                        Tools.loadTools();
+                    }
+                }, 300);
+            } else {
+                // Fallback: reload page if WebSocket manager not available
+                window.location.reload();
+            }
 
         } catch (e) {
-            console.error('Failed to switch model', e);
-            window.location.href = `/setup.html?provider=${providerId}&model=${modelId}`;
+            console.error('[ModelSelector] Failed to switch model:', e.message);
+
+            // Restore the label
+            if (elements.headerModelLabel) {
+                elements.headerModelLabel.textContent = state.currentModel || 'Select Model';
+            }
+
+            // Show error toast instead of silently redirecting
+            if (window.Modals && window.Modals.toast) {
+                window.Modals.toast(e.message, 'error');
+            } else {
+                alert(e.message);
+            }
+
+            // Only redirect to setup if there's a credentials issue
+            if (e.message.includes('No saved API key') || e.message.includes('No saved endpoint')) {
+                setTimeout(() => {
+                    window.location.href = `/setup.html?provider=${providerId}&model=${modelId}`;
+                }, 1500);
+            }
         }
     }
 
@@ -368,15 +411,20 @@ const ModelSelector = (function () {
         try {
             // Get auth token for authenticated request
             const token = AppConfig.getAuthToken();
+            console.log('[ModelSelector] Syncing model, token present:', !!token);
 
-            const response = await fetch('/api/provider/current', {
+            const response = await fetch(AppConfig.getApiUrl('/api/provider/current'), {
                 headers: token ? {
                     'Authorization': `Bearer ${token}`
                 } : {}
             });
 
+            console.log('[ModelSelector] API response status:', response.status);
+
             if (response.ok) {
                 const data = await response.json();
+                console.log('[ModelSelector] API response data:', data);
+
                 if (data.config) {
                     state.currentModel = data.config.model;
                     state.currentProvider = data.config.provider;
@@ -389,28 +437,45 @@ const ModelSelector = (function () {
                         localStorage.setItem('agentry-active-model-type', state.currentModelType);
                     }
                     console.log('[ModelSelector] Synced current model:', state.currentProvider, state.currentModel);
+                } else {
+                    console.warn('[ModelSelector] No config in API response, using localStorage');
+                    loadFromLocalStorage();
                 }
             } else {
                 console.warn('[ModelSelector] API returned', response.status, '- falling back to localStorage');
-                // Fallback to localStorage if API fails
-                state.currentModel = localStorage.getItem('agentry-active-model') || 'llama3-70b';
-                state.currentProvider = localStorage.getItem('agentry-active-provider') || 'groq';
-                state.currentModelType = localStorage.getItem('agentry-active-model-type');
+                loadFromLocalStorage();
             }
         } catch (e) {
             console.error('[ModelSelector] Failed to sync current model', e);
-            state.currentModel = localStorage.getItem('agentry-active-model') || 'llama3-70b';
-            state.currentProvider = localStorage.getItem('agentry-active-provider') || 'groq';
-            state.currentModelType = localStorage.getItem('agentry-active-model-type');
+            loadFromLocalStorage();
         }
 
         // Update header model label
         if (elements.headerModelLabel) {
-            elements.headerModelLabel.textContent = state.currentModel;
+            elements.headerModelLabel.textContent = state.currentModel || 'Select Model';
         }
 
         // Re-render popup to show active state
         renderProviderPopup();
+    }
+
+    /**
+     * Load model from localStorage (no hardcoded fallback)
+     */
+    function loadFromLocalStorage() {
+        const savedModel = localStorage.getItem('agentry-active-model');
+        const savedProvider = localStorage.getItem('agentry-active-provider');
+        const savedModelType = localStorage.getItem('agentry-active-model-type');
+
+        if (savedProvider && savedModel) {
+            state.currentModel = savedModel;
+            state.currentProvider = savedProvider;
+            state.currentModelType = savedModelType;
+            console.log('[ModelSelector] Loaded from localStorage:', state.currentProvider, state.currentModel);
+        } else {
+            // No saved config - leave as current state (initial defaults)
+            console.log('[ModelSelector] No localStorage config found, using initial state');
+        }
     }
 
     /**

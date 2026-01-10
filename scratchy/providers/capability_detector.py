@@ -142,9 +142,17 @@ KNOWN_CAPABILITIES = {
     "claude-opus": {"supports_tools": True, "supports_vision": True},
     "claude-sonnet": {"supports_tools": True, "supports_vision": True}, 
     "claude-haiku": {"supports_tools": True, "supports_vision": True},
+    "claude-opus-4": {"supports_tools": True, "supports_vision": True},
+    "claude-opus-4-5": {"supports_tools": True, "supports_vision": True},
+    "claude-sonnet-4": {"supports_tools": True, "supports_vision": True},
+    "claude-4": {"supports_tools": True, "supports_vision": True},
     "claude-2.1": {"supports_tools": True, "supports_vision": False},
     "claude-2.0": {"supports_tools": True, "supports_vision": False},
     "claude-instant-1.2": {"supports_tools": True, "supports_vision": False},
+    
+    # Additional Groq models
+    "llama3-70b": {"supports_tools": True, "supports_vision": False},
+    "llama3-8b": {"supports_tools": True, "supports_vision": False},
 }
 
 

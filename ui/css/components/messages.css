@@ -213,8 +213,8 @@
     justify-content: space-between;
     align-items: center;
     padding: var(--space-2) var(--space-3);
-    background: rgba(0, 0, 0, 0.3);
-    border-bottom: 1px solid var(--card-border);
+    background: var(--code-header-bg);
+    border-bottom: 1px solid var(--code-header-border);
 }
 
 .code-block-language {
@@ -240,6 +240,144 @@
     line-height: var(--leading-relaxed);
     background: transparent;
     padding: 0;
+    color: var(--code-text);
+}
+
+/* ==================== Highlight.js Light Theme Overrides ==================== */
+/* Override Atom One Dark colors for light theme readability */
+
+:root .code-block-container .hljs,
+:root .message-text pre code.hljs,
+:root pre code.hljs {
+    color: #24292e;
+}
+
+:root .hljs-comment,
+:root .hljs-quote {
+    color: #6a737d;
+    font-style: italic;
+}
+
+:root .hljs-keyword,
+:root .hljs-selector-tag,
+:root .hljs-addition {
+    color: #d73a49;
+}
+
+:root .hljs-string,
+:root .hljs-doctag,
+:root .hljs-regexp {
+    color: #22863a;
+}
+
+:root .hljs-number,
+:root .hljs-literal,
+:root .hljs-variable,
+:root .hljs-template-variable,
+:root .hljs-tag .hljs-attr {
+    color: #005cc5;
+}
+
+:root .hljs-function,
+:root .hljs-title,
+:root .hljs-section,
+:root .hljs-built_in {
+    color: #6f42c1;
+}
+
+:root .hljs-type,
+:root .hljs-class .hljs-title {
+    color: #e36209;
+}
+
+:root .hljs-attr,
+:root .hljs-attribute {
+    color: #005cc5;
+}
+
+:root .hljs-symbol,
+:root .hljs-bullet,
+:root .hljs-link {
+    color: #032f62;
+}
+
+:root .hljs-meta,
+:root .hljs-selector-id,
+:root .hljs-selector-class {
+    color: #6f42c1;
+}
+
+:root .hljs-deletion {
+    color: #b31d28;
+    background-color: #ffeef0;
+}
+
+:root .hljs-addition {
+    color: #22863a;
+    background-color: #f0fff4;
+}
+
+/* Dark theme keeps original Atom One Dark colors from CDN */
+[data-theme="dark"] .hljs,
+[data-theme="dark"] .code-block-container .hljs,
+[data-theme="dark"] .message-text pre code.hljs,
+[data-theme="dark"] pre code.hljs {
+    color: #abb2bf;
+}
+
+[data-theme="dark"] .hljs-comment,
+[data-theme="dark"] .hljs-quote {
+    color: #5c6370;
+    font-style: italic;
+}
+
+[data-theme="dark"] .hljs-keyword,
+[data-theme="dark"] .hljs-selector-tag {
+    color: #c678dd;
+}
+
+[data-theme="dark"] .hljs-string,
+[data-theme="dark"] .hljs-doctag,
+[data-theme="dark"] .hljs-regexp {
+    color: #98c379;
+}
+
+[data-theme="dark"] .hljs-number,
+[data-theme="dark"] .hljs-literal,
+[data-theme="dark"] .hljs-variable,
+[data-theme="dark"] .hljs-template-variable {
+    color: #d19a66;
+}
+
+[data-theme="dark"] .hljs-function,
+[data-theme="dark"] .hljs-title,
+[data-theme="dark"] .hljs-section,
+[data-theme="dark"] .hljs-built_in {
+    color: #61afef;
+}
+
+[data-theme="dark"] .hljs-type,
+[data-theme="dark"] .hljs-class .hljs-title {
+    color: #e5c07b;
+}
+
+[data-theme="dark"] .hljs-attr,
+[data-theme="dark"] .hljs-attribute {
+    color: #d19a66;
+}
+
+[data-theme="dark"] .hljs-symbol,
+[data-theme="dark"] .hljs-bullet,
+[data-theme="dark"] .hljs-link {
+    color: #56b6c2;
+}
+
+[data-theme="dark"] .hljs-deletion {
+    color: #e06c75;
+}
+
+[data-theme="dark"] .hljs-addition {
+    color: #98c379;
 }
 
 /* Copy Button */
@@ -260,7 +398,7 @@
 }
 
 .copy-block-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--code-copy-hover-bg);
     color: var(--text-primary);
     border-color: var(--text-secondary);
 }
@@ -295,8 +433,8 @@
     justify-content: space-between;
     align-items: center;
     padding: var(--space-2) var(--space-3);
-    background: rgba(0, 0, 0, 0.3);
-    border-bottom: 1px solid var(--card-border);
+    background: var(--code-header-bg);
+    border-bottom: 1px solid var(--code-header-border);
     min-height: 36px;
     position: sticky;
     top: 0;

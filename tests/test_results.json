@@ -1,0 +1,133 @@
+{
+  "timestamp": "2026-01-08 07:37:53",
+  "base_url": "http://localhost:8000",
+  "results": [
+    {
+      "test": "Health Check",
+      "success": true,
+      "message": "Server is running. Status: 200",
+      "response": null
+    },
+    {
+      "test": "Login (Rudra)",
+      "success": true,
+      "message": "Successfully logged in. User ID: N/A",
+      "response": {
+        "token": "06fdba6a-f8ca-4d57-b...",
+        "user": {}
+      }
+    },
+    {
+      "test": "Get Provider",
+      "success": true,
+      "message": "Provider: N/A | Model: N/A",
+      "response": {
+        "config": {
+          "provider": "azure",
+          "mode": "local",
+          "model": "claude-opus-4-5",
+          "model_type": "anthropic"
+        },
+        "capabilities": null
+      }
+    },
+    {
+      "test": "Get Tools",
+      "success": true,
+      "message": "Found N/A tools available",
+      "response": {
+        "sample": {
+          "builtin": [
+            {
+              "name": "web_search",
+              "description": "Search the web using Groq's browser search"
+            },
+            {
+              "name": "read_file",
+              "description": "Read the contents of a file"
+            },
+            {
+              "name": "write_file",
+              "description": "Write content to a file"
+            },
+            {
+              "name": "execute_python",
+              "description": "Execute Python code"
+            },
+            {
+              "name": "datetime_tool",
+              "description": "Get current date and time"
+            },
+            {
+              "name": "memory_tool",
+              "description": "Store and retrieve persistent memories"
+            },
+            {
+              "name": "wolfram_alpha",
+              "description": "Query Wolfram Alpha for computations"
+            }
+          ],
+          "mcp": {
+            "excel": [],
+            "airbnb": []
+          },
+          "tools_locked": true
+        }
+      }
+    },
+    {
+      "test": "Get Sessions",
+      "success": true,
+      "message": "Found 33 sessions",
+      "response": {
+        "count": 33
+      }
+    },
+    {
+      "test": "Get Agent Config",
+      "success": false,
+      "message": "Failed. Status: 404",
+      "response": {
+        "detail": "Not Found"
+      }
+    },
+    {
+      "test": "Logout",
+      "success": true,
+      "message": "Successfully logged out.",
+      "response": null
+    },
+    {
+      "test": "Signup (Rudra)",
+      "success": true,
+      "message": "User already exists (expected for existing user test).",
+      "response": {
+        "detail": "Username already exists"
+      }
+    },
+    {
+      "test": "Signup (TestUser_1767838052)",
+      "success": true,
+      "message": "Successfully registered user.",
+      "response": {
+        "token": "2b34cc36-e975-448e-b24f-2d7802be2b56",
+        "message": "Registration successful",
+        "needs_setup": true
+      }
+    },
+    {
+      "test": "Login (Rudra)",
+      "success": true,
+      "message": "Successfully logged in. User ID: N/A",
+      "response": {
+        "token": "ffdbc7b5-5447-4e04-8...",
+        "user": {}
+      }
+    }
+  ],
+  "summary": {
+    "total": 10,
+    "passed": 9,
+    "failed": 1
+  }
+}

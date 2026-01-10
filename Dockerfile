@@ -28,5 +28,5 @@ RUN useradd -m -u 1000 agent && \
 # Switch to non-root user
 USER agent
 
-# Set the entrypoint
-ENTRYPOINT ["uv", "run", "python", "ui/server.py"]
+# Set the entrypoint - use the modular backend
+ENTRYPOINT ["uv", "run", "uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]

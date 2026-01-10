@@ -253,14 +253,17 @@
     margin-top: 8px !important;
     font-size: 11px !important;
     font-weight: 600 !important;
-    color: rgba(255, 255, 255, 0.5) !important;
+    color: var(--text-secondary) !important;
     text-transform: uppercase !important;
     letter-spacing: 0.05em !important;
     transition: all 0.3s ease;
     opacity: 1;
     max-height: 40px;
-    overflow: hidden;
-    border-top: 1px solid var(--card-border, rgba(255, 255, 255, 0.1));
+    overflow: visible;
+    border-top: 1px solid var(--card-border);
+    position: relative;
+    z-index: 5;
+    background: var(--bg-tertiary);
 }
 
 .sessions-header span {
@@ -327,7 +330,7 @@
 
 .session-meta {
     font-size: 9px;
-    color: rgba(255, 255, 255, 0.4) !important;
+    color: var(--text-muted) !important;
     line-height: 1;
     display: block;
     white-space: nowrap;
@@ -984,16 +987,17 @@
     scrollbar-width: none !important;
 }
 
-/* ==================== FORCE ICON VISIBILITY ==================== */
-/* These rules use high specificity to override legacy styles */
+/* ==================== THEME-AWARE ICON VISIBILITY ==================== */
+/* Light theme: dark icons, Dark theme: light icons */
 
+/* Default (light theme) - dark icons */
 .sidebar .sidebar-nav-menu .sidebar-menu-item svg,
 .sidebar .sidebar-nav-menu .sidebar-menu-item svg path,
 .sidebar .sidebar-nav-menu .sidebar-menu-item svg circle,
 .sidebar .sidebar-nav-menu .sidebar-menu-item svg line,
 .sidebar .sidebar-nav-menu .sidebar-menu-item svg polyline,
 .sidebar .sidebar-nav-menu .sidebar-menu-item svg rect {
-    stroke: #ffffff !important;
+    stroke: var(--text-primary) !important;
     stroke-width: 1.8 !important;
     stroke-linecap: round !important;
     stroke-linejoin: round !important;
@@ -1004,7 +1008,7 @@
 
 .sidebar .sidebar-header .sidebar-logo-btn svg,
 .sidebar .sidebar-header .sidebar-logo-btn svg path {
-    stroke: #ffffff !important;
+    stroke: var(--text-primary) !important;
     stroke-width: 1.5 !important;
     fill: none !important;
     opacity: 1 !important;
@@ -1013,8 +1017,139 @@
 .sidebar .sidebar-header .sidebar-toggle-btn svg,
 .sidebar .sidebar-header .sidebar-toggle-btn svg rect,
 .sidebar .sidebar-header .sidebar-toggle-btn svg line {
-    stroke: rgba(255, 255, 255, 0.6) !important;
+    stroke: var(--text-secondary) !important;
     stroke-width: 1.5 !important;
     fill: none !important;
     opacity: 1 !important;
+}
+
+/* ==================== LIGHT THEME OVERRIDES ==================== */
+:root .sidebar,
+:root .sidebar-header {
+    background: var(--bg-secondary) !important;
+}
+
+:root .sidebar-header {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border-bottom: 1px solid var(--card-border) !important;
+}
+
+:root .sidebar-menu-item:hover {
+    background: rgba(0, 0, 0, 0.05) !important;
+}
+
+:root .session-item:hover {
+    background: rgba(0, 0, 0, 0.05) !important;
+}
+
+:root .sessions-header {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-secondary) !important;
+}
+
+:root .sidebar-footer {
+    background: rgba(0, 0, 0, 0.03) !important;
+}
+
+:root .footer-compact-item {
+    background: rgba(0, 0, 0, 0.03) !important;
+    border-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+:root .footer-compact-item:hover {
+    background: rgba(0, 0, 0, 0.06) !important;
+}
+
+:root .footer-title {
+    color: var(--text-primary) !important;
+}
+
+:root .footer-subtitle {
+    color: var(--text-muted) !important;
+}
+
+:root .menu-item-badge {
+    background: rgba(0, 0, 0, 0.06) !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+    color: var(--text-secondary) !important;
+}
+
+:root .sidebar-toggle-btn:hover {
+    background: rgba(0, 0, 0, 0.05) !important;
+}
+
+:root .sidebar-logo-btn:hover {
+    background: rgba(0, 0, 0, 0.05) !important;
+}
+
+:root .session-menu-btn {
+    color: var(--text-muted) !important;
+}
+
+:root .session-menu-btn:hover {
+    background: rgba(0, 0, 0, 0.08) !important;
+    color: var(--text-primary) !important;
+}
+
+/* ==================== DARK THEME STYLES ==================== */
+[data-theme="dark"] .sidebar,
+[data-theme="dark"] .sidebar-header {
+    background: rgba(18, 18, 23, 0.95) !important;
+}
+
+[data-theme="dark"] .sidebar-menu-item:hover {
+    background: rgba(255, 255, 255, 0.06) !important;
+}
+
+[data-theme="dark"] .session-item:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .sessions-header {
+    background: rgba(24, 24, 27, 0.9) !important;
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+[data-theme="dark"] .sidebar-footer {
+    background: rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-theme="dark"] .footer-compact-item {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+[data-theme="dark"] .footer-compact-item:hover {
+    background: rgba(255, 255, 255, 0.07) !important;
+}
+
+[data-theme="dark"] .footer-title {
+    color: #fff !important;
+}
+
+[data-theme="dark"] .footer-subtitle {
+    color: rgba(255, 255, 255, 0.4) !important;
+}
+
+[data-theme="dark"] .menu-item-badge {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+[data-theme="dark"] .sidebar-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.06) !important;
+}
+
+[data-theme="dark"] .sidebar-logo-btn:hover {
+    background: rgba(255, 255, 255, 0.06) !important;
+}
+
+[data-theme="dark"] .session-menu-btn {
+    color: rgba(255, 255, 255, 0.4) !important;
+}
+
+[data-theme="dark"] .session-menu-btn:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #fff !important;
 }

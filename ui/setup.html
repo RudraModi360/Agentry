@@ -1279,8 +1279,11 @@
         </div>
     </div>
 
+    <!-- Environment config for production deployment -->
+    <script src="/js/env.js?v=2"></script>
+
     <script>
-        const API_BASE = '';
+        const API_BASE = window.AGENTRY_API_URL || '';
         let selectedAgentType = 'default'; // Default to 'default'
         let selectedProvider = null;
         let selectedMode = null;

@@ -306,15 +306,18 @@
     --blur-lg: 16px;
     --blur-xl: 24px;
 
-    /* ==================== Code Block Theme ==================== */
+    /* ==================== Code Block Theme (Light Mode) ==================== */
 
-    --code-bg: #282c34;
-    --code-text: #abb2bf;
-    --code-comment: #5c6370;
-    --code-keyword: #c678dd;
-    --code-string: #98c379;
-    --code-number: #d19a66;
-    --code-function: #61afef;
+    --code-bg: #f6f8fa;
+    --code-text: #24292e;
+    --code-comment: #6a737d;
+    --code-keyword: #d73a49;
+    --code-string: #22863a;
+    --code-number: #005cc5;
+    --code-function: #6f42c1;
+    --code-header-bg: rgba(0, 0, 0, 0.05);
+    --code-header-border: rgba(0, 0, 0, 0.1);
+    --code-copy-hover-bg: rgba(0, 0, 0, 0.08);
 }
 
 /* ==================== Dark Theme ==================== */
@@ -363,6 +366,18 @@
     --dark-input: var(--input-bg);
     --dark-border: var(--card-border);
     --dark-item: var(--bg-tertiary);
+
+    /* Code Block Theme (Dark Mode) */
+    --code-bg: #282c34;
+    --code-text: #abb2bf;
+    --code-comment: #5c6370;
+    --code-keyword: #c678dd;
+    --code-string: #98c379;
+    --code-number: #d19a66;
+    --code-function: #61afef;
+    --code-header-bg: rgba(0, 0, 0, 0.3);
+    --code-header-border: rgba(255, 255, 255, 0.08);
+    --code-copy-hover-bg: rgba(255, 255, 255, 0.1);
 }
 
 /* ==================== Print Styles ==================== */

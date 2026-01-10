@@ -79,14 +79,18 @@ class PersistentMemoryStore:
             cursor.execute("SELECT metadata FROM sessions WHERE session_id = ?", (session_id,))
             row = cursor.fetchone()
             if not row:
+                print(f"[Storage] Session {session_id} not found for metadata update")
                 return
             
             current_metadata = json.loads(row[0] or '{}')
             current_metadata.update(updates)
             
+            # Ensure we're passing a string, not a dict
+            serialized_metadata = json.dumps(current_metadata)
+            
             cursor.execute(
                 "UPDATE sessions SET metadata = ? WHERE session_id = ?",
-                (json.dumps(current_metadata), session_id)
+                (serialized_metadata, session_id)
             )
             conn.commit()
         finally:

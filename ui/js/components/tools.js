@@ -157,6 +157,10 @@ const Tools = {
      * Save disabled tools to backend
      */
     async saveDisabledToBackend() {
+        // Don't save to backend if tools are locked (Smart Agent)
+        if (this.toolsLocked) {
+            return;
+        }
         try {
             await API.post('/api/tools/disabled', {
                 disabled_tools: Array.from(this.disabledTools)

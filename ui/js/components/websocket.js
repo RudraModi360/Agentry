@@ -110,8 +110,11 @@ const WebSocketManager = {
                 Messages.thinkingContainer.dataset.startTime = Date.now();
                 Messages.thinkingContainer.innerHTML = `
                     <div class="thinking-header">
-                        <span class="thinking-text">Thinking...</span>
-                        <span class="thinking-toggle">▼</span>
+                        <span class="thinking-text">
+                            <span class="thinking-dots"><span></span><span></span><span></span></span>
+                            Thinking
+                        </span>
+                        <span class="thinking-toggle">›</span>
                     </div>
                     <div class="thinking-content"></div>
                 `;
@@ -120,8 +123,6 @@ const WebSocketManager = {
                 header.addEventListener('click', (e) => {
                     e.stopPropagation();
                     Messages.thinkingContainer.classList.toggle('collapsed');
-                    Messages.thinkingContainer.querySelector('.thinking-toggle').textContent =
-                        Messages.thinkingContainer.classList.contains('collapsed') ? '▶' : '▼';
                 });
 
                 contentDiv.prepend(Messages.thinkingContainer);

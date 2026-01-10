@@ -23,14 +23,18 @@ class SessionManager:
             return
 
         # Ensure session exists in registry
-        if not self.storage.load_state(session_id, "messages"):
-             # If it's the first time saving, create the session entry
-             initial_meta = {"source": "scratchy_cli"}
-             if metadata:
-                 initial_meta.update(metadata)
-             self.storage.create_session(session_id, metadata=initial_meta)
-        elif metadata:
-            # Update metadata if session exists and metadata provided
+        has_messages = self.storage.load_state(session_id, "messages")
+        if not has_messages:
+            # If it's the first time saving messages, try to create the session entry
+            # This uses INSERT OR IGNORE, so it won't fail if session already exists
+            initial_meta = {"source": "scratchy_cli"}
+            if metadata:
+                initial_meta.update(metadata)
+            self.storage.create_session(session_id, metadata=initial_meta)
+        
+        # Always update metadata if provided - this ensures provider/model info
+        # is saved even if session was pre-created (e.g., from /api/sessions endpoint)
+        if metadata:
             self.storage.update_session_metadata(session_id, metadata)
              
         # Update activity timestamp

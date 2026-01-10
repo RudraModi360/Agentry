@@ -70,8 +70,15 @@ class AzureProvider(LLMProvider):
         # Build base URL for Anthropic on Azure
         # Format: https://<resource>.services.ai.azure.com/anthropic
         base_url = self.endpoint
+        
+        # If the user provided a full messages URL, strip it back to the base
+        if "/v1/messages" in base_url:
+            base_url = base_url.split("/v1/messages")[0]
+        elif "/messages" in base_url:
+            base_url = base_url.split("/messages")[0]
+            
         if "/anthropic" not in base_url.lower():
-            base_url = f"{base_url}/anthropic"
+            base_url = f"{base_url.rstrip('/')}/anthropic"
         
         self.client = AnthropicFoundry(
             api_key=self.api_key,

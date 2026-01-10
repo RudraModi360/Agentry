@@ -414,3 +414,212 @@
 .header-brand-text {
     margin-right: 8px;
 }
+
+/* ==================== Connection Status Colors ==================== */
+.connection-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    transition: all 0.3s ease;
+}
+
+.status-dot.connected {
+    background: #22c55e !important;
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+}
+
+.status-dot.disconnected {
+    background: #ef4444 !important;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+}
+
+.status-dot.connecting {
+    background: #f59e0b !important;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* ==================== Header Action Buttons ==================== */
+.header-action-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.header-action-btn:hover {
+    background: var(--accent-light);
+    color: var(--text-primary);
+}
+
+.header-action-btn svg {
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+}
+
+/* Logout Button - Red hover */
+#header-logout-btn:hover {
+    background: rgba(239, 68, 68, 0.15) !important;
+    color: #ef4444 !important;
+}
+
+#header-logout-btn:hover svg {
+    stroke: #ef4444 !important;
+}
+
+/* ==================== LIGHT THEME HEADER OVERRIDES ==================== */
+:root .chat-header {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border-bottom-color: var(--card-border) !important;
+}
+
+:root .agentry-dropdown-btn:hover {
+    background: rgba(0, 0, 0, 0.05) !important;
+}
+
+:root .agentry-dropdown-btn .chevron-icon {
+    color: var(--text-muted) !important;
+}
+
+:root .current-model-label {
+    color: var(--text-secondary) !important;
+    border-left-color: var(--card-border) !important;
+}
+
+:root .header-action-btn {
+    color: var(--text-secondary) !important;
+}
+
+:root .header-action-btn:hover {
+    background: rgba(0, 0, 0, 0.06) !important;
+    color: var(--text-primary) !important;
+}
+
+:root .provider-popup,
+:root .model-dropdown {
+    background: #ffffff !important;
+    border-color: var(--card-border) !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15) !important;
+}
+
+:root .provider-popup-header {
+    border-bottom-color: var(--card-border) !important;
+    color: var(--text-muted) !important;
+}
+
+:root .provider-popup-item:hover,
+:root .provider-option:hover,
+:root .model-option:hover {
+    background: rgba(0, 0, 0, 0.05) !important;
+}
+
+:root .provider-popup-settings-btn {
+    color: var(--text-secondary) !important;
+}
+
+:root .provider-popup-settings-btn:hover {
+    background: rgba(0, 0, 0, 0.05) !important;
+    color: var(--text-primary) !important;
+}
+
+/* ==================== DARK THEME HEADER STYLES ==================== */
+[data-theme="dark"] .chat-header {
+    background: rgba(18, 18, 23, 0.8) !important;
+}
+
+[data-theme="dark"] .agentry-dropdown-btn:hover {
+    background: rgba(255, 255, 255, 0.06) !important;
+}
+
+[data-theme="dark"] .agentry-dropdown-btn .chevron-icon {
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+[data-theme="dark"] .current-model-label {
+    color: rgba(255, 255, 255, 0.5) !important;
+    border-left-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="dark"] .header-action-btn {
+    color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .header-action-btn:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .provider-popup,
+[data-theme="dark"] .model-dropdown {
+    background: #1e1e24 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="dark"] .provider-popup-header {
+    border-bottom-color: rgba(255, 255, 255, 0.06) !important;
+    color: rgba(255, 255, 255, 0.4) !important;
+}
+
+[data-theme="dark"] .provider-popup-item:hover,
+[data-theme="dark"] .provider-option:hover,
+[data-theme="dark"] .model-option:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .provider-popup-settings-btn {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+[data-theme="dark"] .provider-popup-settings-btn:hover {
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: var(--text-primary) !important;
+}
+
+/* ==================== MCP Icon Theme-Aware ==================== */
+/* In light mode, invert the dark MCP icon to make it visible */
+:root #mcp-config-btn img {
+    filter: invert(1) brightness(0.3);
+}
+
+/* In dark mode, show the original dark icon */
+[data-theme="dark"] #mcp-config-btn img {
+    filter: none;
+}
+
+/* Settings icon (gear) in dropdown also needs to be theme-aware */
+:root .provider-popup-settings-btn svg {
+    stroke: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .provider-popup-settings-btn svg {
+    stroke: rgba(255, 255, 255, 0.6) !important;
+}

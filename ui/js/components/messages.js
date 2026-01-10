@@ -497,10 +497,9 @@ const Messages = {
         indicator.classList.add('completed', 'collapsed');
 
         const textEl = indicator.querySelector('.thinking-text');
-        if (textEl) textEl.textContent = 'Thought for ' + durationText;
-
-        const toggle = indicator.querySelector('.thinking-toggle');
-        if (toggle) toggle.textContent = '▶';
+        if (textEl) {
+            textEl.innerHTML = `Thought for <span class="thinking-time">${durationText}</span>`;
+        }
     },
 
     /**

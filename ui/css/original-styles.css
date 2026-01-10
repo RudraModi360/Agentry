@@ -29,15 +29,16 @@
 }
 
 .message-text pre {
-    background: #282c34 !important;
-    /* One Dark bg */
+    background: var(--code-bg) !important;
+    /* One Dark bg for dark, light gray for light */
     border-radius: 8px;
     margin: 12px 0;
     padding: 12px;
     overflow-x: auto;
-    border: 1px solid var(--dark-border);
+    border: 1px solid var(--code-header-border);
     white-space: pre;
     word-wrap: normal;
+    color: var(--code-text);
 }
 
 .message-text code {
@@ -76,8 +77,8 @@
     margin: 12px 0;
     border-radius: 8px;
     overflow: hidden;
-    border: 1px solid var(--dark-border);
-    background: #282c34;
+    border: 1px solid var(--code-header-border);
+    background: var(--code-bg);
 }
 
 .code-block-header {
@@ -85,8 +86,8 @@
     justify-content: space-between;
     align-items: center;
     padding: 8px 12px;
-    background: rgba(0, 0, 0, 0.3);
-    border-bottom: 1px solid var(--dark-border);
+    background: var(--code-header-bg);
+    border-bottom: 1px solid var(--code-header-border);
 }
 
 .code-block-language {
@@ -114,9 +115,9 @@
 }
 
 .copy-block-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--code-copy-hover-bg);
     color: var(--text-primary);
-    border-color: var(--accent-cyan);
+    border-color: var(--accent);
 }
 
 .copy-block-btn.copied {
@@ -212,8 +213,8 @@
     justify-content: space-between;
     align-items: center;
     padding: 8px 12px;
-    background: rgba(0, 0, 0, 0.3);
-    border-bottom: 1px solid var(--dark-border);
+    background: var(--code-header-bg);
+    border-bottom: 1px solid var(--code-header-border);
     min-height: 36px;
     position: sticky;
     top: 0;
@@ -328,6 +329,13 @@
     --error-color: var(--error);
     --success-color: var(--success);
     --tool-color: var(--accent);
+
+    /* Code Block Theme (Light Mode) */
+    --code-bg: #f6f8fa;
+    --code-text: #24292e;
+    --code-header-bg: rgba(0, 0, 0, 0.05);
+    --code-header-border: rgba(0, 0, 0, 0.1);
+    --code-copy-hover-bg: rgba(0, 0, 0, 0.08);
 }
 
 [data-theme="dark"] {
@@ -359,6 +367,13 @@
     --dark-input: #1f1f23;
     --dark-border: var(--card-border);
     --tool-color: var(--accent);
+
+    /* Code Block Theme (Dark Mode) */
+    --code-bg: #282c34;
+    --code-text: #abb2bf;
+    --code-header-bg: rgba(0, 0, 0, 0.3);
+    --code-header-border: rgba(255, 255, 255, 0.08);
+    --code-copy-hover-bg: rgba(255, 255, 255, 0.1);
 }
 
 * {
@@ -639,33 +654,48 @@ body {
     }
 }
 
-/* Thinking Indicator Styles (Enhanced) */
-@keyframes thinking-pulse {
+/* Thinking Indicator Styles - Minimal & Elegant */
+@keyframes thinking-dot-pulse {
+
+    0%,
+    80%,
+    100% {
+        opacity: 0.3;
+        transform: scale(0.8);
+    }
+
+    40% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes thinking-border-flow {
     0% {
-        opacity: 0.6;
+        border-color: var(--text-muted);
     }
 
     50% {
-        opacity: 1;
+        border-color: var(--text-secondary);
     }
 
     100% {
-        opacity: 0.6;
+        border-color: var(--text-muted);
     }
 }
 
 .thinking-indicator {
-    margin: 12px 0;
-    border-radius: 8px;
+    margin: 8px 0;
+    border-radius: 10px;
     border: 1px solid var(--card-border);
-    background: var(--bg-tertiary);
+    background: var(--bg-secondary);
     overflow: hidden;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .thinking-indicator:not(.completed) {
-    border-color: var(--accent);
-    box-shadow: 0 0 10px rgba(var(--accent-rgb, 99, 102, 241), 0.1);
+    border-left: 2px solid var(--text-secondary);
+    animation: thinking-border-flow 2s ease-in-out infinite;
 }
 
 .thinking-header {
@@ -679,59 +709,103 @@ body {
 }
 
 .thinking-header:hover {
-    background: rgba(var(--accent-rgb, 99, 102, 241), 0.05);
+    background: rgba(128, 128, 128, 0.06);
 }
 
 .thinking-text {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--accent);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+    letter-spacing: 0.02em;
 }
 
-.thinking-indicator:not(.completed) .thinking-text {
-    animation: thinking-pulse 1.5s infinite ease-in-out;
+/* Animated thinking dots */
+.thinking-dots {
+    display: flex;
+    align-items: center;
+    gap: 3px;
 }
 
-.thinking-text::before {
-    content: "ðŸ’­";
-    font-size: 16px;
+.thinking-dots span {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--text-secondary);
+    animation: thinking-dot-pulse 1.4s ease-in-out infinite;
+}
+
+.thinking-dots span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.thinking-dots span:nth-child(3) {
+    animation-delay: 0.4s;
 }
 
 .thinking-toggle {
-    font-size: 12px;
+    font-size: 10px;
+    color: var(--text-muted);
+    transition: transform 0.3s ease, color 0.2s ease;
+    opacity: 0.7;
+}
+
+.thinking-header:hover .thinking-toggle {
+    opacity: 1;
     color: var(--text-secondary);
-    transition: transform 0.2s ease;
+}
+
+.thinking-indicator.collapsed .thinking-toggle {
+    transform: rotate(-90deg);
 }
 
 .thinking-content {
-    padding: 12px 14px;
-    font-size: 13px;
-    line-height: 1.6;
-    color: var(--text-secondary);
-    font-family: 'JetBrains Mono', monospace;
+    padding: 10px 14px;
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', 'SF Mono', monospace;
     white-space: pre-wrap;
     word-wrap: break-word;
-    max-height: 400px;
+    max-height: 300px;
     overflow-y: auto;
-    background: rgba(var(--accent-rgb, 99, 102, 241), 0.02);
+    background: transparent;
     border-top: 1px solid var(--card-border);
+    opacity: 1;
+    transition: opacity 0.2s ease, max-height 0.3s ease, padding 0.3s ease;
 }
 
 .thinking-indicator.collapsed .thinking-content {
-    display: none;
+    max-height: 0;
+    padding: 0 14px;
+    opacity: 0;
+    overflow: hidden;
+    border-top: none;
+}
+
+/* Completed state - subtle and clean */
+.thinking-indicator.completed {
+    border-left: 2px solid var(--text-muted);
+    opacity: 0.85;
 }
 
 .thinking-indicator.completed .thinking-text {
-    color: var(--text-secondary);
-    font-weight: 500;
+    color: var(--text-muted);
+    font-weight: 400;
 }
 
-.thinking-indicator.completed .thinking-text::before {
-    content: "âœ“";
-    color: var(--success);
+.thinking-indicator.completed .thinking-header:hover {
+    background: rgba(128, 128, 128, 0.04);
+}
+
+/* Time indicator styling */
+.thinking-time {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 400;
+    opacity: 0.8;
 }
 
 /* Inline elements for chronological flow */
