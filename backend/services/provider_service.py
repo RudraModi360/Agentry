@@ -59,7 +59,17 @@ class ProviderService:
 
     @staticmethod
     async def detect_capabilities(provider_name: str, model_name: str, provider_instance: Any) -> ModelCapabilities:
-        """Detect model capabilities."""
+        """Detect model capabilities (cached)."""
+        from backend.core.cache import capabilities_cache
+        
+        cache_key = f"capabilities:{provider_name}:{model_name}"
+        
+        # Try cache first
+        cached = capabilities_cache.get(cache_key)
+        if cached is not None:
+            # Reconstruct ModelCapabilities from cached dict
+            return ModelCapabilities.from_dict(cached)
+        
         try:
             print(f"[Server] Detecting capabilities for {provider_name}/{model_name}...")
             capabilities = await detect_model_capabilities(
@@ -68,6 +78,10 @@ class ProviderService:
                 provider_instance=provider_instance
             )
             print(f"[Server] Capabilities detected: tools={capabilities.supports_tools}, vision={capabilities.supports_vision}, method={capabilities.detection_method}")
+            
+            # Cache the result
+            capabilities_cache.set(cache_key, capabilities.to_dict())
+            
             return capabilities
         except Exception as e:
             print(f"[Server] Capability detection failed: {e}")

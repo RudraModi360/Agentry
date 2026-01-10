@@ -1,6 +1,6 @@
 """
 Authentication service.
-Optimized with connection pooling.
+Optimized with connection pooling and in-memory caching.
 """
 import sqlite3
 from datetime import datetime
@@ -9,6 +9,7 @@ from typing import Optional, Dict
 from backend.config import DB_PATH
 from backend.core.security import hash_password, verify_password, generate_token
 from backend.core.db_pool import get_connection, connection_context
+from backend.core.cache import user_settings_cache, invalidate_user_cache
 
 __all__ = ["AuthService"]
 
@@ -18,32 +19,71 @@ class AuthService:
     
     @staticmethod
     def get_current_active_settings(user_id: int) -> Optional[Dict]:
-        """Get the currently active provider settings for a user."""
+        """Get the currently active provider settings for a user (cached)."""
+        cache_key = f"user_settings:{user_id}"
+        
+        # Try cache first
+        cached = user_settings_cache.get(cache_key)
+        if cached is not None:
+            return cached
+        
+        # Query database
         conn = get_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM user_active_settings WHERE user_id = ?", (user_id,))
         row = cursor.fetchone()
-        if row:
-            return dict(row)
-        return None
+        
+        result = dict(row) if row else None
+        
+        # Cache the result (even None to avoid repeated DB queries)
+        if result:
+            user_settings_cache.set(cache_key, result)
+        
+        return result
 
     @staticmethod
     def get_api_key(user_id: int, provider: str) -> Optional[str]:
-        """Retrieves the stored API key for a specific provider."""
+        """Retrieves the stored API key for a specific provider (cached)."""
+        cache_key = f"api_key:{user_id}:{provider}"
+        
+        # Try cache first
+        cached = user_settings_cache.get(cache_key)
+        if cached is not None:
+            return cached
+        
         conn = get_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT api_key_encrypted FROM user_api_keys WHERE user_id = ? AND provider = ?", (user_id, provider))
         row = cursor.fetchone()
-        return row[0] if row else None
+        result = row[0] if row else None
+        
+        # Cache for 5 minutes
+        if result:
+            user_settings_cache.set(cache_key, result, ttl=300)
+        
+        return result
 
     @staticmethod
     def get_provider_endpoint(user_id: int, provider: str) -> Optional[str]:
-        """Retrieves the stored Endpoint for a specific provider."""
+        """Retrieves the stored Endpoint for a specific provider (cached)."""
+        cache_key = f"endpoint:{user_id}:{provider}"
+        
+        # Try cache first
+        cached = user_settings_cache.get(cache_key)
+        if cached is not None:
+            return cached
+        
         conn = get_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT endpoint FROM user_api_keys WHERE user_id = ? AND provider = ?", (user_id, provider))
         row = cursor.fetchone()
-        return row[0] if row else None
+        result = row[0] if row else None
+        
+        # Cache for 5 minutes
+        if result:
+            user_settings_cache.set(cache_key, result, ttl=300)
+        
+        return result
 
     @staticmethod
     def save_active_settings(user_id: int, config) -> None:
@@ -73,4 +113,9 @@ class AuthService:
                         endpoint = CASE WHEN excluded.endpoint IS NOT NULL THEN excluded.endpoint ELSE user_api_keys.endpoint END,
                         updated_at = excluded.updated_at
                 """, (user_id, config.provider, config.api_key, config.endpoint, datetime.now()))
+        
+        # Invalidate cache for this user
+        invalidate_user_cache(user_id)
+        user_settings_cache.delete(f"api_key:{user_id}:{config.provider}")
+        user_settings_cache.delete(f"endpoint:{user_id}:{config.provider}")
 

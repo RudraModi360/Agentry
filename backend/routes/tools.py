@@ -18,10 +18,17 @@ router = APIRouter()
 
 @router.get("")
 async def get_available_tools(user: Dict = Depends(get_current_user)):
-    """Get all available tools (built-in and MCP) for the user."""
+    """Get all available tools (built-in and MCP) for the user (cached)."""
     from backend.routes.agents import get_agent_config
+    from backend.core.cache import tools_cache
     
     user_id = user["id"]
+    cache_key = f"tools:{user_id}"
+    
+    # Try cache first
+    cached = tools_cache.get(cache_key)
+    if cached is not None:
+        return cached
     
     builtin_tools = []
     mcp_tools = {}
@@ -122,17 +129,23 @@ async def get_available_tools(user: Dict = Depends(get_current_user)):
         except:
             pass
 
-    return {
+    result = {
         "builtin": builtin_tools,
         "mcp": mcp_tools,
         "tools_locked": tools_locked
     }
+    
+    # Cache result
+    tools_cache.set(cache_key, result)
+    
+    return result
 
 
 @router.post("/disabled")
 async def save_disabled_tools(request: DisabledToolsRequest, user: Dict = Depends(get_current_user)):
     """Save the list of disabled tools for the user."""
     from backend.routes.agents import get_agent_config
+    from backend.core.cache import tools_cache
     
     user_id = user["id"]
     disabled_tools = request.disabled_tools
@@ -182,6 +195,9 @@ async def save_disabled_tools(request: DisabledToolsRequest, user: Dict = Depend
         if agent:
             agent.disabled_tools = set(disabled_tools)
             print(f"[Server] Updated disabled tools for user {user_id}: {disabled_tools}")
+    
+    # Invalidate tools cache
+    tools_cache.delete(f"tools:{user_id}")
     
     return {"message": "Disabled tools saved", "count": len(disabled_tools)}
 
