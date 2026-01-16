@@ -1,10 +1,27 @@
-# API Reference
+---
+layout: page
+title: API Reference
+nav_order: 4
+description: "Complete API documentation for Agentry classes and methods"
+---
 
-Complete API documentation for the Scratchy framework.
+# API Reference
+{: .no_toc }
+
+Complete API documentation for the Agentry framework.
+{: .fs-6 .fw-300 }
+
+## Table of Contents
+{: .no_toc .text-delta }
+
+1. TOC
+{:toc}
+
+---
 
 ## Agent Class
 
-The main agent class that handles LLM interactions, tool management, and session persistence.
+The main agent class that manages LLM interactions, tool execution, and session handling.
 
 ### Constructor
 
@@ -13,6 +30,7 @@ Agent(
     llm: Union[LLMProvider, str] = "ollama",
     model: str = None,
     api_key: str = None,
+    endpoint: str = None,
     system_message: str = None,
     role: str = "general",
     debug: bool = False,
@@ -21,59 +39,86 @@ Agent(
 ```
 
 **Parameters:**
-- `llm`: LLM provider ("ollama", "groq", "gemini") or LLMProvider instance
-- `model`: Model name (e.g., "llama3.2", "llama-3.3-70b-versatile")
-- `api_key`: API key for cloud providers (Groq, Gemini)
-- `system_message`: Custom system prompt (overrides role-based prompt)
-- `role`: Agent role ("general" or "engineer") for default prompt
-- `debug`: Enable debug logging
-- `max_iterations`: Maximum tool execution iterations per chat
+
+| Parameter | Type | Default | Description |
+|:----------|:-----|:--------|:------------|
+| `llm` | str or LLMProvider | "ollama" | Provider name or instance |
+| `model` | str | None | Model name (provider-specific) |
+| `api_key` | str | None | API key for cloud providers |
+| `endpoint` | str | None | Endpoint URL (for Azure) |
+| `system_message` | str | None | Custom system prompt |
+| `role` | str | "general" | Agent role: "general" or "engineer" |
+| `debug` | bool | False | Enable debug logging |
+| `max_iterations` | int | 20 | Maximum tool execution iterations |
 
 **Example:**
+
 ```python
+from agentry import Agent
+
 agent = Agent(
-    llm="ollama",
-    model="llama3.2",
-    role="general",
+    llm="groq",
+    model="llama-3.3-70b-versatile",
+    api_key="your-api-key",
     debug=True
 )
 ```
 
+---
+
 ### Methods
 
-#### `load_default_tools()`
-Load all built-in tools (filesystem, web, execution).
+#### load_default_tools()
+
+Loads all built-in tools (filesystem, web, execution).
 
 ```python
 agent.load_default_tools()
 ```
 
-#### `register_tool_from_function(func: Callable)`
-Register a Python function as a tool. Automatically generates schema from function signature.
+**Returns:** None
+
+---
+
+#### register_tool_from_function(func)
+
+Registers a Python function as a tool. Automatically generates the schema from function signature and docstring.
 
 ```python
 def calculate_bmi(weight_kg: float, height_m: float) -> str:
-    """Calculate BMI given weight and height."""
+    """Calculate BMI given weight in kg and height in meters."""
     bmi = weight_kg / (height_m ** 2)
     return f"BMI: {bmi:.2f}"
 
 agent.register_tool_from_function(calculate_bmi)
 ```
 
-#### `add_custom_tool(schema: Dict, executor: Callable)`
-Add a custom tool with manual schema definition.
+**Parameters:**
+
+| Parameter | Type | Description |
+|:----------|:-----|:------------|
+| `func` | Callable | Python function with type hints and docstring |
+
+**Returns:** None
+
+---
+
+#### add_custom_tool(schema, executor)
+
+Adds a custom tool with a manually defined schema.
 
 ```python
 schema = {
     "type": "function",
     "function": {
         "name": "my_tool",
-        "description": "My custom tool",
+        "description": "My custom tool description",
         "parameters": {
             "type": "object",
             "properties": {
-                "param": {"type": "string"}
-            }
+                "param": {"type": "string", "description": "Parameter description"}
+            },
+            "required": ["param"]
         }
     }
 }
@@ -81,57 +126,139 @@ schema = {
 agent.add_custom_tool(schema, my_executor_function)
 ```
 
-#### `async add_mcp_server(config_path: str)`
-Connect to MCP servers defined in a config file.
+**Parameters:**
+
+| Parameter | Type | Description |
+|:----------|:-----|:------------|
+| `schema` | dict | Tool schema in OpenAI function format |
+| `executor` | Callable | Function to execute when tool is called |
+
+**Returns:** None
+
+---
+
+#### async add_mcp_server(config_path)
+
+Connects to MCP servers defined in a configuration file.
 
 ```python
 await agent.add_mcp_server("mcp.json")
 ```
 
-#### `async chat(user_input: str, session_id: str = "default") -> str`
-Main chat interface. Sends message and returns response.
+**Parameters:**
+
+| Parameter | Type | Description |
+|:----------|:-----|:------------|
+| `config_path` | str | Path to MCP configuration JSON file |
+
+**Returns:** None
+
+---
+
+#### async chat(user_input, session_id)
+
+Main chat interface. Sends a message and returns the agent's response.
 
 ```python
-response = await agent.chat("Hello!", session_id="my_session")
+response = await agent.chat("Hello!", session_id="user_123")
+print(response)
 ```
 
-#### `get_session(session_id: str) -> AgentSession`
-Get or create a session.
+**Parameters:**
+
+| Parameter | Type | Default | Description |
+|:----------|:-----|:--------|:------------|
+| `user_input` | str | Required | User message |
+| `session_id` | str | "default" | Session identifier |
+
+**Returns:** str - The agent's response
+
+---
+
+#### get_session(session_id)
+
+Gets or creates a session.
 
 ```python
-session = agent.get_session("my_session")
+session = agent.get_session("user_123")
 print(f"Messages: {len(session.messages)}")
 ```
 
-#### `clear_session(session_id: str)`
-Clear session history.
+**Parameters:**
+
+| Parameter | Type | Description |
+|:----------|:-----|:------------|
+| `session_id` | str | Session identifier |
+
+**Returns:** AgentSession
+
+---
+
+#### clear_session(session_id)
+
+Clears the session history.
 
 ```python
-agent.clear_session("my_session")
+agent.clear_session("user_123")
 ```
 
-#### `set_callbacks(**kwargs)`
-Set event callbacks.
+**Parameters:**
+
+| Parameter | Type | Description |
+|:----------|:-----|:------------|
+| `session_id` | str | Session identifier |
+
+**Returns:** None
+
+---
+
+#### set_callbacks(**kwargs)
+
+Sets event callbacks for tool execution and messages.
 
 ```python
 def on_tool_start(session_id, name, args):
-    print(f"Tool: {name}")
+    print(f"Executing: {name}")
 
-agent.set_callbacks(on_tool_start=on_tool_start)
+def on_tool_end(session_id, name, result):
+    print(f"Result: {result}")
+
+async def on_tool_approval(session_id, name, args):
+    return input(f"Approve {name}? (y/n): ").lower() == 'y'
+
+def on_final_message(session_id, content):
+    print(f"Response: {content}")
+
+agent.set_callbacks(
+    on_tool_start=on_tool_start,
+    on_tool_end=on_tool_end,
+    on_tool_approval=on_tool_approval,
+    on_final_message=on_final_message
+)
 ```
 
-**Available callbacks:**
-- `on_tool_start(session_id, name, args)`
-- `on_tool_end(session_id, name, result)`
-- `on_tool_approval(session_id, name, args) -> bool` (async)
-- `on_final_message(session_id, content)`
+**Available Callbacks:**
 
-#### `async cleanup()`
-Cleanup resources (close MCP connections).
+| Callback | Signature | Description |
+|:---------|:----------|:------------|
+| `on_tool_start` | `(session_id, name, args)` | Called before tool execution |
+| `on_tool_end` | `(session_id, name, result)` | Called after tool execution |
+| `on_tool_approval` | `async (session_id, name, args) -> bool` | Called for dangerous tools |
+| `on_final_message` | `(session_id, content)` | Called with final response |
+
+**Returns:** None
+
+---
+
+#### async cleanup()
+
+Cleans up resources (closes MCP connections).
 
 ```python
 await agent.cleanup()
 ```
+
+**Returns:** None
 
 ---
 
@@ -151,14 +278,17 @@ CopilotAgent(
 )
 ```
 
-Automatically:
-- Uses "engineer" role for coding-focused prompts
+The CopilotAgent automatically:
+- Uses the "engineer" role for coding-focused prompts
 - Loads default tools
+
+---
 
 ### Additional Methods
 
-#### `async explain_code(code: str) -> str`
-Explain a code snippet.
+#### async explain_code(code)
+
+Explains a code snippet.
 
 ```python
 explanation = await copilot.explain_code("""
@@ -167,25 +297,37 @@ def factorial(n):
 """)
 ```
 
-#### `async review_file(filepath: str) -> str`
-Review a file for bugs and improvements.
+**Returns:** str - Explanation of the code
+
+---
+
+#### async review_file(filepath)
+
+Reviews a file for bugs and improvements.
 
 ```python
 review = await copilot.review_file("my_script.py")
 ```
 
-#### `async general_chat(user_input: str) -> str`
-Switch to general assistant mode (separate session).
+**Returns:** str - Code review feedback
+
+---
+
+#### async general_chat(user_input)
+
+Switches to general assistant mode (uses a separate session).
 
 ```python
 response = await copilot.general_chat("Tell me a joke")
 ```
 
+**Returns:** str - Response in general context
+
 ---
 
 ## SessionManager Class
 
-Manages session persistence with .toon format.
+Manages session persistence with `.toon` format.
 
 ### Constructor
 
@@ -194,26 +336,43 @@ SessionManager(history_dir: str = None)
 ```
 
 **Parameters:**
-- `history_dir`: Directory for session files (default: `scratchy/session_history/`)
+
+| Parameter | Type | Default | Description |
+|:----------|:-----|:--------|:------------|
+| `history_dir` | str | None | Directory for session files (default: `agentry/session_history/`) |
+
+---
 
 ### Methods
 
-#### `save_session(session_id: str, messages: List[Dict])`
-Save session to .toon file.
+#### save_session(session_id, messages)
+
+Saves session to a `.toon` file.
 
 ```python
+sm = SessionManager()
 sm.save_session("my_session", session.messages)
 ```
 
-#### `load_session(session_id: str) -> Optional[List[Dict]]`
-Load session from .toon file.
+**Returns:** None
+
+---
+
+#### load_session(session_id)
+
+Loads session from a `.toon` file.
 
 ```python
 messages = sm.load_session("my_session")
 ```
 
-#### `list_sessions() -> List[Dict]`
-List all saved sessions.
+**Returns:** Optional[List[Dict]] - Message list or None
+
+---
+
+#### list_sessions()
+
+Lists all saved sessions.
 
 ```python
 sessions = sm.list_sessions()
@@ -221,20 +380,32 @@ for s in sessions:
     print(f"{s['id']}: {s['message_count']} messages")
 ```
 
-#### `delete_session(session_id: str) -> bool`
-Delete a session file.
+**Returns:** List[Dict] with keys: `id`, `created_at`, `message_count`
+
+---
+
+#### delete_session(session_id)
+
+Deletes a session file.
 
 ```python
 sm.delete_session("old_session")
 ```
 
-#### `session_exists(session_id: str) -> bool`
-Check if session exists.
+**Returns:** bool - True if deleted, False if not found
+
+---
+
+#### session_exists(session_id)
+
+Checks if a session exists.
 
 ```python
 if sm.session_exists("my_session"):
-    print("Session found!")
+    print("Session found")
 ```
+
+**Returns:** bool
 
 ---
 
@@ -244,27 +415,41 @@ Represents a conversation session.
 
 ### Attributes
 
-- `session_id: str` - Session identifier
-- `messages: List[Dict]` - Message history
-- `created_at: datetime` - Creation timestamp
-- `last_activity: datetime` - Last activity timestamp
-- `metadata: Dict` - Custom metadata
+| Attribute | Type | Description |
+|:----------|:-----|:------------|
+| `session_id` | str | Unique identifier |
+| `messages` | List[Dict] | Message history |
+| `created_at` | datetime | Creation timestamp |
+| `last_activity` | datetime | Last activity timestamp |
+| `metadata` | Dict | Custom metadata |
+
+---
 
 ### Methods
 
-#### `add_message(message: Dict)`
-Add message to session.
+#### add_message(message)
+
+Adds a message to the session.
 
 ```python
 session.add_message({"role": "user", "content": "Hello"})
 ```
 
-#### `clear_history(keep_system: bool = True)`
-Clear message history.
+---
+
+#### clear_history(keep_system)
+
+Clears message history.
 
 ```python
-session.clear_history()
+session.clear_history(keep_system=True)
 ```
+
+**Parameters:**
+
+| Parameter | Type | Default | Description |
+|:----------|:-----|:--------|:------------|
+| `keep_system` | bool | True | Whether to keep system message |
 
 ---
 
@@ -273,7 +458,7 @@ session.clear_history()
 ### OllamaProvider
 
 ```python
-from scratchy.providers import OllamaProvider
+from agentry.providers import OllamaProvider
 
 provider = OllamaProvider(
     model="llama3.2",
@@ -281,10 +466,19 @@ provider = OllamaProvider(
 )
 ```
 
+**Parameters:**
+
+| Parameter | Type | Default | Description |
+|:----------|:-----|:--------|:------------|
+| `model` | str | Required | Model name |
+| `host` | str | "http://localhost:11434" | Ollama server URL |
+
+---
+
 ### GroqProvider
 
 ```python
-from scratchy.providers import GroqProvider
+from agentry.providers import GroqProvider
 
 provider = GroqProvider(
     model="llama-3.3-70b-versatile",
@@ -292,42 +486,137 @@ provider = GroqProvider(
 )
 ```
 
+**Parameters:**
+
+| Parameter | Type | Description |
+|:----------|:-----|:------------|
+| `model` | str | Model name |
+| `api_key` | str | Groq API key |
+
+---
+
 ### GeminiProvider
 
 ```python
-from scratchy.providers import GeminiProvider
+from agentry.providers import GeminiProvider
 
 provider = GeminiProvider(
-    model="gemini-pro",
+    model="gemini-2.0-flash",
     api_key="your-api-key"
 )
 ```
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|:----------|:-----|:------------|
+| `model` | str | Model name |
+| `api_key` | str | Google API key |
+
+---
+
+### AzureProvider
+
+```python
+from agentry.providers import AzureProvider
+
+provider = AzureProvider(
+    model="gpt-4",
+    api_key="your-api-key",
+    endpoint="https://your-resource.openai.azure.com"
+)
+```
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|:----------|:-----|:------------|
+| `model` | str | Deployment name |
+| `api_key` | str | Azure API key |
+| `endpoint` | str | Azure OpenAI endpoint URL |
 
 ---
 
 ## Built-in Tools
 
 ### Filesystem Tools
-- `read_file` - Read file contents
-- `create_file` - Create new files
-- `edit_file` - Modify existing files
-- `delete_file` - Remove files
-- `list_files` - Browse directories
-- `search_files` - Find text in files
-- `fast_grep` - Quick keyword search
+
+| Tool | Description |
+|:-----|:------------|
+| `read_file` | Read file contents |
+| `create_file` | Create new files |
+| `edit_file` | Modify existing files |
+| `delete_file` | Remove files |
+| `list_directory` | Browse directories |
+| `search_files` | Find text in files |
+| `fast_grep` | Quick keyword search |
 
 ### Execution Tools
-- `execute_command` - Run shell commands
-- `code_execute` - Execute Python code
+
+| Tool | Description |
+|:-----|:------------|
+| `run_shell_command` | Execute shell commands |
+| `execute_python` | Execute Python code |
 
 ### Web Tools
-- `web_search` - Search the web
-- `url_fetch` - Fetch URL content
+
+| Tool | Description |
+|:-----|:------------|
+| `web_search` | Search the web |
+| `fetch_url` | Fetch URL content |
 
 ### Git Tools
-- `git_command` - Execute Git operations (status, commit, log, etc.)
+
+| Tool | Description |
+|:-----|:------------|
+| `git_command` | Execute Git operations |
 
 ### Document Tools
-- `pandoc_convert` - Convert documents between formats using Pandoc
 
-For detailed tool schemas, see the [source code](../scratchy/tools/).
+| Tool | Description |
+|:-----|:------------|
+| `pandoc_convert` | Convert documents between formats |
+
+---
+
+## Type Definitions
+
+### Message Format
+
+```python
+{
+    "role": "user" | "assistant" | "system" | "tool",
+    "content": str,
+    "tool_calls": Optional[List[ToolCall]],  # For assistant messages
+    "tool_call_id": Optional[str]  # For tool messages
+}
+```
+
+### ToolCall Format
+
+```python
+{
+    "id": str,
+    "type": "function",
+    "function": {
+        "name": str,
+        "arguments": str  # JSON string
+    }
+}
+```
+
+### MCP Configuration Format
+
+```json
+{
+    "mcpServers": {
+        "server_name": {
+            "command": "executable",
+            "args": ["arg1", "arg2"],
+            "env": {
+                "ENV_VAR": "value"
+            }
+        }
+    }
+}
+```

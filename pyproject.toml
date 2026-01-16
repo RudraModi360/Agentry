@@ -39,12 +39,26 @@ dependencies = [
 ]
 
 [project.scripts]
+# CLI/TUI Commands - Interactive terminal interface
 agentry = "agentry.cli:main"
 agentry_cli = "agentry.cli:main"
 agentry-cli = "agentry.cli:main"
+agentry_tui = "agentry.cli:main"
+agentry-tui = "agentry.cli:main"
+
+# GUI Commands - Web interface (backend only)
 agentry_gui = "agentry.gui:main"
 agentry-gui = "agentry.gui:main"
 
+# Full Stack Commands - Backend + Frontend together
+agentry_ui = "agentry_runner:agentry_ui"
+agentry-ui = "agentry_runner:agentry_ui"
+agentry_run = "agentry_runner:agentry_run"
+agentry-run = "agentry_runner:agentry_run"
+
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["agentry*"]
+include = ["agentry*", "backend*"]
+
+[tool.setuptools]
+py-modules = ["agentry_runner"]

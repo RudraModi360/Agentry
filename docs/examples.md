@@ -1,15 +1,23 @@
-# Examples
+---
+layout: page
+title: Examples
+nav_order: 8
+description: "Practical code examples for common use cases"
+---
 
-Practical examples to help you get started with Scratchy.
+# Examples
+{: .no_toc }
+
+Practical examples to help you get started with Agentry.
+{: .fs-6 .fw-300 }
 
 ## Table of Contents
+{: .no_toc .text-delta }
 
-- [Basic Examples](#basic-examples)
-- [Custom Tools](#custom-tools)
-- [Session Management](#session-management)
-- [Multi-Agent Systems](#multi-agent-systems)
-- [MCP Integration](#mcp-integration)
-- [Real-World Use Cases](#real-world-use-cases)
+1. TOC
+{:toc}
+
+---
 
 ## Basic Examples
 
@@ -17,7 +25,7 @@ Practical examples to help you get started with Scratchy.
 
 ```python
 import asyncio
-from scratchy import Agent
+from agentry import Agent
 
 async def main():
     agent = Agent(llm="ollama", model="llama3.2")
@@ -53,10 +61,14 @@ asyncio.run(file_operations())
 
 ```python
 async def web_search():
-    agent = Agent(llm="groq", model="llama-3.3-70b-versatile", api_key="your-key")
+    agent = Agent(
+        llm="groq",
+        model="llama-3.3-70b-versatile",
+        api_key="your-api-key"
+    )
     agent.load_default_tools()
     
-    response = await agent.chat("Search the web for latest Python 3.12 features")
+    response = await agent.chat("Search for latest Python 3.12 features")
     print(response)
 
 asyncio.run(web_search())
@@ -77,12 +89,14 @@ async def code_execution():
 asyncio.run(code_execution())
 ```
 
+---
+
 ## Custom Tools
 
-### Simple Calculator Tool
+### BMI Calculator
 
 ```python
-from scratchy import Agent
+from agentry import Agent
 
 def calculate_bmi(weight_kg: float, height_m: float) -> str:
     """Calculate Body Mass Index given weight in kg and height in meters."""
@@ -109,14 +123,14 @@ async def main():
 asyncio.run(main())
 ```
 
-### Weather Tool (API Integration)
+### Weather API Integration
 
 ```python
 import requests
 
 def get_weather(city: str) -> str:
     """Get current weather for a city using OpenWeatherMap API."""
-    api_key = "your-api-key"
+    api_key = "your-openweathermap-api-key"
     url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric"
     
     try:
@@ -126,7 +140,7 @@ def get_weather(city: str) -> str:
         temp = data['main']['temp']
         description = data['weather'][0]['description']
         
-        return f"Weather in {city}: {temp}°C, {description}"
+        return f"Weather in {city}: {temp}C, {description}"
     except Exception as e:
         return f"Error fetching weather: {str(e)}"
 
@@ -154,7 +168,10 @@ def query_database(sql: str) -> str:
         results = cursor.fetchall()
         conn.close()
         
-        return str(results)
+        if not results:
+            return "No results found"
+        
+        return "\n".join(str(row) for row in results)
     except Exception as e:
         return f"Database error: {str(e)}"
 
@@ -167,6 +184,8 @@ async def main():
 
 asyncio.run(main())
 ```
+
+---
 
 ## Session Management
 
@@ -182,10 +201,10 @@ async def multi_turn():
     # First interaction
     await agent.chat("My name is Alice", session_id=session_id)
     
-    # Second interaction - agent remembers
+    # Agent remembers previous context
     await agent.chat("Create a file called alice_notes.txt", session_id=session_id)
     
-    # Third interaction - still remembers
+    # Still remembers
     response = await agent.chat("What's my name?", session_id=session_id)
     print(response)  # "Your name is Alice"
 
@@ -195,26 +214,25 @@ asyncio.run(multi_turn())
 ### Saving and Loading Sessions
 
 ```python
-from scratchy import Agent
-from scratchy.session_manager import SessionManager
+from agentry import Agent
+from agentry.session_manager import SessionManager
 
 async def persistent_sessions():
     agent = Agent(llm="ollama")
     agent.load_default_tools()
     
     manager = SessionManager(storage_dir="./my_sessions")
-    
-    # Chat
     session_id = "project_123"
-    await agent.chat("Create a Python project structure", session_id=session_id)
     
-    # Save session
+    # Chat and save
+    await agent.chat("Create a Python project structure", session_id=session_id)
     session = agent.get_session(session_id)
-    await manager.save_session(session)
+    manager.save_session(session_id, session.messages)
     
     # Later... load it back
-    loaded_session = await manager.load_session(session_id)
-    agent.sessions[session_id] = loaded_session
+    loaded_messages = manager.load_session(session_id)
+    if loaded_messages:
+        session.messages = loaded_messages
     
     # Continue conversation
     await agent.chat("Now add a README", session_id=session_id)
@@ -237,11 +255,13 @@ async def session_with_metadata():
     
     await agent.chat("Help me with my project", session_id="user_bob")
     
-    # Access metadata later
+    # Access metadata
     print(session.metadata["project"])  # "web_scraper"
 
 asyncio.run(session_with_metadata())
 ```
+
+---
 
 ## Multi-Agent Systems
 
@@ -288,8 +308,14 @@ asyncio.run(multi_agent_system())
 
 ```python
 async def collaborative_agents():
-    planner = Agent(llm="ollama", system_message="You create project plans")
-    executor = Agent(llm="ollama", system_message="You execute tasks")
+    planner = Agent(
+        llm="ollama",
+        system_message="You create detailed project plans"
+    )
+    executor = Agent(
+        llm="ollama",
+        system_message="You execute tasks based on plans"
+    )
     executor.load_default_tools()
     
     # Planner creates a plan
@@ -303,6 +329,8 @@ async def collaborative_agents():
 asyncio.run(collaborative_agents())
 ```
 
+---
+
 ## MCP Integration
 
 ### Excel Integration
@@ -315,22 +343,25 @@ async def excel_agent():
     # Connect to Excel MCP server
     await agent.add_mcp_server("mcp.json")
     
-    # Now agent can work with Excel files
+    # Work with Excel files
     await agent.chat("Read data from sales.xlsx and calculate total revenue")
     await agent.chat("Create a new sheet with monthly summaries")
+    
+    await agent.cleanup()
 
 asyncio.run(excel_agent())
 ```
 
 **mcp.json:**
+
 ```json
 {
-  "mcpServers": {
-    "excel": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-excel"]
+    "mcpServers": {
+        "excel": {
+            "command": "npx",
+            "args": ["-y", "@modelcontextprotocol/server-excel"]
+        }
     }
-  }
 }
 ```
 
@@ -338,18 +369,25 @@ asyncio.run(excel_agent())
 
 ```python
 async def multi_mcp():
-    agent = Agent(llm="groq", model="llama-3.3-70b-versatile", api_key="your-key")
+    agent = Agent(
+        llm="groq",
+        model="llama-3.3-70b-versatile",
+        api_key="your-key"
+    )
     
     # Connect to multiple MCP servers
     await agent.add_mcp_server("mcp_excel.json")
     await agent.add_mcp_server("mcp_database.json")
-    await agent.add_mcp_server("mcp_slack.json")
     
     # Agent can now use tools from all servers
-    await agent.chat("Get data from database, analyze in Excel, and send summary to Slack")
+    await agent.chat("Get data from database, analyze in Excel, and create a report")
+    
+    await agent.cleanup()
 
 asyncio.run(multi_mcp())
 ```
+
+---
 
 ## Real-World Use Cases
 
@@ -376,7 +414,11 @@ asyncio.run(code_reviewer())
 
 ```python
 async def doc_generator():
-    agent = Agent(llm="gemini", model="gemini-pro", api_key="your-key")
+    agent = Agent(
+        llm="gemini",
+        model="gemini-pro",
+        api_key="your-key"
+    )
     agent.load_default_tools()
     
     await agent.chat(
@@ -390,7 +432,11 @@ asyncio.run(doc_generator())
 
 ```python
 async def data_analyst():
-    agent = Agent(llm="groq", model="llama-3.3-70b-versatile", api_key="your-key")
+    agent = Agent(
+        llm="groq",
+        model="llama-3.3-70b-versatile",
+        api_key="your-key"
+    )
     agent.load_default_tools()
     
     await agent.chat("""
@@ -433,10 +479,10 @@ async def support_bot():
         system_message="You are a helpful customer support agent."
     )
     
-    # Custom tool for checking order status
+    # Custom tool for order status
     def check_order(order_id: str) -> str:
         """Check the status of an order."""
-        # In real app, query database
+        # In production, query your database
         return f"Order {order_id} is being shipped"
     
     agent.register_tool_from_function(check_order)
@@ -451,6 +497,8 @@ async def support_bot():
 
 asyncio.run(support_bot())
 ```
+
+---
 
 ## Interactive Examples
 
@@ -489,17 +537,16 @@ async def monitored_agent():
     agent = Agent(llm="ollama")
     agent.load_default_tools()
     
-    # Set up callbacks
     def on_tool_start(session_id, tool_name, args):
-        print(f"🔧 Calling tool: {tool_name}")
-        print(f"   Args: {args}")
+        print(f"Calling tool: {tool_name}")
+        print(f"Arguments: {args}")
     
     def on_tool_end(session_id, tool_name, result):
-        print(f"✅ Tool {tool_name} completed")
-        print(f"   Result: {result}")
+        print(f"Tool {tool_name} completed")
+        print(f"Result: {result}")
     
     def on_final_message(session_id, message):
-        print(f"💬 Final response: {message}")
+        print(f"Final response: {message}")
     
     agent.set_callbacks(
         on_tool_start=on_tool_start,
@@ -512,13 +559,51 @@ async def monitored_agent():
 asyncio.run(monitored_agent())
 ```
 
-## Next Steps
+---
 
-- Learn about [Custom Tools](custom-tools.md) in detail
-- Explore [Session Management](session-management.md)
-- Check the [API Reference](api-reference.md)
-- Build your own agent!
+## Provider-Specific Examples
+
+### Ollama with Custom Host
+
+```python
+from agentry.providers import OllamaProvider
+
+provider = OllamaProvider(
+    model="llama3.2",
+    host="http://192.168.1.100:11434"  # Remote Ollama server
+)
+
+agent = Agent(llm=provider)
+```
+
+### Groq with Specific Model
+
+```python
+agent = Agent(
+    llm="groq",
+    model="mixtral-8x7b-32768",
+    api_key="your-groq-key"
+)
+```
+
+### Azure with Custom Endpoint
+
+```python
+agent = Agent(
+    llm="azure",
+    model="gpt-4",
+    api_key="your-azure-key",
+    endpoint="https://your-resource.openai.azure.com"
+)
+```
 
 ---
 
-**Need help?** Open an issue on [GitHub](https://github.com/RudraModi360/Agentry/issues)
+## Next Steps
+
+| Topic | Description |
+|:------|:------------|
+| [Custom Tools](custom-tools) | Create your own tools |
+| [Session Management](session-management) | Advanced session handling |
+| [API Reference](api-reference) | Complete API documentation |
+| [MCP Integration](mcp-integration) | External tool servers |

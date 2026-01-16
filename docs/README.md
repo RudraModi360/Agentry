@@ -1,152 +1,85 @@
-# Agentry Documentation
+# Documentation Build
 
-Welcome to the Agentry documentation! This guide will help you understand and use the Agentry AI Agent Framework.
+This directory contains the Jekyll-based documentation for Agentry, configured for GitHub Pages deployment.
 
-## 📚 Table of Contents
-
-### Getting Started
-- [Installation & Setup](getting-started.md) - Get up and running quickly
-- [Your First Agent](getting-started.md#your-first-agent) - Hello World example
-- [Quick Examples](getting-started.md#quick-examples) - Common use cases
-
-### Core Documentation
-- [API Reference](api-reference.md) - Complete API documentation
-  - [Agent Class](api-reference.md#agent-class)
-  - [CopilotAgent Class](api-reference.md#copilotagent-class)
-  - [SessionManager Class](api-reference.md#sessionmanager-class)
-  - [Providers](api-reference.md#providers)
-  - [Built-in Tools](api-reference.md#built-in-tools)
-
-- [Session Management](session-management.md) - Working with sessions
-  - [Basic Usage](session-management.md#basic-usage)
-  - [Interactive Mode](session-management.md#interactive-mode)
-  - [Multi-Session](session-management.md#multi-session-management)
-  - [File Format](session-management.md#session-files)
-
-### Advanced Topics
-- Custom Tools *(coming soon)* - Create your own tools
-- MCP Integration *(coming soon)* - Connect external MCP servers
-- Examples *(coming soon)* - Code examples and recipes
-- Core Concepts *(coming soon)* - Architecture deep dive
-- Troubleshooting *(coming soon)* - Common issues and solutions
-
-## Quick Links
-
-### For Beginners
-- [Installation Guide](getting-started.md#installation)
-- [Your First Agent](getting-started.md#your-first-agent)
-- [Understanding Sessions](session-management.md#overview)
-
-### For Developers
-- [Agent API](api-reference.md#agent-class)
-- [Custom Tool Registration](api-reference.md#register_tool_from_function)
-- [Provider Configuration](api-reference.md#providers)
-
-### For Advanced Users
-- [Session Persistence](session-management.md#session-files)
-- [Multi-Session Management](session-management.md#multi-session-management)
-- [Source Code Exploration](../Agentry/)
-
-## What is Agentry?
-
-Agentry is a **one-stop Python-based solution** for understanding how real-world AI agents are built. It's designed for:
-
-- **🌱 Beginners**: Learn by doing with clear, documented examples
-- **🚀 Intermediate**: Build production-ready agents with best practices
-- **🔬 Experts**: Deep dive into internals and extend the framework
-
-### Key Features
-
-- **Unified Agent Architecture**: Single `Agent` class supporting internal, MCP, and custom tools
-- **Session Management**: Persistent chat history with `.toon` format in `Agentry/session_history/`
-- **Custom Tool Support**: Easy function-to-tool conversion via `register_tool_from_function()`
-- **Multiple LLM Providers**: Ollama, Groq, and Gemini support
-- **Specialized Agents**: Pre-configured agents like `CopilotAgent` for coding
-
-## Module Structure
+## Structure
 
 ```
-Agentry/                      # Main package
-├── agents/                   # Agent implementations
-│   ├── agent.py             # Core Agent class
-│   ├── copilot.py           # CopilotAgent (coding specialist)
-│   └── agent_mcp.py         # Legacy MCP agent
-├── providers/               # LLM provider implementations
-│   ├── ollama_provider.py   # Ollama integration
-│   ├── groq_provider.py     # Groq integration
-│   └── gemini_provider.py   # Gemini integration
-├── tools/                   # Built-in tools
-│   ├── filesystem.py        # File operations
-│   ├── execution.py         # Code/command execution
-│   ├── web.py              # Web search & fetch
-│   └── registry.py         # Tool registration
-├── config/                  # Configuration
-│   ├── prompts.py          # System prompts
-│   └── settings.py         # API keys & settings
-├── session_history/         # Saved chat sessions (.toon)
-├── session_manager.py       # Session persistence
-└── mcp_client.py           # MCP server integration
+docs/
+├── _config.yml           # Jekyll configuration
+├── index.md              # Home page
+├── getting-started.md    # Installation and quick start
+├── core-concepts.md      # Architecture and concepts
+├── api-reference.md      # Complete API documentation
+├── custom-tools.md       # Creating custom tools
+├── mcp-integration.md    # MCP server integration
+├── session-management.md # Session handling
+├── examples.md           # Code examples
+├── troubleshooting.md    # Common issues
+├── CONTRIBUTING.md       # Contribution guidelines
+├── DEPLOYMENT_GUIDE.md   # Production deployment
+├── Gemfile               # Ruby dependencies
+└── assets/
+    └── images/           # Documentation images
 ```
 
-## Architecture Overview
+## Local Development
 
-```
-┌─────────────────────────────────────────────────┐
-│                   User Code                     │
-│         from Agentry import Agent              │
-└─────────────────────┬───────────────────────────┘
-                      │
-┌─────────────────────▼───────────────────────────┐
-│          Agentry.agents.Agent                  │
-│  ┌──────────────────────────────────────────┐  │
-│  │    Session Management (AgentSession)     │  │
-│  │    • Agentry/session_history/*.toon     │  │
-│  └──────────────────────────────────────────┘  │
-│  ┌──────────────────────────────────────────┐  │
-│  │         Tool Management                  │  │
-│  │  • Internal (Agentry/tools/)            │  │
-│  │  • MCP (Agentry/mcp_client.py)          │  │
-│  │  • Custom (register_tool_from_function)  │  │
-│  └──────────────────────────────────────────┘  │
-└─────────────────────┬───────────────────────────┘
-                      │
-┌─────────────────────▼───────────────────────────┐
-│       Agentry.providers.LLMProvider            │
-│    Ollama  │  Groq  │  Gemini                  │
-└─────────────────────────────────────────────────┘
+### Prerequisites
+
+- Ruby 3.0+
+- Bundler
+
+### Setup
+
+```bash
+cd docs
+bundle install
 ```
 
-## Quick Start
+### Run Locally
 
-```python
-from Agentry import Agent
-
-# Initialize
-agent = Agent(llm="ollama", model="llama3.2")
-agent.load_default_tools()
-
-# Chat
-response = await agent.chat("Hello!")
+```bash
+bundle exec jekyll serve
 ```
 
-See [Getting Started](getting-started.md) for detailed instructions.
+Open http://localhost:4000/Agentry/ in your browser.
 
-## Contributing
+## GitHub Pages Deployment
 
-We welcome contributions! Please see our [Contributing Guide](../CONTRIBUTING.md) for details.
+The documentation is automatically deployed to GitHub Pages when changes are pushed to the `main` or `Azure_Provider` branch.
 
-## Support
+### Manual Deployment
 
-- **Issues**: [GitHub Issues](https://github.com/RudraModi360/Agentry/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/RudraModi360/Agentry/discussions)
-- **Email**: rudramodi9560@gmail.com
+1. Go to repository Settings > Pages
+2. Set Source to "GitHub Actions"
+3. The workflow will run on push to main branch
 
-## License
+### Live URL
 
-MIT License - see [LICENSE](../LICENSE) for details.
+https://rudramodi360.github.io/Agentry/
 
+## Adding New Pages
+
+1. Create a new `.md` file in the `docs/` directory
+2. Add the Jekyll front matter:
+
+```yaml
 ---
+layout: page
+title: Your Page Title
+nav_order: 12
+description: "Brief description of the page"
+---
+```
 
-**Built with ❤️ by [Rudra Modi](mailto:rudramodi9560@gmail.com)**
+3. Write your content using Markdown
+4. Commit and push to trigger deployment
 
-*Evolving towards the future of voice-driven AI assistants*
+## Style Guidelines
+
+- Use tables for structured information
+- Use code blocks with language hints
+- Include images from `assets/images/` for complex concepts
+- Avoid emojis in technical documentation
+- Use proper headings hierarchy (h1, h2, h3)

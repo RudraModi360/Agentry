@@ -26,14 +26,16 @@ Agentry (published as `agentry_community` on PyPI) is a powerful, privacy-focuse
 
 ## Features
 
--   **Multiple LLM Providers**: Supports Ollama (local and cloud), Groq, Google Gemini, and Azure OpenAI (including Azure AI Foundry models like Claude).
--   **Built-in Tools**: Comes with a rich set of tools for filesystem operations, web search, code execution, and document handling (PDF, DOCX, PPTX, Excel).
--   **MCP Support**: Connect to external tool servers via the Model Context Protocol for extensibility.
--   **Web and CLI Interfaces**: Offers both a modern web-based chat UI and a feature-rich terminal interface.
--   **Session Management**: Automatically saves and restores chat sessions.
--   **Persistent Memory**: Includes a memory middleware that extracts and stores insights from conversations for long-term context.
--   **Custom Tool Registration**: Easily register Python functions as agent tools.
--   **Streaming Responses**: Supports streaming responses for real-time output.
+| Feature | Description |
+|:--------|:------------|
+| **Multiple LLM Providers** | Ollama (local/cloud), Groq, Google Gemini, Azure OpenAI |
+| **Built-in Tools** | Filesystem, web search, code execution, document handling |
+| **MCP Support** | Connect to external tool servers via Model Context Protocol |
+| **Web and CLI Interfaces** | Modern web UI and feature-rich terminal interface |
+| **Session Management** | Automatic save/restore of chat sessions |
+| **Persistent Memory** | Extract and store insights from conversations |
+| **Custom Tool Registration** | Easily register Python functions as agent tools |
+| **Streaming Responses** | Real-time output for improved UX |
 
 ---
 
@@ -101,23 +103,25 @@ agentry_cli -p azure --endpoint https://your-resource.openai.azure.com -m gpt-4
 
 ### Agent Types
 
--   `--agent default` (or `-a default`): Standard agent with all tools.
--   `--agent smart` (or `-a smart`): Enhanced reasoning with project memory.
--   `--agent copilot` (or `-c`): Optimized for coding tasks.
+| Type | Flag | Description |
+|:-----|:-----|:------------|
+| Default | `--agent default` | Standard agent with all tools |
+| Smart | `--agent smart` | Enhanced reasoning with project memory |
+| Copilot | `--copilot` | Optimized for coding tasks |
 
 ### Available Options
 
-| Option          | Short | Description                                       |
-| --------------- | ----- | ------------------------------------------------- |
-| `--agent`       | `-a`  | Agent type: `default`, `smart`, `copilot`         |
-| `--copilot`     | `-c`  | Shortcut for `--agent copilot`                    |
-| `--provider`    | `-p`  | LLM provider: `ollama`, `groq`, `gemini`, `azure` |
-| `--model`       | `-m`  | Model name (provider-specific)                    |
-| `--endpoint`    |       | Azure Endpoint URL                                |
-| `--session`     | `-s`  | Session ID to resume                              |
-| `--debug`       | `-d`  | Enable debug mode                                 |
-| `--list-models` |       | List available models                             |
-| `--help`        | `-h`  | Show help                                         |
+| Option | Short | Description |
+|:-------|:------|:------------|
+| `--agent` | `-a` | Agent type: default, smart, copilot |
+| `--copilot` | `-c` | Shortcut for --agent copilot |
+| `--provider` | `-p` | LLM provider: ollama, groq, gemini, azure |
+| `--model` | `-m` | Model name (provider-specific) |
+| `--endpoint` | | Azure Endpoint URL |
+| `--session` | `-s` | Session ID to resume |
+| `--debug` | `-d` | Enable debug mode |
+| `--list-models` | | List available models |
+| `--help` | `-h` | Show help |
 
 ---
 
@@ -131,21 +135,21 @@ agentry_gui
 
 Once running, open your browser to `http://localhost:8000`.
 
-### Features of the Web UI
+### Features
 
--   User authentication (login/register)
--   Multi-provider configuration (Ollama, Groq, Gemini, Azure)
--   Chat sessions with history
--   Image upload for vision-capable models
--   Tool usage visualization
--   MCP server configuration
--   Light and dark themes
+- User authentication (login/register)
+- Multi-provider configuration
+- Chat sessions with history
+- Image upload for vision-capable models
+- Tool usage visualization
+- MCP server configuration
+- Light and dark themes
 
 ---
 
 ## Python Framework (Library)
 
-You can use Agentry directly in your Python code for custom applications.
+Use Agentry directly in your Python code for custom applications.
 
 ### Basic Agent Example
 
@@ -157,7 +161,7 @@ async def main():
     # Create an agent with a specific provider
     agent = Agent(llm="ollama", model="llama3.2:3b")
     
-    # Load default tools (filesystem, web, execution)
+    # Load default tools
     agent.load_default_tools()
     
     # Chat with the agent
@@ -236,23 +240,23 @@ asyncio.run(main())
 
 ## Supported Providers
 
-| Provider | Description                          | Requires API Key |
-| -------- | ------------------------------------ | ---------------- |
-| Ollama   | Local models or Ollama Cloud         | Optional (cloud) |
-| Groq     | Ultra-fast inference via LPU         | Yes              |
-| Gemini   | Google AI models                     | Yes              |
-| Azure    | Azure OpenAI and Azure AI Foundry    | Yes + Endpoint   |
+| Provider | Type | API Key | Best For |
+|:---------|:-----|:--------|:---------|
+| Ollama | Local/Cloud | Optional | Development, privacy |
+| Groq | Cloud | Required | Speed, production |
+| Gemini | Cloud | Required | Multimodal tasks |
+| Azure | Cloud | Required + Endpoint | Enterprise |
 
 ---
 
 ## Built-in Tools
 
-Agentry includes multiple tool categories:
-
--   **Filesystem**: `read_file`, `write_file`, `list_directory`, `delete_file`, `move_file`, `copy_file`, `make_directory`
--   **Web**: `web_search`, `scrape_webpage`, `fetch_url`
--   **Execution**: `run_shell_command`, `run_python_script`
--   **Document Handlers**: Support for PDF, DOCX, PPTX, Excel, CSV, and image files
+| Category | Tools |
+|:---------|:------|
+| **Filesystem** | read_file, write_file, list_directory, delete_file, move_file, copy_file, make_directory |
+| **Web** | web_search, scrape_webpage, fetch_url |
+| **Execution** | run_shell_command, run_python_script |
+| **Documents** | PDF, DOCX, PPTX, Excel, CSV, image handlers |
 
 ---
 
@@ -264,12 +268,12 @@ Create an `mcp.json` file in your project root:
 
 ```json
 {
-  "mcpServers": {
-    "excel": {
-      "command": "npx",
-      "args": ["-y", "@anthropic/mcp-server-excel"]
+    "mcpServers": {
+        "excel": {
+            "command": "npx",
+            "args": ["-y", "@anthropic/mcp-server-excel"]
+        }
     }
-  }
 }
 ```
 
@@ -294,33 +298,46 @@ agentry/
         gemini_provider.py
         azure_provider.py
     tools/              # Built-in tools
-    ui/                 # Web interface (FastAPI server, HTML/CSS/JS)
-    memory/             # Persistent memory and context management
-    document_handlers/  # PDF, DOCX, PPTX, Excel handlers
+    ui/                 # Web interface
+    memory/             # Persistent memory
+    document_handlers/  # Document handlers
 ```
 
 ---
 
 ## Documentation
 
-For detailed documentation, see the `docs/` directory in the repository:
+Complete documentation is available at: **[https://rudramodi360.github.io/Agentry/](https://rudramodi360.github.io/Agentry/)**
 
--   [Getting Started](https://github.com/RudraModi360/Agentry/blob/Azure_Provider/docs/getting-started.md)
--   [Core Concepts](https://github.com/RudraModi360/Agentry/blob/Azure_Provider/docs/core-concepts.md)
--   [API Reference](https://github.com/RudraModi360/Agentry/blob/Azure_Provider/docs/api-reference.md)
--   [Custom Tools](https://github.com/RudraModi360/Agentry/blob/Azure_Provider/docs/custom-tools.md)
--   [MCP Integration](https://github.com/RudraModi360/Agentry/blob/Azure_Provider/docs/mcp-integration.md)
--   [Session Management](https://github.com/RudraModi360/Agentry/blob/Azure_Provider/docs/session-management.md)
--   [Troubleshooting](https://github.com/RudraModi360/Agentry/blob/Azure_Provider/docs/troubleshooting.md)
+### Documentation Topics
+
+| Topic | Description |
+|:------|:------------|
+| [Getting Started](https://rudramodi360.github.io/Agentry/getting-started) | Installation and first steps |
+| [Core Concepts](https://rudramodi360.github.io/Agentry/core-concepts) | Agent loop, tools, providers |
+| [API Reference](https://rudramodi360.github.io/Agentry/api-reference) | Complete API documentation |
+| [Custom Tools](https://rudramodi360.github.io/Agentry/custom-tools) | Creating custom tools |
+| [MCP Integration](https://rudramodi360.github.io/Agentry/mcp-integration) | External tool servers |
+| [Session Management](https://rudramodi360.github.io/Agentry/session-management) | Working with sessions |
+| [Examples](https://rudramodi360.github.io/Agentry/examples) | Code examples |
+| [Troubleshooting](https://rudramodi360.github.io/Agentry/troubleshooting) | Common issues |
 
 ---
 
 ## Contributing
 
-We welcome contributions. Please see the [Contributing Guide](https://github.com/RudraModi360/Agentry/blob/Azure_Provider/docs/CONTRIBUTING.md) for details on how to get started.
+We welcome contributions. Please see the [Contributing Guide](https://rudramodi360.github.io/Agentry/CONTRIBUTING) for details.
 
 ---
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](https://github.com/RudraModi360/Agentry/blob/Azure_Provider/LICENSE) file for details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+---
+
+## Contact
+
+- **GitHub Issues:** [Report issues](https://github.com/RudraModi360/Agentry/issues)
+- **Discussions:** [Community discussions](https://github.com/RudraModi360/Agentry/discussions)
+- **Email:** rudramodi9560@gmail.com

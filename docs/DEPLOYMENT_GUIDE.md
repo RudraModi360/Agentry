@@ -1,216 +1,348 @@
-# 🚀 Deployment Guide: Frontend (Vercel) + Backend (Azure)
+---
+layout: page
+title: Deployment Guide
+nav_order: 11
+description: "Guide for deploying Agentry in production environments"
+---
 
-This guide explains how to deploy the Agentry application with the frontend on **Vercel** and the backend on **Azure**.
+# Deployment Guide
+{: .no_toc }
+
+Guide for deploying Agentry in production environments.
+{: .fs-6 .fw-300 }
+
+## Table of Contents
+{: .no_toc .text-delta }
+
+1. TOC
+{:toc}
 
 ---
 
-## 📋 Architecture Overview
+## Overview
 
-```
-┌─────────────────────┐          ┌─────────────────────────────┐
-│   Vercel (Frontend) │  ─────►  │   Azure (Backend + API)     │
-│   Static HTML/JS    │   HTTPS  │   FastAPI + WebSocket       │
-│   ui/               │   WSS    │   backend/main.py           │
-└─────────────────────┘          └─────────────────────────────┘
-```
+Agentry can be deployed in several configurations:
 
-**Backend Module Structure:**
-```
-backend/
-├── main.py              # Entry point
-├── config.py            # Configuration
-├── core/                # Database, security, dependencies
-├── models/              # Pydantic schemas
-├── services/            # Business logic
-└── routes/              # API endpoints (modular)
-```
+| Deployment Type | Use Case | Complexity |
+|:----------------|:---------|:-----------|
+| Local Development | Testing and development | Low |
+| Docker Container | Isolated deployment | Medium |
+| Production Server | Full production deployment | High |
 
 ---
 
-## 🔧 Step 1: Prepare the Backend for Azure
+## Local Development
 
-### 1.1 Update CORS Settings
-
-The backend already has CORS enabled (`allow_origins=["*"]`), but for production you should restrict it:
-
-```python
-# In backend/config.py, set the CORS_ORIGINS environment variable:
-# Or modify the CORS_ORIGINS list directly:
-CORS_ORIGINS = [
-    "https://your-frontend.vercel.app",
-    "https://your-custom-domain.com"
-]
-```
-
-### 1.2 Build and Deploy to Azure
-
-The existing `Dockerfile` is ready for Azure deployment:
+### Backend Server
 
 ```bash
-# Build the Docker image
-docker build -t agentry-backend:latest .
+# Navigate to project directory
+cd Agentry
 
-# Tag for Azure Container Registry (ACR)
-docker tag agentry-backend:latest <your-acr>.azurecr.io/agentry-backend:latest
+# Activate virtual environment
+.venv\Scripts\activate  # Windows
+source .venv/bin/activate  # Linux/macOS
 
-# Push to ACR
-docker push <your-acr>.azurecr.io/agentry-backend:latest
+# Start backend
+python -m backend.main
 ```
 
-Deploy to Azure Web App for Containers or Azure Container Apps.
+The backend will be available at `http://localhost:8000`.
+
+### Frontend Server (Optional)
+
+For development with hot reload:
+
+```bash
+cd ui
+npm install
+npm run dev
+```
+
+Frontend available at `http://localhost:3000`.
 
 ---
 
-## 🌐 Step 2: Deploy Frontend to Vercel
+## Docker Deployment
 
-### 2.1 Frontend File Structure
-
-The frontend is a static site located in the `ui/` directory:
-
-```
-ui/
-├── index.html      # Landing page
-├── login.html      # Login page
-├── chat.html       # Main chat interface
-├── setup.html      # Provider setup
-├── css/            # Stylesheets
-├── js/             # JavaScript modules
-└── assets/         # Static assets
-```
-
-### 2.2 Configure the Backend URL
-
-There are **two ways** to configure the backend URL:
-
-#### Option A: Script Tag in HTML (Recommended for Static Hosting)
-
-Add this script **before** loading `config.js` in your HTML files:
-
-```html
-<script>
-    // Configure before loading the app
-    window.AGENTRY_API_URL = 'https://your-backend.azurewebsites.net';
-    // Optional: explicit WebSocket URL (auto-derived from API URL if not set)
-    // window.AGENTRY_WS_URL = 'wss://your-backend.azurewebsites.net';
-</script>
-<script src="/js/config.js"></script>
-```
-
-#### Option B: Build-time Configuration
-
-Create a build script that replaces the values:
+### Building the Docker Image
 
 ```bash
-# build.sh
-sed -i "s|window.AGENTRY_API_URL || ''|'$BACKEND_URL'|g" ui/js/config.js
+# Build the image
+docker build -t agentry:latest .
+
+# Run the container
+docker run -p 8000:8000 agentry:latest
 ```
 
-### 2.3 Vercel Project Setup
+### Docker Compose
 
-1. **Create a new Vercel project** pointing to your repository
-2. **Set the Root Directory** to `ui/`
-3. **Framework Preset**: Select "Other" (static HTML)
-4. **Add Environment Variables** (if using build-time configuration):
-   - `BACKEND_URL`: Your Azure backend URL
+Create a `docker-compose.yml`:
 
-### 2.4 vercel.json Configuration
+```yaml
+version: '3.8'
 
-Create this file in the `ui/` directory:
+services:
+  agentry:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    volumes:
+      - ./data:/app/data
+```
 
-```json
-{
-    "version": 2,
-    "routes": [
-        {
-            "src": "/api/(.*)",
-            "dest": "https://your-backend.azurewebsites.net/api/$1"
-        },
-        {
-            "src": "/ws/(.*)",
-            "dest": "https://your-backend.azurewebsites.net/ws/$1"
-        },
-        {
-            "src": "/(.*)",
-            "dest": "/$1"
-        }
-    ],
-    "rewrites": [
-        { "source": "/", "destination": "/index.html" },
-        { "source": "/login", "destination": "/login.html" },
-        { "source": "/chat", "destination": "/chat.html" },
-        { "source": "/setup", "destination": "/setup.html" },
-        { "source": "/orb", "destination": "/orb.html" }
-    ]
+Run with:
+
+```bash
+docker-compose up -d
+```
+
+---
+
+## Environment Variables
+
+| Variable | Description | Required |
+|:---------|:------------|:---------|
+| `GROQ_API_KEY` | Groq API key | For Groq provider |
+| `GEMINI_API_KEY` | Gemini API key | For Gemini provider |
+| `AZURE_API_KEY` | Azure OpenAI API key | For Azure provider |
+| `AZURE_ENDPOINT` | Azure OpenAI endpoint | For Azure provider |
+| `OLLAMA_HOST` | Ollama server URL | Optional (default: localhost:11434) |
+
+---
+
+## Production Configuration
+
+### Nginx Reverse Proxy
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    location / {
+        proxy_pass http://localhost:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+### SSL Configuration
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name your-domain.com;
+
+    ssl_certificate /path/to/cert.pem;
+    ssl_certificate_key /path/to/key.pem;
+
+    location / {
+        proxy_pass http://localhost:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
 }
 ```
 
 ---
 
-## 📝 Step 3: Update HTML Files for Production
+## Process Management
 
-Add the configuration script to each HTML file that uses the API:
+### Using systemd (Linux)
 
-**Files to update:**
-- `ui/chat.html`
-- `ui/login.html`
-- `ui/setup.html`
-- `ui/orb.html`
+Create `/etc/systemd/system/agentry.service`:
 
-Add this in the `<head>` section, **before** other scripts:
+```ini
+[Unit]
+Description=Agentry AI Agent Framework
+After=network.target
 
-```html
-<script>
-    // PRODUCTION CONFIGURATION
-    // Set your Azure backend URL here
-    window.AGENTRY_API_URL = 'https://your-backend.azurewebsites.net';
-</script>
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/path/to/Agentry
+Environment="PATH=/path/to/Agentry/.venv/bin"
+ExecStart=/path/to/Agentry/.venv/bin/python -m backend.main
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Enable and start:
+
+```bash
+sudo systemctl enable agentry
+sudo systemctl start agentry
+```
+
+### Using PM2 (Node.js)
+
+```bash
+pm2 start "python -m backend.main" --name agentry
+pm2 save
+pm2 startup
 ```
 
 ---
 
-## ✅ Step 4: Verification Checklist
+## Database Configuration
 
-After deployment, verify:
+Agentry uses SQLite by default. For production:
 
-- [ ] Frontend loads at your Vercel URL
-- [ ] Login/Register works and redirects properly
-- [ ] WebSocket connects (check for "Connected" status)
-- [ ] Chat messages are sent and received
-- [ ] Provider setup saves correctly
-- [ ] Images/media upload works
+### SQLite (Default)
 
----
+```bash
+# Database location
+./agentry_users.db
+./agentry_sessions.db
+```
 
-## 🔒 Security Considerations
+### PostgreSQL (Production)
 
-1. **CORS**: Restrict `allow_origins` to your Vercel domain only
-2. **HTTPS**: Ensure both frontend and backend use HTTPS
-3. **WebSocket**: Use WSS (secure WebSockets)
-4. **API Keys**: Never expose API keys in frontend code
+Update configuration in `backend/config.py`:
 
----
-
-## 🐛 Troubleshooting
-
-### WebSocket Connection Fails
-- Ensure Azure allows WebSocket connections
-- Check that the WSS URL is correct
-- Verify CORS allows WebSocket upgrades
-
-### API Calls Fail with CORS Error
-- Update `allow_origins` in `server.py`
-- Ensure credentials are being handled correctly
-
-### Static Files Not Found
-- Verify `vercel.json` routing is correct
-- Check that all paths are relative, not absolute
+```python
+DATABASE_URL = "postgresql://user:password@localhost/agentry"
+```
 
 ---
 
-## 📚 Related Files
+## Security Considerations
 
-- `ui/js/config.js` - Central configuration
-- `ui/js/utils/api.js` - API utilities
-- `ui/js/components/websocket.js` - WebSocket handling
-- `Dockerfile` - Backend container definition
-- `.github/workflows/deploy.yml` - CI/CD pipeline
+| Area | Recommendation |
+|:-----|:---------------|
+| **API Keys** | Store in environment variables, never in code |
+| **CORS** | Configure allowed origins for production |
+| **Authentication** | Enable user authentication for production |
+| **HTTPS** | Always use SSL/TLS in production |
+| **Rate Limiting** | Implement rate limiting for API endpoints |
+
+---
+
+## Monitoring
+
+### Health Check Endpoint
+
+```bash
+curl http://localhost:8000/health
+```
+
+### Logging
+
+Configure logging in `backend/config.py`:
+
+```python
+LOGGING = {
+    'version': 1,
+    'handlers': {
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': '/var/log/agentry/app.log',
+        },
+    },
+    'root': {
+        'level': 'INFO',
+        'handlers': ['file'],
+    },
+}
+```
+
+---
+
+## Scaling
+
+### Horizontal Scaling
+
+Use a load balancer with multiple instances:
+
+```yaml
+# docker-compose.yml
+version: '3.8'
+
+services:
+  agentry:
+    build: .
+    deploy:
+      replicas: 3
+    ports:
+      - "8000-8002:8000"
+
+  nginx:
+    image: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+```
+
+### Caching
+
+Implement Redis for session caching:
+
+```python
+CACHE_URL = "redis://localhost:6379/0"
+```
+
+---
+
+## Backup
+
+### Database Backup
+
+```bash
+# SQLite backup
+sqlite3 agentry_users.db ".backup '/backups/agentry_users_$(date +%Y%m%d).db'"
+
+# PostgreSQL backup
+pg_dump agentry > /backups/agentry_$(date +%Y%m%d).sql
+```
+
+### Session Data Backup
+
+```bash
+tar -czf /backups/sessions_$(date +%Y%m%d).tar.gz ./agentry/session_history/
+```
+
+---
+
+## Troubleshooting Deployment
+
+### Common Issues
+
+| Issue | Solution |
+|:------|:---------|
+| Port already in use | Change port or stop conflicting service |
+| Permission denied | Check file permissions and user ownership |
+| Database locked | Ensure only one process accesses SQLite |
+| WebSocket not connecting | Check proxy configuration for upgrades |
+
+### Debug Mode
+
+Enable debug mode for troubleshooting:
+
+```bash
+export DEBUG=true
+python -m backend.main
+```
+
+---
+
+## Next Steps
+
+| Topic | Description |
+|:------|:------------|
+| [Getting Started](getting-started) | Basic setup |
+| [API Reference](api-reference) | API documentation |
+| [Troubleshooting](troubleshooting) | Common issues |

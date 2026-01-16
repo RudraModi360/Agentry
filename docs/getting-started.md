@@ -1,170 +1,354 @@
-# Getting Started with Scratchy
+---
+layout: page
+title: Getting Started
+nav_order: 2
+description: "Installation guide and first steps with Agentry"
+# Getting Started
 
-This guide will help you get up and running with Scratchy in minutes.
+This guide covers installation, prerequisites, and creating your first AI agent with Agentry.
+
+## Table of Contents
+
+1. TOC
+
+## Prerequisites
+
+Before installing Agentry, ensure you have the following:
+
+| Requirement | Version | Notes |
+|:------------|:--------|:------|
+| Python | 3.11 or higher | Required for async features |
+| pip or uv | Latest | Package manager |
+| LLM Provider | See below | At least one provider configured |
+
+### LLM Provider Options
+
+| Provider | Type | API Key Required | Setup Difficulty |
+|:---------|:-----|:-----------------|:-----------------|
+| Ollama | Local | No | Easy |
+| Groq | Cloud | Yes | Easy |
+| Google Gemini | Cloud | Yes | Easy |
+| Azure OpenAI | Cloud | Yes + Endpoint | Moderate |
 
 ## Installation
 
-### Prerequisites
+### Option 1: Install from PyPI (Recommended)
 
-- Python 3.11 or higher
-- One of the following LLM providers:
-  - [Ollama](https://ollama.ai/) (local, recommended for development)
-  - [Groq](https://groq.com/) API key (cloud, fast)
-  - [Gemini](https://ai.google.dev/) API key (Google)
+```bash
+pip install agentry_community
+```
 
-### Install Scratchy
+### Option 2: Install from Source (Development)
 
 ```bash
 # Clone the repository
 git clone https://github.com/RudraModi360/Agentry.git
-cd Scratchy
+cd Agentry
 
-# Install dependencies using uv (recommended)
+# Create virtual environment (recommended)
+python -m venv .venv
+
+# Activate virtual environment
+# On Windows:
+.venv\Scripts\activate
+# On Linux/macOS:
+source .venv/bin/activate
+
+# Install in editable mode
+pip install -e .
+```
+
+### Option 3: Using uv (Fast)
+
+```bash
+git clone https://github.com/RudraModi360/Agentry.git
+cd Agentry
 uv sync
-
-# Or using pip
-pip install -r requirements.txt
 ```
 
-### Setup LLM Provider
+---
 
-#### Option 1: Ollama (Local)
+## Provider Setup
+
+### Ollama (Local LLM)
+
+Ollama runs models locally on your machine, providing privacy and no API costs.
+
+**Step 1: Install Ollama**
+
+Download from [ollama.ai/download](https://ollama.ai/download) and follow the installation instructions for your operating system.
+
+**Step 2: Pull a Model**
 
 ```bash
-# Install Ollama
-# Visit https://ollama.ai/download
-
-# Pull a model
-ollama pull gpt-oss:20b
-
-# Or use a specific model
-ollama pull gpt-oss:20b-cloud (If you have Ollama API Key)
+# Pull a model (examples)
+ollama pull llama3.2:3b          # Smaller, faster
+ollama pull llama3.2             # Default size
+ollama pull codellama            # Optimized for code
 ```
 
-#### Option 2: Groq (Cloud)
+**Step 3: Verify Ollama is Running**
 
 ```bash
-# Get API key from https://console.groq.com/
+ollama list
+```
+
+### Groq (Cloud LLM)
+
+Groq provides ultra-fast inference via their LPU architecture.
+
+**Step 1: Get API Key**
+
+Visit [console.groq.com](https://console.groq.com/) and create an API key.
+
+**Step 2: Configure Environment**
+
+```bash
+# Set environment variable
 export GROQ_API_KEY="your-api-key-here"
+
+# Or on Windows PowerShell
+$env:GROQ_API_KEY="your-api-key-here"
 ```
 
-#### Option 3: Gemini (Google)
+### Google Gemini (Cloud LLM)
+
+**Step 1: Get API Key**
+
+Visit [ai.google.dev](https://ai.google.dev/) and generate an API key.
+
+**Step 2: Configure Environment**
 
 ```bash
-# Get API key from https://ai.google.dev/
 export GEMINI_API_KEY="your-api-key-here"
 ```
 
+### Azure OpenAI
+
+**Step 1: Create Azure OpenAI Resource**
+
+Follow the Azure documentation to create an OpenAI resource and deploy a model.
+
+**Step 2: Configure Environment**
+
+```bash
+export AZURE_API_KEY="your-api-key-here"
+export AZURE_ENDPOINT="https://your-resource.openai.azure.com"
+```
+
+---
+
 ## Your First Agent
 
-![Agent Workflow Loop](assets/agent_workflow_loop.png)
-
-### Basic Agent
-
-Create a file `my_first_agent.py`:
+Create a file named `my_first_agent.py`:
 
 ```python
 import asyncio
-from scratchy import Agent
+from agentry import Agent
 
 async def main():
-    # Initialize agent with Ollama
-    agent = Agent(llm="ollama", model="gpt-oss:20b")
+    # Initialize agent with Ollama provider
+    agent = Agent(llm="ollama", model="llama3.2:3b")
     
-    # Load default tools (filesystem, web, execution)
+    # Load built-in tools (filesystem, web, execution)
     agent.load_default_tools()
     
-    # Chat with the agent
-    response = await agent.chat("Hello! What can you do?")
+    # Send a message and get response
+    response = await agent.chat("Hello! What can you help me with?")
     print(response)
 
 if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-Run it:
+Run the agent:
+
 ```bash
 python my_first_agent.py
 ```
 
-### Interactive Mode
+---
 
-For an interactive chat experience:
+## Using Different Providers
+
+### Groq Provider
+
+```python
+from agentry import Agent
+
+agent = Agent(
+    llm="groq",
+    model="llama-3.3-70b-versatile",
+    api_key="your-groq-api-key"  # Or use environment variable
+)
+agent.load_default_tools()
+```
+
+### Gemini Provider
+
+```python
+from agentry import Agent
+
+agent = Agent(
+    llm="gemini",
+    model="gemini-2.0-flash",
+    api_key="your-gemini-api-key"
+)
+agent.load_default_tools()
+```
+
+### Azure Provider
+
+```python
+from agentry import Agent
+
+agent = Agent(
+    llm="azure",
+    model="gpt-4",
+    api_key="your-azure-api-key",
+    endpoint="https://your-resource.openai.azure.com"
+)
+agent.load_default_tools()
+```
+
+---
+
+## Interactive Interfaces
+
+### Command-Line Interface (CLI)
+
+Launch the terminal-based interface:
 
 ```bash
-python run_agent.py
+agentry_cli
 ```
 
-This starts an interactive session with:
-- Session persistence
-- Command support (`/help`, `/status`, etc.)
-- Auto-save functionality
+CLI options:
 
-## Next Steps
+| Option | Short | Description |
+|:-------|:------|:------------|
+| `--provider` | `-p` | LLM provider: ollama, groq, gemini, azure |
+| `--model` | `-m` | Model name |
+| `--agent` | `-a` | Agent type: default, smart, copilot |
+| `--session` | `-s` | Resume a specific session |
+| `--debug` | `-d` | Enable debug output |
 
-- [Learn Core Concepts](core-concepts.md)
-- [Explore Examples](examples.md)
-- [Create Custom Tools](custom-tools.md)
-- [API Reference](api-reference.md)
+**Example:**
 
-## Quick Examples
-
-### Using Different Providers
-
-```python
-# Groq
-agent = Agent(llm="groq", model="llama-3.3-70b-versatile", api_key="...")
-
-# Gemini
-agent = Agent(llm="gemini", model="gemini-pro", api_key="...")
+```bash
+agentry_cli -p groq -m llama-3.3-70b-versatile
 ```
 
-### Custom System Prompt
+### Web Interface (GUI)
+
+Launch the browser-based interface:
+
+```bash
+agentry_gui
+```
+
+Then open [http://localhost:8000](http://localhost:8000) in your browser.
+
+---
+
+## Custom System Prompt
+
+You can customize the agent's behavior with a system message:
 
 ```python
+from agentry import Agent
+
 agent = Agent(
     llm="ollama",
-    system_message="You are a helpful math tutor.",
+    model="llama3.2",
+    system_message="You are a Python programming tutor. Explain concepts clearly with examples.",
     role="general"
 )
+agent.load_default_tools()
 ```
 
-### Using CopilotAgent
+---
+
+## CopilotAgent for Coding Tasks
+
+Agentry includes a specialized agent for coding tasks:
 
 ```python
-from scratchy import CopilotAgent
+from agentry import CopilotAgent
 
-copilot = CopilotAgent(llm="ollama")
+copilot = CopilotAgent(llm="ollama", model="codellama")
 
 # Coding task
-await copilot.chat("Create a factorial function in Python")
+response = await copilot.chat("Create a function to calculate factorial")
 
-# General chat (different context)
-await copilot.general_chat("Tell me a joke")
+# General chat (uses separate context)
+response = await copilot.general_chat("Explain recursion")
 ```
 
-## Troubleshooting
+---
 
-### "Connection refused" error
+## Verifying Installation
 
-Make sure Ollama is running:
+Run this script to verify your installation is working:
+
+```python
+import asyncio
+from agentry import Agent
+
+async def verify():
+    try:
+        agent = Agent(llm="ollama", model="llama3.2:3b")
+        agent.load_default_tools()
+        
+        response = await agent.chat("Say 'Installation successful!' and nothing else.")
+        print(f"Agent Response: {response}")
+        print("\nAgentry is installed and working correctly.")
+    except Exception as e:
+        print(f"Error: {e}")
+        print("\nPlease check your installation and provider configuration.")
+
+if __name__ == "__main__":
+    asyncio.run(verify())
+```
+
+---
+
+## Troubleshooting Common Issues
+
+### "Connection refused" Error
+
+Ollama server is not running:
+
 ```bash
 ollama serve
 ```
 
-### "Model not found" error
+### "Model not found" Error
 
 Pull the model first:
+
 ```bash
-ollama pull <model-name>
+ollama pull llama3.2:3b
 ```
 
-### Import errors
+### Import Errors
 
-Make sure you're in the Scratchy directory and dependencies are installed:
+Ensure you are in the correct directory and dependencies are installed:
+
 ```bash
-cd Scratchy
-uv sync  # or pip install -r requirements.txt
+cd Agentry
+pip install -e .
 ```
 
-For more help, see [Troubleshooting Guide](troubleshooting.md).
+For more issues, see the [Troubleshooting Guide](troubleshooting).
+
+---
+
+## Next Steps
+
+| Topic | Description |
+|:------|:------------|
+| [Core Concepts](core-concepts) | Understanding the agent loop, tools, and providers |
+| [API Reference](api-reference) | Complete API documentation |
+| [Custom Tools](custom-tools) | Creating your own tools |
+| [Examples](examples) | Practical code examples |
