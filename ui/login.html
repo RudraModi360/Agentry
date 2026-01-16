@@ -72,6 +72,8 @@
             padding: 20px;
             position: relative;
             z-index: 10;
+            margin-top: 80px;
+            /* Ensure container stays below fixed header */
         }
 
         .login-card {
@@ -184,6 +186,7 @@
             font-weight: 600;
             border-radius: 10px;
             transition: all 0.2s ease;
+            cursor: pointer;
         }
 
         .auth-tab.active {
@@ -329,8 +332,10 @@
 
             <!-- Auth Tabs -->
             <div class="auth-tabs">
-                <button class="auth-tab active" data-tab="login">Sign In</button>
-                <button class="auth-tab" data-tab="register">Create Account</button>
+                <button type="button" class="auth-tab active" id="tab-login" onclick="switchToTab('login')">Sign
+                    In</button>
+                <button type="button" class="auth-tab" id="tab-register" onclick="switchToTab('register')">Create
+                    Account</button>
             </div>
 
             <!-- Message -->
@@ -450,22 +455,33 @@
         // Use centralized API URL config, fallback to same-origin
         const API_BASE = window.AGENTRY_API_URL || '';
 
-        // Tab switching
-        document.querySelectorAll('.auth-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+        // Tab switching function - called directly from onclick
+        function switchToTab(tabName) {
+            // Hide all messages
+            const msg = document.getElementById('message');
+            if (msg) msg.className = 'message alert';
 
-                tab.classList.add('active');
-                document.getElementById(`${tab.dataset.tab}-form`).classList.add('active');
-                hideMessage();
-            });
-        });
+            // Deactivate all tabs
+            document.getElementById('tab-login').classList.remove('active');
+            document.getElementById('tab-register').classList.remove('active');
+
+            // Hide ALL auth forms
+            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+
+            // Activate clicked tab
+            document.getElementById('tab-' + tabName).classList.add('active');
+
+            // Show corresponding form
+            const targetForm = document.getElementById(tabName + '-form');
+            if (targetForm) {
+                targetForm.classList.add('active');
+            }
+        }
 
         // Check URL for mode
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('mode') === 'register') {
-            document.querySelector('[data-tab="register"]').click();
+            switchToTab('register');
         }
 
         // Message display
