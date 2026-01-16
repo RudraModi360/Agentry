@@ -2007,12 +2007,14 @@ body {
 }
 
 .message {
-    max-width: 900px;
+    max-width: 800px;
     margin: 0 auto 16px;
+    padding: 0 42px 0 0;
+    /* Align padding to the right for right-edge reference line */
     display: flex;
+    justify-content: flex-end;
     gap: 16px;
     width: 100%;
-    /* Ensure full width for alignment */
 }
 
 /* Avatar removed via JS, but hide in CSS just in case */
@@ -2028,14 +2030,22 @@ body {
 /* User Message Styling */
 .message.user {
     justify-content: flex-end;
-    /* Align right */
 }
 
 .message.user .message-content {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    /* Align items inside right */
+}
+
+.message.assistant {
+    justify-content: flex-end;
+}
+
+.message.assistant .message-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
 }
 
 .message.user .message-role {
@@ -2044,17 +2054,10 @@ body {
 }
 
 .message.user .message-text {
-    background-color: #2f2f2f;
-    /* Dark bubble */
-    color: #ececec;
-    padding: 10px 16px;
-    border-radius: 20px;
-    border-bottom-right-radius: 4px;
-    /* Slight indicator */
-    display: inline-block;
-    max-width: 85%;
-    margin-left: auto;
-    text-align: left;
+    color: inherit;
+    padding: 0;
+    max-width: 100%;
+    text-align: right;
 }
 
 /* User Actions (Copy/Edit) */

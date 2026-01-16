@@ -7,7 +7,7 @@ from fastapi import APIRouter
 from .auth import router as auth_router
 from .providers import router as providers_router
 from .sessions import router as sessions_router
-from .mcp import router as mcp_router
+from .mcp_routes import router as mcp_router
 from .tools import router as tools_router
 from .agents import router as agents_router
 from .media import router as media_router

@@ -6,16 +6,22 @@ description: "Guide for deploying Agentry in production environments"
 ---
 
 # Deployment Guide
-{: .no_toc }
 
 Guide for deploying Agentry in production environments.
-{: .fs-6 .fw-300 }
 
 ## Table of Contents
-{: .no_toc .text-delta }
 
-1. TOC
-{:toc}
+1. [Overview](#overview)
+2. [Local Development](#local-development)
+3. [Docker Deployment](#docker-deployment)
+4. [Environment Variables](#environment-variables)
+5. [Process Management](#process-management)
+6. [Database Configuration](#database-configuration)
+7. [Security Considerations](#security-considerations)
+8. [Monitoring](#monitoring)
+9. [Scaling](#scaling)
+10. [Backup](#backup)
+11. [Troubleshooting Deployment](#troubleshooting-deployment)
 
 ---
 

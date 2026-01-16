@@ -11,7 +11,18 @@ Complete guide to session management in Agentry.
 
 ## Table of Contents
 
-1. TOC
+1. [Overview](#overview)
+2. [Basic Usage](#basic-usage)
+3. [Session Structure](#session-structure)
+4. [Interactive Mode](#interactive-mode)
+5. [Session Files](#session-files)
+6. [Multi-Session Management](#multi-session-management)
+7. [Advanced Features](#advanced-features)
+8. [Best Practices](#best-practices)
+9. [Troubleshooting](#troubleshooting)
+10. [Session Object Reference](#session-object-reference)
+11. [SessionManager Reference](#sessionmanager-reference)
+12. [Next Steps](#next-steps)
 
 ---
 
@@ -25,7 +36,7 @@ Sessions maintain conversation context across multiple interactions. Agentry pro
 - History preservation
 - Metadata tracking
 
-![Session Management](/Agentry/assets/images/session-management.png)
+![Session Management](assets/images/session-management.png)
 
 ---
 

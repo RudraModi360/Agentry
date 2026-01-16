@@ -6,16 +6,22 @@ description: "Guidelines for contributing to Agentry"
 ---
 
 # Contributing to Agentry
-{: .no_toc }
 
 Guidelines for contributing to the Agentry project.
-{: .fs-6 .fw-300 }
 
 ## Table of Contents
-{: .no_toc .text-delta }
 
-1. TOC
-{:toc}
+1. [Getting Started](#getting-started)
+2. [Development Workflow](#development-workflow)
+3. [Commit Guidelines](#commit-guidelines)
+4. [Pull Request Process](#pull-request-process)
+5. [Adding New Features](#adding-new-features)
+6. [Documentation](#documentation)
+7. [Testing Guidelines](#testing-guidelines)
+8. [Issue Guidelines](#issue-guidelines)
+9. [Code of Conduct](#code-of-conduct)
+10. [License](#license)
+11. [Contact](#contact)
 
 ---
 

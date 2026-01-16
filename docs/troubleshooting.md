@@ -6,16 +6,20 @@ description: "Common issues and their solutions"
 ---
 
 # Troubleshooting Guide
-{: .no_toc }
 
 Common issues and their solutions when working with Agentry.
-{: .fs-6 .fw-300 }
 
 ## Table of Contents
-{: .no_toc .text-delta }
 
-1. TOC
-{:toc}
+1. [Installation Issues](#installation-issues)
+2. [LLM Provider Issues](#llm-provider-issues)
+3. [Tool Execution Issues](#tool-execution-issues)
+4. [Session Management Issues](#session-management-issues)
+5. [MCP Integration Issues](#mcp-integration-issues)
+6. [Performance Issues](#performance-issues)
+7. [Common Error Messages](#common-error-messages)
+8. [Diagnostic Commands](#diagnostic-commands)
+9. [Getting Help](#getting-help)
 
 ---
 

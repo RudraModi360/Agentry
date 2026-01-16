@@ -7,13 +7,11 @@ permalink: /
 ---
 
 # Agentry Documentation
-{: .fs-9 }
 
 A powerful, modular AI agent framework for Python with multi-provider LLM support, comprehensive built-in tools, and Model Context Protocol (MCP) integration.
-{: .fs-6 .fw-300 }
 
-[Get Started](/Agentry/getting-started){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[View on GitHub](https://github.com/RudraModi360/Agentry){: .btn .fs-5 .mb-4 .mb-md-0 }
+[Get Started](/Agentry/getting-started)
+[View on GitHub](https://github.com/RudraModi360/Agentry)
 
 ---
 
@@ -39,7 +37,7 @@ Agentry (published as `agentry_community` on PyPI) provides a unified interface 
 
 The following diagram illustrates the high-level architecture of Agentry:
 
-![Architecture Overview](/Agentry/assets/images/architecture-overview.png)
+![Architecture Overview](assets/images/architecture-overview.png)
 
 **Component Description:**
 

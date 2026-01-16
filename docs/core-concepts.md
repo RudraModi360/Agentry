@@ -6,16 +6,21 @@ description: "Understanding AI agents, the agent loop, tools, sessions, and prov
 ---
 
 # Core Concepts
-{: .no_toc }
 
 Understanding how Agentry agents work under the hood.
-{: .fs-6 .fw-300 }
 
 ## Table of Contents
-{: .no_toc .text-delta }
 
-1. TOC
-{:toc}
+1. [What is an AI Agent?](#what-is-an-ai-agent)
+2. [Architecture Overview](#architecture-overview)
+3. [The Agent Loop](#the-agent-loop)
+4. [Tools and Function Calling](#tools-and-function-calling)
+5. [Session Management](#session-management)
+6. [Providers](#providers)
+7. [MCP Integration](#mcp-integration)
+8. [Understanding the Flow](#understanding-the-flow)
+9. [Best Practices](#best-practices)
+10. [Next Steps](#next-steps)
 
 ---
 
@@ -36,7 +41,7 @@ Unlike a simple chatbot that only generates text, an agent can perform actions s
 
 ## Architecture Overview
 
-![Architecture Overview](/Agentry/assets/images/architecture-overview.png)
+![Architecture Overview](assets/images/architecture-overview.png)
 
 The Agentry architecture consists of three main layers:
 
@@ -52,7 +57,7 @@ The Agentry architecture consists of three main layers:
 
 Agentry implements the **ReAct** (Reasoning + Acting) pattern, where the agent iteratively reasons about what to do and takes action.
 
-![Agent Loop Flowchart](/Agentry/assets/images/agent-loop-flowchart.png)
+![Agent Loop Flowchart](assets/images/agent-loop-flowchart.png)
 
 ### Loop Structure
 
@@ -90,7 +95,7 @@ Tools are functions that the agent can invoke to interact with external systems.
 
 ### Tool Schema Structure
 
-![Tool Schema Structure](/Agentry/assets/images/tool-schema-structure.png)
+![Tool Schema Structure](assets/images/tool-schema-structure.png)
 
 Every tool has a schema that describes it to the LLM:
 
@@ -153,7 +158,7 @@ When a dangerous tool is called:
 
 Sessions maintain conversation context across multiple interactions.
 
-![Session Management](/Agentry/assets/images/session-management.png)
+![Session Management](assets/images/session-management.png)
 
 ### Why Sessions Matter
 
@@ -206,7 +211,7 @@ For detailed session management, see [Session Management](session-management).
 
 Providers are adapters that connect Agentry to different LLM services.
 
-![Providers Comparison](/Agentry/assets/images/providers-comparison.png)
+![Providers Comparison](assets/images/providers-comparison.png)
 
 ### Provider Comparison
 
@@ -257,7 +262,7 @@ agent = Agent(llm="groq", model="llama-3.3-70b-versatile", api_key="...")
 
 **Model Context Protocol (MCP)** allows Agentry to connect to external tool servers.
 
-![MCP Architecture](/Agentry/assets/images/mcp-architecture.png)
+![MCP Architecture](assets/images/mcp-architecture.png)
 
 ### What is MCP?
 

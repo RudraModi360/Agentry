@@ -244,21 +244,27 @@ async def websocket_chat(websocket: WebSocket):
                     )
                     print(f"[Server WS] Created SmartAgent in {mode} mode")
                 else:
+                    # Default Agent: Enable tools if user wants them, even if model support is ambiguous
+                    current_agent_type = agent_type_config.get("agent_type") if agent_type_config else "default"
+                    tools_enabled = config.get("tools_enabled", True)
+                    
+                    if current_agent_type == "default" and tools_enabled:
+                         capabilities.supports_tools = True
+                         print(f"[Server WS] Forcing tool support for Default Agent")
+
                     agent = Agent(llm=provider, debug=True, capabilities=capabilities)
                     
                     if disabled_tools_list:
                         agent.disabled_tools = set(disabled_tools_list)
-                    
-                    tools_enabled = config.get("tools_enabled", True)
                     
                     if tools_enabled and capabilities.supports_tools:
                         agent.load_default_tools()
                         print(f"[Server WS] Loaded tools for {config.get('model')}")
                         
                         # Load MCP Configuration (only for default agent)
-                        current_agent_type = agent_type_config.get("agent_type") if agent_type_config else "default"
                         if current_agent_type == "default":
                             try:
+                                from backend.core.db_pool import get_connection
                                 conn = get_connection()
                                 cursor = conn.cursor()
                                 cursor.execute("SELECT config_json FROM user_mcp_config WHERE user_id = ?", (user_id,))
@@ -392,21 +398,25 @@ async def websocket_chat(websocket: WebSocket):
                     print(f"[Server WS] Created SmartAgent in {mode} mode" + 
                           (f" for project {project_id}" if project_id else ""))
                 else:
+                    # Default Agent: Enable tools if user wants them, even if model support is ambiguous
+                    current_agent_type = agent_type_config.get("agent_type") if agent_type_config else "default"
+                    tools_enabled_by_user = config.get("tools_enabled", True)
+
+                    if current_agent_type == "default" and tools_enabled_by_user:
+                        capabilities.supports_tools = True
+                        print(f"[Server WS] Forcing tool support for Default Agent (Model: {config.get('model')})")
+
                     agent = Agent(llm=provider, debug=True, capabilities=capabilities)
                     
                     if disabled_tools_list:
                         agent.disabled_tools = set(disabled_tools_list)
                         print(f"[Server WS] Applied {len(agent.disabled_tools)} disabled tools to agent")
 
-                    tools_enabled_by_user = config.get("tools_enabled", True)
-                    
                     if tools_enabled_by_user and capabilities.supports_tools:
                         agent.load_default_tools()
                         print(f"[Server WS] Loaded tools for {config['model']}")
 
                         # Load MCP Configuration
-                        current_agent_type = agent_type_config.get("agent_type") if agent_type_config else "default"
-                        
                         if current_agent_type == "default":
                             try:
                                 conn = sqlite3.connect(DB_PATH)

@@ -6,16 +6,18 @@ description: "Complete API documentation for Agentry classes and methods"
 ---
 
 # API Reference
-{: .no_toc }
 
 Complete API documentation for the Agentry framework.
-{: .fs-6 .fw-300 }
 
 ## Table of Contents
-{: .no_toc .text-delta }
 
-1. TOC
-{:toc}
+1. [Agent Class](#agent-class)
+2. [CopilotAgent Class](#copilotagent-class)
+3. [SessionManager Class](#sessionmanager-class)
+4. [AgentSession Class](#agentsession-class)
+5. [Providers](#providers)
+6. [Built-in Tools](#built-in-tools)
+7. [Type Definitions](#type-definitions)
 
 ---
 

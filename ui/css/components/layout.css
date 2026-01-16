@@ -206,6 +206,7 @@
 .input-container {
     max-width: 800px;
     margin: 0 auto;
+    padding: 0 var(--space-6);
     display: flex;
     gap: var(--space-3);
     align-items: flex-end;

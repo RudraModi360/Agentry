@@ -3,13 +3,27 @@ layout: page
 title: Getting Started
 nav_order: 2
 description: "Installation guide and first steps with Agentry"
+---
+
 # Getting Started
 
 This guide covers installation, prerequisites, and creating your first AI agent with Agentry.
 
 ## Table of Contents
 
-1. TOC
+1. [Prerequisites](#prerequisites)
+2. [Installation](#installation)
+3. [Provider Setup](#provider-setup)
+4. [Your First Agent](#your-first-agent)
+5. [Using Different Providers](#using-different-providers)
+6. [Interactive Interfaces](#interactive-interfaces)
+7. [Custom System Prompt](#custom-system-prompt)
+8. [CopilotAgent](#copilotagent-for-coding-tasks)
+9. [Verifying Installation](#verifying-installation)
+10. [Troubleshooting](#troubleshooting-common-issues)
+11. [Next Steps](#next-steps)
+
+---
 
 ## Prerequisites
 
@@ -29,6 +43,8 @@ Before installing Agentry, ensure you have the following:
 | Groq | Cloud | Yes | Easy |
 | Google Gemini | Cloud | Yes | Easy |
 | Azure OpenAI | Cloud | Yes + Endpoint | Moderate |
+
+---
 
 ## Installation
 

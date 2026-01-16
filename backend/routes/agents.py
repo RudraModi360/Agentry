@@ -92,10 +92,8 @@ async def configure_agent_type(config: AgentTypeConfig, user: Dict = Depends(get
     
     # Invalidate agent cache to force recreation with new type
     if user_id in agent_cache:
-        agent_cache[user_id]["agent_type"] = config.agent_type
-        if config.agent_type == "smart":
-            # Smart agent requires fresh creation
-            del agent_cache[user_id]
+        # Always clear the cache when changing types to ensure fresh state
+        del agent_cache[user_id]
     
     return {"message": "Agent type configured", "agent_type": config.agent_type}
 

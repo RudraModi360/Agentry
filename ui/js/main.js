@@ -282,7 +282,7 @@ const App = {
      */
     async saveAgentType(type, mode = 'solo', projectId = null) {
         try {
-            await API.post('/api/agent/configure', {
+            await API.post('/api/agent-config', {
                 agent_type: type,
                 mode: mode,
                 project_id: projectId

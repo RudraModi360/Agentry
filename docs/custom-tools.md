@@ -6,16 +6,21 @@ description: "Creating and registering custom tools for your AI agents"
 ---
 
 # Custom Tools
-{: .no_toc }
 
 Learn how to create and integrate custom tools into your Agentry agents.
-{: .fs-6 .fw-300 }
 
 ## Table of Contents
-{: .no_toc .text-delta }
 
-1. TOC
-{:toc}
+1. [Overview](#overview)
+2. [Quick Start](#quick-start)
+3. [Tool Registration Methods](#tool-registration-methods)
+4. [Tool Schema Structure](#tool-schema-structure)
+5. [Best Practices](#best-practices)
+6. [Advanced Patterns](#advanced-patterns)
+7. [Tool Approval System](#tool-approval-system)
+8. [Real-World Examples](#real-world-examples)
+9. [Testing Tools](#testing-tools)
+10. [Debugging Tools](#debugging-tools)
 
 ---
 
@@ -150,7 +155,7 @@ agent.register_tool_from_function(db_tool.query)
 
 Every tool has a schema that tells the LLM:
 
-![Tool Schema Structure](/Agentry/assets/images/tool-schema-structure.png)
+![Tool Schema Structure](assets/images/tool-schema-structure.png)
 
 **Schema Fields:**
 

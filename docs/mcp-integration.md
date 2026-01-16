@@ -6,16 +6,22 @@ description: "Model Context Protocol integration for external tool servers"
 ---
 
 # MCP Integration
-{: .no_toc }
 
 Connect Agentry to external tool servers using the Model Context Protocol (MCP).
-{: .fs-6 .fw-300 }
 
 ## Table of Contents
-{: .no_toc .text-delta }
 
-1. TOC
-{:toc}
+1. [Overview](#overview)
+2. [MCP Configuration](#mcp-configuration)
+3. [Using MCP in Code](#using-mcp-in-code)
+4. [MCPAgent Class](#mcpagent-class)
+5. [Practical Examples](#practical-examples)
+6. [Available MCP Servers](#available-mcp-servers)
+7. [Interactive Commands](#interactive-commands)
+8. [Best Practices](#best-practices)
+9. [Comparison: Standard Agent vs MCPAgent](#comparison-standard-agent-vs-mcpagent)
+10. [Troubleshooting](#troubleshooting)
+11. [Next Steps](#next-steps)
 
 ---
 
@@ -28,7 +34,7 @@ The **Model Context Protocol (MCP)** is a standardized protocol for connecting A
 - Integrate with third-party MCP-compatible servers
 - Build modular, composable AI systems
 
-![MCP Architecture](/Agentry/assets/images/mcp-architecture.png)
+![MCP Architecture](assets/images/mcp-architecture.png)
 
 ---
 

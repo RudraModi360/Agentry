@@ -9,7 +9,7 @@
 .messages-container {
     flex: 1;
     overflow-y: auto;
-    padding: var(--space-4) var(--space-6);
+    padding: var(--space-4) 0;
     scroll-behavior: smooth;
 }
 
@@ -29,7 +29,7 @@
 .message {
     display: flex;
     gap: var(--space-3);
-    padding: var(--space-4) 0;
+    padding: var(--space-4) 42px;
     max-width: 800px;
     margin: 0 auto;
 }
@@ -41,11 +41,11 @@
 /* ==================== Message Avatar ==================== */
 
 .message-avatar {
+    display: none;
     width: 36px;
     height: 36px;
     border-radius: var(--radius-full);
     flex-shrink: 0;
-    display: flex;
     align-items: center;
     justify-content: center;
     font-size: var(--text-sm);
@@ -90,23 +90,13 @@
 /* Message Bubble */
 .message-bubble {
     display: inline-block;
-    text-align: left;
-    padding: var(--space-3) var(--space-4);
-    border-radius: var(--radius-xl);
+    padding: 0;
     max-width: 100%;
 }
 
-.message.user .message-bubble {
-    background: linear-gradient(135deg, #404040, #262626);
-    color: white;
-    border-bottom-right-radius: var(--radius-sm);
-}
+/* .message.user .message-bubble removed for cleaner look */
 
-.message.assistant .message-bubble {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-bottom-left-radius: var(--radius-sm);
-}
+/* .message.assistant .message-bubble removed for cleaner look */
 
 .message.system .message-bubble {
     background: var(--bg-tertiary);
