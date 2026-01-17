@@ -1,45 +1,45 @@
 ---
 layout: default
-title: Agentry Documentation
+title: Home
+nav_order: 1
+permalink: /
 ---
 
-# Agentry
+# Agentry Documentation
 
-A powerful, modular AI agent framework for Python with multi-provider LLM support, comprehensive built-in tools, and Model Context Protocol (MCP) integration.
+A powerful, modular AI agent framework for Python.
+{: .fs-6 .fw-300 }
 
-[Get Started](getting-started) | [View on GitHub](https://github.com/RudraModi360/Agentry) | [PyPI](https://pypi.org/project/agentry-community/)
-
----
-
-## Overview
-
-Agentry (published as `agentry_community` on PyPI) provides a unified interface for building AI agents that can reason, use tools, and maintain conversation context. It is designed for flexibility, ease of use, and privacy-focused deployments.
-
-### Key Capabilities
-
-| Feature | Description |
-|:--------|:------------|
-| **Multi-Provider LLM Support** | Ollama (local/cloud), Groq, Google Gemini, Azure OpenAI |
-| **Built-in Tools** | Filesystem operations, web search, code execution, document handling |
-| **MCP Integration** | Connect to external tool servers via Model Context Protocol |
-| **Session Management** | Automatic persistence and multi-session support |
-| **Persistent Memory** | Extract and store insights from conversations |
-| **Custom Tools** | Register Python functions as agent tools |
-| **Streaming Responses** | Real-time output for improved UX |
+[Get Started](getting-started){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[View on GitHub](https://github.com/RudraModi360/Agentry){: .btn .fs-5 .mb-4 .mb-md-0 }
 
 ---
 
-## Architecture Overview
+## What is Agentry?
 
-![Architecture Overview](assets/images/architecture-overview.png)
+Agentry is a privacy-focused AI agent framework that provides a unified interface for building AI agents that can reason, use tools, and maintain conversation context.
 
-| Component | Purpose |
-|:----------|:--------|
-| **Agent** | Core class managing LLM interactions, tool execution, and session handling |
-| **Providers** | Adapters connecting to different LLM services (Ollama, Groq, Gemini, Azure) |
-| **Tools** | Built-in and custom functions the agent can execute |
-| **Session Manager** | Persists conversation history and metadata |
-| **MCP Client** | Connects to external MCP servers for additional tools |
+### Key Features
+
+- **Multi-Provider LLM Support** - Ollama, Groq, Google Gemini, Azure OpenAI
+- **Built-in Tools** - Filesystem, web search, code execution, documents
+- **MCP Integration** - Connect to external tool servers
+- **Session Management** - Automatic persistence
+- **Custom Tools** - Register Python functions as tools
+
+---
+
+## Tested Models
+
+Agentry has been tested with various models across different providers:
+
+| Provider | Model | Type |
+|:---------|:------|:-----|
+| **Ollama** | `gpt-oss:20b:cloud` | Cloud-optimized |
+| **Ollama** | `glm-4.5:cloud` | Cloud-optimized |
+| **Azure** | `claude-opus:4.5` | Enterprise |
+| **Groq** | `llama-3.3-70b-versatile` | High performance |
+| **Gemini** | `gemini-2.0-flash` | Multimodal |
 
 ---
 
@@ -47,14 +47,6 @@ Agentry (published as `agentry_community` on PyPI) provides a unified interface 
 
 ```bash
 pip install agentry_community
-```
-
-Or from source:
-
-```bash
-git clone https://github.com/RudraModi360/Agentry.git
-cd Agentry
-pip install -e .
 ```
 
 ---
@@ -66,55 +58,33 @@ import asyncio
 from agentry import Agent
 
 async def main():
-    agent = Agent(llm="ollama", model="llama3.2:3b")
+    agent = Agent(llm="ollama", model="gpt-oss:20b:cloud")
     agent.load_default_tools()
     
-    response = await agent.chat("What files are in the current directory?")
+    response = await agent.chat("Hello!")
     print(response)
 
-if __name__ == "__main__":
-    asyncio.run(main())
+asyncio.run(main())
 ```
 
 ---
 
-## Launch Interfaces
-
-**Command-Line Interface:**
-```bash
-agentry_cli
-```
-
-**Web Interface:**
-```bash
-agentry_gui
-```
-
----
-
-## Documentation
+## Documentation Sections
 
 | Section | Description |
 |:--------|:------------|
-| [Getting Started](getting-started) | Installation, prerequisites, and first agent |
-| [Core Concepts](core-concepts) | Agent loop, tools, sessions, and providers |
+| [Getting Started](getting-started) | Installation and first steps |
+| [Core Concepts](core-concepts) | Architecture and fundamentals |
 | [API Reference](api-reference) | Complete API documentation |
-| [Custom Tools](custom-tools) | Creating and registering custom tools |
-| [MCP Integration](mcp-integration) | Connecting external tool servers |
-| [Session Management](session-management) | Working with persistent sessions |
+| [Custom Tools](custom-tools) | Creating your own tools |
+| [MCP Integration](mcp-integration) | External tool servers |
 | [Examples](examples) | Practical code examples |
-| [Troubleshooting](troubleshooting) | Common issues and solutions |
+| [Troubleshooting](troubleshooting) | Common issues |
 
 ---
 
 ## Support
 
-- [GitHub Issues](https://github.com/RudraModi360/Agentry/issues) - Report bugs or request features
-- [GitHub Discussions](https://github.com/RudraModi360/Agentry/discussions) - Community discussions
+- [GitHub Issues](https://github.com/RudraModi360/Agentry/issues)
+- [Discussions](https://github.com/RudraModi360/Agentry/discussions)
 - Email: rudramodi9560@gmail.com
-
----
-
-## License
-
-Agentry is distributed under the [MIT License](https://github.com/RudraModi360/Agentry/blob/main/LICENSE).

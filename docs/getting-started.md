@@ -2,12 +2,14 @@
 layout: default
 title: Getting Started
 nav_order: 2
-description: "Installation guide and first steps with Agentry"
+description: Installation guide and first steps with Agentry
 ---
 
 # Getting Started
+{: .fs-9 }
 
-This guide covers installation, prerequisites, and creating your first AI agent with Agentry.
+This guide covers installation, prerequisites, and creating your first AI agent.
+{: .fs-6 .fw-300 }
 
 ## Table of Contents
 

@@ -1,8 +1,11 @@
 source "https://rubygems.org"
 
-# GitHub Pages gem includes all supported themes
-gem "github-pages", group: :jekyll_plugins
+gem "jekyll", "~> 4.3"
+gem "just-the-docs"
+gem "jekyll-seo-tag"
+gem "jekyll-include-cache"
 
 # Windows support
 gem "wdm", "~> 0.1.1", :install_if => Gem.win_platform?
 gem "tzinfo-data", platforms: [:mingw, :mswin, :x64_mingw, :jruby]
+gem "webrick"
