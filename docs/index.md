@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: home
 title: Home
 nav_order: 1
 permalink: /
@@ -8,7 +8,6 @@ permalink: /
 # Agentry Documentation
 
 A powerful, modular AI agent framework for Python.
-{: .fs-6 .fw-300 }
 
 [Get Started](getting-started){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [View on GitHub](https://github.com/RudraModi360/Agentry){: .btn .fs-5 .mb-4 .mb-md-0 }
