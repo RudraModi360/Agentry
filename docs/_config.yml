@@ -1,40 +1,32 @@
-# Agentry Documentation - Jekyll Configuration
+# Agentry Documentation
+# GitHub Pages Configuration
+
 title: Agentry
-description: A Modular AI Agent Framework for Python
-theme: jekyll-theme-slate
+description: A Modular AI Agent Framework for Python with multi-provider LLM support, built-in tools, and MCP integration.
 
-# URL Settings (Updated by workflow)
-# url: https://rudramodi360.github.io
-# baseurl: /Agentry
+# Use GitHub Pages supported theme
+theme: jekyll-theme-cayman
 
-# Google Analytics (Optional)
-# google_analytics: UA-123-456
+# Repository information (for edit links)
+repository: RudraModi360/Agentry
 
-# Markdown Settings
+# Markdown settings
 markdown: kramdown
 kramdown:
   input: GFM
   syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    block:
+      line_numbers: false
 
-# Navigation
-header_pages:
-  - index.md
-  - getting-started.md
-  - core-concepts.md
-  - api-reference.md
-  - examples.md
-
-# Plugin Settings
+# Plugins
 plugins:
   - jekyll-seo-tag
-  - jekyll-github-metadata
 
-# Excludes
+# Exclude from build
 exclude:
   - Gemfile
   - Gemfile.lock
   - node_modules
   - vendor
-
-# Custom Variables
-show_downloads: false
+  - README.md

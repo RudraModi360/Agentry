@@ -1,5 +1,5 @@
 ---
-layout: page
+layout: default
 title: MCP Integration
 nav_order: 6
 description: "Model Context Protocol integration for external tool servers"

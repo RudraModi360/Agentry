@@ -1,5 +1,5 @@
 ---
-layout: page
+layout: default
 title: Examples
 nav_order: 8
 description: "Practical code examples and use cases for Agentry"

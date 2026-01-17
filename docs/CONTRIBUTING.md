@@ -1,5 +1,5 @@
 ---
-layout: page
+layout: default
 title: Contributing
 nav_order: 10
 description: "Guidelines for contributing to Agentry"

@@ -1,5 +1,5 @@
 ---
-layout: page
+layout: default
 title: Custom Tools
 nav_order: 5
 description: "Creating and registering custom tools for your AI agents"

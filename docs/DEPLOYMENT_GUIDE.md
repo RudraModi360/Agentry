@@ -1,5 +1,5 @@
 ---
-layout: page
+layout: default
 title: Deployment Guide
 nav_order: 11
 description: "Guide for deploying Agentry in production environments"

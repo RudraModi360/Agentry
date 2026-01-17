@@ -1,5 +1,5 @@
 ---
-layout: page
+layout: default
 title: API Reference
 nav_order: 4
 description: "Complete API documentation for Agentry classes and methods"

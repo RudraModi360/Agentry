@@ -1,5 +1,5 @@
 ---
-layout: page
+layout: default
 title: Getting Started
 nav_order: 2
 description: "Installation guide and first steps with Agentry"

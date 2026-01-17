@@ -1,5 +1,5 @@
 ---
-layout: page
+layout: default
 title: Core Concepts
 nav_order: 3
 description: "Understanding AI agents, the agent loop, tools, sessions, and providers"

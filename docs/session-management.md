@@ -1,5 +1,5 @@
 ---
-layout: page
+layout: default
 title: Session Management
 nav_order: 7
 description: "Working with persistent sessions and conversation history"

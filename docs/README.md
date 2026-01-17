@@ -66,7 +66,7 @@ https://rudramodi360.github.io/Agentry/
 
 ```yaml
 ---
-layout: page
+layout: default
 title: Your Page Title
 nav_order: 12
 description: "Brief description of the page"
