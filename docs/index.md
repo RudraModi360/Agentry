@@ -1,17 +1,16 @@
 ---
-layout: home
+layout: default
 title: Home
 nav_order: 1
 description: "Agentry is a modular AI agent framework for Python with multi-provider support, built-in tools, and MCP integration."
 permalink: /
 ---
 
-# Agentry Documentation
+# <img src="assets/images/agentry-logo.png" alt="Agentry Logo" width="100" style="vertical-align: middle; margin-right: 10px;"> Agentry
 
 A powerful, modular AI agent framework for Python with multi-provider LLM support, comprehensive built-in tools, and Model Context Protocol (MCP) integration.
 
-[Get Started](/Agentry/getting-started)
-[View on GitHub](https://github.com/RudraModi360/Agentry)
+[Get Started](getting-started) • [View on GitHub](https://github.com/RudraModi360/Agentry)
 
 ---
 
@@ -114,14 +113,14 @@ Then open your browser to `http://localhost:8000`.
 
 | Section | Description |
 |:--------|:------------|
-| [Getting Started](/Agentry/getting-started) | Installation, prerequisites, and first agent |
-| [Core Concepts](/Agentry/core-concepts) | Agent loop, tools, sessions, and providers |
-| [API Reference](/Agentry/api-reference) | Complete API documentation |
-| [Custom Tools](/Agentry/custom-tools) | Creating and registering custom tools |
-| [MCP Integration](/Agentry/mcp-integration) | Connecting external tool servers |
-| [Session Management](/Agentry/session-management) | Working with persistent sessions |
-| [Examples](/Agentry/examples) | Practical code examples |
-| [Troubleshooting](/Agentry/troubleshooting) | Common issues and solutions |
+| [Getting Started](getting-started) | Installation, prerequisites, and first agent |
+| [Core Concepts](core-concepts) | Agent loop, tools, sessions, and providers |
+| [API Reference](api-reference) | Complete API documentation |
+| [Custom Tools](custom-tools) | Creating and registering custom tools |
+| [MCP Integration](mcp-integration) | Connecting external tool servers |
+| [Session Management](session-management) | Working with persistent sessions |
+| [Examples](examples) | Practical code examples |
+| [Troubleshooting](troubleshooting) | Common issues and solutions |
 
 ---
 
