@@ -1,79 +1,101 @@
+---
+layout: default
+title: Troubleshooting
+nav_order: 9
+description: "Common issues and their solutions"
+---
+
 # Troubleshooting Guide
 
-Common issues and their solutions when working with Scratchy.
+Common issues and their solutions when working with Agentry.
 
 ## Table of Contents
 
-- [Installation Issues](#installation-issues)
-- [LLM Provider Issues](#llm-provider-issues)
-- [Tool Execution Issues](#tool-execution-issues)
-- [Session Management Issues](#session-management-issues)
-- [MCP Integration Issues](#mcp-integration-issues)
-- [Performance Issues](#performance-issues)
-- [Common Error Messages](#common-error-messages)
+1. [Installation Issues](#installation-issues)
+2. [LLM Provider Issues](#llm-provider-issues)
+3. [Tool Execution Issues](#tool-execution-issues)
+4. [Session Management Issues](#session-management-issues)
+5. [MCP Integration Issues](#mcp-integration-issues)
+6. [Performance Issues](#performance-issues)
+7. [Common Error Messages](#common-error-messages)
+8. [Diagnostic Commands](#diagnostic-commands)
+9. [Getting Help](#getting-help)
+
+---
 
 ## Installation Issues
 
-### Import Error: No module named 'scratchy'
+### Import Error: No module named 'agentry'
 
-**Problem:** Python can't find the Scratchy module.
+**Problem:** Python cannot find the Agentry module.
 
 **Solution:**
+
 ```bash
-# Make sure you're in the Scratchy directory
-cd Scratchy
+# Verify installation
+pip show agentry-community
 
-# Verify the directory structure
-ls  # Should see scratchy/ folder
+# If not installed
+pip install agentry-community
 
-# Run from the parent directory
-python -c "import sys; sys.path.insert(0, '.'); from scratchy import Agent"
+# If installed from source, ensure you're in the correct directory
+cd Agentry
+pip install -e .
 ```
 
 Or add to your Python path:
+
 ```python
 import sys
-sys.path.insert(0, '/path/to/Scratchy')
-from scratchy import Agent
+sys.path.insert(0, '/path/to/Agentry')
+from agentry import Agent
 ```
+
+---
 
 ### Dependency Installation Fails
 
-**Problem:** `uv sync` or `pip install` fails.
+**Problem:** `pip install` fails with dependency errors.
 
 **Solution:**
+
 ```bash
-# Try using pip directly
-pip install -r requirements.txt
-
-# If specific package fails, install it separately
-pip install <package-name>
-
 # Update pip
 python -m pip install --upgrade pip
 
-# Use a virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
+# Try installing from source
+pip install -e .
+
+# If specific package fails
+pip install <package-name>
+
+# Use virtual environment
+python -m venv .venv
+.venv\Scripts\activate  # Windows
+source .venv/bin/activate  # Linux/macOS
+pip install -e .
 ```
+
+---
 
 ### Python Version Issues
 
-**Problem:** "Python 3.11+ required"
+**Problem:** "Python 3.11+ required" error.
 
 **Solution:**
+
 ```bash
 # Check your Python version
 python --version
 
-# Install Python 3.11 or higher
-# Visit https://www.python.org/downloads/
+# Install Python 3.11 or higher from python.org
 
-# Use pyenv to manage multiple versions
+# Use pyenv for multiple versions
 pyenv install 3.11
 pyenv local 3.11
 ```
+
+---
 
 ## LLM Provider Issues
 
@@ -82,126 +104,169 @@ pyenv local 3.11
 **Problem:** `ConnectionError: [Errno 111] Connection refused`
 
 **Solution:**
+
 ```bash
 # Start Ollama server
 ollama serve
 
-# Or check if it's running
-ps aux | grep ollama
+# Check if running
+ollama list
 
-# On Windows, Ollama runs as a service
-# Check system tray for Ollama icon
+# On Windows, check system tray for Ollama icon
+# On macOS/Linux, check with:
+ps aux | grep ollama
 ```
+
+---
 
 ### Ollama: Model Not Found
 
-**Problem:** `Error: model 'gpt-oss:20b' not found`
+**Problem:** `Error: model 'llama3.2' not found`
 
 **Solution:**
+
 ```bash
 # List available models
 ollama list
 
-# Pull the model
-ollama pull gpt-oss:20b
+# Pull the required model
+ollama pull llama3.2
 
 # Or use a different model
-ollama pull llama3.2
+ollama pull llama3.2:3b
 ```
 
-Then update your code:
+Update your code:
+
 ```python
 agent = Agent(llm="ollama", model="llama3.2")
 ```
+
+---
 
 ### Groq: Authentication Error
 
 **Problem:** `AuthenticationError: Invalid API key`
 
 **Solution:**
+
 ```bash
 # Set environment variable
-export GROQ_API_KEY="your-actual-api-key"
+export GROQ_API_KEY="your-api-key"
 
-# Or pass directly in code
-agent = Agent(llm="groq", model="llama-3.3-70b-versatile", api_key="your-key")
-
-# Verify the key is correct at https://console.groq.com/
+# On Windows PowerShell
+$env:GROQ_API_KEY="your-api-key"
 ```
 
-### Gemini: API Key Issues
+Or pass directly in code:
+
+```python
+agent = Agent(
+    llm="groq",
+    model="llama-3.3-70b-versatile",
+    api_key="your-api-key"
+)
+```
+
+Verify your key at [console.groq.com](https://console.groq.com/).
+
+---
+
+### Gemini: Permission Denied
 
 **Problem:** `google.api_core.exceptions.PermissionDenied`
 
 **Solution:**
+
 ```bash
 # Set environment variable
-export GEMINI_API_KEY="your-actual-api-key"
+export GEMINI_API_KEY="your-api-key"
 
 # Get a key from https://ai.google.dev/
-
-# Enable the Gemini API in Google Cloud Console
+# Ensure the Gemini API is enabled
 ```
+
+---
+
+### Azure: Endpoint Issues
+
+**Problem:** Connection errors with Azure OpenAI
+
+**Solution:**
+
+```python
+agent = Agent(
+    llm="azure",
+    model="your-deployment-name",  # Not model name, deployment name
+    api_key="your-azure-key",
+    endpoint="https://your-resource.openai.azure.com"  # Include full URL
+)
+```
+
+Verify:
+- Endpoint URL is correct
+- Deployment name matches Azure portal
+- API key has correct permissions
+
+---
 
 ### Empty Response Error
 
 **Problem:** `model output must contain either output text or tool calls`
 
-**Cause:** The LLM returned an empty response (common with some models/prompts).
+**Cause:** The LLM returned an empty response.
 
-**Solution:**
+**Solutions:**
 
-Scratchy has built-in retry logic, but you can:
-
-1. **Enable debug mode** to see what's happening:
-```python
-agent = Agent(llm="ollama", debug=True)
-```
+1. **Enable debug mode:**
+   ```python
+   agent = Agent(llm="ollama", debug=True)
+   ```
 
 2. **Try a different model:**
-```python
-# If using Ollama
-agent = Agent(llm="ollama", model="llama3.2:latest")
-
-# If using Groq
-agent = Agent(llm="groq", model="llama-3.3-70b-versatile", api_key="...")
-```
+   ```python
+   agent = Agent(llm="ollama", model="llama3.2:latest")
+   ```
 
 3. **Simplify your prompt:**
-```python
-# Instead of complex multi-step requests
-await agent.chat("Do A, then B, then C")
-
-# Break it down
-await agent.chat("Do A")
-await agent.chat("Now do B")
-await agent.chat("Finally do C")
-```
+   ```python
+   # Instead of complex multi-step requests
+   await agent.chat("Do A, then B, then C")
+   
+   # Break it down
+   await agent.chat("Do A")
+   await agent.chat("Now do B")
+   await agent.chat("Finally do C")
+   ```
 
 4. **Reduce tool count:**
-```python
-# Don't load all tools if not needed
-agent = Agent(llm="ollama")
-# Only register specific tools you need
-agent.register_tool_from_function(my_tool)
-```
+   ```python
+   agent = Agent(llm="ollama")
+   # Only register specific tools needed
+   agent.register_tool_from_function(my_tool)
+   ```
+
+---
 
 ### Rate Limiting
 
 **Problem:** `RateLimitError: Too many requests`
 
 **Solution:**
+
 ```python
 import asyncio
 
 # Add delays between requests
 await agent.chat("First request")
-await asyncio.sleep(1)  # Wait 1 second
+await asyncio.sleep(1)
 await agent.chat("Second request")
 
-# Or use a different provider with higher limits
-agent = Agent(llm="ollama")  # No rate limits for local
+# Or use local provider (no rate limits)
+agent = Agent(llm="ollama")
 ```
+
+---
 
 ## Tool Execution Issues
 
@@ -210,82 +275,90 @@ agent = Agent(llm="ollama")  # No rate limits for local
 **Problem:** Agent says "I don't have a tool for that"
 
 **Solution:**
+
 ```python
-# Make sure you loaded the tools
+# Load default tools
 agent.load_default_tools()
 
 # Or register your custom tool
 agent.register_tool_from_function(my_tool)
 
-# Check what tools are available
+# Check available tools
 tools = await agent.get_all_tools()
 print([t['function']['name'] for t in tools])
 ```
+
+---
 
 ### Tool Execution Fails
 
 **Problem:** Tool returns an error
 
-**Solution:**
+**Solutions:**
 
 1. **Test the tool directly:**
-```python
-from scratchy.tools import execute_tool
+   ```python
+   from agentry.tools import execute_tool
+   result = execute_tool("read_file", {"path": "test.txt"})
+   print(result)
+   ```
 
-result = execute_tool("read_file", {"path": "test.txt"})
-print(result)
-```
-
-2. **Check tool arguments:**
-```python
-# Enable debug mode to see what arguments the LLM is passing
-agent = Agent(llm="ollama", debug=True)
-```
+2. **Enable debug mode:**
+   ```python
+   agent = Agent(llm="ollama", debug=True)
+   ```
 
 3. **Handle errors in custom tools:**
-```python
-def my_tool(arg: str) -> str:
-    """My tool."""
-    try:
-        result = do_something(arg)
-        return str(result)
-    except Exception as e:
-        return f"Error: {str(e)}"
-```
+   ```python
+   def my_tool(arg: str) -> str:
+       """My tool."""
+       try:
+           result = do_something(arg)
+           return str(result)
+       except Exception as e:
+           return f"Error: {str(e)}"
+   ```
+
+---
 
 ### Permission Denied Errors
 
 **Problem:** `PermissionError: [Errno 13] Permission denied`
 
 **Solution:**
-```bash
-# Check file permissions
-ls -l filename
 
-# Make file readable
+```bash
+# Check file permissions (Linux/macOS)
+ls -l filename
 chmod +r filename
 
-# Run with appropriate permissions
-sudo python your_script.py  # Use cautiously!
+# On Windows, check file properties
+# Ensure file is not open in another program
 ```
+
+---
 
 ### File Not Found
 
 **Problem:** `FileNotFoundError: [Errno 2] No such file or directory`
 
 **Solution:**
+
 ```python
-# Use absolute paths
 import os
+
+# Use absolute paths
 file_path = os.path.abspath("myfile.txt")
 
-# Or check current directory
+# Check current directory
 print(os.getcwd())
 
-# Verify file exists before using
+# Verify file exists
 if os.path.exists("myfile.txt"):
     await agent.chat("Read myfile.txt")
 ```
+
+---
 
 ## Session Management Issues
 
@@ -294,54 +367,69 @@ if os.path.exists("myfile.txt"):
 **Problem:** Session data is lost between runs
 
 **Solution:**
-```python
-from scratchy.session_manager import SessionManager
 
-# Create session manager
-manager = SessionManager(storage_dir="./sessions")
+```python
+from agentry.session_manager import SessionManager
+
+sm = SessionManager(storage_dir="./sessions")
 
 # Save after chatting
 session = agent.get_session("my_session")
-await manager.save_session(session)
+sm.save_session("my_session", session.messages)
 
 # Load before chatting
-loaded = await manager.load_session("my_session")
-agent.sessions["my_session"] = loaded
+messages = sm.load_session("my_session")
+if messages:
+    session.messages = messages
 ```
+
+---
 
 ### Session File Corrupted
 
 **Problem:** `JSONDecodeError` when loading session
 
 **Solution:**
+
 ```bash
 # Check the session file
 cat sessions/my_session.toon
 
 # If corrupted, delete and start fresh
 rm sessions/my_session.toon
-
-# Or restore from backup if available
-cp sessions/my_session.toon.backup sessions/my_session.toon
 ```
+
+Or handle in code:
+
+```python
+try:
+    messages = sm.load_session(session_id)
+except Exception as e:
+    print(f"Error loading session: {e}")
+    sm.delete_session(session_id)
+    agent.get_session(session_id)
+```
+
+---
 
 ### Memory Issues with Large Sessions
 
 **Problem:** Session grows too large, causing slowdowns
 
 **Solution:**
+
 ```python
+session = agent.get_session(session_id)
+
 # Clear old messages
-agent.clear_session("my_session")
+if len(session.messages) > 100:
+    session.messages = session.messages[-50:]
 
-# Or keep only recent messages
-session = agent.get_session("my_session")
-session.messages = session.messages[-20:]  # Keep last 20 messages
-
-# Use separate sessions for different topics
-await agent.chat("Topic A", session_id="session_a")
-await agent.chat("Topic B", session_id="session_b")
+# Save trimmed session
+sm.save_session(session_id, session.messages)
 ```
+
+---
 
 ## MCP Integration Issues
 
@@ -350,112 +438,114 @@ await agent.chat("Topic B", session_id="session_b")
 **Problem:** `Failed to connect to MCP server`
 
 **Solution:**
+
 ```bash
 # Check if npx is installed
 npx --version
 
-# Install Node.js if needed
-# Visit https://nodejs.org/
+# Install Node.js if needed (visit nodejs.org)
 
 # Test the MCP server manually
 npx -y @modelcontextprotocol/server-excel
 
-# Check mcp.json syntax
+# Validate mcp.json syntax
 cat mcp.json | python -m json.tool
 ```
 
+---
+
 ### MCP Tools Not Available
 
-**Problem:** Agent can't see MCP tools
+**Problem:** Agent cannot see MCP tools
 
 **Solution:**
+
 ```python
-# Make sure you connected to the server
+# Verify connection
 await agent.add_mcp_server("mcp.json")
 
 # Check if tools were loaded
 tools = await agent.get_all_tools()
-mcp_tools = [t for t in tools if 'excel' in t['function']['name'].lower()]
-print(mcp_tools)
+print([t['function']['name'] for t in tools])
 
 # Enable debug mode
 agent = Agent(llm="ollama", debug=True)
 await agent.add_mcp_server("mcp.json")
 ```
 
+---
+
 ### MCP Server Crashes
 
 **Problem:** MCP server stops responding
 
 **Solution:**
+
 ```python
 # Cleanup and reconnect
 await agent.cleanup()
 
-# Restart the agent
+# Create new agent
 agent = Agent(llm="ollama")
 await agent.add_mcp_server("mcp.json")
 ```
+
+---
 
 ## Performance Issues
 
 ### Slow Response Times
 
-**Problem:** Agent takes too long to respond
-
 **Solutions:**
 
 1. **Use a faster provider:**
-```python
-# Groq is typically fastest
-agent = Agent(llm="groq", model="llama-3.3-70b-versatile", api_key="...")
-```
+   ```python
+   # Groq is typically fastest
+   agent = Agent(llm="groq", model="llama-3.3-70b-versatile", api_key="...")
+   ```
 
 2. **Reduce tool count:**
-```python
-# Don't load all tools
-# agent.load_default_tools()  # Skip this
-
-# Only add what you need
-agent.register_tool_from_function(specific_tool)
-```
+   ```python
+   # Only load specific tools
+   agent.register_tool_from_function(specific_tool)
+   ```
 
 3. **Use smaller models:**
-```python
-# Instead of large models
-agent = Agent(llm="ollama", model="llama3.2:3b")  # Smaller, faster
-```
+   ```python
+   agent = Agent(llm="ollama", model="llama3.2:3b")
+   ```
 
 4. **Limit max iterations:**
-```python
-agent = Agent(llm="ollama", max_iterations=5)  # Default is 20
-```
+   ```python
+   agent = Agent(llm="ollama", max_iterations=5)
+   ```
+
+---
 
 ### High Memory Usage
 
-**Problem:** Python process uses too much RAM
+**Solutions:**
 
-**Solution:**
 ```python
 # Clear sessions periodically
 agent.clear_session("my_session")
 
-# Use separate processes for different tasks
-# Instead of one long-running agent
-
 # Limit conversation history
 session = agent.get_session("my_session")
 if len(session.messages) > 50:
-    session.messages = session.messages[-30:]  # Keep last 30
+    session.messages = session.messages[-30:]
 ```
+
+---
 
 ## Common Error Messages
 
 ### "Max iterations reached"
 
-**Cause:** Agent couldn't complete the task in 20 iterations.
+**Cause:** Agent could not complete the task in 20 iterations.
 
 **Solution:**
+
 ```python
 # Increase max iterations
 agent = Agent(llm="ollama", max_iterations=50)
@@ -465,58 +555,86 @@ await agent.chat("First, do step 1")
 await agent.chat("Now do step 2")
 ```
 
+---
+
 ### "Tool execution denied by user"
 
 **Cause:** User rejected a dangerous tool call.
 
 **Solution:**
+
 ```python
 # Auto-approve if you trust the operation
 async def auto_approve(session_id, tool_name, args):
-    return True  # Always approve
+    return True
 
 agent.set_callbacks(on_tool_approval=auto_approve)
-
-# Or remove from approval list (use cautiously!)
-from scratchy.tools import APPROVAL_REQUIRED_TOOLS
-APPROVAL_REQUIRED_TOOLS.discard("run_shell_command")
 ```
+
+---
 
 ### "JSON decode error"
 
 **Cause:** LLM returned invalid JSON for tool arguments.
 
 **Solution:**
+
 ```python
-# This is usually a model issue - try a different model
+# Try a more capable model
 agent = Agent(llm="groq", model="llama-3.3-70b-versatile", api_key="...")
 
-# Or use a more capable local model
+# Or use a different local model
 agent = Agent(llm="ollama", model="llama3.2:latest")
 ```
 
+---
+
+## Diagnostic Commands
+
+### Check Ollama Status
+
+```bash
+ollama list
+ollama ps
+curl http://localhost:11434/api/tags
+```
+
+### Check Python Environment
+
+```bash
+python --version
+pip list | grep agentry
+```
+
+### Check MCP Configuration
+
+```bash
+cat mcp.json | python -m json.tool
+npx --version
+```
+
+---
+
 ## Getting Help
 
-If you're still stuck:
+If you are still experiencing issues:
 
 1. **Enable debug mode:**
-```python
-agent = Agent(llm="ollama", debug=True)
-```
+   ```python
+   agent = Agent(llm="ollama", debug=True)
+   ```
 
 2. **Check the logs** for detailed error messages
 
 3. **Search existing issues:** [GitHub Issues](https://github.com/RudraModi360/Agentry/issues)
 
 4. **Open a new issue** with:
-   - Your Python version
-   - Scratchy version
+   - Python version
+   - Agentry version
    - LLM provider and model
    - Full error traceback
    - Minimal code to reproduce
 
 5. **Join discussions:** [GitHub Discussions](https://github.com/RudraModi360/Agentry/discussions)
 
----
-
-**Still need help?** Email: rudramodi9560@gmail.com
+6. **Email:** rudramodi9560@gmail.com

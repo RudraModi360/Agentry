@@ -75,3 +75,14 @@ uv.lock
 
 mcp.json
 session_history/
+user_data/
+
+test_web_search.py
+marker_outputs/
+simple_agent.py
+
+# agentry/
+test_azure_anthropic.py
+test_azure_connectivity.py
+ui/media/
+.env

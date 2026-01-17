@@ -1,96 +1,116 @@
+---
+layout: default
+title: Core Concepts
+nav_order: 3
+description: "Understanding AI agents, the agent loop, tools, sessions, and providers"
+---
+
 # Core Concepts
 
-Understanding how Scratchy agents work under the hood.
+Understanding how Agentry agents work under the hood.
 
 ## Table of Contents
 
-- [What is an AI Agent?](#what-is-an-ai-agent)
-- [The Agent Loop](#the-agent-loop)
-- [Tools and Function Calling](#tools-and-function-calling)
-- [Session Management](#session-management)
-- [Providers](#providers)
-- [MCP Integration](#mcp-integration)
+1. [What is an AI Agent?](#what-is-an-ai-agent)
+2. [Architecture Overview](#architecture-overview)
+3. [The Agent Loop](#the-agent-loop)
+4. [Tools and Function Calling](#tools-and-function-calling)
+5. [Session Management](#session-management)
+6. [Providers](#providers)
+7. [MCP Integration](#mcp-integration)
+8. [Understanding the Flow](#understanding-the-flow)
+9. [Best Practices](#best-practices)
+10. [Next Steps](#next-steps)
+
+---
 
 ## What is an AI Agent?
 
-An **AI agent** is a system that can:
-1. **Perceive** its environment (through user input and context)
-2. **Reason** about what actions to take (using an LLM)
-3. **Act** on the environment (by calling tools/functions)
-4. **Learn** from results (by maintaining conversation history)
+An AI agent is a system that can:
 
-Unlike a simple chatbot that only generates text, an agent can **do things** - read files, search the web, execute code, and more.
+| Capability | Description |
+|:-----------|:------------|
+| **Perceive** | Receive input from users and environment context |
+| **Reason** | Use an LLM to decide what actions to take |
+| **Act** | Execute tools and functions to interact with the world |
+| **Learn** | Maintain conversation history for context-aware responses |
 
-![Agent Workflow Loop](assets/agent_workflow_loop.png)
+Unlike a simple chatbot that only generates text, an agent can perform actions such as reading files, searching the web, executing code, and more.
 
-### Example Flow
+---
 
-```
-User: "What's the weather in New York?"
-  ↓
-Agent thinks: "I need to search the web for this"
-  ↓
-Agent calls: search_web("weather New York")
-  ↓
-Tool returns: "72°F, sunny"
-  ↓
-Agent responds: "The weather in New York is 72°F and sunny!"
-```
+## Architecture Overview
+
+![Architecture Overview](assets/images/architecture-overview.png)
+
+The Agentry architecture consists of three main layers:
+
+| Layer | Components | Purpose |
+|:------|:-----------|:--------|
+| **User Code** | Your Python application | Entry point for agent interactions |
+| **Agent Core** | Agent, Session Manager, Tool Manager | Orchestrates LLM calls and tool execution |
+| **Provider Layer** | Ollama, Groq, Gemini, Azure | Connects to LLM services |
+
+---
 
 ## The Agent Loop
 
-Scratchy uses a **ReAct** (Reasoning + Acting) pattern:
+Agentry implements the **ReAct** (Reasoning + Acting) pattern, where the agent iteratively reasons about what to do and takes action.
 
-![ReAct Pattern Flowchart](assets/react_pattern_flowchart.png)
+![Agent Loop Flowchart](assets/images/agent-loop-flowchart.png)
+
+### Loop Structure
 
 ```python
 while not done and iterations < max_iterations:
-    # 1. Get LLM response
+    # Step 1: Send messages to LLM with available tools
     response = await llm.chat(messages, tools=available_tools)
     
-    # 2. Check if done
-    if no tool_calls:
+    # Step 2: Check if LLM wants to call tools
+    if no_tool_calls:
         return response.content  # Final answer
     
-    # 3. Execute tools
+    # Step 3: Execute requested tools
     for tool_call in response.tool_calls:
         result = execute_tool(tool_call.name, tool_call.args)
         messages.append({"role": "tool", "content": result})
     
-    # 4. Loop back to step 1 with updated context
+    # Step 4: Loop continues with updated context
 ```
 
-### Key Points
+### Key Characteristics
 
-- **Iterative**: The agent can call multiple tools in sequence
-- **Context-aware**: Each iteration has access to previous results
-- **Bounded**: `max_iterations` prevents infinite loops (default: 20)
-- **Transparent**: You can see every decision and tool call
+| Property | Description |
+|:---------|:------------|
+| **Iterative** | Agent can call multiple tools in sequence |
+| **Context-aware** | Each iteration has access to previous results |
+| **Bounded** | `max_iterations` prevents infinite loops (default: 20) |
+| **Transparent** | Every decision and tool call is traceable |
+
+---
 
 ## Tools and Function Calling
 
-Tools are functions the agent can call to interact with the world.
+Tools are functions that the agent can invoke to interact with external systems.
 
-### Tool Schema
+### Tool Schema Structure
 
-Every tool has a schema that tells the LLM:
-- **Name**: What the tool is called
-- **Description**: What it does
-- **Parameters**: What inputs it needs
+![Tool Schema Structure](assets/images/tool-schema-structure.png)
 
-Example:
+Every tool has a schema that describes it to the LLM:
+
 ```python
 {
     "type": "function",
     "function": {
         "name": "read_file",
-        "description": "Read the contents of a file",
+        "description": "Read the contents of a file from the filesystem",
         "parameters": {
             "type": "object",
             "properties": {
                 "path": {
                     "type": "string",
-                    "description": "Path to the file"
+                    "description": "Absolute or relative path to the file"
                 }
             },
             "required": ["path"]
@@ -99,45 +119,58 @@ Example:
 }
 ```
 
-### How the LLM Chooses Tools
+### How the LLM Selects Tools
 
-The LLM:
-1. Reads the user's request
-2. Looks at available tool schemas
-3. Decides which tool(s) to call
-4. Generates the arguments in JSON format
+1. LLM receives the user's request
+2. LLM examines available tool schemas
+3. LLM decides which tool(s) to call
+4. LLM generates arguments in JSON format
+5. Agent executes the tool and returns results
 
 ### Built-in Tool Categories
 
-**Filesystem Tools:**
-- `read_file` - Read file contents
-- `create_file` - Create new files
-- `edit_file` - Modify existing files
-- `delete_file` - Remove files
-- `list_directory` - List directory contents
-- `search_files` - Search for files by pattern
+| Category | Tools | Description |
+|:---------|:------|:------------|
+| **Filesystem** | `read_file`, `create_file`, `edit_file`, `delete_file`, `list_directory`, `search_files` | File operations |
+| **Web** | `web_search`, `fetch_url` | Internet access |
+| **Execution** | `run_shell_command`, `execute_python` | Code and command execution |
+| **Documents** | PDF, DOCX, PPTX, Excel handlers | Document processing |
 
-**Web Tools:**
-- `search_web` - Search the internet
-- `fetch_url` - Get content from a URL
+### Tool Safety Classification
 
-**Execution Tools:**
-- `run_shell_command` - Execute shell commands
-- `execute_python` - Run Python code
+Agentry classifies tools by risk level:
+
+| Classification | Examples | Behavior |
+|:---------------|:---------|:---------|
+| **Safe** | `read_file`, `list_directory` | Executes without confirmation |
+| **Dangerous** | `delete_file`, `run_shell_command` | Requires user approval |
+
+When a dangerous tool is called:
+
+1. Agent pauses execution
+2. Triggers the `on_tool_approval` callback
+3. Waits for user confirmation
+4. Executes only if approved
+
+---
 
 ## Session Management
 
 Sessions maintain conversation context across multiple interactions.
 
+![Session Management](assets/images/session-management.png)
+
 ### Why Sessions Matter
 
 Without sessions:
+
 ```python
 await agent.chat("My name is Alice")
-await agent.chat("What's my name?")  # Agent doesn't remember!
+await agent.chat("What's my name?")  # Agent does not remember
 ```
 
 With sessions:
+
 ```python
 await agent.chat("My name is Alice", session_id="user_123")
 await agent.chat("What's my name?", session_id="user_123")
@@ -146,44 +179,48 @@ await agent.chat("What's my name?", session_id="user_123")
 
 ### Session Structure
 
-Each session contains:
-- **session_id**: Unique identifier
-- **messages**: Full conversation history
-- **metadata**: Custom data (timestamps, user info, etc.)
-- **created_at**: When the session started
-- **last_activity**: Last interaction time
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `session_id` | string | Unique identifier |
+| `messages` | array | Full conversation history |
+| `metadata` | object | Custom data (timestamps, user info) |
+| `created_at` | datetime | When the session started |
+| `last_activity` | datetime | Last interaction time |
 
 ### Session Persistence
 
-Scratchy can save sessions to disk in `.toon` format:
+Sessions are saved to disk in `.toon` format:
 
 ```python
-from scratchy.session_manager import SessionManager
+from agentry.session_manager import SessionManager
 
 manager = SessionManager(storage_dir="./sessions")
 
-# Save
+# Save session
 await manager.save_session(agent.get_session("user_123"))
 
-# Load
+# Load session
 session = await manager.load_session("user_123")
 ```
 
-See [Session Management Guide](session-management.md) for details.
+For detailed session management, see [Session Management](session-management).
+
+---
 
 ## Providers
 
-Providers are adapters that connect Scratchy to different LLM services.
+Providers are adapters that connect Agentry to different LLM services.
 
-### Available Providers
+![Providers Comparison](assets/images/providers-comparison.png)
 
-![LLM Providers Comparison](assets/llm_providers_comparison.png)
+### Provider Comparison
 
-| Provider | Type | Best For |
-|----------|------|----------|
-| **Ollama** | Local/Cloud | Development, privacy, no API costs |
-| **Groq** | Cloud | Speed, production, low latency |
-| **Gemini** | Cloud | Google ecosystem, multimodal |
+| Provider | Type | Best For | API Key |
+|:---------|:-----|:---------|:--------|
+| **Ollama** | Local | Development, privacy, no API costs | Optional (cloud) |
+| **Groq** | Cloud | Speed, production, low latency | Required |
+| **Gemini** | Cloud | Google ecosystem, multimodal | Required |
+| **Azure** | Cloud | Enterprise, Azure AI Foundry | Required + Endpoint |
 
 ### Provider Interface
 
@@ -200,104 +237,82 @@ class LLMProvider:
         pass
 ```
 
-This means you can **swap providers** without changing your code:
+This allows swapping providers without changing code:
 
 ```python
-# Development
+# Development (local)
 agent = Agent(llm="ollama", model="llama3.2")
 
-# Production
+# Production (cloud)
 agent = Agent(llm="groq", model="llama-3.3-70b-versatile", api_key="...")
 ```
 
 ### Provider-Specific Features
 
-**Ollama:**
-- Runs locally
-- No API key needed
-- Full privacy
-- Supports custom models
+| Provider | Key Features |
+|:---------|:-------------|
+| **Ollama** | Runs locally, no API key needed, full privacy, custom models |
+| **Groq** | Ultra-fast inference (LPU), pay-per-token, limited model selection |
+| **Gemini** | Multimodal (images, video), Google AI integration, advanced reasoning |
+| **Azure** | Enterprise integration, Azure AI Foundry models including Claude |
 
-**Groq:**
-- Extremely fast inference
-- Pay-per-token pricing
-- Requires API key
-- Limited model selection
-
-**Gemini:**
-- Multimodal support (images, video)
-- Google AI integration
-- Requires API key
-- Advanced reasoning
+---
 
 ## MCP Integration
 
-**Model Context Protocol (MCP)** allows Scratchy to connect to external tool servers.
+**Model Context Protocol (MCP)** allows Agentry to connect to external tool servers.
+
+![MCP Architecture](assets/images/mcp-architecture.png)
 
 ### What is MCP?
 
 MCP is a standard protocol for:
+
 - Exposing tools from external services
 - Connecting multiple agents to shared tools
 - Building modular, composable AI systems
 
-### How It Works
+### MCP Configuration
 
-![MCP Integration Diagram](assets/mcp_integration_diagram.png)
+Create an `mcp.json` file in your project:
 
-```
-┌─────────────┐
-│   Scratchy  │
-│    Agent    │
-└──────┬──────┘
-       │
-       ├─── Internal Tools (filesystem, web, etc.)
-       │
-       └─── MCP Client ──┐
-                         │
-                    ┌────┴─────┐
-                    │ MCP      │
-                    │ Servers  │
-                    └──────────┘
-                         │
-                    ┌────┼────┐
-                    │    │    │
-                  Excel DB  Slack
-```
-
-### Using MCP
-
-1. **Create `mcp.json`:**
 ```json
 {
-  "mcpServers": {
-    "excel": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-excel"]
+    "mcpServers": {
+        "excel": {
+            "command": "npx",
+            "args": ["-y", "@modelcontextprotocol/server-excel"]
+        },
+        "filesystem": {
+            "command": "npx",
+            "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/allowed/directory"]
+        }
     }
-  }
 }
 ```
 
-2. **Connect in your agent:**
+### Using MCP in Code
+
 ```python
+from agentry import Agent
+
 agent = Agent(llm="ollama")
+agent.load_default_tools()
+
+# Connect to MCP servers
 await agent.add_mcp_server("mcp.json")
-```
 
-3. **Use MCP tools naturally:**
-```python
+# Agent can now use MCP tools
 await agent.chat("Read data from sales.xlsx")
-# Agent automatically uses the Excel MCP server
 ```
 
-See [MCP Integration Guide](MCP_AGENT.md) for advanced usage.
+For detailed MCP usage, see [MCP Integration](mcp-integration).
+
+---
 
 ## Understanding the Flow
 
-### High-Level View (What happens)
-
-![Agent Interaction Sequence](assets/agent_interaction_sequence.png)
+### High-Level View
 
 ```
 User Input
@@ -306,58 +321,62 @@ Agent receives request
     ↓
 Agent thinks (LLM reasoning)
     ↓
-Agent decides to use tools OR respond
+Agent decides: use tools OR respond
     ↓
 If tools: Execute → Get results → Think again
 If response: Return to user
 ```
 
-### Low-Level View (How it happens)
+### Low-Level View
 
-```
-1. User input added to session.messages
-2. session.messages sent to provider.chat()
-3. Provider calls LLM API with messages + tool schemas
+1. User input added to `session.messages`
+2. Messages sent to `provider.chat()`
+3. Provider calls LLM API with messages and tool schemas
 4. LLM returns response (text OR tool_calls)
-5. If tool_calls:
-   a. Parse tool name and arguments
-   b. Check if approval needed
-   c. Execute tool via execute_tool()
-   d. Add result to session.messages
-   e. Go back to step 2
+5. If `tool_calls`:
+   - Parse tool name and arguments
+   - Check if approval needed
+   - Execute tool via `execute_tool()`
+   - Add result to `session.messages`
+   - Return to step 2
 6. If text response:
-   a. Add to session.messages
-   b. Return to user
-```
+   - Add to `session.messages`
+   - Return to user
+
+---
 
 ## Best Practices
 
 ### 1. Use Descriptive Tool Names
+
 ```python
-# Good
-def calculate_mortgage_payment(principal, rate, years):
+# Recommended
+def calculate_mortgage_payment(principal: float, rate: float, years: int) -> str:
     """Calculate monthly mortgage payment."""
     pass
 
-# Bad
-def calc(p, r, y):
+# Avoid
+def calc(p: float, r: float, y: int) -> str:
     """Do calculation."""
     pass
 ```
 
 ### 2. Provide Clear Descriptions
+
 The LLM uses descriptions to decide when to call tools:
+
 ```python
 # Good description
 "Calculate the monthly mortgage payment given principal amount, annual interest rate, and loan term in years"
 
-# Bad description
+# Poor description
 "Calculate payment"
 ```
 
 ### 3. Handle Errors Gracefully
+
 ```python
-def my_tool(arg):
+def my_tool(arg: str) -> str:
     try:
         result = do_something(arg)
         return {"success": True, "data": result}
@@ -366,27 +385,28 @@ def my_tool(arg):
 ```
 
 ### 4. Use Sessions for Context
+
 ```python
-# Multi-turn conversation
 session_id = "project_123"
 await agent.chat("Create a file called app.py", session_id)
 await agent.chat("Now add a main function to it", session_id)
-# Agent remembers the file from previous message
+# Agent remembers the file from the previous message
 ```
 
 ### 5. Enable Debug Mode During Development
+
 ```python
 agent = Agent(llm="ollama", debug=True)
 # Prints detailed logs of every decision and tool call
 ```
 
-## Next Steps
-
-- **Practice**: Try the [Examples](examples.md)
-- **Build**: Create [Custom Tools](custom-tools.md)
-- **Deep Dive**: Read the [API Reference](api-reference.md)
-- **Advanced**: Explore [MCP Integration](MCP_AGENT.md)
-
 ---
 
-**Questions?** Check the [FAQ](README.md#faq) or open an issue on GitHub.
+## Next Steps
+
+| Topic | Description |
+|:------|:------------|
+| [API Reference](api-reference) | Complete API documentation |
+| [Custom Tools](custom-tools) | Creating and registering custom tools |
+| [Examples](examples) | Practical code examples |
+| [MCP Integration](mcp-integration) | Advanced MCP usage |

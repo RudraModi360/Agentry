@@ -2,88 +2,86 @@ import os
 import json
 from datetime import datetime
 from typing import Dict, List, Any, Optional
+from .memory.storage import PersistentMemoryStore
 
 class SessionManager:
     """
-    Manages chat sessions with .toon format persistence.
-    Stores session history in scratchy/session_history/ folder.
+    Manages chat sessions using PersistentMemoryStore (SQLite).
+    Replaces legacy .toon file storage.
     """
     
-    def __init__(self, history_dir: str = None):
-        if history_dir is None:
-            # Default to scratchy/session_history
-            script_dir = os.path.dirname(os.path.abspath(__file__))
-            history_dir = os.path.join(script_dir, "session_history")
-        self.history_dir = history_dir
-        os.makedirs(self.history_dir, exist_ok=True)
-    
-    def _get_session_path(self, session_id: str) -> str:
-        """Get the file path for a session."""
-        return os.path.join(self.history_dir, f"{session_id}_chat.toon")
-    
-    def save_session(self, session_id: str, messages: List[Dict[str, Any]]):
-        """Save session messages to .toon file."""
-        session_path = self._get_session_path(session_id)
+    def __init__(self, storage: PersistentMemoryStore = None):
+        if storage is None:
+            self.storage = PersistentMemoryStore()
+        else:
+            self.storage = storage
+            
+    def save_session(self, session_id: str, messages: List[Dict[str, Any]], metadata: Dict[str, Any] = None):
+        """Save session messages to persistent storage."""
+        # Validation: Only store sessions that contain messages
+        if not messages:
+            return
+
+        # Ensure session exists in registry
+        has_messages = self.storage.load_state(session_id, "messages")
+        if not has_messages:
+            # If it's the first time saving messages, try to create the session entry
+            # This uses INSERT OR IGNORE, so it won't fail if session already exists
+            initial_meta = {"source": "scratchy_cli"}
+            if metadata:
+                initial_meta.update(metadata)
+            self.storage.create_session(session_id, metadata=initial_meta)
         
-        # Convert messages to TOON format
-        toon_data = {
-            "session_id": session_id,
-            "created_at": datetime.now().isoformat(),
-            "messages": messages
-        }
+        # Always update metadata if provided - this ensures provider/model info
+        # is saved even if session was pre-created (e.g., from /api/sessions endpoint)
+        if metadata:
+            self.storage.update_session_metadata(session_id, metadata)
+             
+        # Update activity timestamp
+        self.storage.update_session_activity(session_id)
         
-        # For now, we'll use JSON format with .toon extension
-        # A full TOON encoder would be more compact, but JSON is readable and compatible
-        with open(session_path, 'w', encoding='utf-8') as f:
-            json.dump(toon_data, f, indent=2)
-    
+        # Save messages as state
+        # We store the full message list. For massive histories, we might want to optimize later.
+        self.storage.save_state(session_id, "messages", messages)
+
     def load_session(self, session_id: str) -> Optional[List[Dict[str, Any]]]:
-        """Load session messages from .toon file."""
-        session_path = self._get_session_path(session_id)
-        
-        if not os.path.exists(session_path):
-            return None
-        
-        try:
-            with open(session_path, 'r', encoding='utf-8') as f:
-                toon_data = json.load(f)
-            return toon_data.get("messages", [])
-        except Exception as e:
-            print(f"Error loading session {session_id}: {e}")
-            return None
+        """Load session messages from persistent storage."""
+        messages = self.storage.load_state(session_id, "messages")
+        if messages is None:
+            return []
+        return messages
     
-    def list_sessions(self) -> List[Dict[str, str]]:
-        """List all available sessions."""
-        sessions = []
+    def list_sessions(self) -> List[Dict[str, Any]]:
+        """List all available sessions from the DB."""
+        sessions = self.storage.list_sessions()
         
-        for filename in os.listdir(self.history_dir):
-            if filename.endswith("_chat.toon"):
-                session_id = filename.replace("_chat.toon", "")
-                session_path = os.path.join(self.history_dir, filename)
-                
+        # Parse metadata to extract title
+        for s in sessions:
+            if s.get('metadata'):
                 try:
-                    with open(session_path, 'r', encoding='utf-8') as f:
-                        data = json.load(f)
-                    
-                    sessions.append({
-                        "id": session_id,
-                        "created_at": data.get("created_at", "Unknown"),
-                        "message_count": len(data.get("messages", []))
-                    })
+                    meta = json.loads(s['metadata'])
+                    s['title'] = meta.get('title')
+                    s['provider'] = meta.get('provider')
+                    s['model'] = meta.get('model')
+                    s['model_type'] = meta.get('model_type')
                 except:
-                    continue
+                    pass
         
-        return sorted(sessions, key=lambda x: x.get("created_at", ""), reverse=True)
+        # Filter out sessions with no messages
+        return [s for s in sessions if s.get('message_count', 0) > 0]
+
+    def update_session_title(self, session_id: str, title: str):
+        """Update the title of a session."""
+        self.storage.update_session_metadata(session_id, {"title": title})
     
     def delete_session(self, session_id: str) -> bool:
-        """Delete a session file."""
-        session_path = self._get_session_path(session_id)
-        
-        if os.path.exists(session_path):
-            os.remove(session_path)
-            return True
-        return False
+        """Delete a session."""
+        # This would require deleting from sessions, agent_state, memories tables.
+        # For now, let's just clear the messages state.
+        self.storage.save_state(session_id, "messages", [])
+        return True # Soft delete
     
     def session_exists(self, session_id: str) -> bool:
         """Check if a session exists."""
-        return os.path.exists(self._get_session_path(session_id))
+        # Check if messages state exists
+        return self.storage.load_state(session_id, "messages") is not None

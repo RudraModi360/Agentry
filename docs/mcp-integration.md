@@ -1,124 +1,200 @@
-# Multi-Context Prompting (MCP) Agent
+---
+layout: default
+title: MCP Integration
+nav_order: 6
+description: "Model Context Protocol integration for external tool servers"
+---
+
+# MCP Integration
+
+Connect Agentry to external tool servers using the Model Context Protocol (MCP).
+
+## Table of Contents
+
+1. [Overview](#overview)
+2. [MCP Configuration](#mcp-configuration)
+3. [Using MCP in Code](#using-mcp-in-code)
+4. [MCPAgent Class](#mcpagent-class)
+5. [Practical Examples](#practical-examples)
+6. [Available MCP Servers](#available-mcp-servers)
+7. [Interactive Commands](#interactive-commands)
+8. [Best Practices](#best-practices)
+9. [Comparison: Standard Agent vs MCPAgent](#comparison-standard-agent-vs-mcpagent)
+10. [Troubleshooting](#troubleshooting)
+11. [Next Steps](#next-steps)
+
+---
 
 ## Overview
 
-The **MCPAgent** is an enhanced AI agent implementation that supports **Multi-Context Prompting** with session management capabilities. This allows you to manage multiple concurrent conversations with isolated contexts, making it ideal for:
+The **Model Context Protocol (MCP)** is a standardized protocol for connecting AI agents to external tool servers. It allows you to:
 
-- **Multi-user applications** - Each user gets their own session
-- **Context switching** - Maintain different conversation contexts simultaneously
-- **Session persistence** - Track and manage conversation history per session
-- **Production deployments** - Built-in session timeout and cleanup mechanisms
+- Extend agent capabilities with external services
+- Share tools across multiple agents
+- Integrate with third-party MCP-compatible servers
+- Build modular, composable AI systems
 
-![MCP Integration Diagram](assets/mcp_integration_diagram.png)
-
----
-
-## Key Features
-
-### 🎯 Multi-Session Management
-- Create and manage multiple concurrent conversation sessions
-- Each session has isolated message history and context
-- Session metadata support for custom tracking
-- Automatic session timeout and cleanup
-
-### 🛠️ MCP-Compatible Tool Schema
-- Generate standardized tool definitions
-- Export tool configurations in MCP format
-- Tool safety classification (safe, moderate, dangerous)
-- Approval workflow integration
-
-### 🔄 Enhanced Callbacks
-- Session-aware callbacks for all events
-- Tool execution tracking per session
-- Session lifecycle events (created, destroyed)
-- Fine-grained control over agent behavior
-
-### 📊 Session Monitoring
-- List all active sessions
-- Get session summaries with metadata
-- Track message counts and activity timestamps
-- Export session statistics
+![MCP Architecture](assets/images/mcp-architecture.png)
 
 ---
 
-## Quick Start
+## MCP Configuration
+
+### Configuration File Structure
+
+Create an `mcp.json` file in your project root:
+
+```json
+{
+    "mcpServers": {
+        "server_name": {
+            "command": "executable",
+            "args": ["arg1", "arg2"],
+            "env": {
+                "ENV_VAR": "value"
+            }
+        }
+    }
+}
+```
+
+**Configuration Fields:**
+
+| Field | Type | Required | Description |
+|:------|:-----|:---------|:------------|
+| `mcpServers` | object | Yes | Container for server definitions |
+| `server_name` | string | Yes | Unique identifier for the server |
+| `command` | string | Yes | Executable command to run |
+| `args` | array | No | Command-line arguments |
+| `env` | object | No | Environment variables |
+
+---
+
+### Example Configurations
+
+#### Excel Server
+
+```json
+{
+    "mcpServers": {
+        "excel": {
+            "command": "npx",
+            "args": ["-y", "@modelcontextprotocol/server-excel"]
+        }
+    }
+}
+```
+
+#### Filesystem Server
+
+```json
+{
+    "mcpServers": {
+        "filesystem": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-filesystem",
+                "/path/to/allowed/directory"
+            ]
+        }
+    }
+}
+```
+
+#### Multiple Servers
+
+```json
+{
+    "mcpServers": {
+        "excel": {
+            "command": "npx",
+            "args": ["-y", "@modelcontextprotocol/server-excel"]
+        },
+        "filesystem": {
+            "command": "npx",
+            "args": ["-y", "@modelcontextprotocol/server-filesystem", "./data"]
+        },
+        "database": {
+            "command": "python",
+            "args": ["-m", "mcp_server_sqlite", "--db", "mydata.db"]
+        }
+    }
+}
+```
+
+---
+
+## Using MCP in Code
 
 ### Basic Usage
 
 ```python
 import asyncio
-from providers.ollama_provider import OllamaProvider
-from agents.agent_mcp import MCPAgent
+from agentry import Agent
 
 async def main():
-    # Initialize provider
-    provider = OllamaProvider(model="gpt-oss:20b-cloud")
+    agent = Agent(llm="ollama", model="llama3.2")
+    agent.load_default_tools()
     
-    # Create MCP agent
-    agent = MCPAgent(provider, debug=True)
+    # Connect to MCP servers
+    await agent.add_mcp_server("mcp.json")
     
-    # Create a session
-    agent.create_session("user_123")
-    
-    # Chat in the session
-    response = await agent.chat(
-        "Hello! What can you help me with?",
-        session_id="user_123"
-    )
-    
+    # Agent can now use MCP tools
+    response = await agent.chat("Read data from sales.xlsx and summarize it")
     print(response)
+    
+    # Clean up MCP connections
+    await agent.cleanup()
 
 asyncio.run(main())
 ```
 
-### Interactive Mode
+### Connecting Multiple Configuration Files
 
-Run the agent in MCP mode from the command line:
-
-```bash
-python src/main.py
-# Select mode: 2 (MCP Agent)
-# Select provider: 1 (Ollama)
+```python
+await agent.add_mcp_server("mcp_excel.json")
+await agent.add_mcp_server("mcp_database.json")
+await agent.add_mcp_server("mcp_custom.json")
 ```
 
 ---
 
-## Architecture
+## MCPAgent Class
 
-### ClientSession Class
+The `MCPAgent` class provides enhanced multi-session support for MCP-based applications.
 
-Each session is represented by a `ClientSession` object:
-
-```python
-class ClientSession:
-    session_id: str              # Unique session identifier
-    messages: List[Dict]         # Conversation history
-    created_at: datetime         # Session creation time
-    last_activity: datetime      # Last interaction time
-    metadata: Dict[str, Any]     # Custom metadata
-```
-
-### MCPAgent Class
-
-The main agent class with multi-context support:
+### Initialization
 
 ```python
-class MCPAgent:
-    provider: LLMProvider        # LLM provider (Ollama, Groq, Gemini)
-    sessions: Dict[str, ClientSession]  # Active sessions
-    max_iterations: int          # Max tool call iterations
-    session_timeout: int         # Session timeout in seconds
+from agentry.agents.agent_mcp import MCPAgent
+from agentry.providers import OllamaProvider
+
+provider = OllamaProvider(model="llama3.2")
+
+agent = MCPAgent(
+    provider=provider,
+    debug=True,
+    max_iterations=20,
+    session_timeout=3600
+)
 ```
+
+**Parameters:**
+
+| Parameter | Type | Default | Description |
+|:----------|:-----|:--------|:------------|
+| `provider` | LLMProvider | Required | LLM provider instance |
+| `system_message` | str | None | Default system message |
+| `debug` | bool | False | Enable debug output |
+| `max_iterations` | int | 20 | Maximum tool call iterations |
+| `session_timeout` | int | 3600 | Session timeout in seconds |
 
 ---
-
-## API Reference
 
 ### Session Management
 
-#### `create_session(session_id, system_message=None, metadata=None)`
-
-Create a new conversation session.
+#### Creating Sessions
 
 ```python
 agent.create_session(
@@ -128,20 +204,7 @@ agent.create_session(
 )
 ```
 
-**Parameters:**
-- `session_id` (str): Unique identifier for the session
-- `system_message` (str, optional): Custom system prompt
-- `metadata` (dict, optional): Custom metadata to attach
-
-**Returns:** `ClientSession` object
-
-**Raises:** `ValueError` if session already exists
-
----
-
-#### `get_session(session_id)`
-
-Retrieve an existing session.
+#### Getting Sessions
 
 ```python
 session = agent.get_session("customer_123")
@@ -149,25 +212,13 @@ if session:
     print(f"Session has {len(session.messages)} messages")
 ```
 
-**Returns:** `ClientSession` or `None` if not found
-
----
-
-#### `destroy_session(session_id)`
-
-Remove a session and clean up resources.
+#### Destroying Sessions
 
 ```python
 agent.destroy_session("customer_123")
 ```
 
-**Returns:** `bool` - True if session was destroyed, False if not found
-
----
-
-#### `list_sessions()`
-
-Get summaries of all active sessions.
+#### Listing All Sessions
 
 ```python
 sessions = agent.list_sessions()
@@ -175,28 +226,16 @@ for session in sessions:
     print(f"{session['session_id']}: {session['message_count']} messages")
 ```
 
-**Returns:** List of session summary dictionaries
-
----
-
-#### `cleanup_stale_sessions()`
-
-Remove sessions that have exceeded the timeout period.
+#### Cleaning Up Stale Sessions
 
 ```python
 cleaned = agent.cleanup_stale_sessions()
 print(f"Cleaned up {cleaned} stale sessions")
 ```
 
-**Returns:** `int` - Number of sessions cleaned up
-
 ---
 
 ### Chat Operations
-
-#### `chat(user_input, session_id="default", create_if_missing=True)`
-
-Process a message within a specific session.
 
 ```python
 response = await agent.chat(
@@ -207,83 +246,42 @@ response = await agent.chat(
 ```
 
 **Parameters:**
-- `user_input` (str): The user's message
-- `session_id` (str): Session identifier (default: "default")
-- `create_if_missing` (bool): Create session if it doesn't exist
 
-**Returns:** `str` - Final assistant response or `None` if max iterations reached
-
----
-
-#### `get_session_history(session_id)`
-
-Get the full message history for a session.
-
-```python
-history = agent.get_session_history("user_123")
-for msg in history:
-    print(f"{msg['role']}: {msg['content']}")
-```
-
-**Returns:** List of message dictionaries or `None`
+| Parameter | Type | Default | Description |
+|:----------|:-----|:--------|:------------|
+| `user_input` | str | Required | User message |
+| `session_id` | str | "default" | Session identifier |
+| `create_if_missing` | bool | True | Create session if it doesn't exist |
 
 ---
 
-#### `clear_session_history(session_id, keep_system=True)`
+### Tool Schema Export
 
-Clear conversation history for a session.
-
-```python
-agent.clear_session_history("user_123", keep_system=True)
-```
-
-**Parameters:**
-- `session_id` (str): Session to clear
-- `keep_system` (bool): Whether to keep system message
-
-**Returns:** `bool` - Success status
-
----
-
-### Tool Schema Management
-
-#### `list_mcp_tools_schema()` (static method)
-
-Generate MCP-compatible tool schemas.
+Export MCP-compatible tool schemas:
 
 ```python
+# Get tool schemas
 tools = MCPAgent.list_mcp_tools_schema()
 for tool in tools:
     print(f"{tool['name']}: {tool['description']}")
     print(f"  Dangerous: {tool['dangerous']}")
     print(f"  Requires Approval: {tool['requires_approval']}")
-```
 
-**Returns:** List of tool definition dictionaries
-
----
-
-#### `export_mcp_config(filepath="mcp_tools.json")`
-
-Export MCP configuration to a JSON file.
-
-```python
+# Export to file
 agent.export_mcp_config("config/mcp_tools.json")
 ```
 
-**Parameters:**
-- `filepath` (str): Output file path
+**Export Format:**
 
-**Output Format:**
 ```json
 {
-  "version": "1.0",
-  "tools": [...],
-  "metadata": {
-    "provider": "OllamaProvider",
-    "max_iterations": 20,
-    "session_timeout": 3600
-  }
+    "version": "1.0",
+    "tools": [...],
+    "metadata": {
+        "provider": "OllamaProvider",
+        "max_iterations": 20,
+        "session_timeout": 3600
+    }
 }
 ```
 
@@ -291,9 +289,7 @@ agent.export_mcp_config("config/mcp_tools.json")
 
 ### Callbacks
 
-#### `set_tool_callbacks(...)`
-
-Set callbacks for tool execution events.
+#### Tool Callbacks
 
 ```python
 def on_tool_start(session_id, tool_name, args):
@@ -316,11 +312,7 @@ agent.set_tool_callbacks(
 )
 ```
 
----
-
-#### `set_session_callbacks(...)`
-
-Set callbacks for session lifecycle events.
+#### Session Callbacks
 
 ```python
 def on_session_created(session_id):
@@ -337,35 +329,35 @@ agent.set_session_callbacks(
 
 ---
 
-## Usage Examples
+## Practical Examples
 
-### Example 1: Multi-User Chat Application
+### Multi-User Application
 
 ```python
 import asyncio
-from agents.agent_mcp import MCPAgent
-from providers.groq_provider import GroqProvider
+from agentry.agents.agent_mcp import MCPAgent
+from agentry.providers import GroqProvider
 
 async def handle_user_message(agent, user_id, message):
-    """Handle a message from a specific user."""
     session_id = f"user_{user_id}"
     
-    # Create session if first message
     if not agent.get_session(session_id):
         agent.create_session(
             session_id,
             metadata={"user_id": user_id}
         )
     
-    # Process message
     response = await agent.chat(message, session_id=session_id)
     return response
 
 async def main():
-    provider = GroqProvider(model="llama-3.3-70b-versatile")
+    provider = GroqProvider(
+        model="llama-3.3-70b-versatile",
+        api_key="your-api-key"
+    )
     agent = MCPAgent(provider, session_timeout=1800)
     
-    # Simulate multiple users
+    # Handle messages from multiple users concurrently
     users = ["alice", "bob", "charlie"]
     
     tasks = [
@@ -381,16 +373,14 @@ async def main():
 asyncio.run(main())
 ```
 
----
-
-### Example 2: Context Switching
+### Context Switching
 
 ```python
-async def demo_context_switching():
-    provider = OllamaProvider(model="gpt-oss:20b-cloud")
+async def context_switching():
+    provider = OllamaProvider(model="llama3.2")
     agent = MCPAgent(provider)
     
-    # Create different contexts
+    # Create specialized contexts
     agent.create_session(
         "coding",
         system_message="You are a senior software engineer."
@@ -401,33 +391,17 @@ async def demo_context_switching():
         system_message="You are a creative writing assistant."
     )
     
-    # Switch between contexts
-    await agent.chat(
-        "Write a Python function for quicksort",
-        session_id="coding"
-    )
-    
-    await agent.chat(
-        "Write a short poem about the ocean",
-        session_id="writing"
-    )
-    
-    # Each session maintains its own context
-    await agent.chat(
-        "Now optimize it for performance",
-        session_id="coding"  # Continues coding conversation
-    )
+    # Switch between contexts seamlessly
+    await agent.chat("Write a Python quicksort function", session_id="coding")
+    await agent.chat("Write a haiku about programming", session_id="writing")
+    await agent.chat("Now optimize the function", session_id="coding")
 ```
 
----
-
-### Example 3: Session Monitoring
+### Session Monitoring
 
 ```python
 async def monitor_sessions(agent):
-    """Periodically monitor and clean up sessions."""
     while True:
-        # List active sessions
         sessions = agent.list_sessions()
         print(f"Active sessions: {len(sessions)}")
         
@@ -436,7 +410,6 @@ async def monitor_sessions(agent):
                   f"{session['message_count']} messages, "
                   f"last active: {session['last_activity']}")
         
-        # Clean up stale sessions
         cleaned = agent.cleanup_stale_sessions()
         if cleaned > 0:
             print(f"Cleaned up {cleaned} stale sessions")
@@ -446,86 +419,77 @@ async def monitor_sessions(agent):
 
 ---
 
+## Available MCP Servers
+
+### Official Servers
+
+| Server | Package | Description |
+|:-------|:--------|:------------|
+| Excel | `@modelcontextprotocol/server-excel` | Read/write Excel files |
+| Filesystem | `@modelcontextprotocol/server-filesystem` | File operations |
+| SQLite | `mcp-server-sqlite` | SQLite database access |
+| PostgreSQL | `mcp-server-postgres` | PostgreSQL database access |
+
+### Installation
+
+Most MCP servers can be installed via npx:
+
+```bash
+npx -y @modelcontextprotocol/server-excel
+```
+
+Or installed globally:
+
+```bash
+npm install -g @modelcontextprotocol/server-excel
+```
+
+---
+
 ## Interactive Commands
 
-When running in MCP mode, the following commands are available:
+When running in MCP mode via CLI, these commands are available:
 
 | Command | Description | Example |
-|---------|-------------|---------|
+|:--------|:------------|:--------|
 | `/new <id>` | Create new session | `/new customer_123` |
 | `/switch <id>` | Switch to session | `/switch customer_123` |
 | `/list` | List all sessions | `/list` |
 | `/clear` | Clear current session | `/clear` |
 | `/export [file]` | Export MCP config | `/export tools.json` |
 | `/tools` | Show available tools | `/tools` |
-| `/exit` or `/quit` | Exit the agent | `/quit` |
-
----
-
-## Configuration
-
-### Initialization Parameters
-
-```python
-agent = MCPAgent(
-    provider=provider,              # LLM provider instance
-    system_message="...",           # Default system message
-    debug=False,                    # Enable debug output
-    max_iterations=20,              # Max tool call iterations
-    session_timeout=3600            # Session timeout (seconds)
-)
-```
-
-### Environment Variables
-
-The MCP agent uses the same environment variables as the standard agent:
-
-```bash
-# For Groq
-GROQ_API_KEY=your_groq_key
-
-# For Gemini
-GEMINI_API_KEY=your_gemini_key
-
-# For Ollama (optional)
-OLLAMA_HOST=http://localhost:11434
-```
+| `/exit` | Exit the agent | `/exit` |
 
 ---
 
 ## Best Practices
 
-### 1. Session ID Naming
-
-Use meaningful, unique session IDs:
+### Session ID Naming
 
 ```python
-# Good
+# Good - descriptive and unique
 session_id = f"user_{user_id}_{timestamp}"
 session_id = f"customer_support_{ticket_id}"
 
-# Avoid
+# Avoid - not unique or meaningful
 session_id = "session1"
 session_id = str(random.randint(1, 1000))
 ```
 
-### 2. Session Cleanup
-
-Regularly clean up stale sessions in production:
+### Session Cleanup
 
 ```python
-# Run cleanup periodically
 async def cleanup_task(agent):
     while True:
         await asyncio.sleep(600)  # Every 10 minutes
         agent.cleanup_stale_sessions()
 ```
 
-### 3. Metadata Usage
-
-Use metadata for tracking and analytics:
+### Metadata Usage
 
 ```python
+from datetime import datetime
+
 agent.create_session(
     session_id,
     metadata={
@@ -537,124 +501,78 @@ agent.create_session(
 )
 ```
 
-### 4. Error Handling
-
-Always handle session-related errors:
+### Error Handling
 
 ```python
 try:
     response = await agent.chat(message, session_id=session_id)
 except ValueError as e:
     print(f"Session error: {e}")
-    # Create session or handle appropriately
+    agent.create_session(session_id)
+    response = await agent.chat(message, session_id=session_id)
 ```
 
 ---
 
-## Comparison: Standard vs MCP Agent
+## Comparison: Standard Agent vs MCPAgent
 
-| Feature | Standard Agent | MCP Agent |
-|---------|---------------|-----------|
-| **Sessions** | Single | Multiple concurrent |
-| **Context Isolation** | ❌ | ✅ |
-| **Session Management** | ❌ | ✅ |
-| **Metadata Support** | ❌ | ✅ |
-| **Session Timeout** | ❌ | ✅ |
-| **Multi-User Support** | ❌ | ✅ |
-| **Tool Schema Export** | ❌ | ✅ |
-| **Session Callbacks** | ❌ | ✅ |
+| Feature | Standard Agent | MCPAgent |
+|:--------|:--------------|:---------|
+| Sessions | Single | Multiple concurrent |
+| Context Isolation | No | Yes |
+| Session Management | Basic | Full lifecycle |
+| Metadata Support | No | Yes |
+| Session Timeout | No | Yes |
+| Multi-User Support | No | Yes |
+| Tool Schema Export | No | Yes |
+| Session Callbacks | No | Yes |
 
 ---
 
 ## Troubleshooting
 
-### Session Not Found
+### MCP Server Won't Start
 
-```python
-# Always check if session exists
-session = agent.get_session(session_id)
-if not session:
-    agent.create_session(session_id)
+```bash
+# Check if npx is installed
+npx --version
+
+# Test the server manually
+npx -y @modelcontextprotocol/server-excel
+
+# Check mcp.json syntax
+cat mcp.json | python -m json.tool
 ```
 
-### Memory Issues with Many Sessions
+### MCP Tools Not Available
 
 ```python
-# Set aggressive timeout for high-traffic scenarios
-agent = MCPAgent(
-    provider,
-    session_timeout=600  # 10 minutes
-)
+# Verify connection
+await agent.add_mcp_server("mcp.json")
 
-# Run cleanup more frequently
+# Check loaded tools
+tools = await agent.get_all_tools()
+mcp_tools = [t for t in tools if 'mcp' in t.get('source', '')]
+print(mcp_tools)
+```
+
+### Memory Issues
+
+```python
+# Use aggressive timeout
+agent = MCPAgent(provider, session_timeout=600)
+
+# Run cleanup frequently
 agent.cleanup_stale_sessions()
 ```
 
-### Tool Approval Blocking
-
-```python
-# For automated scenarios, skip approval
-agent.on_tool_approval = None  # Auto-approve all tools
-
-# Or implement custom logic
-async def smart_approval(session_id, tool_name, args):
-    # Auto-approve safe tools
-    if tool_name in SAFE_TOOLS:
-        return True
-    # Require approval for others
-    return await ask_user_approval(session_id, tool_name, args)
-```
-
 ---
 
-## Advanced Topics
+## Next Steps
 
-### Custom Session Storage
-
-Extend `ClientSession` for database persistence:
-
-```python
-class DatabaseSession(ClientSession):
-    def __init__(self, session_id, system_message, db_connection):
-        super().__init__(session_id, system_message)
-        self.db = db_connection
-    
-    def add_message(self, message):
-        super().add_message(message)
-        self.db.save_message(self.session_id, message)
-```
-
-### Session Migration
-
-Move sessions between agent instances:
-
-```python
-# Export session
-session = agent1.get_session("user_123")
-session_data = {
-    "session_id": session.session_id,
-    "messages": session.messages,
-    "metadata": session.metadata
-}
-
-# Import to new agent
-agent2.create_session(
-    session_data["session_id"],
-    metadata=session_data["metadata"]
-)
-for msg in session_data["messages"]:
-    agent2.sessions[session_data["session_id"]].add_message(msg)
-```
-
----
-
-## See Also
-
-- [Standard Agent Documentation](../README.md#-usage)
-- [Tool Development Guide](../README.md#-configuration)
-- [Provider Setup](../README.md#-prerequisites)
-- [Examples](../examples/mcp_agent_example.py)
-
----
-
-**Built with ❤️ for the Agentry Framework**
+| Topic | Description |
+|:------|:------------|
+| [Custom Tools](custom-tools) | Creating your own tools |
+| [Session Management](session-management) | Advanced session handling |
+| [Examples](examples) | MCP-related code examples |
+| [API Reference](api-reference) | Complete API documentation |

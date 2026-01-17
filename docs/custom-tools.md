@@ -1,17 +1,30 @@
+---
+layout: default
+title: Custom Tools
+nav_order: 5
+description: "Creating and registering custom tools for your AI agents"
+---
+
 # Custom Tools
 
-Learn how to create and integrate custom tools into your Scratchy agents.
+Learn how to create and integrate custom tools into your Agentry agents.
 
 ## Table of Contents
 
-- [What are Custom Tools?](#what-are-custom-tools)
-- [Quick Start](#quick-start)
-- [Tool Registration Methods](#tool-registration-methods)
-- [Best Practices](#best-practices)
-- [Advanced Patterns](#advanced-patterns)
-- [Tool Approval System](#tool-approval-system)
+1. [Overview](#overview)
+2. [Quick Start](#quick-start)
+3. [Tool Registration Methods](#tool-registration-methods)
+4. [Tool Schema Structure](#tool-schema-structure)
+5. [Best Practices](#best-practices)
+6. [Advanced Patterns](#advanced-patterns)
+7. [Tool Approval System](#tool-approval-system)
+8. [Real-World Examples](#real-world-examples)
+9. [Testing Tools](#testing-tools)
+10. [Debugging Tools](#debugging-tools)
 
-## What are Custom Tools?
+---
+
+## Overview
 
 Custom tools are Python functions that extend your agent's capabilities beyond the built-in tools. They allow your agent to:
 
@@ -21,18 +34,20 @@ Custom tools are Python functions that extend your agent's capabilities beyond t
 - Integrate with third-party services
 - Execute domain-specific logic
 
+---
+
 ## Quick Start
 
-### Simple Function to Tool
+### Simple Function Registration
 
 ```python
-from scratchy import Agent
+from agentry import Agent
 
 def greet_user(name: str, language: str = "english") -> str:
     """Greet a user in the specified language."""
     greetings = {
         "english": f"Hello, {name}!",
-        "spanish": f"¡Hola, {name}!",
+        "spanish": f"Hola, {name}!",
         "french": f"Bonjour, {name}!",
         "german": f"Guten Tag, {name}!"
     }
@@ -42,21 +57,24 @@ def greet_user(name: str, language: str = "english") -> str:
 agent = Agent(llm="ollama")
 agent.register_tool_from_function(greet_user)
 
-# Use it
-await agent.chat("Greet Alice in Spanish")
+# Agent can now use the tool
+response = await agent.chat("Greet Alice in Spanish")
 ```
 
-That's it! The agent can now use your function.
+---
 
 ## Tool Registration Methods
 
-### Method 1: Auto-Registration (Recommended)
+### Method 1: Automatic Registration (Recommended)
 
-The easiest way - Scratchy automatically generates the schema from your function:
+Agentry automatically generates the tool schema from your function's signature and docstring:
 
 ```python
 def calculate_tip(bill_amount: float, tip_percentage: float = 15.0) -> str:
-    """Calculate tip amount and total bill."""
+    """Calculate tip amount and total bill.
+    
+    Use this when the user wants to calculate a tip for a restaurant bill.
+    """
     tip = bill_amount * (tip_percentage / 100)
     total = bill_amount + tip
     return f"Tip: ${tip:.2f}, Total: ${total:.2f}"
@@ -64,36 +82,40 @@ def calculate_tip(bill_amount: float, tip_percentage: float = 15.0) -> str:
 agent.register_tool_from_function(calculate_tip)
 ```
 
-**Requirements:**
-- Type hints for parameters
-- Docstring describing what the function does
-- Return type annotation
+**Requirements for Automatic Registration:**
+
+| Requirement | Description |
+|:------------|:------------|
+| Type hints | All parameters must have type annotations |
+| Docstring | Function must have a docstring describing its purpose |
+| Return type | Function should return a string |
+
+---
 
 ### Method 2: Manual Schema Definition
 
-For more control over the schema:
+For complete control over the tool schema:
 
 ```python
 def my_custom_tool(arg1, arg2):
-    """Do something custom."""
+    """Process two arguments."""
     return f"Processed {arg1} and {arg2}"
 
-# Define schema manually
 schema = {
     "type": "function",
     "function": {
         "name": "my_custom_tool",
-        "description": "Processes two arguments and returns a result",
+        "description": "Processes two arguments and returns a formatted result",
         "parameters": {
             "type": "object",
             "properties": {
                 "arg1": {
                     "type": "string",
-                    "description": "The first argument"
+                    "description": "The first argument to process"
                 },
                 "arg2": {
                     "type": "string",
-                    "description": "The second argument"
+                    "description": "The second argument to process"
                 }
             },
             "required": ["arg1", "arg2"]
@@ -104,18 +126,20 @@ schema = {
 agent.add_custom_tool(schema, my_custom_tool)
 ```
 
+---
+
 ### Method 3: Class-Based Tools
 
-For complex tools with state:
+For tools requiring persistent state:
 
 ```python
 class DatabaseTool:
-    def __init__(self, connection_string):
+    def __init__(self, connection_string: str):
         self.conn = connection_string
     
     def query(self, sql: str) -> str:
         """Execute a SQL query and return results."""
-        # Your database logic here
+        # Database logic here
         return f"Results from: {sql}"
 
 # Create instance
@@ -125,19 +149,40 @@ db_tool = DatabaseTool("postgresql://localhost/mydb")
 agent.register_tool_from_function(db_tool.query)
 ```
 
+---
+
+## Tool Schema Structure
+
+Every tool has a schema that tells the LLM:
+
+![Tool Schema Structure](assets/images/tool-schema-structure.png)
+
+**Schema Fields:**
+
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `type` | string | Always "function" |
+| `function.name` | string | Tool identifier |
+| `function.description` | string | When to use the tool |
+| `function.parameters` | object | Input parameters definition |
+| `parameters.properties` | object | Individual parameter definitions |
+| `parameters.required` | array | List of required parameter names |
+
+---
+
 ## Best Practices
 
 ### 1. Write Clear Docstrings
 
-The docstring is crucial - it tells the LLM when to use your tool:
+The docstring is crucial—it tells the LLM when to use your tool:
 
 ```python
-# ❌ Bad
+# Poor: Vague description
 def calc(x, y):
     """Calculate."""
     return x + y
 
-# ✅ Good
+# Good: Clear and specific
 def calculate_compound_interest(
     principal: float,
     rate: float,
@@ -154,7 +199,7 @@ def calculate_compound_interest(
     return f"Final amount: ${amount:.2f}"
 ```
 
-### 2. Use Type Hints
+### 2. Use Complete Type Hints
 
 Type hints help generate accurate schemas:
 
@@ -165,34 +210,38 @@ def search_products(
     query: str,
     category: Optional[str] = None,
     max_results: int = 10
-) -> List[Dict[str, str]]:
+) -> str:
     """Search for products in the catalog."""
     # Implementation
-    return [{"name": "Product 1", "price": "$10"}]
+    return "Found 5 products matching query"
 ```
+
+**Type Mapping:**
+
+| Python Type | JSON Schema Type |
+|:------------|:-----------------|
+| `str` | `string` |
+| `int` | `integer` |
+| `float` | `number` |
+| `bool` | `boolean` |
+| `List[str]` | `array` |
+| `Optional[str]` | `string` (not required) |
 
 ### 3. Return Structured Data
 
 Return data in a format the LLM can understand:
 
 ```python
-# ✅ Good - Clear structure
-def get_user_info(user_id: str) -> str:
-    """Get user information by ID."""
-    user = fetch_user(user_id)
-    return f"Name: {user.name}, Email: {user.email}, Status: {user.status}"
-
-# ✅ Also good - JSON string
 import json
 
-def get_user_info_json(user_id: str) -> str:
-    """Get user information as JSON."""
+def get_user_info(user_id: str) -> str:
+    """Get user information by ID."""
     user = fetch_user(user_id)
     return json.dumps({
         "name": user.name,
         "email": user.email,
         "status": user.status
-    })
+    }, indent=2)
 ```
 
 ### 4. Handle Errors Gracefully
@@ -200,13 +249,15 @@ def get_user_info_json(user_id: str) -> str:
 Always catch and return errors as strings:
 
 ```python
+import requests
+
 def fetch_weather(city: str) -> str:
     """Get weather information for a city."""
     try:
         response = requests.get(f"https://api.weather.com/{city}")
         response.raise_for_status()
         data = response.json()
-        return f"Temperature: {data['temp']}°C, Conditions: {data['conditions']}"
+        return f"Temperature: {data['temp']}C, Conditions: {data['conditions']}"
     except requests.RequestException as e:
         return f"Error fetching weather: {str(e)}"
     except KeyError as e:
@@ -218,16 +269,15 @@ def fetch_weather(city: str) -> str:
 Each tool should do one thing well:
 
 ```python
-# ❌ Bad - Too many responsibilities
+# Poor: Too many responsibilities
 def do_everything(action, data):
     """Do various things."""
     if action == "email":
         send_email(data)
     elif action == "sms":
         send_sms(data)
-    # ...
 
-# ✅ Good - Separate, focused tools
+# Good: Separate, focused tools
 def send_email(to: str, subject: str, body: str) -> str:
     """Send an email to a recipient."""
     # Email logic
@@ -239,6 +289,8 @@ def send_sms(phone: str, message: str) -> str:
     return "SMS sent successfully"
 ```
 
+---
+
 ## Advanced Patterns
 
 ### Async Tools
@@ -247,18 +299,16 @@ For I/O-bound operations:
 
 ```python
 import aiohttp
+import asyncio
 
 async def fetch_url_async(url: str) -> str:
     """Fetch content from a URL asynchronously."""
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
             content = await response.text()
-            return content[:500]  # Return first 500 chars
+            return content[:500]
 
-# Note: Currently, Scratchy's execute_tool is sync
-# You'll need to wrap async functions:
-import asyncio
-
+# Wrapper for sync execution
 def fetch_url(url: str) -> str:
     """Fetch content from a URL."""
     return asyncio.run(fetch_url_async(url))
@@ -276,6 +326,7 @@ class APITool:
     
     def call_api(self, endpoint: str, method: str = "GET") -> str:
         """Call an API endpoint."""
+        import requests
         url = f"{self.base_url}/{endpoint}"
         headers = {"Authorization": f"Bearer {self.api_key}"}
         
@@ -294,45 +345,23 @@ from functools import lru_cache
 
 @lru_cache(maxsize=100)
 def expensive_calculation(n: int) -> str:
-    """Perform an expensive calculation (cached)."""
-    # Expensive operation
+    """Perform an expensive calculation (results are cached)."""
     result = sum(i**2 for i in range(n))
     return f"Result: {result}"
 
 agent.register_tool_from_function(expensive_calculation)
 ```
 
-### Tools with Side Effects
-
-```python
-def create_backup(directory: str) -> str:
-    """Create a backup of the specified directory."""
-    import shutil
-    import datetime
-    
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    backup_name = f"backup_{timestamp}.zip"
-    
-    try:
-        shutil.make_archive(
-            f"backups/{backup_name}",
-            'zip',
-            directory
-        )
-        return f"Backup created: {backup_name}"
-    except Exception as e:
-        return f"Backup failed: {str(e)}"
-
-agent.register_tool_from_function(create_backup)
-```
+---
 
 ## Tool Approval System
 
-For dangerous operations, you can require user approval:
+For dangerous operations, Agentry can require user approval.
 
 ### Built-in Dangerous Tools
 
-Scratchy automatically requires approval for:
+These tools automatically require approval:
+
 - `delete_file`
 - `run_shell_command`
 - `execute_python`
@@ -340,7 +369,7 @@ Scratchy automatically requires approval for:
 ### Custom Approval
 
 ```python
-from scratchy.tools import APPROVAL_REQUIRED_TOOLS
+from agentry.tools import APPROVAL_REQUIRED_TOOLS
 
 # Add your tool to the approval list
 APPROVAL_REQUIRED_TOOLS.add("send_email")
@@ -361,6 +390,8 @@ async def approval_callback(session_id, tool_name, args):
 agent.set_callbacks(on_tool_approval=approval_callback)
 ```
 
+---
+
 ## Real-World Examples
 
 ### Slack Integration
@@ -375,10 +406,7 @@ class SlackTool:
     def send_message(self, channel: str, message: str) -> str:
         """Send a message to a Slack channel."""
         try:
-            response = self.client.chat_postMessage(
-                channel=channel,
-                text=message
-            )
+            self.client.chat_postMessage(channel=channel, text=message)
             return f"Message sent to #{channel}"
         except Exception as e:
             return f"Error: {str(e)}"
@@ -392,20 +420,15 @@ class SlackTool:
         except Exception as e:
             return f"Error: {str(e)}"
 
-# Setup
 slack = SlackTool(token="xoxb-your-token")
 agent.register_tool_from_function(slack.send_message)
 agent.register_tool_from_function(slack.list_channels)
-
-# Use
-await agent.chat("Send 'Hello team!' to the #general channel")
 ```
 
 ### Database Operations
 
 ```python
 import sqlite3
-from typing import List
 
 class DatabaseTool:
     def __init__(self, db_path: str):
@@ -426,75 +449,52 @@ class DatabaseTool:
             return "\n".join([str(row) for row in results])
         except Exception as e:
             return f"Database error: {str(e)}"
-    
-    def insert_record(self, table: str, data: dict) -> str:
-        """Insert a record into a table."""
-        try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            columns = ', '.join(data.keys())
-            placeholders = ', '.join(['?' for _ in data])
-            sql = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
-            
-            cursor.execute(sql, list(data.values()))
-            conn.commit()
-            conn.close()
-            
-            return f"Record inserted into {table}"
-        except Exception as e:
-            return f"Insert error: {str(e)}"
 
-# Setup
 db = DatabaseTool("myapp.db")
 agent.register_tool_from_function(db.execute_query)
-agent.register_tool_from_function(db.insert_record)
 ```
 
-### Email Tool
+### HTTP API Client
 
 ```python
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import requests
 
-class EmailTool:
-    def __init__(self, smtp_server: str, smtp_port: int, username: str, password: str):
-        self.smtp_server = smtp_server
-        self.smtp_port = smtp_port
-        self.username = username
-        self.password = password
+def api_request(
+    url: str,
+    method: str = "GET",
+    headers: str = "{}",
+    body: str = "{}"
+) -> str:
+    """Make an HTTP request to an API endpoint.
     
-    def send_email(self, to: str, subject: str, body: str) -> str:
-        """Send an email to a recipient."""
-        try:
-            msg = MIMEMultipart()
-            msg['From'] = self.username
-            msg['To'] = to
-            msg['Subject'] = subject
-            msg.attach(MIMEText(body, 'plain'))
-            
-            server = smtplib.SMTP(self.smtp_server, self.smtp_port)
-            server.starttls()
-            server.login(self.username, self.password)
-            server.send_message(msg)
-            server.quit()
-            
-            return f"Email sent to {to}"
-        except Exception as e:
-            return f"Email error: {str(e)}"
+    Use this to interact with REST APIs. Headers and body should be JSON strings.
+    """
+    import json
+    
+    try:
+        parsed_headers = json.loads(headers)
+        parsed_body = json.loads(body) if body != "{}" else None
+        
+        response = requests.request(
+            method=method.upper(),
+            url=url,
+            headers=parsed_headers,
+            json=parsed_body
+        )
+        
+        return json.dumps({
+            "status_code": response.status_code,
+            "body": response.text[:1000]
+        }, indent=2)
+    except Exception as e:
+        return f"Request error: {str(e)}"
 
-# Setup
-email = EmailTool(
-    smtp_server="smtp.gmail.com",
-    smtp_port=587,
-    username="your-email@gmail.com",
-    password="your-app-password"
-)
-agent.register_tool_from_function(email.send_email)
+agent.register_tool_from_function(api_request)
 ```
 
-## Testing Your Tools
+---
+
+## Testing Tools
 
 ### Unit Testing
 
@@ -508,10 +508,10 @@ def test_calculate_tip():
 
 def test_greet_user():
     result = greet_user("Alice", "spanish")
-    assert "¡Hola, Alice!" in result
+    assert "Hola, Alice!" in result
 ```
 
-### Integration Testing with Agent
+### Integration Testing
 
 ```python
 async def test_tool_with_agent():
@@ -519,8 +519,10 @@ async def test_tool_with_agent():
     agent.register_tool_from_function(calculate_tip)
     
     response = await agent.chat("Calculate a 20% tip on a $50 bill")
-    assert "$10.00" in response  # Expected tip amount
+    assert "$10.00" in response
 ```
+
+---
 
 ## Debugging Tools
 
@@ -550,12 +552,12 @@ def my_tool(arg: str) -> str:
 
 ```python
 def on_tool_start(session_id, tool_name, args):
-    print(f"🔧 Starting: {tool_name}")
-    print(f"   Arguments: {args}")
+    print(f"Starting: {tool_name}")
+    print(f"Arguments: {args}")
 
 def on_tool_end(session_id, tool_name, result):
-    print(f"✅ Completed: {tool_name}")
-    print(f"   Result: {result}")
+    print(f"Completed: {tool_name}")
+    print(f"Result: {result}")
 
 agent.set_callbacks(
     on_tool_start=on_tool_start,
@@ -563,12 +565,12 @@ agent.set_callbacks(
 )
 ```
 
-## Next Steps
-
-- Check out [Examples](examples.md) for more use cases
-- Learn about [MCP Integration](MCP_AGENT.md) for external tools
-- Read the [API Reference](api-reference.md) for detailed documentation
-
 ---
 
-**Questions?** Open an issue on [GitHub](https://github.com/RudraModi360/Agentry/issues)
+## Next Steps
+
+| Topic | Description |
+|:------|:------------|
+| [Examples](examples) | More practical examples |
+| [MCP Integration](mcp-integration) | External tool servers |
+| [API Reference](api-reference) | Complete API documentation |
