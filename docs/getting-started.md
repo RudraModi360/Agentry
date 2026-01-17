@@ -185,6 +185,40 @@ Run the agent:
 python my_first_agent.py
 ```
 
+### Running in Jupyter Notebook
+
+If you're using Jupyter Notebook or Google Colab, use `await` directly instead of `asyncio.run()`:
+
+```python
+from agentry import Agent
+
+# Create agent
+agent = Agent(llm="groq", model="llama-3.3-70b-versatile", api_key="your-key")
+agent.load_default_tools()
+
+# Use await directly in Jupyter cells
+response = await agent.chat("Hello!")
+print(response)
+```
+
+Alternatively, use `nest_asyncio` to allow nested event loops:
+
+```python
+import nest_asyncio
+nest_asyncio.apply()
+
+import asyncio
+from agentry import Agent
+
+async def main():
+    agent = Agent(llm="groq", model="llama-3.3-70b-versatile", api_key="your-key")
+    agent.load_default_tools()
+    response = await agent.chat("Hello!")
+    print(response)
+
+asyncio.run(main())
+```
+
 ---
 
 ## Using Different Providers

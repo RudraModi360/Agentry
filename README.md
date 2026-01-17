@@ -39,6 +39,8 @@ async def main():
 asyncio.run(main())
 ```
 
+> **Jupyter/Colab Users:** Use `await agent.chat(...)` directly instead of `asyncio.run()`. See [full docs](https://rudramodi360.github.io/Agentry/getting-started#running-in-jupyter-notebook) for details.
+
 ### Launch CLI
 
 ```bash
