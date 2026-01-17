@@ -1,12 +1,10 @@
 # Agentry Documentation Configuration
-# Using Just the Docs theme for proper navigation
-
 title: Agentry
 description: A Modular AI Agent Framework for Python
-baseurl: /Agentry
-url: https://rudramodi360.github.io
+baseurl: ""
+url: "https://rudramodi360.github.io"
 
-# Theme configuration
+# Use remote theme for GitHub Pages compatibility
 remote_theme: just-the-docs/just-the-docs@v0.10.0
 
 # Color scheme
@@ -62,6 +60,7 @@ kramdown:
 
 # Plugins
 plugins:
+  - jekyll-remote-theme
   - jekyll-seo-tag
   - jekyll-include-cache
 
