@@ -67,7 +67,7 @@
     /* Solid background matching navbar */
     background: var(--bg-secondary);
     /* Match navbar border */
-    border-bottom: 1px solid var(--card-border);
+    border-bottom: none;
     z-index: 10;
 }
 

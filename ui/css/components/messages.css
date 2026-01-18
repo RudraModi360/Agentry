@@ -7,9 +7,10 @@
 /* ==================== Messages Container ==================== */
 
 .messages-container {
-    flex: 1;
+    height: 100vh;
+    width: 100%;
     overflow-y: auto;
-    padding: var(--space-4) 0;
+    padding: 80px 0 120px 0;
     scroll-behavior: smooth;
 }
 
@@ -29,8 +30,11 @@
 .message {
     display: flex;
     gap: var(--space-3);
-    padding: var(--space-4) 42px;
+    padding: var(--space-4) 0;
+    padding-right: 56px;
+    /* Reserve space for send button alignment */
     max-width: 800px;
+    /* Match input container width */
     margin: 0 auto;
 }
 
@@ -78,9 +82,10 @@
 /* ==================== Message Content ==================== */
 
 .message-content {
-    flex: 0 1 auto;
+    flex: 1;
+    /* Take full available width */
     min-width: 0;
-    max-width: 85%;
+    max-width: 100%;
 }
 
 /* User message content - right aligned with bubble styling */
@@ -123,6 +128,8 @@
     line-height: var(--leading-relaxed);
     word-wrap: break-word;
     overflow-wrap: break-word;
+    font-size: 1rem;
+    /* Unified font size */
 }
 
 /* User message text - ensure proper alignment */
@@ -465,6 +472,8 @@
     width: 100%;
     border-collapse: collapse;
     font-size: var(--text-sm);
+    table-layout: fixed;
+    /* Force table to fit */
 }
 
 .message-text th,
@@ -472,6 +481,11 @@
     padding: var(--space-2) var(--space-3);
     text-align: left;
     border: 1px solid var(--card-border);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    /* Ensure text wraps */
+    word-break: break-word;
+    white-space: normal;
 }
 
 .message-text th {
@@ -767,6 +781,58 @@
 }
 
 @keyframes typing-bounce {
+
+    0%,
+    80%,
+    100% {
+        transform: scale(0);
+    }
+
+    40% {
+        transform: scale(1);
+    }
+}
+
+/* ==================== Processing Indicator (Restored) ==================== */
+.processing-indicator {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) 0;
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+}
+
+.processing-text {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.processing-dots {
+    display: inline-flex;
+    align-items: center;
+}
+
+.processing-dot {
+    width: 3px;
+    height: 3px;
+    margin: 0 1px;
+    background-color: currentColor;
+    border-radius: 50%;
+    animation: processing-dot-bounce 1.4s infinite ease-in-out both;
+}
+
+.processing-dot:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.processing-dot:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+@keyframes processing-dot-bounce {
 
     0%,
     80%,

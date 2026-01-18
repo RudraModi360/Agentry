@@ -275,9 +275,14 @@ class Agent:
         """Set callbacks: on_tool_start, on_tool_end, on_tool_approval, on_final_message, on_token."""
         self.callbacks.update(kwargs)
 
-    async def chat(self, user_input: Union[str, List[Dict[str, Any]]], session_id: str = "default") -> str:
+    async def chat(self, user_input: Union[str, List[Dict[str, Any]]], session_id: str = "default", callbacks: Dict[str, Callable] = None) -> str:
         """Main chat loop."""
         from agentry.providers.utils import extract_content
+        
+        # Merge ephemeral callbacks
+        active_callbacks = self.callbacks.copy()
+        if callbacks:
+             active_callbacks.update(callbacks)
 
         session = self.get_session(session_id)
         
@@ -328,7 +333,7 @@ class Agent:
                         llm_messages.append(m_copy)
 
                 # Use streaming if on_token callback is set and provider supports it
-                on_token = self.callbacks.get("on_token")
+                on_token = active_callbacks.get("on_token")
                 if on_token and hasattr(self.provider, 'chat_stream'):
                     response = await self.provider.chat_stream(llm_messages, tools=all_tools, on_token=on_token)
                 else:
@@ -380,8 +385,8 @@ class Agent:
                             error_msg = f"I encountered an error from the model: {str(fallback_error)}. Please try again."
                             if self.debug: 
                                 print(f"[Agent] All retries failed: {fallback_error}")
-                            if self.callbacks["on_final_message"]:
-                                self.callbacks["on_final_message"](session_id, error_msg)
+                            if active_callbacks["on_final_message"]:
+                                active_callbacks["on_final_message"](session_id, error_msg)
                             return error_msg
                 else:
                     # Different error
@@ -453,8 +458,8 @@ class Agent:
                 # Note: Memory storage is now handled at WebSocket level
                 # via backend.services.simplemem_middleware
 
-                if self.callbacks["on_final_message"]:
-                    self.callbacks["on_final_message"](session_id, content)
+                if active_callbacks["on_final_message"]:
+                    active_callbacks["on_final_message"](session_id, content)
                 return content
 
             # 4. Execute Tools
@@ -470,8 +475,8 @@ class Agent:
                     if isinstance(args, str): args = json.loads(args)
                     tc_id = getattr(tc, 'id', None)
 
-                if self.callbacks["on_tool_start"]:
-                    callback = self.callbacks["on_tool_start"]
+                if active_callbacks["on_tool_start"]:
+                    callback = active_callbacks["on_tool_start"]
                     if inspect.iscoroutinefunction(callback):
                         await callback(session_id, name, args)
                     else:
@@ -480,8 +485,8 @@ class Agent:
                 # Approval
                 approved = True
                 if self._requires_approval(name):
-                    if self.callbacks["on_tool_approval"]:
-                        approval_result = await self.callbacks["on_tool_approval"](session_id, name, args)
+                    if active_callbacks["on_tool_approval"]:
+                        approval_result = await active_callbacks["on_tool_approval"](session_id, name, args)
                         
                         if isinstance(approval_result, dict):
                             # User modified arguments
@@ -499,8 +504,8 @@ class Agent:
                 else:
                     result = await self._execute_tool(name, args, session_id)
 
-                if self.callbacks["on_tool_end"]:
-                    callback = self.callbacks["on_tool_end"]
+                if active_callbacks["on_tool_end"]:
+                    callback = active_callbacks["on_tool_end"]
                     if inspect.iscoroutinefunction(callback):
                         await callback(session_id, name, result)
                     else:

@@ -16,7 +16,6 @@ from scratchy.mcp_client import MCPClientManager
 # from scratchy.user_profile_manager import UserProfileManager
 from scratchy.memory.storage import PersistentMemoryStore
 from scratchy.memory.middleware import MemoryMiddleware
-from scratchy.memory.vfs import VirtualFileSystem
 
 class AgentSession:
     """Represents a conversation session."""
@@ -26,7 +25,7 @@ class AgentSession:
         self.created_at = datetime.now()
         self.last_activity = datetime.now()
         self.metadata: Dict[str, Any] = {}
-        self.files: Dict[str, str] = {} # VFS: Filename -> Content
+        self.metadata: Dict[str, Any] = {}
     
     def add_message(self, message: Dict[str, Any]):
         self.messages.append(message)
@@ -100,8 +99,7 @@ class Agent:
         from scratchy.memory.context_middleware import ContextMiddleware
         self.context_middleware = ContextMiddleware(self.provider, token_threshold=100000)
         
-        # Virtual File System
-        self.vfs = VirtualFileSystem(self.memory_store)
+        
         
         # Tool support flag - set when load_default_tools is called
         self.supports_tools = False
@@ -298,9 +296,6 @@ class Agent:
             # Ensure session exists in persistent memory store
             self.memory_store.create_session(session_id)
             
-            # Load VFS files
-            self.sessions[session_id].files = self.vfs.load_session_files(session_id)
-                
         return self.sessions[session_id]
 
     def clear_session(self, session_id: str = "default"):

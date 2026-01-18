@@ -63,12 +63,12 @@
 
     /* ==================== Semantic Colors (Light Mode) ==================== */
 
-    /* Backgrounds */
-    --bg-primary: var(--color-neutral-50);
-    --bg-secondary: var(--color-neutral-100);
-    --bg-tertiary: var(--color-neutral-100);
+    /* Backgrounds - Refined Contrast */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --bg-tertiary: #f1f3f5;
     --bg-elevated: #ffffff;
-    --bg-overlay: rgba(0, 0, 0, 0.5);
+    --bg-overlay: rgba(0, 0, 0, 0.4);
 
     /* Text */
     --text-primary: var(--color-neutral-950);
@@ -323,20 +323,21 @@
 /* ==================== Dark Theme ==================== */
 
 [data-theme="dark"] {
-    /* Backgrounds - ChatGPT-style contrast */
-    /* Main canvas (darkest) */
-    --bg-primary: #0d0d0d;
-    /* Sidebar & Navbar (slightly lighter - visible contrast) */
+    /* Backgrounds - ChatGPT-Style Professional Contrast */
+    /* Main canvas: Lighter dark gray for the message areas */
+    --bg-primary: #212121;
+    /* Sidebar: Darker gray for the persistent left menu */
     --bg-secondary: #171717;
+    /* Headers & Navigation: Matching sidebar for unified chrome */
     --bg-tertiary: #171717;
-    /* Elevated elements */
-    --bg-elevated: #212121;
+    /* Elevated elements: Surface Slate for tooltips/popups */
+    --bg-elevated: #2f2f2f;
     --bg-overlay: rgba(0, 0, 0, 0.7);
 
-    /* Text */
+    /* Text - High Readability */
     --text-primary: #ececec;
-    --text-secondary: #9b9b9b;
-    --text-muted: #666666;
+    --text-secondary: #b4b4b4;
+    --text-muted: #8e8e8e;
     --text-inverted: #0d0d0d;
 
     /* Borders */
@@ -344,8 +345,8 @@
     --border-strong: rgba(255, 255, 255, 0.15);
 
     /* Cards & Components */
-    --card-bg: rgba(33, 33, 33, 0.9);
-    --card-border: rgba(255, 255, 255, 0.08);
+    --card-bg: rgba(47, 47, 47, 0.4);
+    --card-border: rgba(255, 255, 255, 0.1);
     --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
     --card-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
 
@@ -356,11 +357,11 @@
     --accent-light: rgba(163, 163, 163, 0.15);
     --accent-glow: rgba(163, 163, 163, 0.5);
 
-    /* Input - Slightly elevated dark */
-    --input-bg: #2f2f2f;
-    --input-border: rgba(255, 255, 255, 0.15);
-    --input-focus-ring: rgba(163, 163, 163, 0.25);
-    --input-placeholder: #666666;
+    /* Input - Integrated look */
+    --input-bg: transparent;
+    --input-border: rgba(255, 255, 255, 0.2);
+    --input-focus-ring: rgba(236, 236, 236, 0.1);
+    --input-placeholder: #8e8e8e;
 
     /* Legacy Compatibility Aliases for Dark Theme */
     --dark-bg: var(--bg-primary);
