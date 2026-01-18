@@ -64,9 +64,8 @@
     align-items: center;
     position: sticky;
     top: 0;
-    /* Match navbar background */
-    background: rgba(18, 18, 23, 0.8);
-    backdrop-filter: blur(12px);
+    /* Solid background matching navbar */
+    background: var(--bg-secondary);
     /* Match navbar border */
     border-bottom: 1px solid var(--card-border);
     z-index: 10;
@@ -572,14 +571,15 @@
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.03);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    cursor: default;
+    cursor: pointer !important;
     position: relative;
     width: 100%;
 }
 
 .footer-compact-item:hover {
-    background: rgba(255, 255, 255, 0.07);
-    border-color: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    transform: translateY(-2px);
 }
 
 .footer-icon-box {
@@ -700,14 +700,15 @@
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.03);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    cursor: default;
+    cursor: pointer !important;
     position: relative;
     width: 100%;
 }
 
 .footer-compact-item:hover {
-    background: rgba(255, 255, 255, 0.07);
-    border-color: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    transform: translateY(-2px);
 }
 
 .footer-icon-box {

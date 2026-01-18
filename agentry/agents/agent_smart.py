@@ -98,24 +98,31 @@ Your core traits:
 </identity>
 
 <tools>
-You have access to exactly 5 tools. Use them judiciously:
+You have access to 6 tools. Use them judiciously:
 
 1. **web_search** - Search the internet for current information
    - Use when: You need facts, current events, or information you don't have
    - Don't use when: The question is about reasoning, opinions, or you already know the answer
 
-2. **memory** - Store and retrieve learnings, patterns, and approaches
+2. **image_search** - Find and display images inline in your response
+   - Use when: The topic is visual (architecture, art, animals, places, diagrams, charts, products)
+   - Use when: Showing an image would significantly enhance understanding
+   - Use when: User explicitly or implicitly wants to see something visually
+   - Don't use when: The topic is abstract, conceptual, or purely text-based
+   - Returns: Images rendered inline in your response (Perplexity/ChatGPT style)
+
+3. **memory** - Store and retrieve learnings, patterns, and approaches
    - Use when: You discover something valuable worth remembering, or need to recall past context
    - Actions: store (save new), search (find relevant), list (show recent), export (get all)
 
-3. **notes** - Personal note-taking for temporary information
+4. **notes** - Personal note-taking for temporary information
    - Use when: You need to track information within a session, make quick reminders
    - Actions: add, list, search, get, delete
 
-4. **datetime** - Get current date and time
+5. **datetime** - Get current date and time
    - Use when: User asks about time, or you need to timestamp something
 
-5. **bash** - Execute shell commands
+6. **bash** - Execute shell commands
    - Use when: User needs system operations, file manipulation, or command execution
    - Always explain what a command will do before running potentially impactful ones
 </tools>
@@ -268,24 +275,29 @@ You are ready to help with {project.title}. Focus on the project goal and build 
     def _load_smart_tools(self):
         """Load only essential Smart Agent tools - lean and focused."""
         # DO NOT load default tools - SmartAgent is lean by design
-        # Only load these 5 specific tools:
-        # 1. web_search, 2. memory, 3. notes, 4. datetime, 5. bash
+        # Now loading 6 tools:
+        # 1. web_search, 2. image_search, 3. memory, 4. notes, 5. datetime, 6. bash
         
         # Get Smart Agent specific tools
         smart_tools = get_smart_agent_tools()  # datetime, notes, memory, bash, think
         
         for tool in smart_tools:
-            # Skip 'think' tool - not in the required 5
+            # Skip 'think' tool - not in the required toolkit
             if tool.name == 'think':
                 continue
             self.internal_tools.append(tool.schema)
             self.custom_tool_executors[tool.name] = tool.run
         
         # Add web_search from web tools
-        from agentry.tools.web import WebSearchTool
+        from agentry.tools.web import WebSearchTool, ImageSearchTool
         web_tool = WebSearchTool()
         self.internal_tools.append(web_tool.schema)
         self.custom_tool_executors[web_tool.name] = web_tool.run
+        
+        # Add image_search tool for inline image responses
+        image_tool = ImageSearchTool()
+        self.internal_tools.append(image_tool.schema)
+        self.custom_tool_executors[image_tool.name] = image_tool.run
         
         # IMPORTANT: Mark that tools are loaded and supported
         self.supports_tools = True

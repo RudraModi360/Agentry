@@ -19,6 +19,13 @@ class WebSearchParams(BaseModel):
 class UrlFetchParams(BaseModel):
     url: str = Field(..., description='URL to fetch content from.')
 
+class ImageSearchParams(BaseModel):
+    query: str = Field(..., description='Search query for images.')
+    num_images: int = Field(
+        3, 
+        description='Number of images to return (1-10). Default is 3.'
+    )
+
 # --- Helpers ---
 
 def extract_text_from_html(html: str, max_chars: int = 3000) -> str:
@@ -245,3 +252,97 @@ class UrlFetchTool(BaseTool):
             return ToolResult(success=True, content=content)
         else:
             return ToolResult(success=False, error=f"Failed to fetch or parse URL: {url}")
+
+
+class ImageSearchTool(BaseTool):
+    """
+    Search for images using Google Custom Search API.
+    Returns images that can be rendered inline in chat messages.
+    Similar to Perplexity, ChatGPT, and Gemini Pro's image search capabilities.
+    """
+    name = "image_search"
+    description = (
+        "Search for images related to the query. Use this when the user asks about visual topics, "
+        "wants to see examples, diagrams, charts, photos, or when showing an image would enhance "
+        "the response. Returns image URLs with thumbnails and titles for inline rendering."
+    )
+    args_schema = ImageSearchParams
+
+    def _google_image_search(self, query: str, num_results: int = 3) -> List[Dict[str, str]]:
+        """Perform a Google Custom Search for images."""
+        api_key = os.environ.get("GOOGLE_API_KEY")
+        cx = os.environ.get("GOOGLE_CX")
+        
+        if not api_key or not cx:
+            raise ValueError("GOOGLE_API_KEY and GOOGLE_CX environment variables must be set for image search")
+        
+        url = "https://www.googleapis.com/customsearch/v1"
+        params = {
+            "key": api_key,
+            "cx": cx,
+            "q": query,
+            "searchType": "image",
+            "num": min(max(1, num_results), 10),
+            "safe": "active"
+        }
+
+        response = requests.get(url, params=params, timeout=15)
+        data = response.json()
+
+        if "error" in data:
+            raise Exception(f"Google API Error: {data['error'].get('message', 'Unknown error')}")
+
+        if "items" not in data:
+            return []
+
+        results = []
+        for item in data["items"]:
+            image_info = {
+                "title": item.get("title", ""),
+                "url": item.get("link", ""),
+                "thumbnail": item.get("image", {}).get("thumbnailLink", item.get("link", "")),
+                "width": item.get("image", {}).get("width", 0),
+                "height": item.get("image", {}).get("height", 0),
+                "context_url": item.get("image", {}).get("contextLink", ""),
+                "source": item.get("displayLink", "")
+            }
+            results.append(image_info)
+        
+        return results
+
+    def run(self, query: str = None, num_images: int = 3, **kwargs) -> ToolResult:
+        if not query:
+            return ToolResult(success=False, error="Search query is required")
+        
+        try:
+            results = self._google_image_search(query, num_images)
+            
+            if not results:
+                return ToolResult(
+                    success=True, 
+                    content=f"No images found for '{query}'."
+                )
+            
+            # Format results as special markdown with image tags
+            # The UI will parse these and render inline images
+            lines = [f"📷 **Image Search Results for \"{query}\"**\n"]
+            lines.append('<div class="inline-images-gallery">')
+            
+            for i, img in enumerate(results, 1):
+                # Create a structured format that the UI can parse
+                lines.append(f'<figure class="inline-image-item" data-index="{i}" onclick="window.open(\'{img["url"]}\', \'_blank\')">')
+                lines.append(f'<img src="{img["thumbnail"]}" data-full-url="{img["url"]}" alt="{img["title"]}" loading="lazy" />')
+                lines.append(f'<figcaption>')
+                lines.append(f'<span class="image-title">{img["title"][:50]}{"..." if len(img["title"]) > 50 else ""}</span>')
+                if img["source"]:
+                    lines.append(f'<span class="image-source">{img["source"]}</span>')
+                lines.append(f'</figcaption>')
+                lines.append(f'</figure>')
+            
+            lines.append('</div>')
+            
+            return ToolResult(success=True, content="\n".join(lines))
+
+        except Exception as e:
+            return ToolResult(success=False, error=f"Image search failed: {e}")
+

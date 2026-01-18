@@ -497,6 +497,57 @@
         </div>
     </div>
 
+    <!-- Project Management Modal -->
+    <div class="projects-modal-overlay" id="projects-modal-overlay">
+        <div class="projects-modal">
+            <div class="projects-modal-header">
+                <div class="projects-modal-title">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <h2>Projects & Workspaces</h2>
+                </div>
+                <button class="projects-modal-close" id="projects-modal-close-btn">×</button>
+            </div>
+            <div class="projects-modal-content">
+                <div class="projects-list-header">
+                    <h3>Your Active Projects</h3>
+                    <button class="create-project-btn" id="create-project-btn">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        New Project
+                    </button>
+                </div>
+
+                <!-- Create Project Form (Hidden by default) -->
+                <div id="create-project-form" class="create-project-form" style="display: none;">
+                    <div class="form-group">
+                        <label for="project-title">Project Title</label>
+                        <input type="text" id="project-title" placeholder="e.g. My Awesome App">
+                    </div>
+                    <div class="form-group">
+                        <label for="project-goal">Primary Goal</label>
+                        <textarea id="project-goal" placeholder="What are we building?"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn-cancel" id="cancel-project-btn">Cancel</button>
+                        <button class="btn-save" id="save-project-btn">Create Project</button>
+                    </div>
+                </div>
+
+                <div class="projects-list" id="projects-list">
+                    <div class="loading-projects">
+                        <div class="spinner-small"></div>
+                        <span>Loading projects...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- User Profile Modal -->
     <div class="profile-modal-overlay" id="profile-modal-overlay">
         <div class="profile-modal">
@@ -513,7 +564,7 @@
                 <div class="profile-tab-content active" id="tab-profile-info">
                     <div class="profile-field-group">
                         <label>Username</label>
-                        <input type="text" id="profile-username" readonly>
+                        <input type="text" id="profile-username" placeholder="Change your username">
                     </div>
                     <div class="profile-field-group">
                         <label>Email Address</label>
@@ -546,6 +597,7 @@
         </div>
     </div>
 
+
     <!-- JavaScript Files (load order matters) -->
     <!-- Environment config - set AGENTRY_API_URL for production -->
     <script src="js/env.js?v=2"></script>
@@ -560,6 +612,7 @@
     <script src="js/components/websocket.js"></script>
     <script src="js/components/modals.js"></script>
     <script src="js/components/profile-modal.js"></script>
+    <script src="js/components/projects.js"></script>
     <script src="js/components/tools.js"></script>
     <script src="js/components/sessions.js"></script>
     <script src="js/components/upload.js"></script>
@@ -568,6 +621,7 @@
     <script src="js/components/model-selector.js"></script>
     <script src="js/components/input-editor.js"></script>
     <script src="js/main.js"></script>
+
 </body>
 
 </html>

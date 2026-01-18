@@ -22,11 +22,11 @@ from backend.services.auth_service import AuthService
 from backend.services.agent_cache import agent_cache
 from backend.services.provider_service import ProviderService
 
-from scratchy.providers.ollama_provider import OllamaProvider
-from scratchy.providers.groq_provider import GroqProvider
-from scratchy.providers.gemini_provider import GeminiProvider
-from scratchy.providers.azure_provider import AzureProvider
-from scratchy.providers.capability_detector import detect_model_capabilities, get_known_capability
+from agentry.providers.ollama_provider import OllamaProvider
+from agentry.providers.groq_provider import GroqProvider
+from agentry.providers.gemini_provider import GeminiProvider
+from agentry.providers.azure_provider import AzureProvider
+from agentry.providers.capability_detector import detect_model_capabilities, get_known_capability
 
 router = APIRouter()
 
@@ -311,7 +311,7 @@ async def configure_provider(config: ProviderConfig, user: Dict = Depends(get_cu
         raise HTTPException(status_code=400, detail=f"Failed to initialize provider: {str(e)}")
     
     # 2. Get capabilities using hardcoded lookup (instant) or provider defaults
-    from scratchy.providers.capability_detector import get_known_capability, ModelCapabilities
+    from agentry.providers.capability_detector import get_known_capability, ModelCapabilities
     
     known_caps = get_known_capability(config.model)
     if known_caps:
@@ -498,7 +498,7 @@ async def switch_provider_quick(config: ProviderConfig, user: Dict = Depends(get
         raise HTTPException(status_code=400, detail=f"Failed to create provider: {str(e)}")
     
     # 5. Get capabilities FAST using hardcoded lookup (no async detection)
-    from scratchy.providers.capability_detector import get_known_capability, ModelCapabilities
+    from agentry.providers.capability_detector import get_known_capability, ModelCapabilities
     
     known_caps = get_known_capability(config.model)
     if known_caps:
@@ -535,7 +535,7 @@ async def switch_provider_quick(config: ProviderConfig, user: Dict = Depends(get
     if user_id in agent_cache:
         del agent_cache[user_id]
     
-    from scratchy import Agent
+    from agentry import Agent
     agent = Agent(llm=provider, debug=True, capabilities=capabilities)
     
     # Load default tools if supported (fast - no DB or MCP)

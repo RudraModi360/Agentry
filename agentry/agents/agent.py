@@ -6,14 +6,16 @@ from datetime import datetime
 from agentry.providers.base import LLMProvider
 from agentry.tools import ALL_TOOL_SCHEMAS, DANGEROUS_TOOLS, APPROVAL_REQUIRED_TOOLS, SAFE_TOOLS, execute_tool
 from agentry.config.prompts import get_system_prompt
+import logging
+
+logger = logging.getLogger(__name__)
 
 import sys
 import os
 from agentry.mcp_client import MCPClientManager
-# from agentry.user_profile_manager import UserProfileManager
-from agentry.memory.storage import PersistentMemoryStore
-from agentry.memory.middleware import MemoryMiddleware
-from agentry.memory.vfs import VirtualFileSystem
+# SimpleMem integration replaces old VFS, storage, and middleware
+# Memory is now handled via backend.services.simplemem_middleware
+# Old imports removed: PersistentMemoryStore, SimpleMemMiddleware, VirtualFileSystem, ContextMiddleware
 
 class AgentSession:
     """Represents a conversation session."""
@@ -90,16 +92,9 @@ class Agent:
         # Session Management
         self.sessions: Dict[str, AgentSession] = {}
         
-        # Memory Middleware
-        self.memory_store = PersistentMemoryStore() # Default to sqlite in user_data
-        self.memory_middleware = MemoryMiddleware(self.provider, self.memory_store)
-        
-        # Context Middleware (Token Management)
-        from agentry.memory.context_middleware import ContextMiddleware
-        self.context_middleware = ContextMiddleware(self.provider, token_threshold=100000)
-        
-        # Virtual File System
-        self.vfs = VirtualFileSystem(self.memory_store)
+        # SimpleMem integration is now handled at the WebSocket level
+        # via backend.services.simplemem_middleware
+        # This provides non-blocking memory operations and per-user isolation
         
         # Tool support flag - set when load_default_tools is called
         self.supports_tools = False
@@ -113,11 +108,6 @@ class Agent:
             "on_final_message": None,
             "on_token": None  # For streaming token updates
         }
-
-        # Initialize UserProfileManager
-        # Removed in favor of MemoryMiddleware
-        # profile_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "user_data", "user_profile.md")
-        # self.user_profile_manager = UserProfileManager(profile_path, self.provider)
 
     def _create_provider(self, provider_name: str, model: str, api_key: str, endpoint: str = None) -> LLMProvider:
         """Factory method to create providers from strings."""
@@ -148,10 +138,10 @@ class Agent:
     def load_default_tools(self):
         """Load all built-in tools (Filesystem, Web, Execution)."""
         self.internal_tools.extend(ALL_TOOL_SCHEMAS)
-        self.internal_tools.extend(self.vfs.get_tool_schemas())
+        # VFS tools removed - SimpleMem handles memory now
         self.supports_tools = True  # Mark that tools are loaded and supported
         if self.debug:
-            print(f"[Agent] Loaded {len(ALL_TOOL_SCHEMAS)} default tools + VFS tools.")
+            print(f"[Agent] Loaded {len(ALL_TOOL_SCHEMAS)} default tools.")
     
     def disable_tools(self, reason: str = None):
         """Disable tool support for this agent."""
@@ -273,12 +263,6 @@ class Agent:
         """Get or create a session."""
         if session_id not in self.sessions:
             self.sessions[session_id] = AgentSession(session_id, self.default_system_message)
-            # Ensure session exists in persistent memory store
-            self.memory_store.create_session(session_id)
-            
-            # Load VFS files
-            self.sessions[session_id].files = self.vfs.load_session_files(session_id)
-                
         return self.sessions[session_id]
 
     def clear_session(self, session_id: str = "default"):
@@ -297,44 +281,13 @@ class Agent:
 
         session = self.get_session(session_id)
         
-        # --- Context Management (Middleware) ---
-        # Check token limit and summarize if necessary
-        session.messages = await self.context_middleware.manage_context(session.messages)
-
         # --- Handle Multimodal Input ---
         text_for_memory = user_input
         if isinstance(user_input, list):
             text_for_memory, _ = extract_content(user_input)
 
-        # --- Memory Middleware: Process User Input ---
-        # Extract insights and retrieve relevant memories
-        if self.debug: print(f"[Agent] Middleware: Processing user input for memory...")
-        relevant_memories = await self.memory_middleware.process_user_input(session_id, text_for_memory)
-        
-        # Format memories for injection
-        memory_context = ""
-        if relevant_memories:
-            memory_context = "\n\n=== Relevant Memories ===\n"
-            for mem in relevant_memories:
-                memory_context += f"- [{mem['type']}] {mem['content']}\n"
-
-        # Inject Memories into System Message
-        
-        # Construct dynamic system message
-        base_system = self.default_system_message
-        full_system_msg = base_system
-        
-        if memory_context:
-            full_system_msg += memory_context
-            
-        # Update system message in history
-        if session.messages and session.messages[0]['role'] == 'system':
-            session.messages[0]['content'] = full_system_msg
-        else:
-            session.messages.insert(0, {"role": "system", "content": full_system_msg})
-
-        # Note: We NO LONGER update profile on every turn to reduce latency/overhead.
-        # We only update on truncation (above) or explicit session end.
+        # Note: Memory context retrieval is now handled at WebSocket level
+        # via backend.services.simplemem_middleware for non-blocking operation
 
         session.add_message({"role": "user", "content": user_input})
         
@@ -497,12 +450,8 @@ class Agent:
 
             # 3. Handle Final Response
             if not tool_calls:
-                # --- Memory Middleware: Process Agent Output ---
-                if self.debug: print(f"[Agent] Middleware: Processing agent output for memory...")
-                # We use create_task to not block the response, or await if we want to ensure it's saved?
-                # The user wants it "added to memory", implying it's part of the flow.
-                # Awaiting ensures it's saved before the next turn.
-                await self.memory_middleware.process_agent_output(session_id, content)
+                # Note: Memory storage is now handled at WebSocket level
+                # via backend.services.simplemem_middleware
 
                 if self.callbacks["on_final_message"]:
                     self.callbacks["on_final_message"](session_id, content)
@@ -576,10 +525,6 @@ class Agent:
         if name in SAFE_TOOLS:
             return False
             
-        # VFS tools are internal memory operations, so they are safe
-        if name in ["write_virtual_file", "read_virtual_file", "list_virtual_files"]:
-            return False
-            
         # Exempt 'computer' tool calls from approval (Claude Computer Use)
         if name == 'computer':
             return False
@@ -588,28 +533,46 @@ class Agent:
         # This covers DANGEROUS_TOOLS, APPROVAL_REQUIRED_TOOLS, and any unknown MCP/Custom tools
         return True
 
+
+
     async def _execute_tool(self, name: str, args: Dict, session_id: str) -> Any:
-        # 0. VFS Tools
-        if name in ["write_virtual_file", "read_virtual_file", "list_virtual_files"]:
-            session = self.get_session(session_id)
-            return self.vfs.execute_tool(session.files, session_id, name, args)
-
-        # 1. Custom Tools
-        if name in self.custom_tool_executors:
-            return self.custom_tool_executors[name](**args)
+        # Logging Tool Execution
+        logger.info(f"Tool Execution Start: {name} | Args: {args}")
         
-        # 2. MCP Tools
-        for manager in self.mcp_managers:
-            if name in manager.server_tools_map:
-                try:
-                    return await manager.execute_tool(name, args)
-                except Exception as e:
-                    return {"error": str(e)}
+        start_time = datetime.now()
+        result = None
+        
+        try:
+            # 1. Custom Tools
+            if name in self.custom_tool_executors:
+                result = self.custom_tool_executors[name](**args)
+            
+            # 2. MCP Tools
+            elif any(name in manager.server_tools_map for manager in self.mcp_managers):
+                 for manager in self.mcp_managers:
+                    if name in manager.server_tools_map:
+                        try:
+                            result = await manager.execute_tool(name, args)
+                            break
+                        except Exception as e:
+                            logger.error(f"Tool Error (MCP): {name} | Error: {e}")
+                            return {"error": str(e)}
+                            
+            # 3. Internal Default Tools
+            else:
+                result = execute_tool(name, args)
 
-        # 3. Internal Default Tools
-        return execute_tool(name, args)
+            duration = (datetime.now() - start_time).total_seconds()
+            logger.info(f"Tool Execution End: {name} | Duration: {duration:.4f}s | Result: {str(result)[:200]}...") # Truncate result for logs
+            return result
+
+        except Exception as e:
+            duration = (datetime.now() - start_time).total_seconds()
+            logger.error(f"Tool Execution Failed: {name} | Duration: {duration:.4f}s | Error: {e}")
+            return {"error": f"Tool execution failed: {str(e)}"}
 
     async def cleanup(self):
+        """Clean up resources."""
         for manager in self.mcp_managers:
             await manager.cleanup()
 

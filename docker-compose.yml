@@ -1,0 +1,86 @@
+# Agentry Local Development Stack
+# Runs Backend, Ollama (embeddings), and optionally Frontend
+# Usage: docker-compose up -d
+
+version: '3.8'
+
+services:
+  # ============================================
+  # Backend (FastAPI)
+  # ============================================
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: agentry-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - AGENTRY_MODE=local
+      - OLLAMA_URL=http://ollama:11434
+      - LANCEDB_PATH=/data/lancedb
+      - DEBUG=true
+    volumes:
+      - ./ui/media:/app/ui/media
+      - lancedb-data:/data/lancedb
+      - ./ui/scratchy_users.db:/app/ui/scratchy_users.db
+    depends_on:
+      ollama:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ============================================
+  # Ollama (Embedding Service)
+  # ============================================
+  ollama:
+    build:
+      context: ./docker/ollama
+      dockerfile: Dockerfile
+    container_name: agentry-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2'
+
+  # ============================================
+  # Frontend (Static file server - optional)
+  # In production, use Vercel instead
+  # ============================================
+  frontend:
+    image: nginx:alpine
+    container_name: agentry-frontend
+    ports:
+      - "3000:80"
+    volumes:
+      - ./ui:/usr/share/nginx/html:ro
+      - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+    profiles:
+      - with-frontend
+
+volumes:
+  lancedb-data:
+    name: agentry-lancedb
+  ollama-models:
+    name: agentry-ollama-models
+
+networks:
+  default:
+    name: agentry-network

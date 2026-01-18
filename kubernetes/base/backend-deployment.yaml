@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agentry-backend
+  labels:
+    app: agentry-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: agentry-backend
+  template:
+    metadata:
+      labels:
+        app: agentry-backend
+    spec:
+      containers:
+      - name: backend
+        image: agentryacr.azurecr.io/agentry-backend:latest
+        ports:
+        - containerPort: 8000
+        envFrom:
+        - configMapRef:
+            name: agentry-config
+        - secretRef:
+            name: agentry-secrets
+        env:
+        - name: OLLAMA_URL
+          value: "http://ollama-service:11434"
+        - name: LANCEDB_PATH
+          value: "/data/lancedb"
+        - name: AGENTRY_MODE
+          value: "cloud"
+        volumeMounts:
+        - name: lancedb-storage
+          mountPath: /data/lancedb
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      volumes:
+      - name: lancedb-storage
+        persistentVolumeClaim:
+          claimName: lancedb-pvc

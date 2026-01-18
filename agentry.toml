@@ -1,0 +1,56 @@
+# Agentry Configuration File
+# Copy to agentry.toml and customize for your deployment
+# Environment variables take precedence over this file
+
+[deployment]
+# Mode: "local" or "cloud"
+mode = "local"
+environment = "development"
+debug = false
+
+[server]
+host = "0.0.0.0"
+port = 8000
+frontend_port = 3000
+cors_origins = [
+    "http://localhost:8000",
+    "http://localhost:3000",
+    "http://127.0.0.1:8000",
+    "http://127.0.0.1:3000"
+]
+
+[simplemem]
+enabled = true
+window_size = 6
+top_k = 5
+
+[embedding]
+provider = "ollama"
+model = "qwen3-embedding:0.6b"
+ollama_url = "http://localhost:11434"
+# For cloud: lancedb_path = "s3://bucket/lancedb"
+lancedb_path = "./agentry/user_data/lancedb_data"
+
+[agent]
+default_provider = "ollama"
+default_model = "gpt-oss:20b-cloud"
+max_iterations = 40
+
+[cloud]
+# Required when mode = "cloud"
+# supabase_url = "https://your-project.supabase.co"
+# supabase_key = "your-anon-key"
+# blob_read_write_token = "vercel_blob_rw_xxx"
+
+[smtp]
+host = "smtp.gmail.com"
+port = 587
+use_tls = true
+# user = "your_email@gmail.com"
+# password = "your_app_password"
+# from_email = "Agentry <notifications@agentry.ai>"
+
+[kubernetes]
+acr_registry = "agentryacr.azurecr.io"
+aks_cluster = "agentry-aks"
+aks_resource_group = "agentry-rg"

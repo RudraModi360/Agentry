@@ -21,7 +21,7 @@ def get_session_manager():
         with _session_manager_lock:
             # Double-check locking pattern
             if _session_manager_instance is None:
-                from scratchy.session_manager import SessionManager
+                from agentry.session_manager import SessionManager
                 _session_manager_instance = SessionManager()
     
     return _session_manager_instance

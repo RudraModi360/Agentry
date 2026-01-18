@@ -10,6 +10,7 @@
 
 /* Import the complete original styles */
 @import url('./original-styles.css');
+@import url('./variables.css');
 @import url('./legacy-compat.css');
 
 /* Import component styles */
@@ -17,3 +18,4 @@
 @import url('./components/sidebar.css');
 @import url('./components/input-editor.css');
 @import url('./components/header-refinement.css');
+@import url('./components/modals.css');

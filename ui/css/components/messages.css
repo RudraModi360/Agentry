@@ -35,7 +35,7 @@
 }
 
 .message.user {
-    flex-direction: row-reverse;
+    justify-content: flex-end;
 }
 
 /* ==================== Message Avatar ==================== */
@@ -78,13 +78,25 @@
 /* ==================== Message Content ==================== */
 
 .message-content {
-    flex: 1;
+    flex: 0 1 auto;
     min-width: 0;
-    max-width: calc(100% - 48px);
+    max-width: 85%;
 }
 
+/* User message content - right aligned with bubble styling */
 .message.user .message-content {
-    text-align: right;
+    display: inline-block;
+    background: var(--accent);
+    background: linear-gradient(135deg, rgba(115, 115, 115, 0.15), rgba(115, 115, 115, 0.08));
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-3) var(--space-4);
+    text-align: left;
+}
+
+[data-theme="dark"] .message.user .message-content {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
+    border-color: rgba(255, 255, 255, 0.1);
 }
 
 /* Message Bubble */
@@ -111,6 +123,11 @@
     line-height: var(--leading-relaxed);
     word-wrap: break-word;
     overflow-wrap: break-word;
+}
+
+/* User message text - ensure proper alignment */
+.message.user .message-text {
+    text-align: left;
 }
 
 /* Message Typography */
@@ -656,6 +673,11 @@
     transition: opacity var(--transition-default);
 }
 
+/* User message actions - align left within the bubble */
+.message.user .message-actions {
+    justify-content: flex-start;
+}
+
 .message:hover .message-actions {
     opacity: 1;
 }
@@ -776,4 +798,67 @@
     .message-bubble {
         padding: var(--space-2-5) var(--space-3);
     }
+}
+
+/* ==================== Inline Image Gallery (Image Search Results) ==================== */
+
+.inline-images-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: var(--space-3);
+    margin: var(--space-4) 0;
+    width: 100%;
+}
+
+.inline-image-item {
+    margin: 0;
+    padding: 0;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--bg-secondary);
+    border: 1px solid var(--card-border);
+    transition: transform var(--transition-default), box-shadow var(--transition-default);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+}
+
+.inline-image-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--accent);
+}
+
+.inline-image-item img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    background: var(--bg-tertiary);
+    display: block;
+}
+
+.inline-image-item figcaption {
+    padding: var(--space-2);
+    font-size: var(--text-xs);
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--card-border);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.inline-image-item .image-title {
+    font-weight: var(--font-medium);
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.inline-image-item .image-source {
+    font-size: 10px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }

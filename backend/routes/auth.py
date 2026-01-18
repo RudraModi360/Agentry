@@ -177,16 +177,39 @@ async def get_current_user_info(user: Dict = Depends(get_current_user)):
 
 @router.post("/profile")
 async def update_profile(data: UserProfileUpdate, user: Dict = Depends(get_current_user)):
-    """Update user profile (email essentially)."""
+    """Update user profile (username and/or email)."""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     try:
-        # Check if email is taken by another user
-        cursor.execute("SELECT id FROM users WHERE email = ? AND id != ?", (data.email, user["id"]))
-        if cursor.fetchone():
-            raise HTTPException(status_code=400, detail="Email already in use")
+        # Check if username is taken
+        if data.username and data.username != user["username"]:
+            cursor.execute("SELECT id FROM users WHERE username = ? AND id != ?", (data.username, user["id"]))
+            if cursor.fetchone():
+                raise HTTPException(status_code=400, detail="Username already in use")
         
-        cursor.execute("UPDATE users SET email = ? WHERE id = ?", (data.email, user["id"]))
+        # Check if email is taken
+        if data.email:
+            cursor.execute("SELECT id FROM users WHERE email = ? AND id != ?", (data.email, user["id"]))
+            if cursor.fetchone():
+                raise HTTPException(status_code=400, detail="Email already in use")
+        
+        # Build update query
+        updates = []
+        params = []
+        if data.username:
+            updates.append("username = ?")
+            params.append(data.username)
+        if data.email:
+            updates.append("email = ?")
+            params.append(data.email)
+            
+        if not updates:
+            return {"message": "No changes provided"}
+            
+        params.append(user["id"])
+        query = f"UPDATE users SET {', '.join(updates)} WHERE id = ?"
+        
+        cursor.execute(query, params)
         conn.commit()
         return {"message": "Profile updated successfully"}
     finally:

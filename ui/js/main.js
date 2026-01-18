@@ -101,6 +101,11 @@ const App = {
         // Sessions
         Sessions.init();
 
+        // Projects
+        if (typeof Projects !== 'undefined') {
+            Projects.init();
+        }
+
         // Image upload
         ImageUpload.init();
 
@@ -161,17 +166,10 @@ const App = {
             const initial = (response.user?.username || 'U')[0].toUpperCase();
             DOM.text('user-avatar', initial);
 
-            // Add click listener for profile modal
             const userSection = document.querySelector('.footer-section.user-section');
             if (userSection) {
                 userSection.style.cursor = 'pointer';
                 userSection.setAttribute('title', 'Click to edit profile');
-                userSection.onclick = (e) => {
-                    e.stopPropagation(); // Prevent bubbling
-                    if (typeof ProfileModal !== 'undefined') {
-                        ProfileModal.open();
-                    }
-                };
             }
 
             // Update provider info
@@ -347,18 +345,6 @@ const App = {
         if (sendBtn) {
             DOM.on(sendBtn, 'click', () => this.sendMessage());
         }
-
-        // Logout button
-        const logoutBtn = DOM.byId('header-logout-btn');
-        if (logoutBtn) {
-            DOM.on(logoutBtn, 'click', async () => {
-                try {
-                    await API.post('/api/auth/logout');
-                } catch (e) { }
-                Storage.remove(AppConfig.auth.tokenKey);
-                window.location.href = AppConfig.auth.loginPath;
-            });
-        }
     },
 
     /**
@@ -453,6 +439,41 @@ const App = {
      * Setup global event listeners
      */
     setupGlobalEvents() {
+        // Toggle theme
+        const themeToggle = DOM.byId('theme-toggle-btn');
+        if (themeToggle) {
+            DOM.on(themeToggle, 'click', () => Theme.toggle());
+        }
+
+        // Projects Button
+        const projectsBtn = DOM.byId('projects-sidebar-btn');
+        if (projectsBtn) {
+            DOM.on(projectsBtn, 'click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof Projects !== 'undefined') {
+                    Projects.open();
+                } else {
+                    console.error('[Agentry] Projects component not found');
+                }
+            });
+        }
+
+        // Profile / User Section (whole item in sidebar footer)
+        const userSection = document.querySelector('.footer-compact-item.user-profile-only');
+        if (userSection) {
+            userSection.style.cursor = 'pointer';
+            DOM.on(userSection, 'click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof ProfileModal !== 'undefined') {
+                    ProfileModal.open();
+                } else {
+                    console.error('[Agentry] ProfileModal component not found');
+                }
+            });
+        }
+
         // Handle browser back/forward
         window.addEventListener('popstate', () => {
             const params = new URLSearchParams(window.location.search);
@@ -470,6 +491,18 @@ const App = {
         const menuBtn = DOM.byId('mobile-menu-btn');
         if (menuBtn) {
             DOM.on(menuBtn, 'click', () => Sidebar.toggleMobile());
+        }
+
+        // Logout button
+        const logoutBtn = DOM.byId('header-logout-btn');
+        if (logoutBtn) {
+            DOM.on(logoutBtn, 'click', async () => {
+                try {
+                    await API.post('/api/auth/logout');
+                } catch (e) { }
+                Storage.remove(AppConfig.auth.tokenKey);
+                window.location.href = AppConfig.auth.loginPath;
+            });
         }
     }
 };

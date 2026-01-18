@@ -5,7 +5,7 @@ Run with: uvicorn backend.main:app --reload
 import os
 import sys
 
-# Add parent directory to path for scratchy imports
+# Add parent directory to path for agentry imports
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 if parent_dir not in sys.path:
@@ -14,6 +14,11 @@ if parent_dir not in sys.path:
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+
+import logging
+import time
+from starlette.middleware.base import BaseHTTPMiddleware
+from fastapi import Request
 
 from backend.config import (
     CORS_ORIGINS,
@@ -29,6 +34,17 @@ from backend.core.database import init_db
 from backend.routes import router
 
 
+# ============== Logging Setup ==============
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+logger = logging.getLogger("backend.server")
+
+
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
     app = FastAPI(
@@ -36,6 +52,37 @@ def create_app() -> FastAPI:
         description="A powerful AI agent with tool capabilities",
         version="1.0.0"
     )
+    
+    # ============== Middleware ==============
+    class RequestLoggingMiddleware(BaseHTTPMiddleware):
+        async def dispatch(self, request: Request, call_next):
+            start_time = time.time()
+            
+            # Log Request
+            logger.info(f"Incoming Request: {request.method} {request.url.path}")
+            
+            try:
+                response = await call_next(request)
+                
+                # Log Response
+                process_time = time.time() - start_time
+                logger.info(
+                    f"Completed Request: {request.method} {request.url.path} "
+                    f"- Status: {response.status_code} "
+                    f"- Duration: {process_time:.4f}s"
+                )
+                
+                return response
+            except Exception as e:
+                process_time = time.time() - start_time
+                logger.error(
+                    f"Request Failed: {request.method} {request.url.path} "
+                    f"- Error: {str(e)} "
+                    f"- Duration: {process_time:.4f}s"
+                )
+                raise
+
+    app.add_middleware(RequestLoggingMiddleware)
     
     # CORS middleware
     app.add_middleware(

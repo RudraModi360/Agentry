@@ -153,7 +153,7 @@ const ProfileModal = {
             }
         } catch (error) {
             console.error('Failed to load profile:', error);
-            Modals.showToast('Failed to load profile data', 'error');
+            if (window.Modals) Modals.showToast('Failed to load profile data', 'error');
         }
     },
 
@@ -161,11 +161,17 @@ const ProfileModal = {
      * Save profile changes
      */
     async saveProfile() {
+        const username = this.elements.usernameInput.value.trim();
         const email = this.elements.emailInput.value.trim();
 
         // Basic validation
+        if (!username) {
+            if (window.Modals) Modals.showToast('Username cannot be empty', 'error');
+            return;
+        }
+
         if (email && !email.includes('@')) {
-            Modals.showToast('Invalid email address', 'error');
+            if (window.Modals) Modals.showToast('Invalid email address', 'error');
             return;
         }
 
@@ -175,12 +181,17 @@ const ProfileModal = {
             btn.textContent = 'Saving...';
             btn.disabled = true;
 
-            await API.post('/api/auth/profile', { email });
+            await API.post('/api/auth/profile', { username, email });
 
-            Modals.showToast('Profile updated successfully', 'success');
+            if (window.Modals) Modals.showToast('Profile updated successfully', 'success');
+
+            // Update UI username if it changed
+            const userNameEl = DOM.byId('user-name');
+            if (userNameEl) userNameEl.textContent = username;
+
         } catch (error) {
             console.error('Failed to save profile:', error);
-            Modals.showToast(error.message || 'Failed to update profile', 'error');
+            if (window.Modals) Modals.showToast(error.message || 'Failed to update profile', 'error');
         } finally {
             const btn = this.elements.saveProfileBtn;
             btn.textContent = 'Save Profile';

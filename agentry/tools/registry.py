@@ -5,7 +5,7 @@ from .filesystem import (
     ListFilesTool, SearchFilesTool, FastGrepTool
 )
 from .execution import ExecuteCommandTool, CodeExecuteTool
-from .web import WebSearchTool, UrlFetchTool
+from .web import WebSearchTool, UrlFetchTool, ImageSearchTool
 from .git import GitCommandTool
 from .document import ReadDocumentTool
 from .convert_document import ConvertDocumentTool
@@ -41,6 +41,7 @@ class ToolRegistry:
         self.register_tool(ExecuteCommandTool())
         self.register_tool(CodeExecuteTool())
         self.register_tool(WebSearchTool())
+        self.register_tool(ImageSearchTool())
         self.register_tool(UrlFetchTool())
         self.register_tool(GitCommandTool())
         self.register_tool(ReadDocumentTool())
@@ -87,7 +88,7 @@ def execute_tool(tool_name: str, tool_args: Dict[str, Any]) -> ToolResult:
 # Tool categories
 SAFE_TOOLS = ['read_file', 'list_files', 'search_files', 'fast_grep', 'read_document']
 APPROVAL_REQUIRED_TOOLS = [
-    'create_file', 'edit_file', 'web_search', 'url_fetch', 'convert_document',
+    'create_file', 'edit_file', 'web_search', 'image_search', 'url_fetch', 'convert_document',
     'edit_pptx', 'create_pptx', 'append_slide',
     'edit_docx', 'create_docx',
     'edit_excel', 'create_excel',

@@ -1,0 +1,22 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: agentry-prod
+
+resources:
+  - ../../base
+
+patches:
+  - path: config-patch.yaml
+
+configMapGenerator:
+  - name: agentry-config
+    behavior: merge
+    literals:
+      - ENVIRONMENT=prod
+      - DEBUG=false
+      - CORS_ORIGINS=https://agentry.io,https://www.agentry.io
+
+replicas:
+  - name: agentry-backend
+    count: 3

@@ -65,7 +65,7 @@
 
     /* Backgrounds */
     --bg-primary: var(--color-neutral-50);
-    --bg-secondary: #ffffff;
+    --bg-secondary: var(--color-neutral-100);
     --bg-tertiary: var(--color-neutral-100);
     --bg-elevated: #ffffff;
     --bg-overlay: rgba(0, 0, 0, 0.5);
@@ -95,7 +95,7 @@
     --accent-glow: rgba(64, 64, 64, 0.4);
 
     /* Input */
-    --input-bg: #ffffff;
+    --input-bg: var(--color-neutral-100);
     --input-border: rgba(0, 0, 0, 0.2);
     --input-focus-ring: rgba(99, 102, 241, 0.25);
     --input-placeholder: var(--color-neutral-400);
@@ -134,8 +134,8 @@
     /* ==================== Typography ==================== */
 
     /* Font Families */
-    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-    --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Monaco, 'Cascadia Code', monospace;
+    --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
 
     /* Font Sizes (based on 16px root) */
     --text-xs: 0.75rem;
@@ -323,41 +323,44 @@
 /* ==================== Dark Theme ==================== */
 
 [data-theme="dark"] {
-    /* Backgrounds */
-    --bg-primary: var(--color-neutral-950);
-    --bg-secondary: var(--color-neutral-900);
-    --bg-tertiary: var(--color-neutral-800);
-    --bg-elevated: var(--color-neutral-800);
+    /* Backgrounds - ChatGPT-style contrast */
+    /* Main canvas (darkest) */
+    --bg-primary: #0d0d0d;
+    /* Sidebar & Navbar (slightly lighter - visible contrast) */
+    --bg-secondary: #171717;
+    --bg-tertiary: #171717;
+    /* Elevated elements */
+    --bg-elevated: #212121;
     --bg-overlay: rgba(0, 0, 0, 0.7);
 
     /* Text */
-    --text-primary: var(--color-neutral-50);
-    --text-secondary: var(--color-neutral-400);
-    --text-muted: var(--color-neutral-600);
-    --text-inverted: var(--color-neutral-950);
+    --text-primary: #ececec;
+    --text-secondary: #9b9b9b;
+    --text-muted: #666666;
+    --text-inverted: #0d0d0d;
 
     /* Borders */
     --border-default: rgba(255, 255, 255, 0.08);
     --border-strong: rgba(255, 255, 255, 0.15);
 
     /* Cards & Components */
-    --card-bg: rgba(24, 24, 27, 0.8);
+    --card-bg: rgba(33, 33, 33, 0.9);
     --card-border: rgba(255, 255, 255, 0.08);
     --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
     --card-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
 
-    /* Accent - Black & White (brighter for dark mode) */
+    /* Accent - Neutral grays */
     --accent: #a3a3a3;
     --accent-hover: #d4d4d4;
     --accent-active: #737373;
     --accent-light: rgba(163, 163, 163, 0.15);
     --accent-glow: rgba(163, 163, 163, 0.5);
 
-    /* Input */
-    --input-bg: var(--color-neutral-900);
+    /* Input - Slightly elevated dark */
+    --input-bg: #2f2f2f;
     --input-border: rgba(255, 255, 255, 0.15);
     --input-focus-ring: rgba(163, 163, 163, 0.25);
-    --input-placeholder: var(--color-neutral-600);
+    --input-placeholder: #666666;
 
     /* Legacy Compatibility Aliases for Dark Theme */
     --dark-bg: var(--bg-primary);
@@ -416,4 +419,21 @@
         --border-default: rgba(255, 255, 255, 0.3);
         --border-strong: rgba(255, 255, 255, 0.5);
     }
+}
+
+/* ==================== Base Typography Application ==================== */
+
+html,
+body {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+code,
+pre,
+kbd,
+samp {
+    font-family: var(--font-mono);
 }
