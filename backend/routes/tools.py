@@ -86,17 +86,16 @@ async def get_available_tools(user: Dict = Depends(get_current_user)):
                                     "description": "Consolidating tool info..."
                                 })
     
-    # If no agent cached, return default built-in tools list
+    # If no agent cached, return all available default tools from registry
     if not builtin_tools:
-        builtin_tools = [
-            {"name": "web_search", "description": "Search the web using Groq's browser search"},
-            {"name": "read_file", "description": "Read the contents of a file"},
-            {"name": "write_file", "description": "Write content to a file"},
-            {"name": "execute_python", "description": "Execute Python code"},
-            {"name": "datetime_tool", "description": "Get current date and time"},
-            {"name": "memory_tool", "description": "Store and retrieve persistent memories"},
-            {"name": "wolfram_alpha", "description": "Query Wolfram Alpha for computations"},
-        ]
+        from agentry.tools import ALL_TOOL_SCHEMAS
+        for schema in ALL_TOOL_SCHEMAS:
+            if isinstance(schema, dict) and 'function' in schema:
+                func = schema['function']
+                builtin_tools.append({
+                    "name": func.get("name"),
+                    "description": func.get("description", "No description")[:100]
+                })
     
     # Get MCP server names from config if no tools loaded yet
     if not mcp_tools:

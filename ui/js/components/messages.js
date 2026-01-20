@@ -11,6 +11,13 @@ const Messages = {
     thinkingText: '',
     selectedImagesData: [],
 
+    // Streaming optimization state
+    _streamBuffer: '',
+    _streamRenderTimer: null,
+    _streamRenderDelay: 50, // ms between renders
+    _lastRenderTime: 0,
+    _pendingMediaResults: [], // Buffer for media_search results
+
     // Elements
     container: null,
     emptyState: null,
@@ -175,16 +182,51 @@ const Messages = {
     },
 
     /**
-     * Update assistant message text
+     * Update assistant message text with streaming optimization
+     * Uses debounced rendering to prevent UI freezes during fast token streaming
      */
-    updateAssistantMessageText(msgElement, content) {
+    updateAssistantMessageText(msgElement, content, forceRender = false) {
         if (content && content.length > 0) {
             this.removeLoadingIndicators(msgElement);
         }
 
         if (!content || !content.trim()) return;
 
+        // Store the content
+        this._streamBuffer = content;
+
+        const now = Date.now();
+        const timeSinceLastRender = now - this._lastRenderTime;
+
+        // Clear any pending render
+        if (this._streamRenderTimer) {
+            clearTimeout(this._streamRenderTimer);
+            this._streamRenderTimer = null;
+        }
+
+        // If enough time has passed or forceRender, render immediately
+        if (forceRender || timeSinceLastRender >= this._streamRenderDelay) {
+            this._renderStreamContent(msgElement, content);
+            this._lastRenderTime = now;
+        } else {
+            // Schedule a render for later
+            this._streamRenderTimer = setTimeout(() => {
+                this._renderStreamContent(msgElement, this._streamBuffer);
+                this._lastRenderTime = Date.now();
+                this._streamRenderTimer = null;
+            }, this._streamRenderDelay - timeSinceLastRender);
+        }
+    },
+
+    /**
+     * Internal method to actually render the streamed content
+     */
+    _renderStreamContent(msgElement, content) {
+        if (!msgElement || !content) return;
+
         const contentDiv = msgElement.querySelector('.message-content');
+        if (!contentDiv) return;
+
         const toolsContainer = contentDiv.querySelector('.tool-calls-container');
 
         if (toolsContainer) {
@@ -206,6 +248,21 @@ const Messages = {
         }
 
         this.scrollToBottom();
+    },
+
+    /**
+     * Force render any pending stream content (call on message complete)
+     */
+    flushStreamBuffer(msgElement) {
+        if (this._streamRenderTimer) {
+            clearTimeout(this._streamRenderTimer);
+            this._streamRenderTimer = null;
+        }
+        if (this._streamBuffer && msgElement) {
+            this._renderStreamContent(msgElement, this._streamBuffer);
+        }
+        this._streamBuffer = '';
+        this._lastRenderTime = 0;
     },
 
     /**
@@ -251,9 +308,34 @@ const Messages = {
 
     /**
      * Add tool call to message
+     * Special handling for media_search - renders inline carousel instead of collapsible
      */
     addToolCall(msgElement, toolName, args) {
         const contentDiv = msgElement.querySelector('.message-content');
+
+        // Special handling for media_search - create a minimal inline indicator
+        if (toolName === 'media_search' || toolName === 'image_search') {
+            // Create or get media container
+            let mediaCarousel = contentDiv.querySelector('.inline-media-carousel');
+            if (!mediaCarousel) {
+                mediaCarousel = DOM.create('div', { class: 'inline-media-carousel' });
+                mediaCarousel.innerHTML = `
+                    <div class="media-carousel-header">
+                        <span class="media-carousel-icon">🔍</span>
+                        <span class="media-carousel-text">Searching for media...</span>
+                    </div>
+                    <div class="media-carousel-items"></div>
+                `;
+                const textDiv = contentDiv.querySelector('.message-text');
+                if (textDiv) {
+                    contentDiv.insertBefore(mediaCarousel, textDiv.nextSibling);
+                } else {
+                    contentDiv.appendChild(mediaCarousel);
+                }
+            }
+            this.scrollToBottom();
+            return;
+        }
 
         let toolsContainer = contentDiv.querySelector('.tool-calls-container');
         if (!toolsContainer) {
@@ -317,9 +399,18 @@ const Messages = {
 
     /**
      * Update tool call with result
+     * Special handling for media_search - renders inline carousel
      */
     updateToolCallResult(msgElement, toolName, result) {
         const contentDiv = msgElement.querySelector('.message-content');
+
+        // Special handling for media_search - render inline carousel
+        if (toolName === 'media_search' || toolName === 'image_search') {
+            this._renderMediaCarouselResult(contentDiv, result);
+            this.scrollToBottom();
+            return;
+        }
+
         const toolDivs = contentDiv.querySelectorAll('.tool-call');
 
         let targetToolDiv = null;
@@ -364,6 +455,77 @@ const Messages = {
             targetToolDiv.classList.add('collapsed');
             this.scrollToBottom();
         }
+    },
+
+    /**
+     * Render media search results in a horizontal carousel
+     */
+    _renderMediaCarouselResult(contentDiv, result) {
+        const carousel = contentDiv.querySelector('.inline-media-carousel');
+        if (!carousel) return;
+
+        // Parse result
+        let mediaItems = [];
+        try {
+            if (typeof result === 'string') {
+                // Try to parse JSON from result
+                const jsonMatch = result.match(/\[[\s\S]*\]/);
+                if (jsonMatch) {
+                    mediaItems = JSON.parse(jsonMatch[0]);
+                }
+            } else if (Array.isArray(result)) {
+                mediaItems = result;
+            } else if (result && result.results) {
+                mediaItems = result.results;
+            } else if (result && result.images) {
+                mediaItems = result.images;
+            }
+        } catch (e) {
+            console.warn('Failed to parse media results:', e);
+        }
+
+        // Update header
+        const header = carousel.querySelector('.media-carousel-header');
+        if (header) {
+            if (mediaItems.length > 0) {
+                header.innerHTML = `
+                    <span class="media-carousel-icon">🖼️</span>
+                    <span class="media-carousel-text">Found ${mediaItems.length} ${mediaItems.length === 1 ? 'image' : 'images'}</span>
+                `;
+            } else {
+                header.innerHTML = `
+                    <span class="media-carousel-icon">📷</span>
+                    <span class="media-carousel-text">No images found</span>
+                `;
+            }
+        }
+
+        // Render items in carousel
+        const itemsContainer = carousel.querySelector('.media-carousel-items');
+        if (itemsContainer && mediaItems.length > 0) {
+            itemsContainer.innerHTML = mediaItems.slice(0, 10).map(item => {
+                const url = item.url || item.image_url || item.thumbnail || item.src || '';
+                const title = item.title || item.alt || item.description || '';
+                const source = item.source || item.domain || '';
+                const link = item.link || item.page_url || url;
+
+                if (!url) return '';
+
+                return `
+                    <div class="media-carousel-item" onclick="window.open('${DOM.escapeHtml(link)}', '_blank')">
+                        <img src="${DOM.escapeHtml(url)}" alt="${DOM.escapeHtml(title)}" 
+                             onerror="this.parentElement.style.display='none'" 
+                             loading="lazy" />
+                        <div class="media-carousel-item-info">
+                            <span class="media-item-title">${DOM.escapeHtml(title.substring(0, 40) || 'Image')}</span>
+                            ${source ? `<span class="media-item-source">${DOM.escapeHtml(source)}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        carousel.classList.add('loaded');
     },
 
     /**
@@ -663,6 +825,12 @@ const Messages = {
         if (typeof content !== 'string') return '';
 
         try {
+            // Pre-process: Convert YouTube markers to rich embeds
+            content = this.processYouTubeEmbeds(content);
+
+            // Pre-process: Enhance inline images with better styling
+            content = this.processInlineImages(content);
+
             const renderer = new marked.Renderer();
 
             renderer.code = (codeOrToken, language) => {
@@ -707,6 +875,80 @@ const Messages = {
             console.error('Markdown parsing error:', e);
             return content;
         }
+    },
+
+    /**
+     * Process YouTube embed markers and convert to rich cards
+     */
+    processYouTubeEmbeds(content) {
+        // Match <!-- YOUTUBE:VIDEO_ID --> followed by markdown image link
+        const youtubePattern = /<!-- YOUTUBE:([a-zA-Z0-9_-]{11}) -->\s*\n?\[!\[([^\]]*)\]\(([^)]+)\)\]\(([^)]+)\)\s*\n?\*([^*]+)\*/g;
+
+        return content.replace(youtubePattern, (match, videoId, title, thumbnail, url, channel) => {
+            // Clean up the title (remove emoji if present)
+            const cleanTitle = title.replace(/🎬\s*/, '').trim();
+            const cleanChannel = channel.replace(/📺\s*/, '').trim();
+
+            return `
+<div class="youtube-embed-card" onclick="window.open('${url}', '_blank')">
+    <div class="youtube-thumbnail">
+        <img src="${thumbnail}" alt="${cleanTitle}" onerror="this.src='https://img.youtube.com/vi/${videoId}/hqdefault.jpg'" />
+        <div class="youtube-play-btn">
+            <svg viewBox="0 0 68 48" width="68" height="48">
+                <path class="youtube-play-bg" d="M66.52,7.74c-0.78-2.93-2.49-5.41-5.42-6.19C55.79,.13,34,0,34,0S12.21,.13,6.9,1.55 C3.97,2.33,2.27,4.81,1.48,7.74C0.06,13.05,0,24,0,24s0.06,10.95,1.48,16.26c0.78,2.93,2.49,5.41,5.42,6.19 C12.21,47.87,34,48,34,48s21.79-0.13,27.1-1.55c2.93-0.78,4.64-3.26,5.42-6.19C67.94,34.95,68,24,68,24S67.94,13.05,66.52,7.74z" fill="#f00"/>
+                <path d="M 45,24 27,14 27,34" fill="#fff"/>
+            </svg>
+        </div>
+    </div>
+    <div class="youtube-info">
+        <div class="youtube-title">${cleanTitle}</div>
+        <div class="youtube-channel">${cleanChannel}</div>
+    </div>
+</div>
+`;
+        });
+    },
+
+    /**
+     * Process inline images to add better styling and containers
+     */
+    processInlineImages(content) {
+        // Match markdown images: ![alt](url)
+        // Followed by optional source line: *Source: [text](url)*
+        const imageWithSourcePattern = /!\[([^\]]*)\]\(([^)]+)\)\s*\n?\*Source:\s*\[([^\]]*)\]\(([^)]+)\)\*/g;
+
+        content = content.replace(imageWithSourcePattern, (match, alt, imageUrl, sourceName, sourceUrl) => {
+            return `
+<div class="inline-media-card">
+    <div class="inline-media-image">
+        <img src="${imageUrl}" alt="${alt}" onclick="window.open('${imageUrl}', '_blank')" 
+             onerror="this.parentElement.style.display='none'" />
+    </div>
+    <div class="inline-media-source">
+        <a href="${sourceUrl}" target="_blank" rel="noopener">${sourceName || 'Source'}</a>
+    </div>
+</div>
+`;
+        });
+
+        // Handle standalone markdown images without source
+        const standaloneImagePattern = /!\[([^\]]*)\]\((https?:\/\/[^)]+)\)(?!\s*\n?\*Source)/g;
+
+        content = content.replace(standaloneImagePattern, (match, alt, imageUrl) => {
+            // Skip YouTube thumbnails (they're handled by processYouTubeEmbeds)
+            if (imageUrl.includes('youtube.com') || imageUrl.includes('ytimg.com')) {
+                return match;
+            }
+
+            return `
+<div class="inline-media-image standalone">
+    <img src="${imageUrl}" alt="${alt}" onclick="window.open('${imageUrl}', '_blank')"
+         onerror="this.parentElement.style.display='none'" />
+</div>
+`;
+        });
+
+        return content;
     },
 
     /**

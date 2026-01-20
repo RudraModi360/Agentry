@@ -98,6 +98,255 @@ class AzureProvider(LLMProvider):
             return await self._chat_anthropic(messages, tools)
         else:
             return await self._chat_openai(messages, tools)
+
+    async def chat_stream(self, messages: List[Dict[str, Any]], tools: Optional[List[Dict[str, Any]]] = None, on_token: Optional[Any] = None) -> Any:
+        """Streaming version of chat - streams tokens to the callback in real-time."""
+        if self.model_type == self.MODEL_TYPE_ANTHROPIC:
+            return await self._chat_anthropic_stream(messages, tools, on_token)
+        else:
+            return await self._chat_openai_stream(messages, tools, on_token)
+
+    async def _chat_anthropic_stream(self, messages: List[Dict[str, Any]], tools: Optional[List[Dict[str, Any]]] = None, on_token: Optional[Any] = None) -> Any:
+        """Handle streaming chat with Anthropic Claude models on Azure."""
+        import asyncio
+        import concurrent.futures
+        import queue
+        import threading
+        import json
+        from .utils import extract_content
+        
+        # Separate system message
+        system_content = None
+        chat_messages = []
+        
+        for msg in messages:
+            if msg["role"] == "system":
+                system_content = msg["content"] if isinstance(msg["content"], str) else str(msg["content"])
+            elif msg["role"] == "tool":
+                # Convert tool response to Anthropic format
+                chat_messages.append({
+                    "role": "user",
+                    "content": [{
+                        "type": "tool_result",
+                        "tool_use_id": msg.get("tool_call_id"),
+                        "content": msg.get("content", "")
+                    }]
+                })
+            elif msg["role"] == "assistant":
+                # Handle assistant messages with tool calls
+                tool_calls = msg.get("tool_calls")
+                if tool_calls:
+                    blocks = []
+                    text_content = msg.get("content", "")
+                    if text_content:
+                        blocks.append({"type": "text", "text": text_content})
+                    for tc in tool_calls:
+                        args = tc.get("function", {}).get("arguments", "{}")
+                        if isinstance(args, str):
+                            try:
+                                input_json = json.loads(args)
+                            except:
+                                input_json = {}
+                        else:
+                            input_json = args
+                        blocks.append({
+                            "type": "tool_use",
+                            "id": tc.get("id"),
+                            "name": tc.get("function", {}).get("name"),
+                            "input": input_json
+                        })
+                    chat_messages.append({"role": "assistant", "content": blocks})
+                else:
+                    raw_content = msg.get("content", "")
+                    text_content, images = extract_content(raw_content)
+                    chat_messages.append({"role": "assistant", "content": text_content or ""})
+            else:
+                raw_content = msg.get("content", "")
+                text_content, images = extract_content(raw_content)
+                
+                if images:
+                    content_blocks = []
+                    for img in images:
+                        img_data = img["data"]
+                        if isinstance(img_data, bytes):
+                            img_data = base64.b64encode(img_data).decode('utf-8')
+                        content_blocks.append({
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": img.get("mime_type", "image/png"),
+                                "data": img_data
+                            }
+                        })
+                    if text_content:
+                        content_blocks.append({"type": "text", "text": text_content})
+                    chat_messages.append({"role": msg["role"], "content": content_blocks})
+                else:
+                    chat_messages.append({"role": msg["role"], "content": text_content or ""})
+        
+        kwargs = {
+            "model": self.model_name,
+            "messages": chat_messages,
+            "max_tokens": 16384
+        }
+        
+        if system_content:
+            kwargs["system"] = system_content
+        
+        # Convert tools if present
+        if tools:
+            anthropic_tools = []
+            for tool in tools:
+                if tool.get("type") == "function":
+                    func = tool.get("function", {})
+                    anthropic_tools.append({
+                        "name": func.get("name"),
+                        "description": func.get("description"),
+                        "input_schema": func.get("parameters")
+                    })
+            kwargs["tools"] = anthropic_tools
+        
+        try:
+            accumulated_text = ""
+            accumulated_tool_calls = []
+            
+            q = queue.Queue()
+            
+            def stream_worker():
+                try:
+                    with self.client.messages.stream(**kwargs) as stream:
+                        for event in stream:
+                            q.put(('event', event))
+                    q.put(('done', None))
+                except Exception as e:
+                    q.put(('error', e))
+            
+            thread = threading.Thread(target=stream_worker, daemon=True)
+            thread.start()
+            
+            while True:
+                try:
+                    msg_type, data = q.get(timeout=120)
+                    
+                    if msg_type == 'event':
+                        event = data
+                        
+                        if event.type == 'content_block_delta' and hasattr(event.delta, 'text'):
+                            text = event.delta.text
+                            accumulated_text += text
+                            if on_token:
+                                await on_token(text)
+                                await asyncio.sleep(0)
+                        
+                        elif event.type == 'content_block_start' and event.content_block.type == 'tool_use':
+                            accumulated_tool_calls.append({
+                                "id": event.content_block.id,
+                                "name": event.content_block.name,
+                                "input_json": ""
+                            })
+                        
+                        elif event.type == 'content_block_delta' and hasattr(event.delta, 'partial_json'):
+                            if accumulated_tool_calls:
+                                accumulated_tool_calls[-1]["input_json"] += event.delta.partial_json
+                                
+                    elif msg_type == 'done':
+                        break
+                    elif msg_type == 'error':
+                        raise data
+                except queue.Empty:
+                    raise TimeoutError("Stream timeout")
+            
+            thread.join(timeout=5)
+            
+            # Build final tool calls
+            final_tool_calls = None
+            if accumulated_tool_calls:
+                final_tool_calls = []
+                for tc in accumulated_tool_calls:
+                    final_tool_calls.append(ToolCall(
+                        id=tc["id"],
+                        name=tc["name"],
+                        arguments=tc["input_json"]
+                    ))
+            
+            return MockMessage(content=accumulated_text, role="assistant", tool_calls=final_tool_calls)
+            
+        except Exception as e:
+            raise ValueError(f"Azure Anthropic Streaming Error: {str(e)}")
+
+    async def _chat_openai_stream(self, messages: List[Dict[str, Any]], tools: Optional[List[Dict[str, Any]]] = None, on_token: Optional[Any] = None) -> Any:
+        """Handle streaming chat with OpenAI models on Azure."""
+        processed_messages = []
+        
+        for msg in messages:
+            content = msg.get("content")
+            if isinstance(content, list):
+                new_content = []
+                for part in content:
+                    if isinstance(part, dict) and part.get("type") == "image":
+                        b64_data = part.get("data", "")
+                        if isinstance(b64_data, str) and b64_data.startswith('data:'):
+                            new_content.append({"type": "image_url", "image_url": {"url": b64_data}})
+                        else:
+                            mime_type = "image/png"
+                            new_content.append({"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{b64_data}"}})
+                    else:
+                        new_content.append(part)
+                processed_messages.append({**msg, "content": new_content})
+            else:
+                processed_messages.append(msg)
+
+        kwargs = {
+            "model": self.model_name,
+            "messages": processed_messages,
+            "stream": True
+        }
+        
+        if tools:
+            kwargs["tools"] = tools
+            kwargs["tool_choice"] = "auto"
+        
+        try:
+            stream = self.client.chat.completions.create(**kwargs)
+            accumulated_content = ""
+            accumulated_tool_calls_data = []
+
+            for chunk in stream:
+                delta = chunk.choices[0].delta
+                
+                if delta.content:
+                    accumulated_content += delta.content
+                    if on_token:
+                        await on_token(delta.content)
+                
+                if delta.tool_calls:
+                    for tc in delta.tool_calls:
+                        idx = tc.index
+                        while len(accumulated_tool_calls_data) <= idx:
+                            accumulated_tool_calls_data.append({"id": "", "function": {"name": "", "arguments": ""}})
+                        if tc.id:
+                            accumulated_tool_calls_data[idx]["id"] += tc.id
+                        if tc.function:
+                            if tc.function.name:
+                                accumulated_tool_calls_data[idx]["function"]["name"] += tc.function.name
+                            if tc.function.arguments:
+                                accumulated_tool_calls_data[idx]["function"]["arguments"] += tc.function.arguments
+            
+            final_tool_calls = None
+            if accumulated_tool_calls_data:
+                final_tool_calls = []
+                for tc_data in accumulated_tool_calls_data:
+                    if tc_data["function"]["name"]:
+                        final_tool_calls.append(ToolCall(
+                            id=tc_data["id"],
+                            name=tc_data["function"]["name"],
+                            arguments=tc_data["function"]["arguments"]
+                        ))
+
+            return MockMessage(content=accumulated_content, role="assistant", tool_calls=final_tool_calls)
+            
+        except Exception as e:
+            raise e
     
     async def _chat_anthropic(self, messages: List[Dict[str, Any]], tools: Optional[List[Dict[str, Any]]] = None) -> Any:
         """Handle chat with Anthropic Claude models on Azure using AnthropicFoundry SDK."""
@@ -257,9 +506,25 @@ class AzureProvider(LLMProvider):
         return self.model_name
 
 
+class Function:
+    """Helper class to mimic OpenAI function structure."""
+    def __init__(self, name, arguments):
+        self.name = name
+        self.arguments = arguments
+
+
+class ToolCall:
+    """Helper class to mimic OpenAI tool call structure."""
+    def __init__(self, id, name, arguments):
+        self.id = id
+        self.function = Function(name, arguments)
+        self.type = "function"
+
+
 class MockMessage:
     """Mock message class to mimic OpenAI response structure."""
-    def __init__(self, content: str, role: str = "assistant"):
+    def __init__(self, content: str, role: str = "assistant", tool_calls=None):
         self.content = content
         self.role = role
-        self.tool_calls = None
+        self.tool_calls = tool_calls
+

@@ -197,12 +197,17 @@ const WebSocketManager = {
                 break;
 
             case 'complete':
+                // Flush any pending stream content first
+                if (Messages.currentAssistantMessage) {
+                    Messages.flushStreamBuffer(Messages.currentAssistantMessage);
+                }
+
                 if (data.content && data.content.trim()) {
                     if (!Messages.currentAssistantMessage) {
                         Messages.currentAssistantMessage = Messages.createAssistantMessage();
                     }
                     Messages.removeLoadingIndicators(Messages.currentAssistantMessage);
-                    Messages.updateAssistantMessageText(Messages.currentAssistantMessage, data.content);
+                    Messages.updateAssistantMessageText(Messages.currentAssistantMessage, data.content, true);
                 } else if (Messages.currentAssistantMessage) {
                     Messages.removeLoadingIndicators(Messages.currentAssistantMessage);
                 }

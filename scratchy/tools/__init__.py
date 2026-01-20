@@ -10,6 +10,7 @@ from .agent_tools import (
     DateTimeTool, NotesTool, MemoryTool, SmartBashTool, ThinkTool,
     get_smart_agent_tools, get_smart_agent_tool_schemas
 )
+from .media_search import MediaSearchTool, media_search_tool
 
 # Convenience for getting all schemas
 ALL_TOOL_SCHEMAS = registry.schemas
@@ -30,6 +31,9 @@ __all__ = [
     'SmartBashTool',
     'ThinkTool',
     'get_smart_agent_tools',
-    'get_smart_agent_tool_schemas'
+    'get_smart_agent_tool_schemas',
+    # Media Tools
+    'MediaSearchTool',
+    'media_search_tool'
 ]
 

@@ -1046,7 +1046,7 @@
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: rgba(40, 44, 52, 0.8);
+    background: var(--bg-elevated);
     backdrop-filter: blur(8px);
     border: 1px solid var(--card-border);
     color: var(--text-primary);

@@ -280,6 +280,21 @@ const App = {
      */
     async saveAgentType(type, mode = 'solo', projectId = null) {
         try {
+            // Force reset processing state if switching while generating
+            if (this.state.isProcessing) {
+                console.log('[Agentry] Interrupting generation for agent switch...');
+                this.state.isProcessing = false;
+
+                const sendBtn = DOM.byId('send-btn');
+                if (sendBtn) sendBtn.disabled = false;
+
+                if (typeof Messages !== 'undefined' && Messages.currentAssistantMessage) {
+                    Messages.removeLoadingIndicators(Messages.currentAssistantMessage);
+                    Messages.addErrorMessage('Response interrupted by agent switch.');
+                    Messages.currentAssistantMessage = null;
+                }
+            }
+
             await API.post('/api/agent-config', {
                 agent_type: type,
                 mode: mode,
@@ -439,11 +454,7 @@ const App = {
      * Setup global event listeners
      */
     setupGlobalEvents() {
-        // Toggle theme
-        const themeToggle = DOM.byId('theme-toggle-btn');
-        if (themeToggle) {
-            DOM.on(themeToggle, 'click', () => Theme.toggle());
-        }
+        // Toggle theme - Handled in Theme.init()
 
         // Projects Button
         const projectsBtn = DOM.byId('projects-sidebar-btn');

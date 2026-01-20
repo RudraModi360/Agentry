@@ -406,7 +406,12 @@ class Agent:
 
                 # Use streaming if on_token callback is set and provider supports it
                 on_token = active_callbacks.get("on_token")
-                if on_token and hasattr(self.provider, 'chat_stream'):
+                has_stream = hasattr(self.provider, 'chat_stream')
+                
+                if self.debug:
+                    print(f"[Agent] Streaming check: on_token={on_token is not None}, has_chat_stream={has_stream}")
+                
+                if on_token and has_stream:
                     if self.debug:
                         model_name = getattr(self.provider, 'model_name', 'LLM')
                         print(f"[Agent] Streaming response from {model_name}...")

@@ -174,6 +174,7 @@ def run_backend_server(host: str = BACKEND_HOST, port: int = BACKEND_PORT):
             host=host,
             port=port,
             reload=True,
+            reload_dirs=[os.path.join(current_dir, "backend"), os.path.join(current_dir, "agentry")],
             log_level="info"
         )
     except ImportError:

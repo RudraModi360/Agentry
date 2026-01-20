@@ -262,6 +262,38 @@
     border-color: transparent transparent var(--bg-elevated) transparent;
 }
 
+/* Light Theme Tooltip - Uses amber accent */
+:root .tooltip-text {
+    background-color: #f59e0b !important;
+    color: #ffffff !important;
+    border-color: #d97706 !important;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+:root .tooltip-text::after {
+    border-color: #f59e0b transparent transparent transparent !important;
+}
+
+:root .tooltip-bottom .tooltip-text::after {
+    border-color: transparent transparent #f59e0b transparent !important;
+}
+
+/* Dark Theme Tooltip - Uses amber accent */
+[data-theme="dark"] .tooltip-text {
+    background-color: #fbbf24 !important;
+    color: #0c0a09 !important;
+    border-color: #f59e0b !important;
+    box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+}
+
+[data-theme="dark"] .tooltip-text::after {
+    border-color: #fbbf24 transparent transparent transparent !important;
+}
+
+[data-theme="dark"] .tooltip-bottom .tooltip-text::after {
+    border-color: transparent transparent #fbbf24 transparent !important;
+}
+
 /* ==================== Clock Widget ==================== */
 
 /* Clock Styles */

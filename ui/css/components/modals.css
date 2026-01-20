@@ -442,16 +442,22 @@
 }
 
 .mcp-server-status.connected {
-    background: var(--success);
+    background: #10b981;
+    /* Green */
+    box-shadow: 0 0 5px rgba(16, 185, 129, 0.4);
 }
 
 .mcp-server-status.connecting {
-    background: var(--warning);
+    background: #f59e0b;
+    /* Yellow */
+    box-shadow: 0 0 5px rgba(245, 158, 11, 0.4);
     animation: pulse 2s infinite;
 }
 
 .mcp-server-status.disconnected {
-    background: var(--error);
+    background: #ef4444;
+    /* Red */
+    box-shadow: 0 0 5px rgba(239, 68, 68, 0.4);
 }
 
 .mcp-server-name {

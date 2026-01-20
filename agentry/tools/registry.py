@@ -19,6 +19,7 @@ from .agent_tools import (
     DateTimeTool, NotesTool, MemoryTool, SmartBashTool, ThinkTool,
     get_smart_agent_tools, get_smart_agent_tool_schemas
 )
+from .media_search import MediaSearchTool
 
 class ToolRegistry:
     def __init__(self):
@@ -46,6 +47,9 @@ class ToolRegistry:
         self.register_tool(GitCommandTool())
         self.register_tool(ReadDocumentTool())
         self.register_tool(ConvertDocumentTool())
+        
+        # Media Search for inline images/videos (Gemini-like)
+        self.register_tool(MediaSearchTool())
         
         # New Office Tools
         self.register_tool(EditPPTXTool())
@@ -86,7 +90,7 @@ def execute_tool(tool_name: str, tool_args: Dict[str, Any]) -> ToolResult:
     return registry.execute_tool(tool_name, tool_args)
 
 # Tool categories
-SAFE_TOOLS = ['read_file', 'list_files', 'search_files', 'fast_grep', 'read_document']
+SAFE_TOOLS = ['read_file', 'list_files', 'search_files', 'fast_grep', 'read_document', 'media_search']
 APPROVAL_REQUIRED_TOOLS = [
     'create_file', 'edit_file', 'web_search', 'image_search', 'url_fetch', 'convert_document',
     'edit_pptx', 'create_pptx', 'append_slide',
