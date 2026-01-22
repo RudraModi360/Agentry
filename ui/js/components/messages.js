@@ -11,11 +11,16 @@ const Messages = {
     thinkingText: '',
     selectedImagesData: [],
 
+<<<<<<< HEAD
     _pendingMediaResults: [], // Buffer for media_search results
     mediaRegistry: {}, // Store resolved media items by query/type
     _lastFormattedIdx: 0, // Track up to where we've formatted the text in a stream
     _formattedCache: '', // Cache for stable rendered HTML
     _lastContentRaw: '', // Copy of raw content for change detection
+=======
+    // Streaming optimization state
+    _streamBuffer: '',
+>>>>>>> 835c700e5992dfe8b31175fd7ffa3fc359b6a749
     _streamRenderTimer: null,
     _streamRenderDelay: 50, // ms between renders
     _lastRenderTime: 0,
@@ -188,11 +193,15 @@ const Messages = {
      * Update assistant message text with streaming optimization
      * Uses debounced rendering to prevent UI freezes during fast token streaming
      */
+<<<<<<< HEAD
     /**
      * Update assistant message text with streaming optimization
      * Uses debounced rendering to prevent UI freezes during fast token streaming
      */
     updateAssistantMessageText(msgElement, content, forceRender = false, msgData = null) {
+=======
+    updateAssistantMessageText(msgElement, content, forceRender = false) {
+>>>>>>> 835c700e5992dfe8b31175fd7ffa3fc359b6a749
         if (content && content.length > 0) {
             this.removeLoadingIndicators(msgElement);
         }
@@ -201,6 +210,43 @@ const Messages = {
 
         // Store the content
         this._streamBuffer = content;
+<<<<<<< HEAD
+=======
+
+        const now = Date.now();
+        const timeSinceLastRender = now - this._lastRenderTime;
+
+        // Clear any pending render
+        if (this._streamRenderTimer) {
+            clearTimeout(this._streamRenderTimer);
+            this._streamRenderTimer = null;
+        }
+
+        // If enough time has passed or forceRender, render immediately
+        if (forceRender || timeSinceLastRender >= this._streamRenderDelay) {
+            this._renderStreamContent(msgElement, content);
+            this._lastRenderTime = now;
+        } else {
+            // Schedule a render for later
+            this._streamRenderTimer = setTimeout(() => {
+                this._renderStreamContent(msgElement, this._streamBuffer);
+                this._lastRenderTime = Date.now();
+                this._streamRenderTimer = null;
+            }, this._streamRenderDelay - timeSinceLastRender);
+        }
+    },
+
+    /**
+     * Internal method to actually render the streamed content
+     */
+    _renderStreamContent(msgElement, content) {
+        if (!msgElement || !content) return;
+
+        const contentDiv = msgElement.querySelector('.message-content');
+        if (!contentDiv) return;
+
+        const toolsContainer = contentDiv.querySelector('.tool-calls-container');
+>>>>>>> 835c700e5992dfe8b31175fd7ffa3fc359b6a749
 
         const now = Date.now();
         const timeSinceLastRender = now - this._lastRenderTime;
@@ -275,6 +321,7 @@ const Messages = {
             this._renderStreamContent(msgElement, this._streamBuffer);
         }
         this._streamBuffer = '';
+<<<<<<< HEAD
         this._lastContentRaw = '';
         this._lastRenderTime = 0;
     },
@@ -363,6 +410,8 @@ const Messages = {
             this._renderStreamContent(msgElement, this._streamBuffer);
         }
         this._streamBuffer = '';
+=======
+>>>>>>> 835c700e5992dfe8b31175fd7ffa3fc359b6a749
         this._lastRenderTime = 0;
     },
 
@@ -945,9 +994,12 @@ const Messages = {
             // Pre-process: Enhance inline images with better styling
             content = this.processInlineImages(content);
 
+<<<<<<< HEAD
             // Pre-process: Handle semantic media anchors ![SEARCH: "query"] and ![VIDEO: "query"]
             content = this.processSemanticMediaAnchors(content);
 
+=======
+>>>>>>> 835c700e5992dfe8b31175fd7ffa3fc359b6a749
             const renderer = new marked.Renderer();
 
             renderer.code = (codeOrToken, language) => {
@@ -1069,6 +1121,7 @@ const Messages = {
     },
 
     /**
+<<<<<<< HEAD
      * Process semantic media anchors: ![SEARCH: "query"] or ![VIDEO: "query"]
      * Uses deterministic IDs to prevent UI jitter during streaming.
      */
@@ -1123,6 +1176,8 @@ const Messages = {
     },
 
     /**
+=======
+>>>>>>> 835c700e5992dfe8b31175fd7ffa3fc359b6a749
      * Copy code block
      */
     async copyCodeBlock(btn) {
