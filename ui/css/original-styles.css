@@ -837,7 +837,7 @@ body {
 }
 
 
-/* Scroll to Bottom Button */
+/* Scroll to Bottom Button - Theme Aware */
 .scroll-bottom-btn {
     position: absolute;
     bottom: 110px;
@@ -845,7 +845,7 @@ body {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: rgba(var(--bg-secondary-rgb, 40, 44, 52), 0.8);
+    background: var(--bg-elevated);
     backdrop-filter: blur(8px);
     border: 1px solid var(--card-border);
     color: var(--text-primary);
@@ -4998,6 +4998,22 @@ tr:nth-child(even) {
     opacity: 1;
 }
 
+/* Light Theme Tooltip - Orange/Amber Accent */
+:root .tooltip-text {
+    background-color: #f59e0b !important;
+    color: #ffffff !important;
+    border-color: #d97706 !important;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+/* Dark Theme Tooltip - Orange/Amber Accent */
+[data-theme="dark"] .tooltip-text {
+    background-color: #fbbf24 !important;
+    color: #0c0a09 !important;
+    border-color: #f59e0b !important;
+    box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+}
+
 /* Tools Popup Granular Control Styles */
 .tools-popup.global-disabled .tools-section-group:not(#mcp-tools-group),
 .tools-popup.global-disabled .upload-media-item {
@@ -5326,8 +5342,27 @@ tr:nth-child(even) {
 }
 
 .mcp-server-group.expanded .mcp-server-tools {
-    max-height: 1000px;
+    max-height: 300px;
+    overflow-y: auto;
     transition: max-height 0.35s ease-in;
+}
+
+/* Scrollbar styling for MCP server tools */
+.mcp-server-tools::-webkit-scrollbar {
+    width: 6px;
+}
+
+.mcp-server-tools::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.mcp-server-tools::-webkit-scrollbar-thumb {
+    background: var(--text-muted);
+    border-radius: 3px;
+}
+
+.mcp-server-tools::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
 }
 
 .mcp-server-tools .tools-list {

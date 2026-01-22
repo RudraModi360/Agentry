@@ -110,6 +110,75 @@ def save_media_to_disk(user_id: int, image_data: str, filename: str = None) -> d
     }
 
 
+async def resolve_media_inline(query: str, media_type: str, placeholder: str, websocket: WebSocket, session_id: str = None, session_manager: SessionManager = None, media_state: dict = None):
+    """Background task to resolve an inline media search request with persistence."""
+    from backend.services.media_orchestrator import media_orchestrator
+    try:
+        print(f"[Server] Resolving inline media: {media_type} for '{query}'")
+        # Find only required and relevant ones, limit to 4 to avoid being "too mediatic"
+        results = await media_orchestrator.search_media(query, [media_type])
+        
+        # Format and limit results
+        formatted_results = []
+        for r in results:
+            if r.get("type") == media_type:
+                formatted_results.append({
+                    "url": r.get("url") or r.get("thumbnail"),
+                    "title": r.get("title", "Media"),
+                    "source": r.get("source") or r.get("channel") or "Source",
+                    "thumbnail": r.get("thumbnail"),
+                    "link": r.get("url")
+                })
+            if len(formatted_results) >= 4:
+                break
+        
+        # Update shared state
+        if media_state is not None:
+            media_state["data"][placeholder] = formatted_results
+            
+            # If main loop already finished (committed), we must patch the DB ourselves
+            if media_state.get("committed") and session_id and session_manager:
+                print(f"[Server] Late media resolution for '{query}' - Patching DB...")
+                messages = session_manager.load_session(session_id)
+                if messages:
+                    # Find latest assistant message
+                    for i in range(len(messages) - 1, -1, -1):
+                        msg = messages[i]
+                        if msg.get("role") == "assistant":
+                            # Verify this message actually contains our placeholder
+                            # (Simple check to ensure we attach to the right message)
+                            content = msg.get("content", "")
+                            if isinstance(content, str) and placeholder in content:
+                                if "media" not in msg:
+                                    msg["media"] = {}
+                                msg["media"][placeholder] = formatted_results
+                                session_manager.save_session(session_id, messages)
+                                print(f"[Server] DB patched successfully for '{query}'")
+                            break
+
+        if websocket:
+            await websocket.send_json({
+                "type": "media_resolved",
+                "query": query,
+                "media_type": media_type,
+                "placeholder": placeholder,
+                "results": formatted_results
+            })
+            print(f"[Server] Sent media_resolved for '{query}' with {len(formatted_results)} items")
+    except Exception as e:
+        print(f"[Server] Media inline resolution failed for '{query}': {e}")
+        # Send empty results to trigger "vanishing" on frontend if desired
+        if websocket:
+            await websocket.send_json({
+                "type": "media_resolved",
+                "query": query,
+                "media_type": media_type,
+                "placeholder": placeholder,
+                "results": [],
+                "error": str(e)
+            })
+
+
 async def generate_title(session_id: str, messages: list, provider, session_manager: SessionManager, websocket: WebSocket = None):
     """Generate and save 3-5 word title for the session."""
     try:
@@ -524,10 +593,15 @@ async def websocket_chat(websocket: WebSocket):
                 # Track thinking state
                 in_thinking = False
                 stream_buffer = ""
+                # Media detection state
+                all_text_buffer = ""
+                detected_placeholders = set()
+                # Shared state for persistence tracking
+                media_state = {"committed": False, "data": {}}
                 
                 # Define callbacks for streaming
                 async def on_token(token_text: str):
-                    nonlocal ws_connected, in_thinking, stream_buffer
+                    nonlocal ws_connected, in_thinking, stream_buffer, all_text_buffer, detected_placeholders
                     
                     print(token_text, end="", flush=True)
                     
@@ -536,7 +610,31 @@ async def websocket_chat(websocket: WebSocket):
                         
                     try:
                         stream_buffer += token_text
+                        all_text_buffer += token_text
                         
+                        # 1. Detect Media Placeholders in the growing buffer
+                        # Pattern: ![SEARCH: "query"] or ![VIDEO: "query"]
+                        import re
+                        media_patterns = [
+                            (r'!\[SEARCH:\s*"([^"]+)"\]', 'image'),
+                            (r'!\[VIDEO:\s*"([^"]+)"\]', 'video')
+                        ]
+                        
+                        for pattern, m_type in media_patterns:
+                            matches = re.finditer(pattern, all_text_buffer)
+                            for match in matches:
+                                full_placeholder = match.group(0)
+                                query = match.group(1)
+                                if full_placeholder not in detected_placeholders:
+                                    detected_placeholders.add(full_placeholder)
+                                    # Trigger background resolution with persistence info
+                                    asyncio.create_task(resolve_media_inline(
+                                        query, m_type, full_placeholder, websocket, 
+                                        session_id=session_id, session_manager=session_manager,
+                                        media_state=media_state
+                                    ))
+
+                        # 2. Existing thinking tag logic
                         # List of potential thinking tags to handle
                         start_tags = ["<thinking>", "<thought>"]
                         end_tags = ["</thinking>", "</thought>"]
@@ -731,6 +829,18 @@ async def websocket_chat(websocket: WebSocket):
                             "model_type": conf.get("model_type")
                         }
                     
+                    # Merge captured media into the final message before saving
+                    if media_state["data"]:
+                        if session.messages and session.messages[-1]["role"] == "assistant":
+                            # Ensure we don't overwrite if something is already there (though unlikely for new msg)
+                            if "media" not in session.messages[-1]:
+                                session.messages[-1]["media"] = {}
+                            session.messages[-1]["media"].update(media_state["data"])
+                            print(f"[Server] Merged {len(media_state['data'])} media items into final message")
+
+                    # Mark as committed so late-finishing tasks know to patch DB directly
+                    media_state["committed"] = True
+
                     session_manager.save_session(session_id, session.messages, metadata=save_metadata)
                     
                     # SimpleMem: Store the response in memory

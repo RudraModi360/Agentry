@@ -91,7 +91,7 @@
     cursor: pointer;
     padding: 8px;
     border-radius: 8px;
-    transition: background 0.15s ease;
+    transition: all 0.15s ease;
 }
 
 .sidebar-logo-btn svg {
@@ -105,17 +105,58 @@
 }
 
 .sidebar-logo-btn:hover {
-    background: rgba(255, 255, 255, 0.06);
+    background: var(--accent-light);
+    color: var(--accent);
 }
 
-/* Sidebar Toggle Button */
+/* Light Theme Logo Button - Explicit Styling */
+html:not([data-theme="dark"]) .sidebar-logo-btn,
+:root:not([data-theme="dark"]) .sidebar-logo-btn {
+    color: #0c0a09 !important;
+}
+
+html:not([data-theme="dark"]) .sidebar-logo-btn svg,
+:root:not([data-theme="dark"]) .sidebar-logo-btn svg {
+    stroke: #0c0a09 !important;
+}
+
+html:not([data-theme="dark"]) .sidebar-logo-btn:hover,
+:root:not([data-theme="dark"]) .sidebar-logo-btn:hover {
+    background: rgba(245, 158, 11, 0.15) !important;
+    color: #f59e0b !important;
+}
+
+html:not([data-theme="dark"]) .sidebar-logo-btn:hover svg,
+:root:not([data-theme="dark"]) .sidebar-logo-btn:hover svg {
+    stroke: #f59e0b !important;
+}
+
+/* Dark Theme Logo Button */
+[data-theme="dark"] .sidebar-logo-btn {
+    color: #ececec !important;
+}
+
+[data-theme="dark"] .sidebar-logo-btn svg {
+    stroke: #ececec !important;
+}
+
+[data-theme="dark"] .sidebar-logo-btn:hover {
+    background: rgba(251, 191, 36, 0.15) !important;
+    color: #fbbf24 !important;
+}
+
+[data-theme="dark"] .sidebar-logo-btn:hover svg {
+    stroke: #fbbf24 !important;
+}
+
+/* Sidebar Toggle Button - Theme Aware */
 .sidebar-toggle-btn {
     display: flex;
     align-items: center;
     justify-content: center;
     background: transparent;
     border: none;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--text-secondary);
     cursor: pointer;
     padding: 8px;
     border-radius: 8px;
@@ -131,8 +172,48 @@
 }
 
 .sidebar-toggle-btn:hover {
-    background: rgba(255, 255, 255, 0.06);
-    color: var(--text-primary);
+    background: var(--accent-light);
+    color: var(--accent);
+}
+
+/* Light Theme Sidebar Toggle Button - Explicit Styling */
+html:not([data-theme="dark"]) .sidebar-toggle-btn,
+:root:not([data-theme="dark"]) .sidebar-toggle-btn {
+    color: #0c0a09 !important;
+}
+
+html:not([data-theme="dark"]) .sidebar-toggle-btn svg,
+:root:not([data-theme="dark"]) .sidebar-toggle-btn svg {
+    stroke: #0c0a09 !important;
+}
+
+html:not([data-theme="dark"]) .sidebar-toggle-btn:hover,
+:root:not([data-theme="dark"]) .sidebar-toggle-btn:hover {
+    background: rgba(245, 158, 11, 0.15) !important;
+    color: #f59e0b !important;
+}
+
+html:not([data-theme="dark"]) .sidebar-toggle-btn:hover svg,
+:root:not([data-theme="dark"]) .sidebar-toggle-btn:hover svg {
+    stroke: #f59e0b !important;
+}
+
+/* Dark Theme Sidebar Toggle Button */
+[data-theme="dark"] .sidebar-toggle-btn {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+[data-theme="dark"] .sidebar-toggle-btn svg {
+    stroke: rgba(255, 255, 255, 0.6) !important;
+}
+
+[data-theme="dark"] .sidebar-toggle-btn:hover {
+    background: rgba(251, 191, 36, 0.15) !important;
+    color: #fbbf24 !important;
+}
+
+[data-theme="dark"] .sidebar-toggle-btn:hover svg {
+    stroke: #fbbf24 !important;
 }
 
 
@@ -300,9 +381,11 @@
 }
 
 .session-item.active {
-    background: rgba(163, 163, 163, 0.15);
-    border-left: 3px solid #a3a3a3;
+    background: var(--bg-tertiary);
+    border-left: 3px solid var(--text-primary);
     padding-left: 9px;
+    color: var(--text-primary);
+    /* Ensure text is readable */
 }
 
 .session-info {
@@ -316,26 +399,37 @@
 }
 
 .session-title {
-    font-size: 12px;
+    font-size: 13px;
+    /* Slightly larger */
     font-weight: 500;
     color: var(--text-primary, #ffffff) !important;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    margin-bottom: 2px;
-    line-height: 1.2;
-    transition: opacity 0.3s ease;
+    margin-bottom: 0;
+    line-height: 1.4;
+    transition: all 0.2s ease;
 }
 
 .session-meta {
-    font-size: 9px;
+    font-size: 10px;
     color: var(--text-muted) !important;
-    line-height: 1;
+    line-height: 1.2;
     display: block;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    transition: opacity 0.3s ease;
+    opacity: 0;
+    height: 0;
+    margin-top: 0;
+    transition: all 0.2s ease;
+}
+
+.session-item:hover .session-meta {
+    opacity: 1;
+    height: 12px;
+    /* Auto expand */
+    margin-top: 2px;
 }
 
 /* Menu button (three dots) */
@@ -1009,7 +1103,6 @@
 
 .sidebar .sidebar-header .sidebar-logo-btn svg,
 .sidebar .sidebar-header .sidebar-logo-btn svg path {
-    stroke: var(--text-primary) !important;
     stroke-width: 1.5 !important;
     fill: none !important;
     opacity: 1 !important;
@@ -1018,10 +1111,33 @@
 .sidebar .sidebar-header .sidebar-toggle-btn svg,
 .sidebar .sidebar-header .sidebar-toggle-btn svg rect,
 .sidebar .sidebar-header .sidebar-toggle-btn svg line {
-    stroke: var(--text-secondary) !important;
     stroke-width: 1.5 !important;
     fill: none !important;
     opacity: 1 !important;
+}
+
+/* Light Theme - Match menu item icons color (--text-primary = #0c0a09) */
+html:not([data-theme="dark"]) .sidebar .sidebar-header .sidebar-logo-btn svg,
+html:not([data-theme="dark"]) .sidebar .sidebar-header .sidebar-logo-btn svg path {
+    stroke: #0c0a09 !important;
+}
+
+html:not([data-theme="dark"]) .sidebar .sidebar-header .sidebar-toggle-btn svg,
+html:not([data-theme="dark"]) .sidebar .sidebar-header .sidebar-toggle-btn svg rect,
+html:not([data-theme="dark"]) .sidebar .sidebar-header .sidebar-toggle-btn svg line {
+    stroke: #0c0a09 !important;
+}
+
+/* Dark Theme - Match menu item icons color (#ececec) */
+[data-theme="dark"] .sidebar .sidebar-header .sidebar-logo-btn svg,
+[data-theme="dark"] .sidebar .sidebar-header .sidebar-logo-btn svg path {
+    stroke: #ececec !important;
+}
+
+[data-theme="dark"] .sidebar .sidebar-header .sidebar-toggle-btn svg,
+[data-theme="dark"] .sidebar .sidebar-header .sidebar-toggle-btn svg rect,
+[data-theme="dark"] .sidebar .sidebar-header .sidebar-toggle-btn svg line {
+    stroke: #ececec !important;
 }
 
 /* ==================== LIGHT THEME OVERRIDES ==================== */
@@ -1076,11 +1192,13 @@
 }
 
 :root .sidebar-toggle-btn:hover {
-    background: rgba(0, 0, 0, 0.05) !important;
+    background: rgba(245, 158, 11, 0.1) !important;
+    color: #f59e0b !important;
 }
 
 :root .sidebar-logo-btn:hover {
-    background: rgba(0, 0, 0, 0.05) !important;
+    background: rgba(245, 158, 11, 0.1) !important;
+    color: #f59e0b !important;
 }
 
 :root .session-menu-btn {
@@ -1139,11 +1257,13 @@
 }
 
 [data-theme="dark"] .sidebar-toggle-btn:hover {
-    background: rgba(255, 255, 255, 0.06) !important;
+    background: rgba(251, 191, 36, 0.15) !important;
+    color: #fbbf24 !important;
 }
 
 [data-theme="dark"] .sidebar-logo-btn:hover {
-    background: rgba(255, 255, 255, 0.06) !important;
+    background: rgba(251, 191, 36, 0.15) !important;
+    color: #fbbf24 !important;
 }
 
 [data-theme="dark"] .session-menu-btn {

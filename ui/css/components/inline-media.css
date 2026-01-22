@@ -1,0 +1,595 @@
+/**
+ * Inline Media Styles
+ * For YouTube embeds and images rendered inline in chat messages
+ * Similar to Gemini/Perplexity rich media display
+ */
+
+/* ============================================
+   YouTube Embed Card
+   ============================================ */
+.youtube-embed-card {
+    display: flex;
+    flex-direction: column;
+    max-width: 400px;
+    margin: 16px 0;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--card-bg, #1e1e1e);
+    border: 1px solid var(--card-border, #333);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.youtube-embed-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    border-color: var(--primary, #6366f1);
+}
+
+.youtube-thumbnail {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: #000;
+}
+
+.youtube-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.youtube-embed-card:hover .youtube-thumbnail img {
+    transform: scale(1.05);
+}
+
+.youtube-play-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.9;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.youtube-embed-card:hover .youtube-play-btn {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+.youtube-play-btn svg {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.youtube-info {
+    padding: 12px 16px;
+}
+
+.youtube-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary, #fff);
+    line-height: 1.4;
+    margin-bottom: 4px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.youtube-channel {
+    font-size: 12px;
+    color: var(--text-secondary, #aaa);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.youtube-channel::before {
+    content: '';
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff0000'%3E%3Cpath d='M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z'/%3E%3C/svg%3E");
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+/* ============================================
+   Inline Media Card (Images with Source)
+   ============================================ */
+.inline-media-card {
+    display: flex;
+    flex-direction: column;
+    max-width: 350px;
+    margin: 16px 0;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--card-bg, #1e1e1e);
+    border: 1px solid var(--card-border, #333);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+}
+
+.inline-media-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    border-color: var(--primary, #6366f1);
+}
+
+.inline-media-image {
+    width: 100%;
+    overflow: hidden;
+    background: var(--bg-secondary, #1a1a1a);
+}
+
+.inline-media-image img {
+    width: 100%;
+    max-height: 300px;
+    object-fit: cover;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.inline-media-card:hover .inline-media-image img {
+    transform: scale(1.02);
+}
+
+.inline-media-image.standalone {
+    max-width: 400px;
+    margin: 16px 0;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--card-border, #333);
+}
+
+.inline-media-image.standalone img {
+    width: 100%;
+    max-height: 350px;
+    object-fit: contain;
+    background: var(--bg-secondary, #1a1a1a);
+}
+
+.inline-media-source {
+    padding: 10px 14px;
+    background: var(--bg-tertiary, #252525);
+    border-top: 1px solid var(--card-border, #333);
+}
+
+.inline-media-source a {
+    color: var(--text-secondary, #aaa);
+    font-size: 12px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.2s ease;
+}
+
+.inline-media-source a::before {
+    content: '📷';
+    font-size: 11px;
+}
+
+.inline-media-source a:hover {
+    color: var(--primary, #6366f1);
+    text-decoration: underline;
+}
+
+/* ============================================
+   Media Grid (Multiple Images)
+   ============================================ */
+.media-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+}
+
+.media-grid .inline-media-image {
+    margin: 0;
+}
+
+.media-grid .inline-media-image img {
+    aspect-ratio: 4/3;
+    height: auto;
+}
+
+/* ============================================
+   Responsive Adjustments
+   ============================================ */
+@media (max-width: 768px) {
+
+    .youtube-embed-card,
+    .inline-media-card,
+    .inline-media-image.standalone {
+        max-width: 100%;
+    }
+
+    .youtube-info {
+        padding: 10px 12px;
+    }
+
+    .youtube-title {
+        font-size: 13px;
+    }
+
+    .media-grid {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 8px;
+    }
+}
+
+/* ============================================
+   Light Theme Adjustments
+   ============================================ */
+[data-theme="light"] .youtube-embed-card,
+[data-theme="light"] .inline-media-card {
+    background: #fff;
+    border-color: #e0e0e0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .youtube-embed-card:hover,
+[data-theme="light"] .inline-media-card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] .youtube-title {
+    color: #1a1a1a;
+}
+
+[data-theme="light"] .youtube-channel {
+    color: #666;
+}
+
+[data-theme="light"] .inline-media-source {
+    background: #f5f5f5;
+    border-color: #e0e0e0;
+}
+
+[data-theme="light"] .inline-media-source a {
+    color: #666;
+}
+
+/* ============================================
+   Animation for Loading
+   ============================================ */
+.inline-media-image img,
+.youtube-thumbnail img {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* ============================================
+   Inline Media Carousel (Media Search Tool)
+   Horizontal scrollable carousel for image results
+   ============================================ */
+.inline-media-carousel {
+    margin: 16px 0;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--bg-tertiary, #1a1a1a);
+    border: 1px solid var(--card-border, #333);
+}
+
+.media-carousel-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--bg-secondary, #1e1e1e);
+    border-bottom: 1px solid var(--card-border, #333);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary, #aaa);
+}
+
+.media-carousel-icon {
+    font-size: 14px;
+}
+
+.media-carousel-text {
+    flex: 1;
+}
+
+/* Searching state animation */
+.inline-media-carousel:not(.loaded) .media-carousel-text {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.media-carousel-items {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+
+/* Custom scrollbar for carousel */
+.media-carousel-items::-webkit-scrollbar {
+    height: 6px;
+}
+
+.media-carousel-items::-webkit-scrollbar-track {
+    background: var(--bg-primary, #0a0a0a);
+    border-radius: 3px;
+}
+
+.media-carousel-items::-webkit-scrollbar-thumb {
+    background: var(--text-muted, #666);
+    border-radius: 3px;
+}
+
+.media-carousel-items::-webkit-scrollbar-thumb:hover {
+    background: var(--accent, #f97316);
+}
+
+.media-carousel-item {
+    flex: 0 0 auto;
+    width: 160px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--bg-secondary, #1e1e1e);
+    border: 1px solid var(--card-border, #333);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.media-carousel-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    border-color: var(--accent, #f97316);
+}
+
+.media-carousel-item img {
+    width: 100%;
+    height: 100px;
+    object-fit: cover;
+    background: var(--bg-primary, #0a0a0a);
+    display: block;
+}
+
+.media-carousel-item-info {
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.media-item-title {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-primary, #fff);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+}
+
+.media-item-source {
+    font-size: 10px;
+    color: var(--text-muted, #888);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Empty state */
+.media-carousel-items:empty::after {
+    content: 'Loading images...';
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 80px;
+    color: var(--text-muted, #666);
+    font-size: 12px;
+}
+
+.inline-media-carousel.loaded .media-carousel-items:empty::after {
+    content: 'No images available';
+}
+
+/* Light theme adjustments */
+[data-theme="light"] .inline-media-carousel {
+    background: #f8f8f8;
+    border-color: #e0e0e0;
+}
+
+[data-theme="light"] .media-carousel-header {
+    background: #fff;
+    border-color: #e0e0e0;
+}
+
+[data-theme="light"] .media-carousel-item {
+    background: #fff;
+    border-color: #e0e0e0;
+}
+
+[data-theme="light"] .media-carousel-item:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .media-item-title {
+    color: #1a1a1a;
+}
+
+[data-theme="light"] .media-item-source {
+    color: #666;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .media-carousel-item {
+        width: 140px;
+    }
+
+    .media-carousel-item img {
+        height: 85px;
+    }
+
+    .media-carousel-items {
+        gap: 10px;
+        padding: 10px;
+    }
+}
+
+/* ============================================
+   Semantic Media Placeholders (Inline Search)
+   ============================================ */
+:root {
+    --placeholder-bg: var(--bg-tertiary, #1a1a1a);
+    --placeholder-pulse-bg: var(--bg-secondary, #1e1e1e);
+    --placeholder-border: var(--card-border, #444);
+}
+
+[data-theme="light"] {
+    --placeholder-bg: #f8f8f8;
+    --placeholder-pulse-bg: #f0f0f0;
+    --placeholder-border: #ddd;
+}
+
+.semantic-media-placeholder {
+    margin: 16px 0;
+    min-height: 100px;
+    border-radius: 12px;
+    background: var(--placeholder-bg);
+    border: 1px dashed var(--placeholder-border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.semantic-media-placeholder.loading {
+    border-style: dashed;
+    animation: placeholderPulse 2s infinite ease-in-out;
+}
+
+@keyframes placeholderPulse {
+    0% {
+        border-color: var(--placeholder-border);
+        background: var(--placeholder-bg);
+    }
+
+    50% {
+        border-color: var(--primary, #6366f1);
+        background: var(--placeholder-pulse-bg);
+    }
+
+    100% {
+        border-color: var(--placeholder-border);
+        background: var(--placeholder-bg);
+    }
+}
+
+.semantic-media-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.semantic-media-skeleton {
+    width: 100%;
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    overflow: hidden;
+}
+
+.skeleton-item {
+    flex: 0 0 160px;
+    height: 140px;
+    border-radius: 10px;
+    background: linear-gradient(90deg,
+            var(--placeholder-bg) 25%,
+            var(--placeholder-pulse-bg) 50%,
+            var(--placeholder-bg) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite linear;
+}
+
+@keyframes shimmer {
+    from {
+        background-position: -200% 0;
+    }
+
+    to {
+        background-position: 200% 0;
+    }
+}
+
+.skeleton-video {
+    width: 100%;
+    max-width: 400px;
+    aspect-ratio: 16/9;
+    border-radius: 12px;
+    background: linear-gradient(90deg,
+            var(--placeholder-bg) 25%,
+            var(--placeholder-pulse-bg) 50%,
+            var(--placeholder-bg) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite linear;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.semantic-media-placeholder:not(.loading) {
+    border: none;
+    background: transparent;
+    min-height: auto;
+    width: 100%;
+}
+
+/* Override inline-media-carousel margin when inside placeholder */
+.semantic-media-placeholder .inline-media-carousel {
+    margin: 0;
+    width: 100%;
+}
+
+.semantic-media-error {
+    color: var(--error, #ef4444);
+    font-size: 12px;
+    font-style: italic;
+    padding: 12px;
+    border-radius: 8px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}. s e m a n t i c - m e d i a - e r r o r  
+   d i s p l a y :   n o n e ;    
+ 

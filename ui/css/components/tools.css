@@ -271,6 +271,35 @@
     opacity: 0.5;
 }
 
+/* Tool Loading State */
+@keyframes tool-pulse {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.4;
+        pointer-events: none;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+.tool-item.loading {
+    animation: tool-pulse 1.5s infinite ease-in-out;
+    pointer-events: none;
+}
+
+.tool-item.loading .tool-item-icon {
+    background: var(--accent-light) !important;
+}
+
+.tool-item.loading .tool-item-icon svg {
+    stroke: var(--accent) !important;
+}
+
 .tool-item-icon {
     width: 28px;
     height: 28px;
@@ -453,8 +482,52 @@
 }
 
 .mcp-server-group.expanded .mcp-server-tools {
-    max-height: 1000px;
+    max-height: 300px;
+    overflow-y: auto;
     transition: max-height 0.35s ease-in;
+}
+
+/* Scrollbar styling for MCP server tools - Enhanced Visibility */
+.mcp-server-tools::-webkit-scrollbar {
+    width: 8px;
+    /* Slightly wider */
+}
+
+.mcp-server-tools::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    /* Light track for contrast */
+    border-radius: 4px;
+}
+
+[data-theme="dark"] .mcp-server-tools::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    /* Subtle track in dark mode */
+}
+
+.mcp-server-tools::-webkit-scrollbar-thumb {
+    background: #a8a29e;
+    /* Default gray thumb */
+    border-radius: 10px;
+    border: 2px solid transparent;
+    /* Padding around thumb */
+    background-clip: content-box;
+}
+
+/* Light Theme: Darker thumb for better visibility */
+html:not([data-theme="dark"]) .mcp-server-tools::-webkit-scrollbar-thumb {
+    background: #78716c !important;
+    /* Stone-500 for good contrast */
+}
+
+/* Dark Theme: Lighter thumb */
+[data-theme="dark"] .mcp-server-tools::-webkit-scrollbar-thumb {
+    background: #a8a29e !important;
+    /* Stone-400 */
+}
+
+.mcp-server-tools::-webkit-scrollbar-thumb:hover {
+    background: var(--accent) !important;
+    /* Orange accent on hover */
 }
 
 .mcp-server-tools .tools-list {

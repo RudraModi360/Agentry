@@ -11,62 +11,63 @@
  */
 
 :root {
-    /* ==================== Color Palette (Black & White) ==================== */
+    /* ==================== Color Palette (Orange/Amber) ==================== */
 
-    /* Primary Colors - Grayscale */
-    --color-primary-50: #ffffff;
-    --color-primary-100: #f5f5f5;
-    --color-primary-200: #e5e5e5;
-    --color-primary-300: #d4d4d4;
-    --color-primary-400: #a3a3a3;
-    --color-primary-500: #737373;
-    --color-primary-600: #525252;
-    --color-primary-700: #404040;
-    --color-primary-800: #262626;
-    --color-primary-900: #171717;
+    /* Primary Colors - Orange/Amber Scale */
+    --color-primary-50: #fffbeb;
+    --color-primary-100: #fef3c7;
+    --color-primary-200: #fde68a;
+    --color-primary-300: #fcd34d;
+    --color-primary-400: #fbbf24;
+    --color-primary-500: #f59e0b;
+    --color-primary-600: #d97706;
+    --color-primary-700: #b45309;
+    --color-primary-800: #92400e;
+    --color-primary-900: #78350f;
 
-    /* Neutral Colors (Pure Grayscale) */
-    --color-neutral-50: #ffffff;
-    --color-neutral-100: #f5f5f5;
-    --color-neutral-200: #e5e5e5;
-    --color-neutral-300: #d4d4d4;
-    --color-neutral-400: #a3a3a3;
-    --color-neutral-500: #737373;
-    --color-neutral-600: #525252;
-    --color-neutral-700: #404040;
-    --color-neutral-800: #262626;
-    --color-neutral-900: #171717;
-    --color-neutral-950: #0a0a0a;
+    /* Neutral Colors (Warm Gray) */
+    --color-neutral-50: #fafaf9;
+    --color-neutral-100: #f5f5f4;
+    --color-neutral-200: #e7e5e4;
+    --color-neutral-300: #d6d3d1;
+    --color-neutral-400: #a8a29e;
+    --color-neutral-500: #78716c;
+    --color-neutral-600: #57534e;
+    --color-neutral-700: #44403c;
+    --color-neutral-800: #292524;
+    --color-neutral-900: #1c1917;
+    --color-neutral-950: #0c0a09;
 
-    /* Status Colors - Grayscale */
-    --color-success-light: #e5e5e5;
-    --color-success: #525252;
-    --color-success-dark: #404040;
+    /* Status Colors - Vibrant */
+    --color-success-light: #dcfce7;
+    --color-success: #22c55e;
+    --color-success-dark: #16a34a;
 
-    --color-warning-light: #e5e5e5;
-    --color-warning: #737373;
-    --color-warning-dark: #525252;
+    --color-warning-light: #fef3c7;
+    --color-warning: #f59e0b;
+    --color-warning-dark: #d97706;
 
-    --color-error-light: #e5e5e5;
-    --color-error: #404040;
-    --color-error-dark: #262626;
+    --color-error-light: #fee2e2;
+    --color-error: #ef4444;
+    --color-error-dark: #dc2626;
 
-    --color-info-light: #e5e5e5;
-    --color-info: #525252;
-    --color-info-dark: #404040;
+    --color-info-light: #dbeafe;
+    --color-info: #3b82f6;
+    --color-info-dark: #2563eb;
 
-    /* Accent Colors - Grayscale */
-    --color-cyan: #737373;
-    --color-pink: #a3a3a3;
-    --color-violet: #525252;
-    --color-emerald: #737373;
+    /* Accent Colors - Warm Palette */
+    --color-cyan: #06b6d4;
+    --color-pink: #ec4899;
+    --color-violet: #8b5cf6;
+    --color-emerald: #10b981;
 
     /* ==================== Semantic Colors (Light Mode) ==================== */
 
     /* Backgrounds - Refined Contrast */
-    --bg-primary: #ffffff;
-    --bg-secondary: #f8f9fa;
-    --bg-tertiary: #f1f3f5;
+    /* Backgrounds - Refined Warm/Creamy White */
+    --bg-primary: #fdfbf7;
+    --bg-secondary: #faf6f0;
+    --bg-tertiary: #f8f1eb;
     --bg-elevated: #ffffff;
     --bg-overlay: rgba(0, 0, 0, 0.4);
 
@@ -87,12 +88,12 @@
     --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
     --card-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 
-    /* Accent - Black & White */
-    --accent: #404040;
-    --accent-hover: #262626;
-    --accent-active: #171717;
-    --accent-light: rgba(64, 64, 64, 0.1);
-    --accent-glow: rgba(64, 64, 64, 0.4);
+    /* Accent - Orange/Amber */
+    --accent: #f59e0b;
+    --accent-hover: #d97706;
+    --accent-active: #b45309;
+    --accent-light: rgba(245, 158, 11, 0.15);
+    --accent-glow: rgba(245, 158, 11, 0.4);
 
     /* Input */
     --input-bg: var(--color-neutral-100);
@@ -350,12 +351,12 @@
     --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
     --card-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
 
-    /* Accent - Neutral grays */
-    --accent: #a3a3a3;
-    --accent-hover: #d4d4d4;
-    --accent-active: #737373;
-    --accent-light: rgba(163, 163, 163, 0.15);
-    --accent-glow: rgba(163, 163, 163, 0.5);
+    /* Accent - Orange/Amber (Dark Mode) */
+    --accent: #fbbf24;
+    --accent-hover: #fcd34d;
+    --accent-active: #f59e0b;
+    --accent-light: rgba(251, 191, 36, 0.15);
+    --accent-glow: rgba(251, 191, 36, 0.5);
 
     /* Input - Integrated look */
     --input-bg: transparent;

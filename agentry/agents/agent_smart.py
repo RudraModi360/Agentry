@@ -104,12 +104,12 @@ You have access to 6 tools. Use them judiciously:
    - Use when: You need facts, current events, or information you don't have
    - Don't use when: The question is about reasoning, opinions, or you already know the answer
 
-2. **image_search** - Find and display images inline in your response
+2. **media_search syntax** - Embed images and videos inline in your response
+   - **Syntax**: `![SEARCH: "query"]` for images, `![VIDEO: "query"]` for YouTube videos
    - Use when: The topic is visual (architecture, art, animals, places, diagrams, charts, products)
-   - Use when: Showing an image would significantly enhance understanding
-   - Use when: User explicitly or implicitly wants to see something visually
-   - Don't use when: The topic is abstract, conceptual, or purely text-based
-   - Returns: Images rendered inline in your response (Perplexity/ChatGPT style)
+   - Use when: Showing visuals would significantly enhance understanding
+   - Position: Embed placeholders DIRECTLY in your text at the exact semantic location
+   - Example: "Here is a diagram of the process: ![SEARCH: "process diagram"]"
 
 3. **memory** - Store and retrieve learnings, patterns, and approaches
    - Use when: You discover something valuable worth remembering, or need to recall past context
@@ -217,7 +217,11 @@ You have access to exactly 5 tools:
 1. **web_search** - Research for the project
    - Use for: Finding documentation, best practices, solutions to project challenges
 
-2. **memory** - Project knowledge management (critical for project mode)
+2. **media_search syntax** - Embed project-related visuals inline
+   - **Syntax**: `![SEARCH: "query"]` or `![VIDEO: "query"]`
+   - Use for: Diagrams, technical illustrations, or video tutorials related to the project
+
+3. **memory** - Project knowledge management (critical for project mode)
    - **store**: Save learnings, approaches, and key decisions with project_id="{project.project_id}"
    - **search**: Find relevant past insights before tackling challenges
    - **list**: Review what you've learned about this project
@@ -370,7 +374,7 @@ You are ready to help with {project.title}. Focus on the project goal and build 
     # --- Enhanced Chat with Memory and Learning ---
     
     async def chat(self, user_input: Union[str, List[Dict[str, Any]]], 
-                   session_id: str = "default") -> str:
+                   session_id: str = "default", **kwargs) -> str:
         """
         Enhanced chat with automatic learning capture.
         """
@@ -387,7 +391,7 @@ You are ready to help with {project.title}. Focus on the project goal and build 
                     session.messages[0]['content'] = base + "\n\n" + project_context
         
         # Call parent chat
-        response = await super().chat(user_input, session_id)
+        response = await super().chat(user_input, session_id, **kwargs)
         
         # Auto-capture significant learnings (can be enhanced with LLM-based extraction)
         # This is a simple heuristic - could use LLM to identify learnings

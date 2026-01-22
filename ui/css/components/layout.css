@@ -225,8 +225,8 @@
     flex: 1;
     display: flex;
     align-items: center;
-    background: #2f2f2f;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-default);
     border-radius: var(--radius-2xl);
     padding: var(--space-1);
     transition: all var(--transition-default);

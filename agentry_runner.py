@@ -65,7 +65,7 @@ class CORSRequestHandler(SimpleHTTPRequestHandler):
         
         # Smart caching for development - cache static assets for 5 seconds
         # This speeds up normal navigation while allowing quick iteration
-        path = self.path.split('?')[0]  # Remove query string
+        path = getattr(self, 'path', '').split('?')[0]  # Remove query string
         if path.endswith(('.css', '.js', '.woff2', '.woff', '.ttf', '.png', '.jpg', '.svg', '.ico')):
             self.send_header('Cache-Control', 'public, max-age=5')
         else:
@@ -174,6 +174,7 @@ def run_backend_server(host: str = BACKEND_HOST, port: int = BACKEND_PORT):
             host=host,
             port=port,
             reload=True,
+            reload_dirs=[os.path.join(current_dir, "backend"), os.path.join(current_dir, "agentry")],
             log_level="info"
         )
     except ImportError:

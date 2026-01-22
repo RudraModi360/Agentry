@@ -199,8 +199,8 @@ You are ready to help with {project.title}. Focus on the project goal and build 
     def _load_smart_tools(self):
         """Load only essential Smart Agent tools - lean and focused."""
         # DO NOT load default tools - SmartAgent is lean by design
-        # Only load these 5 specific tools:
-        # 1. web_search, 2. memory, 3. notes, 4. datetime, 5. bash
+        # Now loading 6 tools with media_search:
+        # 1. web_search, 2. memory, 3. notes, 4. datetime, 5. bash, 6. media_search
         
         # Get Smart Agent specific tools
         smart_tools = get_smart_agent_tools()  # datetime, notes, memory, bash, think
@@ -217,6 +217,12 @@ You are ready to help with {project.title}. Focus on the project goal and build 
         web_tool = WebSearchTool()
         self.internal_tools.append(web_tool.schema)
         self.custom_tool_executors[web_tool.name] = web_tool.run
+        
+        # Add media_search for inline image/video embedding (like Gemini)
+        from scratchy.tools.media_search import MediaSearchTool
+        media_tool = MediaSearchTool()
+        self.internal_tools.append(media_tool.schema)
+        self.custom_tool_executors[media_tool.name] = media_tool.run
         
         # IMPORTANT: Mark that tools are loaded and supported
         self.supports_tools = True

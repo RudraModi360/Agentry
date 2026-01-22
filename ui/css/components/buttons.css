@@ -234,12 +234,12 @@
     stroke-width: 2 !important;
 }
 
-/* Send Button - Grayscale */
+/* Send Button - Theme Aware with Orange/Amber Accent */
 .send-btn {
     width: 48px;
     height: 48px;
     padding: 0;
-    background: linear-gradient(135deg, #404040, #262626);
+    background: linear-gradient(135deg, var(--accent), var(--accent-hover));
     color: white;
     border: none;
     border-radius: var(--radius-lg);
@@ -252,7 +252,7 @@
 
 .send-btn:hover:not(:disabled) {
     transform: scale(1.05);
-    box-shadow: 0 0 15px rgba(64, 64, 64, 0.4);
+    box-shadow: 0 0 15px var(--accent-glow);
 }
 
 .send-btn:disabled {
@@ -264,6 +264,26 @@
 
 .send-btn:active:not(:disabled) {
     transform: scale(0.95);
+}
+
+/* Light Theme Send Button */
+:root .send-btn {
+    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+:root .send-btn:hover:not(:disabled) {
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+}
+
+/* Dark Theme Send Button */
+[data-theme="dark"] .send-btn {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b) !important;
+    box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+}
+
+[data-theme="dark"] .send-btn:hover:not(:disabled) {
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
 }
 
 /* Attach Button */
@@ -293,7 +313,7 @@
     stroke-width: 2;
 }
 
-/* Scroll to Bottom Button */
+/* Scroll to Bottom Button - Theme Aware */
 .scroll-bottom-btn {
     position: absolute;
     bottom: 110px;
@@ -301,7 +321,7 @@
     width: 36px;
     height: 36px;
     border-radius: var(--radius-full);
-    background: var(--card-bg);
+    background: var(--bg-elevated);
     backdrop-filter: blur(var(--blur-default));
     border: 1px solid var(--card-border);
     color: var(--text-primary);
@@ -339,6 +359,36 @@
     stroke-width: 3;
     stroke-linecap: round;
     stroke-linejoin: round;
+}
+
+/* Light Theme Scroll Button */
+:root .scroll-bottom-btn {
+    background: #ffffff !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+    color: var(--text-primary) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+:root .scroll-bottom-btn:hover {
+    background: #f59e0b !important;
+    border-color: #f59e0b !important;
+    color: white !important;
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+}
+
+/* Dark Theme Scroll Button */
+[data-theme="dark"] .scroll-bottom-btn {
+    background: #2f2f2f !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #ececec !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .scroll-bottom-btn:hover {
+    background: #fbbf24 !important;
+    border-color: #fbbf24 !important;
+    color: #0c0a09 !important;
+    box-shadow: 0 0 15px rgba(251, 191, 36, 0.5);
 }
 
 /* ==================== Button Groups ==================== */

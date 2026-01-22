@@ -197,12 +197,17 @@ const WebSocketManager = {
                 break;
 
             case 'complete':
+                // Flush any pending stream content first
+                if (Messages.currentAssistantMessage) {
+                    Messages.flushStreamBuffer(Messages.currentAssistantMessage);
+                }
+
                 if (data.content && data.content.trim()) {
                     if (!Messages.currentAssistantMessage) {
                         Messages.currentAssistantMessage = Messages.createAssistantMessage();
                     }
                     Messages.removeLoadingIndicators(Messages.currentAssistantMessage);
-                    Messages.updateAssistantMessageText(Messages.currentAssistantMessage, data.content);
+                    Messages.updateAssistantMessageText(Messages.currentAssistantMessage, data.content, true);
                 } else if (Messages.currentAssistantMessage) {
                     Messages.removeLoadingIndicators(Messages.currentAssistantMessage);
                 }
@@ -259,6 +264,16 @@ const WebSocketManager = {
             case 'media_saved':
                 if (data.media && typeof Media !== 'undefined') {
                     Media.addItem(data.media, true);
+                }
+                break;
+
+            case 'media_resolved':
+                if (data.query && data.results) {
+                    // Update registry
+                    const key = `${data.media_type}:${data.query}`;
+                    Messages.mediaRegistry[key] = data.results;
+                    // Resolve all placeholders
+                    Messages.resolveMedia(data.query, data.media_type, data.results);
                 }
                 break;
 
