@@ -11,16 +11,13 @@ const Messages = {
     thinkingText: '',
     selectedImagesData: [],
 
-<<<<<<< HEAD
     _pendingMediaResults: [], // Buffer for media_search results
     mediaRegistry: {}, // Store resolved media items by query/type
     _lastFormattedIdx: 0, // Track up to where we've formatted the text in a stream
     _formattedCache: '', // Cache for stable rendered HTML
     _lastContentRaw: '', // Copy of raw content for change detection
-=======
     // Streaming optimization state
     _streamBuffer: '',
->>>>>>> 835c700e5992dfe8b31175fd7ffa3fc359b6a749
     _streamRenderTimer: null,
     _streamRenderDelay: 50, // ms between renders
     _lastRenderTime: 0,
@@ -193,15 +190,11 @@ const Messages = {
      * Update assistant message text with streaming optimization
      * Uses debounced rendering to prevent UI freezes during fast token streaming
      */
-<<<<<<< HEAD
     /**
      * Update assistant message text with streaming optimization
      * Uses debounced rendering to prevent UI freezes during fast token streaming
      */
     updateAssistantMessageText(msgElement, content, forceRender = false, msgData = null) {
-=======
-    updateAssistantMessageText(msgElement, content, forceRender = false) {
->>>>>>> 835c700e5992dfe8b31175fd7ffa3fc359b6a749
         if (content && content.length > 0) {
             this.removeLoadingIndicators(msgElement);
         }
@@ -210,43 +203,7 @@ const Messages = {
 
         // Store the content
         this._streamBuffer = content;
-<<<<<<< HEAD
-=======
 
-        const now = Date.now();
-        const timeSinceLastRender = now - this._lastRenderTime;
-
-        // Clear any pending render
-        if (this._streamRenderTimer) {
-            clearTimeout(this._streamRenderTimer);
-            this._streamRenderTimer = null;
-        }
-
-        // If enough time has passed or forceRender, render immediately
-        if (forceRender || timeSinceLastRender >= this._streamRenderDelay) {
-            this._renderStreamContent(msgElement, content);
-            this._lastRenderTime = now;
-        } else {
-            // Schedule a render for later
-            this._streamRenderTimer = setTimeout(() => {
-                this._renderStreamContent(msgElement, this._streamBuffer);
-                this._lastRenderTime = Date.now();
-                this._streamRenderTimer = null;
-            }, this._streamRenderDelay - timeSinceLastRender);
-        }
-    },
-
-    /**
-     * Internal method to actually render the streamed content
-     */
-    _renderStreamContent(msgElement, content) {
-        if (!msgElement || !content) return;
-
-        const contentDiv = msgElement.querySelector('.message-content');
-        if (!contentDiv) return;
-
-        const toolsContainer = contentDiv.querySelector('.tool-calls-container');
->>>>>>> 835c700e5992dfe8b31175fd7ffa3fc359b6a749
 
         const now = Date.now();
         const timeSinceLastRender = now - this._lastRenderTime;
@@ -321,7 +278,6 @@ const Messages = {
             this._renderStreamContent(msgElement, this._streamBuffer);
         }
         this._streamBuffer = '';
-<<<<<<< HEAD
         this._lastContentRaw = '';
         this._lastRenderTime = 0;
     },
@@ -347,7 +303,7 @@ const Messages = {
 <div class="youtube-thumbnail">
 <img src="${video.thumbnail}" alt="${video.title}" />
 <div class="youtube-play-btn">
-<svg viewBox="0 0 68 48" width="68" height="48"><path d="M66.52,7.74c-0.78-2.93-2.49-5.41-5.42-6.19C55.79,.13,34,0,34,0S12.21,.13,6.9,1.55 C3.97,2.33,2.27,4.81,1.48,7.74C0.06,13.05,0,24,0,24s0.06,10.95,1.48,16.26c0.78,2.93,2.49,5.41,5.42,6.19 C12.21,47.87,34,48,34,48s21.79-0.13,27.1-1.55c2.93-0.78,4.64-3.26,5.42-6.19C67.94,34.95,68,24,68,24S67.94,13.05,66.52,7.74z" fill="#f00"/><path d="M 45,24 27,14 27,34" fill="#fff"/></svg>
+<svg viewBox="0 0 68 48" width="68" height="48"><path d="M66.52,7.74c-0.78-2.93-2.49-5.41-5.42-6.19C55.79,.13,34,0,34,0S12.21,.13,6.9,1.55 C3.97,2.33,2.27,4.81,1.48,7.74C0.06,13.05,0,24,0,24s0.06,10.95,1.48,16.26c0.78,2.93,2.49,5.41,5.42-6.19 C12.21,47.87,34,48,34,48s21.79-0.13,27.1-1.55c2.93-0.78,4.64-3.26,5.42-6.19C67.94,34.95,68,24,68,24S67.94,13.05,66.52,7.74z" fill="#f00"/><path d="M 45,24 27,14 27,34" fill="#fff"/></svg>
 </div>
 </div>
 <div class="youtube-info">
@@ -396,23 +352,6 @@ const Messages = {
 
         // Smooth scroll after hydration to account for height changes
         this.scrollToBottom(true);
-    },
-
-    /**
-     * Force render any pending stream content (call on message complete)
-     */
-    flushStreamBuffer(msgElement) {
-        if (this._streamRenderTimer) {
-            clearTimeout(this._streamRenderTimer);
-            this._streamRenderTimer = null;
-        }
-        if (this._streamBuffer && msgElement) {
-            this._renderStreamContent(msgElement, this._streamBuffer);
-        }
-        this._streamBuffer = '';
-=======
->>>>>>> 835c700e5992dfe8b31175fd7ffa3fc359b6a749
-        this._lastRenderTime = 0;
     },
 
     /**
@@ -994,12 +933,8 @@ const Messages = {
             // Pre-process: Enhance inline images with better styling
             content = this.processInlineImages(content);
 
-<<<<<<< HEAD
             // Pre-process: Handle semantic media anchors ![SEARCH: "query"] and ![VIDEO: "query"]
             content = this.processSemanticMediaAnchors(content);
-
-=======
->>>>>>> 835c700e5992dfe8b31175fd7ffa3fc359b6a749
             const renderer = new marked.Renderer();
 
             renderer.code = (codeOrToken, language) => {
@@ -1121,7 +1056,7 @@ const Messages = {
     },
 
     /**
-<<<<<<< HEAD
+    /**
      * Process semantic media anchors: ![SEARCH: "query"] or ![VIDEO: "query"]
      * Uses deterministic IDs to prevent UI jitter during streaming.
      */
@@ -1176,8 +1111,6 @@ const Messages = {
     },
 
     /**
-=======
->>>>>>> 835c700e5992dfe8b31175fd7ffa3fc359b6a749
      * Copy code block
      */
     async copyCodeBlock(btn) {
@@ -1218,9 +1151,6 @@ const Messages = {
         }
     },
 
-    /**
-     * Scroll to bottom
-     */
     /**
      * Scroll to bottom with behavior control
      */
