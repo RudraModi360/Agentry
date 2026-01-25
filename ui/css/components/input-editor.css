@@ -2,32 +2,42 @@
 
 #message-input {
     flex: 1;
-    padding: 14px 20px 14px 8px;
+    min-width: 0;
+    /* Crucial for preventing flex overflow */
+    padding: 8px 0;
+    /* Reduced padding as wrapper handles spacing */
     background: transparent;
     border: none;
     color: var(--text-primary);
     font-size: 15px;
     font-family: inherit;
     resize: none;
-    max-height: 200px;
+    max-height: 200px !important;
+    /* Strictly enforce height limit */
     min-height: 24px;
     line-height: 1.5;
-    align-self: center;
     outline: none;
-    overflow-y: auto;
+    overflow-y: auto !important;
+    /* Strictly enforce scrollbar */
     white-space: pre-wrap;
-    /* Keep whitespace */
     word-wrap: break-word;
+    word-break: break-word;
+    /* Ensure unwrappable words break */
+    overflow-wrap: anywhere;
+    /* Modern overflow handling */
     display: block;
+    align-self: center;
+    /* Center vertically in wrapper */
+    margin-right: 8px;
+    /* Space for send button */
 }
 
-/* Placeholder support for contenteditable */
+/* Placeholder support via empty pseudo-element */
 #message-input:empty::before {
     content: attr(placeholder);
     color: var(--text-secondary);
     pointer-events: none;
     display: block;
-    /* Needed for empty state */
 }
 
 /* Focus state */
@@ -35,14 +45,35 @@
     outline: none;
 }
 
+#message-input {
+    scrollbar-width: thin !important;
+    /* Firefox override */
+}
+
 /* Scrollbar within input */
 #message-input::-webkit-scrollbar {
-    width: 6px;
+    display: block !important;
+    /* Override global hide */
+    width: 6px !important;
+    /* Slightly thinner */
+    background: transparent !important;
 }
 
 #message-input::-webkit-scrollbar-thumb {
-    background: var(--text-muted);
+    background-color: var(--text-muted);
+    /* Visible by default per user request */
     border-radius: 3px;
+    opacity: 0.5;
+}
+
+#message-input::-webkit-scrollbar-thumb:hover {
+    background-color: var(--text-secondary);
+}
+
+#message-input::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 4px 0;
+    /* Inset track */
 }
 
 /* Markdown Rendered Styles within Input */

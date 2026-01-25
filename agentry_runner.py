@@ -25,7 +25,7 @@ import asyncio
 import threading
 import subprocess
 import time
-from http.server import HTTPServer, SimpleHTTPRequestHandler
+from http.server import HTTPServer, SimpleHTTPRequestHandler, ThreadingHTTPServer
 from functools import partial
 
 # Add parent directory to path
@@ -136,8 +136,8 @@ def run_frontend_server(host: str = FRONTEND_HOST, port: int = FRONTEND_PORT):
     handler = partial(CORSRequestHandler, directory=UI_DIR)
     
     try:
-        httpd = HTTPServer((host, port), handler)
-        print(f"[Frontend] Static server running at http://{host}:{port}")
+        httpd = ThreadingHTTPServer((host, port), handler)
+        print(f"[Frontend] Multi-threaded static server running at http://{host}:{port}")
         print(f"[Frontend] Serving files from: {UI_DIR}")
         httpd.serve_forever()
     except OSError as e:

@@ -31,6 +31,7 @@ from agentry.providers.ollama_provider import OllamaProvider
 from agentry.providers.groq_provider import GroqProvider
 from agentry.providers.gemini_provider import GeminiProvider
 from agentry.providers.azure_provider import AzureProvider
+from agentry.providers.llama_cpp_provider import LlamaCppProvider
 from agentry.providers.capability_detector import detect_model_capabilities
 
 router = APIRouter()
@@ -264,274 +265,314 @@ async def websocket_chat(websocket: WebSocket):
         
         user_id = user["id"]
         
-        # Get or create agent from cache
-        if user_id in agent_cache:
-            cached = agent_cache[user_id]
+        try:
+            # Setup block started
+            print(f"[Server WS] Initializing agent for user {user_id}...")
             
-            # Check if agent needs lazy initialization (from quick configure)
-            if cached.get("needs_init"):
-                print(f"[Server WS] Lazy initializing agent for user {user_id}...")
-                provider = cached["provider"]
-                config = cached["config"]
-                capabilities_dict = cached["capabilities"]
+            # 1. Get or create agent from cache
+            if user_id in agent_cache:
+                cached = agent_cache[user_id]
                 
-                from agentry.providers.capability_detector import ModelCapabilities
-                capabilities = ModelCapabilities.from_dict(capabilities_dict)
-                
-                # Check agent type configuration
-                agent_type_config = None
-                try:
-                    from backend.core.db_pool import get_connection
-                    conn = get_connection()
-                    cursor = conn.cursor()
-                    cursor.execute("SELECT * FROM user_agent_config WHERE user_id = ?", (user_id,))
-                    row = cursor.fetchone()
-                    if row:
-                        agent_type_config = {"agent_type": row[0] if row else "default", "mode": row[1] if len(row) > 1 else None, "project_id": row[2] if len(row) > 2 else None}
-                except Exception as e:
-                    print(f"[Server WS] Error loading agent config: {e}")
-                
-                # Load disabled tools
-                disabled_tools_list = []
-                try:
-                    from backend.core.db_pool import get_connection
-                    conn = get_connection()
-                    cursor = conn.cursor()
-                    cursor.execute("SELECT disabled_tools_json FROM user_disabled_tools WHERE user_id = ?", (user_id,))
-                    row = cursor.fetchone()
-                    if row:
-                        disabled_tools_list = json.loads(row[0])
-                        print(f"[Server WS] Loaded {len(disabled_tools_list)} disabled tools for user {user_id}")
-                except Exception as e:
-                    print(f"[Server WS] Error loading disabled tools: {e}")
-                
-                # Create appropriate agent type
-                if agent_type_config and agent_type_config.get("agent_type") == "smart":
-                    mode = agent_type_config.get("mode") or SmartAgentMode.SOLO
-                    project_id = agent_type_config.get("project_id")
+                # Check if agent needs lazy initialization (from quick configure)
+                if cached.get("needs_init"):
+                    print(f"[Server WS] Lazy initializing agent for user {user_id}...")
+                    provider = cached["provider"]
+                    config = cached["config"]
+                    capabilities_dict = cached["capabilities"]
                     
-                    agent = SmartAgent(
-                        llm=provider,
-                        mode=mode,
-                        project_id=project_id,
-                        debug=True,
-                        capabilities=capabilities
-                    )
-                    print(f"[Server WS] Created SmartAgent in {mode} mode")
-                else:
-                    # Default Agent: Enable tools if user wants them, even if model support is ambiguous
-                    current_agent_type = agent_type_config.get("agent_type") if agent_type_config else "default"
-                    tools_enabled = config.get("tools_enabled", True)
+                    from agentry.providers.capability_detector import ModelCapabilities
+                    capabilities = ModelCapabilities.from_dict(capabilities_dict)
                     
-                    if current_agent_type == "default" and tools_enabled:
-                         capabilities.supports_tools = True
-                         print(f"[Server WS] Forcing tool support for Default Agent")
-
-                    agent = Agent(llm=provider, debug=True, capabilities=capabilities)
+                    # Check agent type configuration
+                    agent_type_config = None
+                    try:
+                        from backend.core.db_pool import get_connection
+                        conn = get_connection()
+                        cursor = conn.cursor()
+                        cursor.execute("SELECT * FROM user_agent_config WHERE user_id = ?", (user_id,))
+                        row = cursor.fetchone()
+                        if row:
+                            agent_type_config = {"agent_type": row[0] if row else "default", "mode": row[1] if len(row) > 1 else None, "project_id": row[2] if len(row) > 2 else None}
+                    except Exception as e:
+                        print(f"[Server WS] Error loading agent config: {e}")
                     
-                    if disabled_tools_list:
-                        agent.disabled_tools = set(disabled_tools_list)
+                    # Load disabled tools
+                    disabled_tools_list = []
+                    try:
+                        from backend.core.db_pool import get_connection
+                        conn = get_connection()
+                        cursor = conn.cursor()
+                        cursor.execute("SELECT disabled_tools_json FROM user_disabled_tools WHERE user_id = ?", (user_id,))
+                        row = cursor.fetchone()
+                        if row:
+                            disabled_tools_list = json.loads(row[0])
+                            print(f"[Server WS] Loaded {len(disabled_tools_list)} disabled tools for user {user_id}")
+                    except Exception as e:
+                        print(f"[Server WS] Error loading disabled tools: {e}")
                     
-                    if tools_enabled and capabilities.supports_tools:
-                        agent.load_default_tools()
-                        print(f"[Server WS] Loaded tools for {config.get('model')}")
+                    # Create appropriate agent type
+                    if agent_type_config and agent_type_config.get("agent_type") == "smart":
+                        mode = agent_type_config.get("mode") or "solo"
+                        project_id = agent_type_config.get("project_id")
                         
-                        # Load MCP Configuration (only for default agent)
-                        if current_agent_type == "default":
-                            try:
-                                from backend.core.db_pool import get_connection
-                                conn = get_connection()
-                                cursor = conn.cursor()
-                                cursor.execute("SELECT config_json FROM user_mcp_config WHERE user_id = ?", (user_id,))
-                                row = cursor.fetchone()
-                                if row:
-                                    mcp_config = json.loads(row[0])
-                                    await agent.add_mcp_server(config=mcp_config)
-                                    print(f"[Server WS] Loaded MCP tools for user {user_id}")
-                            except Exception as e:
-                                print(f"[Server WS] Failed to load MCP config: {e}")
+                        from agentry.agents import SmartAgent
+                        agent = SmartAgent(
+                            llm=provider,
+                            mode=mode,
+                            project_id=project_id,
+                            debug=True,
+                            capabilities=capabilities
+                        )
+                        print(f"[Server WS] Created SmartAgent in {mode} mode")
+                    else:
+                        # Default Agent: Enable tools if user wants them, even if model support is ambiguous
+                        current_agent_type = agent_type_config.get("agent_type") if agent_type_config else "default"
+                        tools_enabled = config.get("tools_enabled", True)
+                        
+                        if current_agent_type == "default" and tools_enabled:
+                             capabilities.supports_tools = True
+                             print(f"[Server WS] Forcing tool support for Default Agent")
+    
+                        agent = Agent(llm=provider, debug=True, capabilities=capabilities)
+                        
+                        if disabled_tools_list:
+                            agent.disabled_tools = set(disabled_tools_list)
+                        
+                        if tools_enabled and capabilities.supports_tools:
+                            agent.load_default_tools()
+                            print(f"[Server WS] Loaded tools for {config.get('model')}")
+                            
+                            # Load MCP Configuration (only for default agent)
+                            if current_agent_type == "default":
+                                try:
+                                    from backend.core.db_pool import get_connection
+                                    conn = get_connection()
+                                    cursor = conn.cursor()
+                                    cursor.execute("SELECT config_json FROM user_mcp_config WHERE user_id = ?", (user_id,))
+                                    row = cursor.fetchone()
+                                    if row:
+                                        mcp_config = json.loads(row[0])
+                                        await agent.add_mcp_server(config=mcp_config)
+                                        print(f"[Server WS] Loaded MCP tools for user {user_id}")
+                                except Exception as e:
+                                    print(f"[Server WS] Failed to load MCP config: {e}")
+                    
+                    # Update cache with initialized agent
+                    agent_cache[user_id] = {
+                        "agent": agent,
+                        "config": config,
+                        "provider": provider,
+                        "capabilities": (capabilities.to_dict() if hasattr(capabilities, 'to_dict') else capabilities),
+                        "needs_init": False
+                    }
+                    print(f"[Server WS] Agent lazy initialization complete")
+                else:
+                    agent = cached["agent"]
                 
-                # Update cache with initialized agent
-                agent_cache[user_id] = {
-                    "agent": agent,
-                    "config": config,
-                    "provider": provider,
-                    "capabilities": capabilities_dict,
-                    "needs_init": False
-                }
-                print(f"[Server WS] Agent lazy initialization complete")
+                    # Refresh disabled tools from database
+                    try:
+                        from backend.core.db_pool import get_connection
+                        conn = get_connection()
+                        cursor = conn.cursor()
+                        cursor.execute("SELECT disabled_tools_json FROM user_disabled_tools WHERE user_id = ?", (user_id,))
+                        row = cursor.fetchone()
+                        if row:
+                            disabled_tools_list = json.loads(row[0])
+                            agent.disabled_tools = set(disabled_tools_list)
+                            print(f"[Server WS] Refreshed {len(disabled_tools_list)} disabled tools for cached agent")
+                        else:
+                            agent.disabled_tools = set()
+                    except Exception as e:
+                        print(f"[Server WS] Error refreshing disabled tools: {e}")
             else:
-                agent = cached["agent"]
-            
-                # Refresh disabled tools from database
-                try:
-                    from backend.core.db_pool import get_connection
-                    conn = get_connection()
-                    cursor = conn.cursor()
-                    cursor.execute("SELECT disabled_tools_json FROM user_disabled_tools WHERE user_id = ?", (user_id,))
-                    row = cursor.fetchone()
-                    if row:
-                        disabled_tools_list = json.loads(row[0])
-                        agent.disabled_tools = set(disabled_tools_list)
-                        print(f"[Server WS] Refreshed {len(disabled_tools_list)} disabled tools for cached agent")
-                    else:
-                        agent.disabled_tools = set()
-                except Exception as e:
-                    print(f"[Server WS] Error refreshing disabled tools: {e}")
-        else:
-            # Load config and create agent
-            config = AuthService.get_current_active_settings(user_id)
-            if not config:
-                await websocket.send_json({"type": "error", "message": "Provider not configured. Please complete setup."})
-                await websocket.close()
-                return
-            
-            try:
-                provider_name = config["provider"]
-                api_key = AuthService.get_api_key(user_id, provider_name)
+                # Load config and create agent
+                config = AuthService.get_current_active_settings(user_id)
+                if not config:
+                    await websocket.send_json({"type": "error", "message": "Provider not configured. Please complete setup."})
+                    await websocket.close()
+                    return
                 
-                # Restore API keys to environment
-                if api_key:
-                    if provider_name == "groq":
-                        os.environ["GROQ_API_KEY"] = api_key
+                try:
+                    provider_name = config["provider"]
+                    api_key = AuthService.get_api_key(user_id, provider_name)
+                    
+                    # Restore API keys to environment
+                    if api_key:
+                        if provider_name == "groq":
+                            os.environ["GROQ_API_KEY"] = api_key
+                        elif provider_name == "gemini":
+                            os.environ["GOOGLE_API_KEY"] = api_key
+                            os.environ["GEMINI_API_KEY"] = api_key
+                        elif provider_name == "ollama":
+                            os.environ["OLLAMA_API_KEY"] = api_key
+                    
+                    # Create provider
+                    if provider_name == "ollama":
+                        provider = OllamaProvider(model_name=config["model"] or "llama3.2:3b")
+                    elif provider_name == "groq":
+                        provider = GroqProvider(model_name=config["model"], api_key=api_key)
                     elif provider_name == "gemini":
-                        os.environ["GOOGLE_API_KEY"] = api_key
-                        os.environ["GEMINI_API_KEY"] = api_key
-                    elif provider_name == "ollama":
-                        os.environ["OLLAMA_API_KEY"] = api_key
-                
-                # Create provider
-                if provider_name == "ollama":
-                    provider = OllamaProvider(model_name=config["model"] or "llama3.2:3b")
-                elif provider_name == "groq":
-                    provider = GroqProvider(model_name=config["model"], api_key=api_key)
-                elif provider_name == "gemini":
-                    provider = GeminiProvider(model_name=config["model"], api_key=api_key)
-                elif provider_name == "azure":
-                    endpoint = AuthService.get_provider_endpoint(user_id, "azure")
-                    model_name_lower = (config.get("model") or "").lower()
-                    if "claude" in model_name_lower:
-                        model_type = "anthropic"
-                    else:
-                        model_type = config.get("model_type", "openai")
-                    provider = AzureProvider(
-                        model_name=config["model"], 
-                        api_key=api_key, 
-                        endpoint=endpoint,
-                        model_type=model_type
-                    )
-                else:
-                    raise ValueError(f"Unknown provider: {provider_name}")
-                
-                # Detect capabilities
-                capabilities = await detect_model_capabilities(
-                    provider_name=provider_name,
-                    model_name=config["model"],
-                    provider_instance=provider
-                )
-                
-                # Check agent type configuration
-                agent_type_config = None
-                try:
-                    conn = sqlite3.connect(DB_PATH)
-                    conn.row_factory = sqlite3.Row
-                    cursor = conn.cursor()
-                    cursor.execute("SELECT * FROM user_agent_config WHERE user_id = ?", (user_id,))
-                    row = cursor.fetchone()
-                    if row:
-                        agent_type_config = dict(row)
-                    conn.close()
-                except:
-                    pass
-                
-                # Load disabled tools
-                disabled_tools_list = []
-                try:
-                    conn = sqlite3.connect(DB_PATH)
-                    cursor = conn.cursor()
-                    cursor.execute("SELECT disabled_tools_json FROM user_disabled_tools WHERE user_id = ?", (user_id,))
-                    row = cursor.fetchone()
-                    if row:
-                        disabled_tools_list = json.loads(row[0])
-                        print(f"[Server WS] Loaded {len(disabled_tools_list)} disabled tools for user {user_id}")
-                    conn.close()
-                except Exception as e:
-                    print(f"[Server WS] Error loading disabled tools: {e}")
-
-                # Create appropriate agent type
-                if agent_type_config and agent_type_config.get("agent_type") == "smart":
-                    mode = agent_type_config.get("mode") or SmartAgentMode.SOLO
-                    project_id = agent_type_config.get("project_id")
-                    
-                    agent = SmartAgent(
-                        llm=provider,
-                        mode=mode,
-                        project_id=project_id,
-                        debug=True,
-                        capabilities=capabilities
-                    )
-                    print(f"[Server WS] Created SmartAgent in {mode} mode" + 
-                          (f" for project {project_id}" if project_id else ""))
-                else:
-                    # Default Agent: Enable tools if user wants them, even if model support is ambiguous
-                    current_agent_type = agent_type_config.get("agent_type") if agent_type_config else "default"
-                    tools_enabled_by_user = config.get("tools_enabled", True)
-
-                    if current_agent_type == "default" and tools_enabled_by_user:
-                        capabilities.supports_tools = True
-                        print(f"[Server WS] Forcing tool support for Default Agent (Model: {config.get('model')})")
-
-                    agent = Agent(llm=provider, debug=True, capabilities=capabilities)
-                    
-                    if disabled_tools_list:
-                        agent.disabled_tools = set(disabled_tools_list)
-                        print(f"[Server WS] Applied {len(agent.disabled_tools)} disabled tools to agent")
-
-                    if tools_enabled_by_user and capabilities.supports_tools:
-                        agent.load_default_tools()
-                        print(f"[Server WS] Loaded tools for {config['model']}")
-
-                        # Load MCP Configuration
-                        if current_agent_type == "default":
+                        provider = GeminiProvider(model_name=config["model"], api_key=api_key)
+                    elif provider_name == "azure":
+                        endpoint = AuthService.get_provider_endpoint(user_id, "azure", model=config.get("model"))
+                        # Also fetch specific key if available
+                        specific_key = AuthService.get_api_key(user_id, "azure", model=config.get("model"))
+                        if specific_key: api_key = specific_key
+                        
+                        provider = AzureProvider(
+                            model_name=config["model"], 
+                            api_key=api_key, 
+                            endpoint=endpoint,
+                            model_type=config.get("model_type") # Pass stored type if exists
+                        )
+                        
+                        # Fix: If model_type was null in config, update it with detected type
+                        if not config.get("model_type") or config.get("model_type") == "unknown":
+                            detected_type = provider.model_type
+                            config["model_type"] = detected_type
+                            print(f"[Server WS] Auto-detected model_type for {config['model']}: {detected_type}")
+                            
+                            # Persist this back to the user's active settings so it's not null next time
                             try:
-                                conn = sqlite3.connect(DB_PATH)
-                                conn.row_factory = sqlite3.Row
-                                cursor = conn.cursor()
-                                cursor.execute("SELECT config_json FROM user_mcp_config WHERE user_id = ?", (user_id,))
-                                row = cursor.fetchone()
-                                if row:
-                                    mcp_config = json.loads(row["config_json"])
-                                    await agent.add_mcp_server(config=mcp_config)
-                                    print(f"[Server WS] Loaded MCP tools for user {user_id}")
-                                conn.close()
-                            except Exception as e:
-                                print(f"[Server WS] Failed to load MCP config: {e}")
-                    elif not tools_enabled_by_user:
-                        agent.disable_tools("User disabled tools in setup")
-                        print(f"[Server WS] Tools disabled by user for {config['model']}")
+                                from backend.core.db_pool import connection_context
+                                with connection_context() as conn:
+                                    conn.execute(
+                                        "UPDATE user_active_settings SET model_type = ? WHERE user_id = ?",
+                                        (detected_type, user_id)
+                                    )
+                                    conn.commit()
+                            except Exception as db_err:
+                                print(f"[Server WS] Failed to persist detected model_type: {db_err}")
+                    elif provider_name == "llama_cpp":
+                        provider = LlamaCppProvider(model_name=config["model"])
                     else:
-                        print(f"[Server WS] Skipping tools - {config['model']} does not support tools")
+                        raise ValueError(f"Unknown provider: {provider_name}")
+                    
+                    # Detect capabilities
+                    capabilities = await detect_model_capabilities(
+                        provider_name=provider_name,
+                        model_name=config["model"],
+                        provider_instance=provider
+                    )
+                    
+                    # Check agent type configuration
+                    agent_type_config = None
+                    try:
+                        conn = sqlite3.connect(DB_PATH)
+                        conn.row_factory = sqlite3.Row
+                        cursor = conn.cursor()
+                        cursor.execute("SELECT * FROM user_agent_config WHERE user_id = ?", (user_id,))
+                        row = cursor.fetchone()
+                        if row:
+                            agent_type_config = dict(row)
+                        conn.close()
+                    except:
+                        pass
+                    
+                    # Load disabled tools
+                    disabled_tools_list = []
+                    try:
+                        conn = sqlite3.connect(DB_PATH)
+                        cursor = conn.cursor()
+                        cursor.execute("SELECT disabled_tools_json FROM user_disabled_tools WHERE user_id = ?", (user_id,))
+                        row = cursor.fetchone()
+                        if row:
+                            disabled_tools_list = json.loads(row[0])
+                            print(f"[Server WS] Loaded {len(disabled_tools_list)} disabled tools for user {user_id}")
+                        conn.close()
+                    except Exception as e:
+                        print(f"[Server WS] Error loading disabled tools: {e}")
+    
+                    # Create appropriate agent type
+                    if agent_type_config and agent_type_config.get("agent_type") == "smart":
+                        mode = agent_type_config.get("mode") or "solo"
+                        project_id = agent_type_config.get("project_id")
+                        
+                        from agentry.agents import SmartAgent
+                        agent = SmartAgent(
+                            llm=provider,
+                            mode=mode,
+                            project_id=project_id,
+                            debug=True,
+                            capabilities=capabilities
+                        )
+                        print(f"[Server WS] Created SmartAgent in {mode} mode" + 
+                              (f" for project {project_id}" if project_id else ""))
+                    else:
+                        # Default Agent: Enable tools if user wants them, even if model support is ambiguous
+                        current_agent_type = agent_type_config.get("agent_type") if agent_type_config else "default"
+                        tools_enabled_by_user = config.get("tools_enabled", True)
+    
+                        if current_agent_type == "default" and tools_enabled_by_user:
+                            capabilities.supports_tools = True
+                            print(f"[Server WS] Forcing tool support for Default Agent (Model: {config.get('model')})")
+    
+                        agent = Agent(llm=provider, debug=True, capabilities=capabilities)
+                        
+                        if disabled_tools_list:
+                            agent.disabled_tools = set(disabled_tools_list)
+                            print(f"[Server WS] Applied {len(agent.disabled_tools)} disabled tools to agent")
+    
+                        if tools_enabled_by_user and capabilities.supports_tools:
+                            agent.load_default_tools()
+                            print(f"[Server WS] Loaded tools for {config['model']}")
+    
+                            # Load MCP Configuration
+                            if current_agent_type == "default":
+                                try:
+                                    conn = sqlite3.connect(DB_PATH)
+                                    conn.row_factory = sqlite3.Row
+                                    cursor = conn.cursor()
+                                    cursor.execute("SELECT config_json FROM user_mcp_config WHERE user_id = ?", (user_id,))
+                                    row = cursor.fetchone()
+                                    if row:
+                                        mcp_config = json.loads(row["config_json"])
+                                        await agent.add_mcp_server(config=mcp_config)
+                                        print(f"[Server WS] Loaded MCP tools for user {user_id}")
+                                    conn.close()
+                                except Exception as e:
+                                    print(f"[Server WS] Failed to load MCP config: {e}")
+                        elif not tools_enabled_by_user:
+                            agent.disable_tools("User disabled tools in setup")
+                            print(f"[Server WS] Tools disabled by user for {config['model']}")
+                        else:
+                            print(f"[Server WS] Skipping tools - {config['model']} does not support tools")
+                    
+                    agent_cache[user_id] = {
+                        "agent": agent,
+                        "config": config,
+                        "provider": provider,
+                        "capabilities": capabilities.to_dict(),
+                        "agent_type": agent_type_config.get("agent_type") if agent_type_config else "default"
+                    }
                 
-                agent_cache[user_id] = {
-                    "agent": agent,
-                    "config": config,
-                    "provider": provider,
-                    "capabilities": capabilities.to_dict(),
-                    "agent_type": agent_type_config.get("agent_type") if agent_type_config else "default"
-                }
-            
-            except Exception as e:
-                await websocket.send_json({"type": "error", "message": f"Failed to initialize agent: {str(e)}"})
-                await websocket.close()
-                return
+                except Exception as e:
+                    await websocket.send_json({"type": "error", "message": f"Failed to initialize agent: {str(e)}"})
+                    await websocket.close()
+                    return
         
-        # Send capabilities to client on connection
+        except Exception as e:
+            print(f"[Server WS] CRITICAL ERROR during agent setup: {e}")
+            import traceback
+            traceback.print_exc()
+            await websocket.send_json({"type": "error", "message": f"Setup failed: {str(e)}"})
+            # Continue anyway with a minimal setup if possible, or close
+            await websocket.close()
+            return
+
+        # Send capabilities to client ONLY after success
+        # Ensure we have a valid capabilities dict
         cached_capabilities = agent_cache.get(user_id, {}).get("capabilities", {})
+        if not cached_capabilities:
+            # Fallback for error cases
+            cached_capabilities = {"supports_tools": False, "supports_vision": False}
+
         await websocket.send_json({
             "type": "connected", 
             "message": "Connected to Agentry",
             "capabilities": cached_capabilities
         })
+        print(f"[Server WS] Sent 'connected' to user {user_id}")
         
         session_manager = SessionManager()
         

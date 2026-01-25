@@ -142,6 +142,27 @@
     margin-top: 2px;
 }
 
+.provider-popup-item-actions button {
+    transition: all 0.2s ease;
+}
+
+.provider-edit-btn:hover {
+    opacity: 1 !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-radius: 4px;
+    color: var(--accent) !important;
+}
+
+.provider-delete-btn:hover {
+    opacity: 1 !important;
+    background: rgba(239, 68, 68, 0.1) !important;
+    border-radius: 4px;
+}
+
+.provider-delete-btn:hover svg {
+    stroke: #ff4d4d !important;
+}
+
 .provider-popup-item-check {
     width: 18px;
     height: 18px;

@@ -1167,6 +1167,15 @@
                     <div class="provider-desc">Enterprise-grade AI. Requires Endpoint and API Key.</div>
                     <div class="provider-badge">Cloud API</div>
                 </div>
+                <div class="provider-card" data-provider="llama_cpp">
+                    <div class="provider-icon llama_cpp">
+                        <img src="https://github.com/ggerganov/llama.cpp/raw/master/media/llama.cpp.png" alt="Llama Cpp"
+                            style="filter: invert(1);">
+                    </div>
+                    <div class="provider-name">Llama Cpp</div>
+                    <div class="provider-desc">Run GGUF models locally using Python bindings.</div>
+                    <div class="provider-badge">Local (GGUF)</div>
+                </div>
             </div>
             <div class="button-row">
                 <button class="btn btn-secondary" id="step1-back" onclick="window.location.href='/login.html'">←
@@ -1244,6 +1253,16 @@
                 <div class="input-group">
                     <input type="text" class="form-input" id="deployment-input"
                         placeholder="e.g. claude-opus-4-5 or gpt-4">
+                </div>
+            </div>
+
+            <!-- Llama.cpp Section -->
+            <div class="api-key-section" id="llama-cpp-section" style="display: none;">
+                <div class="api-key-title">Model Path</div>
+                <div class="api-key-desc">Enter the full absolute path to your .gguf model file</div>
+                <div class="input-group">
+                    <input type="text" class="form-input" id="llama-cpp-path"
+                        placeholder="e.g. D:\llama_cpp_models\LFM2.5-1.2B-Instruct.gguf">
                 </div>
             </div>
 
@@ -1469,6 +1488,7 @@
             document.getElementById('endpoint-section').style.display = 'none';
             document.getElementById('deployment-section').style.display = 'none';
             document.getElementById('azure-model-type').style.display = 'none';
+            document.getElementById('llama-cpp-section').style.display = 'none';
             document.getElementById('step2-next').textContent = 'Continue →';
             azureModelType = null; // Reset
 
@@ -1492,15 +1512,34 @@
             } else if (selectedProvider === 'azure') {
                 document.getElementById('api-key-title').textContent = 'Azure API Key';
                 document.getElementById('api-key-desc').textContent = 'Get your key from Azure AI Foundry Portal';
-                document.getElementById('azure-model-type').style.display = 'block';
-                document.getElementById('endpoint-section').style.display = 'block';
+
+                // Hide type selector, simplify to just inputs
+                document.getElementById('azure-model-type').style.display = 'none';
+
+                // Show generic sections
                 document.getElementById('deployment-section').style.display = 'block';
+                document.getElementById('endpoint-section').style.display = 'block';
+
+                // Update specific text to be generic
+                document.getElementById('endpoint-desc').textContent = 'Your Azure Endpoint URL (e.g. https://my-resource.services.ai.azure.com)';
+                document.getElementById('deployment-desc').textContent = 'Your Deployment Name (e.g. gpt-4o or claude-3-opus)';
+                document.getElementById('deployment-input').placeholder = 'e.g. gpt-4o, claude-3-5-sonnet, deepseek-v3...';
+
                 document.getElementById('step2-next').textContent = 'Complete Setup';
 
                 // Pre-fill endpoint
                 const storedEndpoint = storedEndpoints['azure'];
                 if (storedEndpoint) {
                     document.getElementById('endpoint-input').value = storedEndpoint;
+                }
+            } else if (selectedProvider === 'llama_cpp') {
+                document.getElementById('api-key-section').style.display = 'none';
+                document.getElementById('llama-cpp-section').style.display = 'block';
+                document.getElementById('step2-next').textContent = 'Complete Setup';
+
+                // Pre-fill path if exists
+                if (existingConfig && existingConfig.provider === 'llama_cpp' && existingConfig.model) {
+                    document.getElementById('llama-cpp-path').value = existingConfig.model;
                 }
             }
 
@@ -1628,7 +1667,7 @@
                 return;
             }
 
-            const needsKey = selectedProvider !== 'ollama' || selectedMode === 'cloud';
+            const needsKey = (selectedProvider !== 'ollama' && selectedProvider !== 'llama_cpp') || selectedMode === 'cloud';
             apiKey = document.getElementById('api-key-input').value.trim();
 
             // Check if we can skip key check (because we have one on server)
@@ -1646,29 +1685,54 @@
 
             // --- AZURE SPECIFIC FLOW ---
             if (selectedProvider === 'azure') {
-                // Validate Model Type Selection
-                if (!azureModelType) {
-                    showMessage('Please select a Model Family (OpenAI or Anthropic Claude)');
-                    return;
-                }
-
                 // Validate Endpoint
                 const endpoint = document.getElementById('endpoint-input').value.trim();
+                const deploymentName = document.getElementById('deployment-input').value.trim();
+                const key = document.getElementById('api-key-input').value.trim();
+
+                // Allow empty key if one is already stored on server (checked by hasServerKey logic earlier)
+                const hasServerKey = hasStoredKeys['azure'];
+
                 if (!endpoint) {
                     showMessage('Please enter Azure Endpoint');
                     return;
                 }
-                storedEndpoints['azure'] = endpoint;
 
-                // Validate Deployment Name
-                const deploymentName = document.getElementById('deployment-input').value.trim();
+                // Basic URL validation
+                if (!endpoint.startsWith('http')) {
+                    showMessage('Endpoint must start with http:// or https://');
+                    return;
+                }
+
                 if (!deploymentName) {
                     showMessage('Please enter your specific Deployment Name');
                     return;
                 }
-                selectedModel = deploymentName;
 
-                // Submit directly
+                if (!key && !hasServerKey) {
+                    showMessage('Please enter your Azure API Key');
+                    return;
+                }
+
+                // Store endpoint locally for convenience
+                storedEndpoints['azure'] = endpoint;
+                selectedModel = deploymentName;
+                apiKey = key;
+
+                // Submit directly - no further manual model selection needed
+                // The backend will auto-detect if it's Anthropic or OpenAI based on internal logic
+                await submitConfiguration();
+                return;
+            }
+
+            // --- LLAMA_CPP SPECIFIC FLOW ---
+            if (selectedProvider === 'llama_cpp') {
+                const path = document.getElementById('llama-cpp-path').value.trim();
+                if (!path) {
+                    showMessage('Please enter the model path');
+                    return;
+                }
+                selectedModel = path;
                 await submitConfiguration();
                 return;
             }
@@ -1701,6 +1765,9 @@
                     if (selectedProvider === 'ollama') {
                         manualTitle.textContent = 'Or run the other Ollama model';
                         manualInput.placeholder = 'e.g. qwen2.5-coder:7b';
+                    } else if (selectedProvider === 'llama_cpp') {
+                        manualTitle.textContent = 'Or enter absolute path manually';
+                        manualInput.placeholder = 'e.g. C:\\Models\\llama-3-8b.gguf';
                     } else {
                         manualTitle.textContent = 'Or enter Deployment Name manually';
                         manualInput.placeholder = 'e.g. my-gpt4-deployment';

@@ -41,7 +41,9 @@ dependencies = [
     "pyarrow>=14.0.0",
     "sentence-transformers>=2.2.0",
     # Cloud Mode (optional)
+    "llama-cpp-python>=0.2.77",
     "supabase>=2.0.0",
+    "openai",
 ]
 
 [project.scripts]

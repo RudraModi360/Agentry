@@ -340,12 +340,37 @@ def get_current_active_settings(user_id: int) -> Optional[Dict]:
     finally:
         conn.close()
 
-def get_api_key(user_id: int, provider: str) -> Optional[str]:
+def get_api_key(user_id: int, provider: str, model: Optional[str] = None) -> Optional[str]:
     """Retrieves the stored API key for a specific provider."""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     try:
+        # Try specific model key first for Azure
+        if model and provider == "azure":
+            specific_key = f"{provider}:{model}"
+            cursor.execute("SELECT api_key_encrypted FROM user_api_keys WHERE user_id = ? AND provider = ?", (user_id, specific_key))
+            row = cursor.fetchone()
+            if row: return row[0]
+
         cursor.execute("SELECT api_key_encrypted FROM user_api_keys WHERE user_id = ? AND provider = ?", (user_id, provider))
+        row = cursor.fetchone()
+        return row[0] if row else None
+    finally:
+        conn.close()
+
+def get_provider_endpoint(user_id: int, provider: str, model: Optional[str] = None) -> Optional[str]:
+    """Retrieves the stored Endpoint for a specific provider."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    try:
+        # Try specific model endpoint first for Azure
+        if model and provider == "azure":
+            specific_key = f"{provider}:{model}"
+            cursor.execute("SELECT endpoint FROM user_api_keys WHERE user_id = ? AND provider = ?", (user_id, specific_key))
+            row = cursor.fetchone()
+            if row: return row[0]
+
+        cursor.execute("SELECT endpoint FROM user_api_keys WHERE user_id = ? AND provider = ?", (user_id, provider))
         row = cursor.fetchone()
         return row[0] if row else None
     finally:
@@ -701,16 +726,6 @@ async def get_current_user_info(user: Dict = Depends(get_current_user)):
         "stored_keys": stored_keys
     }
 
-def get_provider_endpoint(user_id: int, provider: str) -> Optional[str]:
-    """Retrieves the stored Endpoint for a specific provider."""
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    try:
-        cursor.execute("SELECT endpoint FROM user_api_keys WHERE user_id = ? AND provider = ?", (user_id, provider))
-        row = cursor.fetchone()
-        return row[0] if row else None
-    finally:
-        conn.close()
 
 # --- Provider Configuration ---
 @app.get("/api/providers")
@@ -1785,6 +1800,28 @@ async def websocket_chat(websocket: WebSocket):
                     provider = GroqProvider(model_name=config["model"], api_key=api_key)
                 elif provider_name == "gemini":
                     provider = GeminiProvider(model_name=config["model"], api_key=api_key)
+                elif provider_name == "azure":
+                    endpoint = get_provider_endpoint(user_id, "azure", model=config["model"])
+                    provider = AzureProvider(
+                        model_name=config["model"], 
+                        api_key=api_key, 
+                        endpoint=endpoint,
+                        model_type=config.get("model_type")
+                    )
+                    
+                    # Fix: Update config with detected model_type if it was null
+                    if not config.get("model_type"):
+                        detected_type = provider.model_type
+                        config["model_type"] = detected_type
+                        
+                        # Persist to DB
+                        try:
+                            conn = sqlite3.connect(DB_PATH)
+                            conn.execute("UPDATE user_active_settings SET model_type = ? WHERE user_id = ?", (detected_type, user_id))
+                            conn.commit()
+                            conn.close()
+                        except:
+                            pass
                 else:
                     raise ValueError(f"Unknown provider: {provider_name}")
                 

@@ -21,6 +21,7 @@ class ModelCapabilities:
     max_context_length: Optional[int] = None
     provider: str = "unknown"
     model_name: str = "unknown"
+    model_type: Optional[str] = None # openai, anthropic, inference
     detection_method: str = "default"  # 'probe', 'api', 'hardcoded', 'default'
     error_message: Optional[str] = None
     
@@ -142,9 +143,21 @@ KNOWN_CAPABILITIES = {
     "claude-opus": {"supports_tools": True, "supports_vision": True},
     "claude-sonnet": {"supports_tools": True, "supports_vision": True}, 
     "claude-haiku": {"supports_tools": True, "supports_vision": True},
+    "claude-opus-4": {"supports_tools": True, "supports_vision": True},
+    "claude-opus-4-5": {"supports_tools": True, "supports_vision": True},
+    "claude-sonnet-4": {"supports_tools": True, "supports_vision": True},
+    "claude-4": {"supports_tools": True, "supports_vision": True},
     "claude-2.1": {"supports_tools": True, "supports_vision": False},
     "claude-2.0": {"supports_tools": True, "supports_vision": False},
     "claude-instant-1.2": {"supports_tools": True, "supports_vision": False},
+    
+    # DeepSeek Specific (Azure AI Foundry often doesn't support tools for base R1)
+    "deepseek-r1": {"supports_tools": False, "supports_vision": False},
+    "deepseek-v3": {"supports_tools": True, "supports_vision": False},
+    
+    # Additional Groq models
+    "llama3-70b": {"supports_tools": True, "supports_vision": False},
+    "llama3-8b": {"supports_tools": True, "supports_vision": False},
 }
 
 
@@ -171,6 +184,9 @@ class CapabilityDetector:
         Returns:
             ModelCapabilities object with detected capabilities
         """
+        # Get model_type if instance exists
+        model_type = getattr(provider_instance, "model_type", None) if provider_instance else None
+        
         # Normalize model name for lookup
         normalized_name = self._normalize_model_name(model_name)
         
@@ -183,10 +199,11 @@ class CapabilityDetector:
                 supports_streaming=True,
                 provider=self.provider_name,
                 model_name=model_name,
+                model_type=model_type,
                 detection_method="hardcoded"
             )
         
-        # Strategy 2: Check partial matches (e.g., "gemma:1b" matches "gemma")
+        # Strategy 2: Check partial matches
         for known_model, caps in KNOWN_CAPABILITIES.items():
             if normalized_name.startswith(known_model) or known_model.startswith(normalized_name.split(":")[0]):
                 return ModelCapabilities(
@@ -195,6 +212,7 @@ class CapabilityDetector:
                     supports_streaming=True,
                     provider=self.provider_name,
                     model_name=model_name,
+                    model_type=model_type,
                     detection_method="partial_match"
                 )
         
@@ -202,22 +220,24 @@ class CapabilityDetector:
         name_lower = normalized_name.lower()
         
         # Vision + Tools Keywords
-        # Claude 3+ models always support vision. GPT-4o and o1 models too.
         vision_keywords = ["gpt-4o", "o1-", "claude-3", "sonnet", "haiku", "opus", "pixtral", "llava"]
         if any(kw in name_lower for kw in vision_keywords):
-             if "agent" in name_lower: # Some wrapper model names might contain 'agent'
-                 pass 
              print(f"[CapabilityDetector] Keyword match: '{name_lower}' contains vision keyword. Vision=True")
              return ModelCapabilities(
                  supports_tools=True, 
                  supports_vision=True, 
                  provider=self.provider_name, 
                  model_name=model_name, 
+                 model_type=model_type,
                  detection_method="keyword_match"
              )
              
         # Tools Only (non-vision) Keywords
-        tool_keywords = ["gpt-4", "gpt-3.5", "claude-", "llama-3", "mistral", "mixtral", "qwen"]
+        # Refined: DeepSeek-R1 doesn't support tools, but coder models do.
+        if "deepseek-r1" in name_lower:
+             return ModelCapabilities(supports_tools=False, supports_vision=False, provider=self.provider_name, model_name=model_name, model_type=model_type, detection_method="keyword_match")
+        
+        tool_keywords = ["gpt-4", "gpt-3.5", "claude-", "llama-3", "mistral", "mixtral", "qwen", "deepseek"]
         if any(kw in name_lower for kw in tool_keywords):
              print(f"[CapabilityDetector] Keyword match: '{name_lower}' contains tool keyword. Vision=False")
              return ModelCapabilities(
@@ -225,6 +245,7 @@ class CapabilityDetector:
                  supports_vision=False, 
                  provider=self.provider_name, 
                  model_name=model_name, 
+                 model_type=model_type,
                  detection_method="keyword_match"
              )
         

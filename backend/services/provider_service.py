@@ -16,6 +16,7 @@ from agentry.providers.ollama_provider import OllamaProvider
 from agentry.providers.groq_provider import GroqProvider
 from agentry.providers.gemini_provider import GeminiProvider
 from agentry.providers.azure_provider import AzureProvider
+from agentry.providers.llama_cpp_provider import LlamaCppProvider
 from agentry.providers.capability_detector import detect_model_capabilities, ModelCapabilities
 
 from .agent_cache import agent_cache
@@ -54,6 +55,8 @@ class ProviderService:
                 endpoint=endpoint,
                 model_type=model_type
             )
+        elif config.provider == "llama_cpp":
+            return LlamaCppProvider(model_name=config.model)
         else:
             raise ValueError(f"Unknown provider: {config.provider}")
 

@@ -20,6 +20,22 @@
     position: relative;
 }
 
+/* Globally hide scrollbars in chat area but keep functionality */
+.chat-main * {
+    scrollbar-width: none !important;
+    /* Firefox */
+    -ms-overflow-style: none !important;
+    /* IE/Edge */
+}
+
+.chat-main *::-webkit-scrollbar {
+    display: none !important;
+    /* Chrome, Safari, Opera */
+    width: 0 !important;
+    height: 0 !important;
+    background: transparent !important;
+}
+
 /* Chat Header */
 .chat-header {
     position: absolute;
@@ -201,37 +217,37 @@
 
 /* Input Area - Gradient Background to hide scrolling text */
 .input-area {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    position: relative;
     z-index: var(--z-sticky);
     padding: var(--space-4);
-    background: var(--bg-primary) !important;
-    border: none !important;
-    pointer-events: none;
+    background: var(--bg-primary);
+    border-top: 1px solid var(--card-border);
+    flex-shrink: 0;
 }
 
 .input-container {
     max-width: 800px;
     margin: 0 auto;
     display: flex;
-    gap: var(--space-3);
-    align-items: flex-end;
-    pointer-events: auto;
+    align-items: flex-end !important;
+    position: relative;
+    /* Removed gap to integrate button */
 }
 
 .input-wrapper {
     flex: 1;
     display: flex;
-    align-items: center;
+    align-items: flex-end;
+    /* Align icons and text to bottom */
     background: var(--bg-tertiary);
     border: 1px solid var(--border-default);
-    border-radius: var(--radius-2xl);
-    padding: var(--space-1);
+    border-radius: 26px;
+    padding: 6px 6px 6px 16px;
+    /* Less padding on right for button */
     transition: all var(--transition-default);
     font-size: 1rem;
-    /* Unified font size */
+    min-height: 52px;
+    /* Match new layout */
 }
 
 .input-wrapper textarea,
@@ -243,7 +259,7 @@
 
 .input-wrapper:focus-within {
     border-color: var(--text-secondary);
-    box-shadow: 0 0 0 3px rgba(115, 115, 115, 0.15);
+    box-shadow: 0 0 0 2px rgba(115, 115, 115, 0.1);
 }
 
 /* Mobile Header */

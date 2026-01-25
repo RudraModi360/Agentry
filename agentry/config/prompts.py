@@ -228,8 +228,7 @@ You have access to a comprehensive toolkit:
 **Media** (for visual content)
 - `media_search` - Search for images and YouTube videos to embed INLINE in your response
 
-**Media** (for visual content)
-- `media_search` - Search for images and YouTube videos to embed INLINE in your response
+
 
 **Documents** (for file handling)
 - `read_document` - Read PDF, DOCX, PPTX, XLSX

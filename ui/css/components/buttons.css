@@ -235,56 +235,54 @@
 }
 
 /* Send Button - Theme Aware with Orange/Amber Accent */
+/* Send Button - Integrated Style */
 .send-btn {
-    width: 48px;
-    height: 48px;
+    width: 32px;
+    height: 32px;
     padding: 0;
-    background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-    color: white;
+    background: var(--text-primary);
+    /* Simple black/white based on theme */
+    color: var(--bg-primary);
     border: none;
-    border-radius: var(--radius-lg);
-    font-size: var(--text-lg);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    transition: all var(--transition-default);
-    box-shadow: var(--shadow-md);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: none;
     flex-shrink: 0;
+    margin-left: 8px;
+    margin-bottom: 2px;
+    /* Align visually with text */
+}
+
+.send-btn svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke-width: 2.5;
 }
 
 .send-btn:hover:not(:disabled) {
-    transform: scale(1.05);
-    box-shadow: 0 0 15px var(--accent-glow);
+    transform: scale(1.1);
+    opacity: 0.9;
 }
 
 .send-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    box-shadow: none;
-    transform: none;
+    background: var(--bg-elevated);
+    /* Improved disabled state */
+    color: var(--text-muted);
+    cursor: default;
+    opacity: 1;
+    /* Reset opacity for bg change */
 }
 
 .send-btn:active:not(:disabled) {
     transform: scale(0.95);
 }
 
-/* Light Theme Send Button */
-:root .send-btn {
-    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
-    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
-}
-
-:root .send-btn:hover:not(:disabled) {
-    box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
-}
-
-/* Dark Theme Send Button */
-[data-theme="dark"] .send-btn {
-    background: linear-gradient(135deg, #fbbf24, #f59e0b) !important;
-    box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
-}
-
-[data-theme="dark"] .send-btn:hover:not(:disabled) {
-    box-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
-}
+/* Theme overrides removed for send-btn to use base style */
 
 /* Attach Button */
 .attach-btn {

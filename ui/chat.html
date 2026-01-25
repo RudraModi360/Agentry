@@ -341,8 +341,14 @@
 
                         <div id="message-input" class="message-input" contenteditable="true" role="textbox"
                             aria-multiline="true" placeholder="Type your message..."></div>
+                        <button class="send-btn" id="send-btn" disabled>
+                            <svg viewBox="0 0 24 24" fill="none" class="send-icon" stroke="currentColor"
+                                stroke-width="2">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                            </svg>
+                        </button>
                     </div>
-                    <button class="send-btn" id="send-btn" disabled>➤</button>
                 </div>
             </div>
 
@@ -466,6 +472,58 @@
             </div>
             <div class="mcp-modal-footer">
                 <button id="mcp-save-btn" class="mcp-modal-btn save">Save Configuration</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Provider Configuration Modal -->
+    <div class="mcp-modal-overlay" id="provider-config-modal-overlay">
+        <div class="mcp-modal" style="max-width: 500px;">
+            <div class="mcp-modal-header">
+                <div class="mcp-modal-title">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                    <h2>Provider Config</h2>
+                </div>
+                <button class="mcp-modal-close" id="provider-config-close-btn" title="Close">×</button>
+            </div>
+            <div class="mcp-modal-content">
+                <div class="mcp-json-section">
+                    <label id="provider-config-label">
+                        Configuration (JSON)
+                    </label>
+                    <textarea id="provider-config-editor" class="mcp-json-editor"
+                        style="height: 250px; font-family: 'JetBrains Mono', monospace;"></textarea>
+                    <div class="mcp-json-error" id="provider-config-error" style="display: none;">Invalid JSON</div>
+                </div>
+            </div>
+            <div class="mcp-modal-footer">
+                <button id="provider-config-save-btn" class="mcp-modal-btn save">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Saved Models Modal -->
+    <div class="mcp-modal-overlay" id="saved-models-modal-overlay">
+        <div class="mcp-modal" style="max-width: 500px;">
+            <div class="mcp-modal-header">
+                <div class="mcp-modal-title">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <h2>Saved Models</h2>
+                </div>
+                <button class="mcp-modal-close" id="saved-models-close-btn" title="Close">×</button>
+            </div>
+            <div class="mcp-modal-content">
+                <div class="saved-models-list" id="saved-models-list"
+                    style="max-height: 400px; overflow-y: auto; padding: 10px;">
+                    <!-- Models loaded dynamically -->
+                </div>
             </div>
         </div>
     </div>

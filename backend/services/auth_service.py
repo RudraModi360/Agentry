@@ -42,8 +42,25 @@ class AuthService:
         return result
 
     @staticmethod
-    def get_api_key(user_id: int, provider: str) -> Optional[str]:
+    def get_api_key(user_id: int, provider: str, model: Optional[str] = None) -> Optional[str]:
         """Retrieves the stored API key for a specific provider (cached)."""
+        # Try specific model key first (e.g. "azure:claude-3-5-sonnet")
+        if model and provider == "azure":
+             specific_key = f"{provider}:{model}"
+             cache_key = f"api_key:{user_id}:{specific_key}"
+             cached = user_settings_cache.get(cache_key)
+             if cached: return cached
+             
+             conn = get_connection()
+             cursor = conn.cursor()
+             cursor.execute("SELECT api_key_encrypted FROM user_api_keys WHERE user_id = ? AND provider = ?", (user_id, specific_key))
+             row = cursor.fetchone()
+             if row:
+                 result = row[0]
+                 user_settings_cache.set(cache_key, result, ttl=300)
+                 return result
+
+        # Fallback to generic provider key
         cache_key = f"api_key:{user_id}:{provider}"
         
         # Try cache first
@@ -64,8 +81,24 @@ class AuthService:
         return result
 
     @staticmethod
-    def get_provider_endpoint(user_id: int, provider: str) -> Optional[str]:
+    def get_provider_endpoint(user_id: int, provider: str, model: Optional[str] = None) -> Optional[str]:
         """Retrieves the stored Endpoint for a specific provider (cached)."""
+        # Try specific model endpoint first
+        if model and provider == "azure":
+             specific_key = f"{provider}:{model}"
+             cache_key = f"endpoint:{user_id}:{specific_key}"
+             cached = user_settings_cache.get(cache_key)
+             if cached: return cached
+             
+             conn = get_connection()
+             cursor = conn.cursor()
+             cursor.execute("SELECT endpoint FROM user_api_keys WHERE user_id = ? AND provider = ?", (user_id, specific_key))
+             row = cursor.fetchone()
+             if row:
+                 result = row[0]
+                 user_settings_cache.set(cache_key, result, ttl=300)
+                 return result
+
         cache_key = f"endpoint:{user_id}:{provider}"
         
         # Try cache first
@@ -118,4 +151,53 @@ class AuthService:
         invalidate_user_cache(user_id)
         user_settings_cache.delete(f"api_key:{user_id}:{config.provider}")
         user_settings_cache.delete(f"endpoint:{user_id}:{config.provider}")
+
+    @staticmethod
+    def get_all_saved_configs(user_id: int):
+        """Get all stored provider/model configurations for a user."""
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT provider, endpoint, updated_at 
+            FROM user_api_keys 
+            WHERE user_id = ?
+            ORDER BY updated_at DESC
+        """, (user_id,))
+        rows = cursor.fetchall()
+        
+        configs = []
+        for row in rows:
+            provider_full = row[0]
+            endpoint = row[1]
+            updated_at = row[2]
+            
+            # Split into parent provider and model name if applicable
+            if ":" in provider_full:
+                parent, model = provider_full.split(":", 1)
+            else:
+                parent = provider_full
+                model = None
+                
+            configs.append({
+                "provider_full": provider_full,
+                "provider": parent,
+                "model": model,
+                "endpoint": endpoint,
+                "updated_at": updated_at
+            })
+            
+        return configs
+
+    @staticmethod
+    def delete_config(user_id: int, provider: str, model: Optional[str] = None):
+        """Delete a stored provider/model configuration."""
+        specific_key = f"{provider}:{model}" if model else provider
+        
+        with connection_context() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM user_api_keys WHERE user_id = ? AND provider = ?", (user_id, specific_key))
+        
+        # Invalidate cache
+        user_settings_cache.delete(f"api_key:{user_id}:{specific_key}")
+        user_settings_cache.delete(f"endpoint:{user_id}:{specific_key}")
 

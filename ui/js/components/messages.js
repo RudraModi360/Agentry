@@ -11,20 +11,16 @@ const Messages = {
     thinkingText: '',
     selectedImagesData: [],
 
-<<<<<<< HEAD
     _pendingMediaResults: [], // Buffer for media_search results
     mediaRegistry: {}, // Store resolved media items by query/type
     _lastFormattedIdx: 0, // Track up to where we've formatted the text in a stream
     _formattedCache: '', // Cache for stable rendered HTML
     _lastContentRaw: '', // Copy of raw content for change detection
-=======
     // Streaming optimization state
     _streamBuffer: '',
->>>>>>> 835c700e5992dfe8b31175fd7ffa3fc359b6a749
     _streamRenderTimer: null,
     _streamRenderDelay: 50, // ms between renders
     _lastRenderTime: 0,
-    _pendingMediaResults: [], // Buffer for media_search results
 
     // Elements
     container: null,
@@ -193,15 +189,8 @@ const Messages = {
      * Update assistant message text with streaming optimization
      * Uses debounced rendering to prevent UI freezes during fast token streaming
      */
-<<<<<<< HEAD
-    /**
-     * Update assistant message text with streaming optimization
-     * Uses debounced rendering to prevent UI freezes during fast token streaming
-     */
+
     updateAssistantMessageText(msgElement, content, forceRender = false, msgData = null) {
-=======
-    updateAssistantMessageText(msgElement, content, forceRender = false) {
->>>>>>> 835c700e5992dfe8b31175fd7ffa3fc359b6a749
         if (content && content.length > 0) {
             this.removeLoadingIndicators(msgElement);
         }
@@ -210,43 +199,7 @@ const Messages = {
 
         // Store the content
         this._streamBuffer = content;
-<<<<<<< HEAD
-=======
 
-        const now = Date.now();
-        const timeSinceLastRender = now - this._lastRenderTime;
-
-        // Clear any pending render
-        if (this._streamRenderTimer) {
-            clearTimeout(this._streamRenderTimer);
-            this._streamRenderTimer = null;
-        }
-
-        // If enough time has passed or forceRender, render immediately
-        if (forceRender || timeSinceLastRender >= this._streamRenderDelay) {
-            this._renderStreamContent(msgElement, content);
-            this._lastRenderTime = now;
-        } else {
-            // Schedule a render for later
-            this._streamRenderTimer = setTimeout(() => {
-                this._renderStreamContent(msgElement, this._streamBuffer);
-                this._lastRenderTime = Date.now();
-                this._streamRenderTimer = null;
-            }, this._streamRenderDelay - timeSinceLastRender);
-        }
-    },
-
-    /**
-     * Internal method to actually render the streamed content
-     */
-    _renderStreamContent(msgElement, content) {
-        if (!msgElement || !content) return;
-
-        const contentDiv = msgElement.querySelector('.message-content');
-        if (!contentDiv) return;
-
-        const toolsContainer = contentDiv.querySelector('.tool-calls-container');
->>>>>>> 835c700e5992dfe8b31175fd7ffa3fc359b6a749
 
         const now = Date.now();
         const timeSinceLastRender = now - this._lastRenderTime;
@@ -321,7 +274,7 @@ const Messages = {
             this._renderStreamContent(msgElement, this._streamBuffer);
         }
         this._streamBuffer = '';
-<<<<<<< HEAD
+
         this._lastContentRaw = '';
         this._lastRenderTime = 0;
     },
@@ -371,6 +324,67 @@ const Messages = {
     },
 
     /**
+     * Check for media placeholders that need loading
+     */
+    checkAndTriggerMediaSearches() {
+        const placeholders = document.querySelectorAll('.semantic-media-placeholder.loading');
+        placeholders.forEach(el => {
+            const query = el.dataset.query;
+            const type = el.dataset.type;
+            const key = `${type}:${query}`;
+
+            // If we already have results in registry, resolve immediately
+            if (this.mediaRegistry[key]) {
+                this.resolveMedia(query, type, this.mediaRegistry[key]);
+                return;
+            }
+
+            // If we are already fetching this, skip (mark as fetching)
+            if (el.dataset.fetching === 'true') return;
+
+            // Otherwise, trigger a search via tool execution (or simulated tool)
+            el.dataset.fetching = 'true';
+            console.log(`[Messages] Triggering auto-fetch for: ${query} (${type})`);
+
+            // Call the backend to perform the search
+            // We use the same endpoint as the tools, or a direct media search endpoint
+            if (window.App && window.App.client) {
+                // Construct a tool call to 'media_search'
+                // But since we are in the frontend, we might need a direct API or send a hidden message?
+                // Actually, the best way is to ask the *Backend* to run the tool. 
+                // BUT, if the Agent output text "![SEARCH...]", it *didn't* run the tool. 
+                // We must run it "out of band".
+
+                fetch('/api/tools/execute', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tool_name: 'media_search',
+                        arguments: { query, type: type === 'video' ? 'video' : 'image' }
+                    })
+                })
+                    .then(res => res.json())
+                    .then(result => {
+                        // Result comes back as tool output string/json
+                        let items = [];
+                        if (result.status === 'success' && result.output) {
+                            try {
+                                const parsed = JSON.parse(result.output);
+                                items = parsed.results || parsed.images || [];
+                            } catch (e) { console.error('Error parsing media result', e); }
+                        }
+                        this.resolveMedia(query, type, items);
+                    })
+                    .catch(err => {
+                        console.error('Media search failed', err);
+                        el.classList.remove('loading');
+                        el.innerHTML = `<div class="semantic-media-error">Failed to load media</div>`;
+                    });
+            }
+        });
+    },
+
+    /**
      * Resolve all placeholders for a specific media search result
      */
     resolveMedia(query, mediaType, results) {
@@ -410,8 +424,7 @@ const Messages = {
             this._renderStreamContent(msgElement, this._streamBuffer);
         }
         this._streamBuffer = '';
-=======
->>>>>>> 835c700e5992dfe8b31175fd7ffa3fc359b6a749
+
         this._lastRenderTime = 0;
     },
 
@@ -994,12 +1007,11 @@ const Messages = {
             // Pre-process: Enhance inline images with better styling
             content = this.processInlineImages(content);
 
-<<<<<<< HEAD
             // Pre-process: Handle semantic media anchors ![SEARCH: "query"] and ![VIDEO: "query"]
             content = this.processSemanticMediaAnchors(content);
 
-=======
->>>>>>> 835c700e5992dfe8b31175fd7ffa3fc359b6a749
+            // Trigger potential media searches for newly added placeholders
+            setTimeout(() => this.checkAndTriggerMediaSearches(), 100);
             const renderer = new marked.Renderer();
 
             renderer.code = (codeOrToken, language) => {
@@ -1121,7 +1133,7 @@ const Messages = {
     },
 
     /**
-<<<<<<< HEAD
+    <<<<<<< HEAD
      * Process semantic media anchors: ![SEARCH: "query"] or ![VIDEO: "query"]
      * Uses deterministic IDs to prevent UI jitter during streaming.
      */

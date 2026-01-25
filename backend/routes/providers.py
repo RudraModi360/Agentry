@@ -25,7 +25,9 @@ from backend.services.provider_service import ProviderService
 from agentry.providers.ollama_provider import OllamaProvider
 from agentry.providers.groq_provider import GroqProvider
 from agentry.providers.gemini_provider import GeminiProvider
+from agentry.providers.gemini_provider import GeminiProvider
 from agentry.providers.azure_provider import AzureProvider
+from agentry.providers.llama_cpp_provider import LlamaCppProvider
 from agentry.providers.capability_detector import detect_model_capabilities, get_known_capability
 
 router = APIRouter()
@@ -67,6 +69,14 @@ async def get_providers():
                 "description": "Enterprise-grade AI with your own deployments. Supports GPT-4, Claude (via Foundry), etc.",
                 "requires_key": True,
                 "requires_endpoint": True,
+                "has_modes": False
+            },
+            {
+                "id": "llama_cpp",
+                "name": "Llama Cpp",
+                "description": "Run GGUF models locally using llama.cpp",
+                "requires_key": False,
+                "requires_endpoint": False, # Uses file path as model
                 "has_modes": False
             }
         ]
@@ -205,6 +215,57 @@ async def get_models(provider: str, mode: Optional[str] = None, api_key: Optiona
         except:
             pass
         
+        # Try to find saved Azure configurations for this user
+        saved_models = []
+        try:
+            from backend.core.db_pool import get_connection
+            conn = get_connection()
+            c = conn.cursor()
+            # Join with user_api_keys to get endpoints for each saved model
+            c.execute("""
+                SELECT provider, endpoint FROM user_api_keys 
+                WHERE user_id = ? AND provider LIKE 'azure:%'
+            """, (user["id"],))
+            rows = c.fetchall()
+            for row in rows:
+                provider_str, ep = row
+                model_name = provider_str.split(":", 1)[1]
+                
+                # Detect model_type from endpoint for metadata
+                m_type = "openai"
+                if ep:
+                    ep_low = ep.lower()
+                    if "/anthropic" in ep_low: m_type = "anthropic"
+                    elif "/v1" in ep_low and "openai.azure.com" not in ep_low: m_type = "inference"
+                
+                saved_models.append({
+                    "id": model_name,
+                    "name": model_name,
+                    "description": f"Saved {m_type.capitalize()} Config",
+                    "model_type": m_type,
+                    "saved": True
+                })
+        except Exception as e:
+            print(f"[get_models] Error fetching saved azure models: {e}")
+
+        # If we have saved models, return them combined with defaults
+        if saved_models:
+             # Add some defaults if they aren't already there
+             defaults = [
+                {"id": "gpt-4o", "name": "GPT-4o", "description": "Vision + Fast"},
+                {"id": "claude-3-5-sonnet", "name": "Claude 3.5 Sonnet", "description": "Anthropic on Azure"}
+             ]
+             # Filter out defaults if they are already in saved_models
+             saved_ids = {m["id"] for m in saved_models}
+             final_list = saved_models + [d for d in defaults if d["id"] not in saved_ids]
+             
+             return {
+                "models": final_list,
+                "requires_key": True,
+                "requires_endpoint": True,
+                "message": "Select a saved model or enter a new one."
+             }
+
         return {
             "models": [
                 {"id": "gpt-4o", "name": "GPT-4o", "description": "Vision + Fast (Enter Deployment Name)"},
@@ -216,6 +277,15 @@ async def get_models(provider: str, mode: Optional[str] = None, api_key: Optiona
             "requires_key": True,
             "requires_endpoint": True,
             "message": "Deployment names vary. If using Azure Anthropic, deployment name might be 'claude-3-5-sonnet' etc."
+        }
+    
+    elif provider == "llama_cpp":
+        return {
+            "models": [
+                {"id": "Enter absolute path to .gguf file", "name": "Custom GGUF File", "description": "Enter the full path to your .gguf model file"}
+            ],
+            "requires_key": False,
+            "message": "Enter the absolute path to your .gguf model file."
         }
     
     raise HTTPException(status_code=400, detail="Unknown provider")
@@ -272,16 +342,9 @@ async def configure_provider(config: ProviderConfig, user: Dict = Depends(get_cu
                 raise ValueError("Azure requires an Endpoint.")
                  
             # Infer model_type from model name if not provided
+            # We prefer to let AzureProvider detect it based on endpoint/name if possible
             final_model_type = config.model_type
-            if not final_model_type and config.model:
-                model_name_lower = config.model.lower()
-                if "claude" in model_name_lower:
-                    final_model_type = "anthropic"
-                else:
-                    final_model_type = "openai"
             
-            config.model_type = final_model_type
-
             provider = AzureProvider(
                 model_name=config.model or "gpt-4", 
                 api_key=final_api_key, 
@@ -289,22 +352,51 @@ async def configure_provider(config: ProviderConfig, user: Dict = Depends(get_cu
                 model_type=final_model_type
             )
             
+            # Update config with whatever the provider detected
+            config.model_type = provider.model_type
+            
             # Save endpoint to DB if provided in config (use pooled connection)
-            if config.endpoint:
+            # Save endpoint/key to DB if provided in config (use pooled connection)
+            if config.endpoint or final_api_key:
+                # Save specifically for this model (e.g. "azure:gpt-4o")
+                specific_provider_key = f"azure:{config.model}"
                 from backend.core.db_pool import connection_context
+                
                 with connection_context() as conn:
                     c = conn.cursor()
+                    
+                    # 1. Update Specific Entry
                     c.execute("""
-                        UPDATE user_api_keys 
-                        SET endpoint = ?, updated_at = ?
-                        WHERE user_id = ? AND provider = ?
-                    """, (config.endpoint, datetime.now(), user_id, "azure"))
-                    if c.rowcount == 0:
-                        c.execute("""
-                            INSERT INTO user_api_keys (user_id, provider, api_key_encrypted, endpoint, updated_at)
-                            VALUES (?, ?, ?, ?, ?)
-                        """, (user_id, "azure", final_api_key, config.endpoint, datetime.now()))
-
+                        INSERT INTO user_api_keys (user_id, provider, api_key_encrypted, endpoint, updated_at)
+                        VALUES (?, ?, ?, ?, ?)
+                        ON CONFLICT(user_id, provider) DO UPDATE SET
+                            api_key_encrypted = excluded.api_key_encrypted,
+                            endpoint = excluded.endpoint,
+                            updated_at = excluded.updated_at
+                    """, (user_id, specific_provider_key, final_api_key, config.endpoint, datetime.now()))
+                    
+                    # 2. Update Generic "azure" Entry (as fallback/last used)
+                    c.execute("""
+                        INSERT INTO user_api_keys (user_id, provider, api_key_encrypted, endpoint, updated_at)
+                        VALUES (?, ?, ?, ?, ?)
+                        ON CONFLICT(user_id, provider) DO UPDATE SET
+                            api_key_encrypted = excluded.api_key_encrypted,
+                            endpoint = excluded.endpoint,
+                            updated_at = excluded.updated_at
+                    """, (user_id, "azure", final_api_key, config.endpoint, datetime.now()))
+                        
+        elif config.provider == "llama_cpp":
+            # For Llama Cpp, model is the file path
+            model_path = config.model
+            if not model_path:
+                raise ValueError("Llama Cpp requires a model path.")
+            if not os.path.exists(model_path):
+                 # Try to be helpful, maybe it's just a filename in a models dir?
+                 # For now, strict check
+                 pass
+            
+            provider = LlamaCppProvider(model_name=model_path, n_ctx=4096) # Default context, could be configurable
+            
         else:
             raise HTTPException(status_code=400, detail="Unknown provider")
     except Exception as e:
@@ -330,6 +422,7 @@ async def configure_provider(config: ProviderConfig, user: Dict = Depends(get_cu
             "groq": {"tools": True, "vision": False},
             "gemini": {"tools": True, "vision": True},
             "azure": {"tools": True, "vision": True},
+            "llama_cpp": {"tools": False, "vision": False},
         }
         defaults = provider_defaults.get(config.provider, {"tools": True, "vision": False})
         capabilities = ModelCapabilities(
@@ -440,6 +533,32 @@ async def switch_provider(config: ProviderConfig, user: Dict = Depends(get_curre
     return await configure_provider(config, user)
 
 
+@router.get("/provider/config/{provider}/{model:path}")
+async def get_provider_config(provider: str, model: str, user: Dict = Depends(get_current_user)):
+    """Get configuration for a specific provider/model (for editing)."""
+    user_id = user["id"]
+    
+    # Get stored credentials
+    api_key = AuthService.get_api_key(user_id, provider, model=model)
+    endpoint = None
+    if provider == "azure":
+        endpoint = AuthService.get_provider_endpoint(user_id, provider, model=model)
+        
+    # Determine model_type (try to find in active settings if it matches, otherwise null)
+    # The user might be retrieving a config that isn't currently active, so we just return known data.
+    
+    return {
+        "provider": provider,
+        "model": model,
+        "api_key": api_key or "",
+        "endpoint": endpoint or "",
+        # We don't store model_type separately for non-active models easily without parsing history or DB.
+        # But for editing, the user mainly needs keys/endpoints.
+        "model_type": None 
+    }
+
+
+
 @router.put("/provider/switch-quick")
 async def switch_provider_quick(config: ProviderConfig, user: Dict = Depends(get_current_user)):
     """
@@ -450,10 +569,10 @@ async def switch_provider_quick(config: ProviderConfig, user: Dict = Depends(get
     
     # 1. Get stored credentials (fast DB lookup with pooled connection)
     if not config.api_key:
-        config.api_key = AuthService.get_api_key(user_id, config.provider)
+        config.api_key = AuthService.get_api_key(user_id, config.provider, model=config.model)
     
     if not config.endpoint and config.provider == "azure":
-        config.endpoint = AuthService.get_provider_endpoint(user_id, config.provider)
+        config.endpoint = AuthService.get_provider_endpoint(user_id, config.provider, model=config.model)
     
     # 2. Validate credentials exist
     if not config.api_key and config.provider not in ["ollama"]:
@@ -481,17 +600,17 @@ async def switch_provider_quick(config: ProviderConfig, user: Dict = Depends(get
             provider = GeminiProvider(model_name=config.model, api_key=config.api_key)
         elif config.provider == "azure":
             # Infer model_type if not provided
-            model_type = config.model_type
-            if not model_type and config.model:
-                model_type = "anthropic" if "claude" in config.model.lower() else "openai"
-            config.model_type = model_type
+            # Let AzureProvider auto-detect based on endpoint/name
             
             provider = AzureProvider(
                 model_name=config.model,
                 api_key=config.api_key,
                 endpoint=config.endpoint,
-                model_type=model_type
+                model_type=config.model_type
             )
+            config.model_type = provider.model_type
+        elif config.provider == "llama_cpp":
+            provider = LlamaCppProvider(model_name=config.model)
         else:
             raise HTTPException(status_code=400, detail="Unknown provider")
     except Exception as e:
@@ -517,6 +636,7 @@ async def switch_provider_quick(config: ProviderConfig, user: Dict = Depends(get
             "groq": {"tools": True, "vision": False},
             "gemini": {"tools": True, "vision": True},
             "azure": {"tools": True, "vision": True},
+            "llama_cpp": {"tools": False, "vision": False},
         }
         defaults = provider_defaults.get(config.provider, {"tools": True, "vision": False})
         capabilities = ModelCapabilities(
@@ -606,6 +726,8 @@ async def get_capabilities(provider: str, model: str, user: Dict = Depends(get_c
             endpoint = AuthService.get_provider_endpoint(user_id, provider)
             if endpoint:
                 temp_provider = AzureProvider(model_name=model, api_key=api_key, endpoint=endpoint)
+        elif provider == "llama_cpp":
+            temp_provider = LlamaCppProvider(model_name=model)
         
         if temp_provider:
             capabilities = await detect_model_capabilities(
@@ -659,6 +781,8 @@ async def get_model_capabilities(provider: str, model: str, user: Dict = Depends
             temp_provider = GroqProvider(model_name=model, api_key=api_key)
         elif provider == "gemini" and api_key:
             temp_provider = GeminiProvider(model_name=model, api_key=api_key)
+        elif provider == "llama_cpp":
+            temp_provider = LlamaCppProvider(model_name=model)
         
         if temp_provider:
             capabilities = await detect_model_capabilities(
@@ -674,14 +798,27 @@ async def get_model_capabilities(provider: str, model: str, user: Dict = Depends
     except Exception as e:
         print(f"[Server] Dynamic capability detection failed: {e}")
     
-    # Fallback to conservative defaults
     return {
         "model": model,
         "provider": provider,
         "capabilities": {
-            "supports_tools": provider in ["groq", "gemini"],
-            "supports_vision": provider == "gemini",
+            "supports_tools": False,
+            "supports_vision": False,
             "supports_streaming": True,
-            "detection_method": "default"
+            "detection_method": "error_fallback"
         }
     }
+
+
+@router.get("/provider/saved")
+async def get_saved_providers(user: Dict = Depends(get_current_user)):
+    """Get all saved provider configurations for current user."""
+    configs = AuthService.get_all_saved_configs(user["id"])
+    return {"configs": configs}
+
+
+@router.delete("/provider/config/{provider}/{model:path}")
+async def delete_provider_config(provider: str, model: str, user: Dict = Depends(get_current_user)):
+    """Delete a specific provider/model configuration."""
+    AuthService.delete_config(user["id"], provider, model)
+    return {"message": f"Configuration for {provider}:{model} deleted successfully"}

@@ -5,6 +5,7 @@ from .providers.ollama_provider import OllamaProvider
 from .providers.groq_provider import GroqProvider
 from .providers.gemini_provider import GeminiProvider
 from .providers.azure_provider import AzureProvider
+from .providers.llama_cpp_provider import LlamaCppProvider
 from .providers.base import LLMProvider
 from .mcp_client import MCPClientManager
 from .session_manager import SessionManager
@@ -17,6 +18,7 @@ __all__ = [
     "GroqProvider",
     "GeminiProvider",
     "AzureProvider",
+    "LlamaCppProvider",
     "LLMProvider",
     "MCPClientManager",
     "SessionManager"
