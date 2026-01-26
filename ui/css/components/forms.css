@@ -344,25 +344,3 @@
     fill: none;
     stroke-width: 2;
 }
-
-/* ==================== Message Input ==================== */
-
-#message-input {
-    flex: 1;
-    border: none;
-    background: transparent;
-    color: var(--text-primary);
-    font-size: var(--text-base);
-    resize: none;
-    max-height: 150px;
-    padding: var(--space-3) var(--space-4);
-    line-height: var(--leading-normal);
-}
-
-#message-input::placeholder {
-    color: var(--text-muted);
-}
-
-#message-input:focus {
-    outline: none;
-}

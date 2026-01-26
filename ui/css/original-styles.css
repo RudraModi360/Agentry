@@ -2657,54 +2657,7 @@ body {
     box-shadow: 0 4px 10px rgba(64, 64, 64, 0.3);
 }
 
-/* Input Area */
-.input-area {
-    padding: 20px 24px;
-    border-top: 1px solid var(--dark-border);
-}
 
-.input-container {
-    max-width: 800px;
-    margin: 0 auto;
-    display: flex;
-    gap: 12px;
-    align-items: flex-end;
-}
-
-.input-wrapper {
-    flex: 1;
-    background: var(--dark-input);
-    border: 2px solid var(--dark-border);
-    border-radius: 16px;
-    display: flex;
-    align-items: center;
-    transition: all 0.3s;
-    min-height: 52px;
-}
-
-.input-wrapper:focus-within {
-    border-color: var(--gradient-start);
-    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
-}
-
-#message-input {
-    flex: 1;
-    padding: 14px 20px 14px 8px;
-    /* Reduced left padding to accommodate attach button */
-    background: transparent;
-    border: none;
-    color: var(--text-primary);
-    font-size: 15px;
-    font-family: inherit;
-    resize: none;
-    max-height: 150px;
-    line-height: 1.5;
-    align-self: center;
-}
-
-#message-input:focus {
-    outline: none;
-}
 
 #message-input::placeholder {
     color: var(--text-secondary);

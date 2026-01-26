@@ -153,6 +153,39 @@
     opacity: 1;
 }
 
+/* Edit button in provider popup - Always visible */
+.provider-popup-item-edit {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+    opacity: 1;
+    /* Always visible */
+}
+
+/* Removed hover-based visibility */
+
+/* Removed hover-based styles to match "remove hover based effect" request */
+/* If you want to keep the subtle hover color change, you can uncomment below */
+/* 
+.provider-popup-item-edit:hover {
+    color: var(--accent);
+}
+*/
+
+.provider-popup-item-edit svg {
+    width: 14px;
+    height: 14px;
+}
+
 .provider-popup-footer {
     padding: 8px;
     border-top: 1px solid rgba(255, 255, 255, 0.06);

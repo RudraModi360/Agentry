@@ -630,6 +630,20 @@ async def get_capabilities(provider: str, model: str, user: Dict = Depends(get_c
     }
 
 
+@router.get("/provider/saved/{provider}")
+async def get_saved_provider_config(provider: str, user: Dict = Depends(get_current_user)):
+    """Get stored configuration for a specific provider (API key and endpoint)."""
+    user_id = user["id"]
+    api_key = AuthService.get_api_key(user_id, provider)
+    endpoint = AuthService.get_provider_endpoint(user_id, provider)
+    
+    return {
+        "provider": provider,
+        "api_key": api_key,
+        "endpoint": endpoint
+    }
+
+
 @router.get("/model/capabilities/{provider}/{model:path}")
 async def get_model_capabilities(provider: str, model: str, user: Dict = Depends(get_current_user)):
     """Get capabilities for a specific model."""

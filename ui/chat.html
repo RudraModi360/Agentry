@@ -597,6 +597,111 @@
         </div>
     </div>
 
+    <!-- Manage Models Modal -->
+    <div class="manage-models-overlay" id="manage-models-overlay">
+        <div class="manage-models-modal">
+            <div class="manage-models-header">
+                <div class="manage-models-title">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                    </svg>
+                    <h2 id="manage-models-title-text">Manage Models</h2>
+                </div>
+                <button class="manage-models-close" id="manage-models-close-btn" title="Close">×</button>
+            </div>
+
+            <!-- Models List View -->
+            <div class="manage-models-content" id="manage-models-list-view">
+                <p class="manage-models-description">Previously used models. Click to switch, or use the buttons to
+                    edit/remove.</p>
+                <div class="manage-models-list" id="manage-models-list">
+                    <!-- Models will be loaded dynamically -->
+                </div>
+            </div>
+
+            <!-- Config Editor View (hidden by default) -->
+            <div class="manage-models-content" id="manage-models-edit-view" style="display: none;">
+                <div class="config-editor-header">
+                    <button class="config-editor-back" id="config-editor-back">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                        Back to list
+                    </button>
+                </div>
+
+                <div class="config-editor-model-info" id="config-editor-model-info">
+                    <!-- Provider icon and model name will be inserted here -->
+                </div>
+
+                <form class="config-editor-form" id="config-editor-form">
+                    <!-- API Key Field -->
+                    <div class="config-field-group">
+                        <label for="config-api-key">API Key</label>
+                        <div class="config-input-wrapper">
+                            <input type="password" id="config-api-key" class="config-input"
+                                placeholder="Enter API key (leave blank to keep existing)">
+                            <button type="button" class="config-toggle-visibility" id="toggle-api-key-visibility"
+                                title="Toggle visibility">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </button>
+                        </div>
+                        <span class="config-field-hint" id="config-api-key-hint">Leave blank to keep your existing
+                            key</span>
+                    </div>
+
+                    <!-- Endpoint Field (for Azure/Ollama) -->
+                    <div class="config-field-group" id="config-endpoint-group" style="display: none;">
+                        <label for="config-endpoint">Endpoint URL</label>
+                        <input type="text" id="config-endpoint" class="config-input"
+                            placeholder="https://your-resource.openai.azure.com">
+                        <span class="config-field-hint">Your Azure resource endpoint URL</span>
+                    </div>
+
+                    <!-- Model Name/Deployment Field -->
+                    <div class="config-field-group">
+                        <label for="config-model-name">Model / Deployment Name</label>
+                        <input type="text" id="config-model-name" class="config-input"
+                            placeholder="e.g. gpt-4, claude-opus-4-5">
+                        <span class="config-field-hint">The model or deployment name to use</span>
+                    </div>
+
+                    <!-- Error Message -->
+                    <div class="config-error-message" id="config-error-message" style="display: none;"></div>
+
+                    <!-- Success Message -->
+                    <div class="config-success-message" id="config-success-message" style="display: none;"></div>
+                </form>
+            </div>
+
+            <!-- Footer: Changes based on view -->
+            <div class="manage-models-footer" id="manage-models-list-footer">
+                <button class="manage-models-add-btn" id="manage-models-add-btn">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Add New Model
+                </button>
+            </div>
+
+            <div class="manage-models-footer" id="manage-models-edit-footer" style="display: none;">
+                <button class="config-cancel-btn" id="config-cancel-btn">Cancel</button>
+                <button class="config-save-btn" id="config-save-btn">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Save Configuration
+                </button>
+            </div>
+        </div>
+    </div>
+
 
     <!-- JavaScript Files (load order matters) -->
     <!-- Environment config - set AGENTRY_API_URL for production -->

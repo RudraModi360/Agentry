@@ -50,6 +50,13 @@ const ModelSelector = (function () {
     const elements = {};
 
     /**
+     * Get provider info by ID
+     */
+    function getProviderInfo(id) {
+        return PROVIDERS.find(p => p.id === id) || { name: id, icon: '' };
+    }
+
+    /**
      * Initialize the component
      */
     async function init() {
@@ -106,6 +113,12 @@ const ModelSelector = (function () {
                     <svg class="provider-popup-item-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                         <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>` : ''}
+                    <button class="provider-popup-item-edit" data-provider-id="${item.provider}" data-model-id="${item.model}" title="Edit config">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                    </button>
                 </div>
             `).join('');
         }
@@ -130,9 +143,11 @@ const ModelSelector = (function () {
 
         elements.providerPopupList.innerHTML = html;
 
-        // Attach click handlers
+        // Attach click handlers for model selection (clicking on the item but not the edit button)
         elements.providerPopupList.querySelectorAll('.provider-popup-item:not(.manage-item)').forEach(item => {
             item.addEventListener('click', (e) => {
+                // Don't trigger if clicking the edit button
+                if (e.target.closest('.provider-popup-item-edit')) return;
                 e.stopPropagation();
                 const providerId = item.dataset.providerId;
                 const modelId = item.dataset.modelId;
@@ -140,15 +155,429 @@ const ModelSelector = (function () {
             });
         });
 
-        // Attach Manage Handler
+        // Attach edit button handlers
+        elements.providerPopupList.querySelectorAll('.provider-popup-item-edit').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const providerId = btn.dataset.providerId;
+                const modelId = btn.dataset.modelId;
+                closeDropdown();
+                // Open the manage models modal with the config editor
+                openManageModelsModal();
+                // Then open the config editor for this model
+                setTimeout(() => openConfigEditor(providerId, modelId), 100);
+            });
+        });
+
+        // Attach Manage Handler - opens the modal
         const manageBtn = document.getElementById('provider-manage-btn');
         if (manageBtn) {
             manageBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 closeDropdown();
-                window.location.href = '/setup.html';
+                openManageModelsModal();
             });
         }
+    }
+
+    /**
+     * Open the Manage Models modal
+     */
+    function openManageModelsModal() {
+        const overlay = document.getElementById('manage-models-overlay');
+        if (overlay) {
+            renderManageModelsList();
+            overlay.classList.add('active');
+        }
+    }
+
+    /**
+     * Close the Manage Models modal
+     */
+    function closeManageModelsModal() {
+        const overlay = document.getElementById('manage-models-overlay');
+        if (overlay) {
+            overlay.classList.remove('active');
+        }
+    }
+
+    /**
+     * Render the list of models in the manage modal
+     */
+    function renderManageModelsList() {
+        const listContainer = document.getElementById('manage-models-list');
+        if (!listContainer) return;
+
+        const recentModels = getRecentModelsFromHistory();
+
+        if (recentModels.length === 0) {
+            listContainer.innerHTML = `
+                <div class="manage-models-empty">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                    </svg>
+                    <p>No previously used models</p>
+                </div>
+            `;
+            return;
+        }
+
+        listContainer.innerHTML = recentModels.map(item => `
+            <div class="manage-model-item ${isCurrent(item.provider, item.model) ? 'current' : ''}" data-provider-id="${item.provider}" data-model-id="${item.model}">
+                <div class="manage-model-icon">
+                    <img src="${item.icon}" alt="${item.providerName}" onerror="this.style.display='none'">
+                </div>
+                <div class="manage-model-info">
+                    <div class="manage-model-name">${item.model}</div>
+                    <div class="manage-model-provider">${item.providerName}</div>
+                </div>
+                ${isCurrent(item.provider, item.model) ? '<span class="manage-model-badge">Current</span>' : ''}
+                <div class="manage-model-actions">
+                    <button class="manage-model-btn edit" data-provider-id="${item.provider}" data-model-id="${item.model}" title="Edit configuration">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                    </button>
+                    <button class="manage-model-btn delete" data-provider-id="${item.provider}" data-model-id="${item.model}" title="Remove from list">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+
+        // Attach handlers
+        listContainer.querySelectorAll('.manage-model-btn.edit').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const providerId = btn.dataset.providerId;
+                const modelId = btn.dataset.modelId;
+                openConfigEditor(providerId, modelId);
+            });
+        });
+
+        listContainer.querySelectorAll('.manage-model-btn.delete').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const providerId = btn.dataset.providerId;
+                const modelId = btn.dataset.modelId;
+                deleteModelFromHistory(providerId, modelId);
+            });
+        });
+
+        // Allow clicking on item to select it
+        listContainer.querySelectorAll('.manage-model-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                if (e.target.closest('.manage-model-btn')) return;
+                const providerId = item.dataset.providerId;
+                const modelId = item.dataset.modelId;
+                closeManageModelsModal();
+                selectModelFromHistory(providerId, modelId);
+            });
+        });
+    }
+
+    // State for config editor
+    const editorState = {
+        currentProvider: null,
+        currentModel: null,
+        currentModelType: null
+    };
+
+    /**
+     * Open the inline config editor for a model
+     */
+    async function openConfigEditor(providerId, modelId) {
+        console.log('[ModelSelector] Opening config editor for:', providerId, modelId);
+
+        editorState.currentProvider = providerId;
+        editorState.currentModel = modelId;
+
+        // Find model info
+        const providerInfo = getProviderInfo(providerId);
+
+        // Update modal title
+        const titleText = document.getElementById('manage-models-title-text');
+        if (titleText) {
+            titleText.textContent = 'Edit Configuration';
+        }
+
+        // Populate model info header
+        const modelInfoEl = document.getElementById('config-editor-model-info');
+        if (modelInfoEl) {
+            modelInfoEl.innerHTML = `
+                <div class="model-icon">
+                    <img src="${providerInfo.icon}" alt="${providerInfo.name}" onerror="this.style.display='none'">
+                </div>
+                <div class="model-details">
+                    <div class="model-name">${modelId}</div>
+                    <div class="model-provider">${providerInfo.name}</div>
+                </div>
+            `;
+        }
+
+        // Pre-fill model name
+        const modelNameInput = document.getElementById('config-model-name');
+        if (modelNameInput) {
+            modelNameInput.value = modelId;
+        }
+
+        // Clear API key field (for security, we don't pre-fill API keys)
+        const apiKeyInput = document.getElementById('config-api-key');
+        if (apiKeyInput) {
+            apiKeyInput.value = '';
+        }
+
+        // Show/hide endpoint field based on provider
+        const endpointGroup = document.getElementById('config-endpoint-group');
+        const endpointInput = document.getElementById('config-endpoint');
+
+        // Fetch saved config to pre-fill
+        try {
+            const token = AppConfig.getAuthToken();
+            const response = await fetch(AppConfig.getApiUrl(`/api/provider/saved/${providerId}`), {
+                headers: {
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                }
+            });
+
+            if (response.ok) {
+                const savedConfig = await response.json();
+
+                if (savedConfig.api_key && apiKeyInput) {
+                    apiKeyInput.value = savedConfig.api_key;
+                    apiKeyInput.placeholder = '••••••••••••••••';
+                }
+
+                if (savedConfig.endpoint && endpointInput) {
+                    endpointInput.value = savedConfig.endpoint;
+                }
+            }
+        } catch (e) {
+            console.warn('[ModelSelector] Could not fetch saved config:', e);
+        }
+
+        if (endpointGroup && endpointInput) {
+            if (providerId === 'azure' || providerId === 'ollama') {
+                endpointGroup.style.display = 'flex';
+                if (!endpointInput.value) {
+                    if (providerId === 'azure') {
+                        endpointInput.placeholder = 'https://your-resource.openai.azure.com';
+                    } else {
+                        endpointInput.placeholder = 'http://localhost:11434';
+                    }
+                }
+            } else {
+                endpointGroup.style.display = 'none';
+            }
+        }
+
+        // Clear messages
+        const errorMsg = document.getElementById('config-error-message');
+        const successMsg = document.getElementById('config-success-message');
+        if (errorMsg) errorMsg.style.display = 'none';
+        if (successMsg) successMsg.style.display = 'none';
+
+        // Switch views
+        document.getElementById('manage-models-list-view').style.display = 'none';
+        document.getElementById('manage-models-edit-view').style.display = 'block';
+        document.getElementById('manage-models-list-footer').style.display = 'none';
+        document.getElementById('manage-models-edit-footer').style.display = 'flex';
+    }
+
+    /**
+     * Close config editor and go back to list view
+     */
+    function closeConfigEditor() {
+        // Reset title
+        const titleText = document.getElementById('manage-models-title-text');
+        if (titleText) {
+            titleText.textContent = 'Manage Models';
+        }
+
+        // Switch views
+        document.getElementById('manage-models-list-view').style.display = 'block';
+        document.getElementById('manage-models-edit-view').style.display = 'none';
+        document.getElementById('manage-models-list-footer').style.display = 'flex';
+        document.getElementById('manage-models-edit-footer').style.display = 'none';
+
+        // Clear editor state
+        editorState.currentProvider = null;
+        editorState.currentModel = null;
+    }
+
+    /**
+     * Save the configuration from the editor
+     */
+    async function saveConfigFromEditor() {
+        const providerId = editorState.currentProvider;
+        const apiKey = document.getElementById('config-api-key').value.trim();
+        const modelName = document.getElementById('config-model-name').value.trim();
+        const endpoint = document.getElementById('config-endpoint')?.value.trim() || null;
+
+        const errorMsg = document.getElementById('config-error-message');
+        const successMsg = document.getElementById('config-success-message');
+        const saveBtn = document.getElementById('config-save-btn');
+
+        // Clear previous messages
+        if (errorMsg) errorMsg.style.display = 'none';
+        if (successMsg) successMsg.style.display = 'none';
+
+        // Validation
+        if (!modelName) {
+            if (errorMsg) {
+                errorMsg.textContent = 'Please enter a model/deployment name';
+                errorMsg.style.display = 'block';
+            }
+            return;
+        }
+
+        // For Azure, endpoint is required
+        if (providerId === 'azure' && !endpoint) {
+            if (errorMsg) {
+                errorMsg.textContent = 'Please enter the Azure endpoint URL';
+                errorMsg.style.display = 'block';
+            }
+            return;
+        }
+
+        // Show loading state
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = `
+                <svg class="spin" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" stroke-dasharray="60" stroke-dashoffset="20"></circle>
+                </svg>
+                Saving...
+            `;
+        }
+
+        try {
+            const token = AppConfig.getAuthToken();
+
+            const payload = {
+                provider: providerId,
+                model: modelName,
+                mode: providerId === 'ollama' ? 'cloud' : null,
+                api_key: apiKey || null,
+                endpoint: endpoint,
+                model_type: editorState.currentModelType || null
+            };
+
+            console.log('[ModelSelector] Saving config:', payload);
+
+            const response = await fetch(AppConfig.getApiUrl('/api/provider/configure'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Success!
+                if (successMsg) {
+                    successMsg.textContent = 'Configuration saved successfully!';
+                    successMsg.style.display = 'block';
+                }
+
+                // Update local state
+                updateCurrentModel(providerId, modelName, editorState.currentModelType);
+
+                // Show toast
+                if (window.Modals && window.Modals.toast) {
+                    window.Modals.toast('Configuration saved!', 'success');
+                }
+
+                // Close editor and modal after a short delay
+                setTimeout(() => {
+                    closeConfigEditor();
+                    closeManageModelsModal();
+
+                    // Reconnect WebSocket to use new config
+                    if (typeof WebSocketManager !== 'undefined' && WebSocketManager.close) {
+                        console.log('[ModelSelector] Reconnecting WebSocket for new config...');
+                        WebSocketManager.close();
+                        setTimeout(() => {
+                            WebSocketManager.init();
+                            if (typeof Tools !== 'undefined' && Tools.loadTools) {
+                                Tools.loadTools();
+                            }
+                        }, 300);
+                    }
+                }, 1000);
+
+            } else {
+                // Error from server
+                if (errorMsg) {
+                    errorMsg.textContent = data.detail || 'Failed to save configuration';
+                    errorMsg.style.display = 'block';
+                }
+            }
+        } catch (e) {
+            console.error('[ModelSelector] Error saving config:', e);
+            if (errorMsg) {
+                errorMsg.textContent = 'Connection error. Please try again.';
+                errorMsg.style.display = 'block';
+            }
+        } finally {
+            // Reset button
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = `
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Save Configuration
+                `;
+            }
+        }
+    }
+
+    /**
+     * Delete a model from history (removes from localStorage tracking)
+     */
+    async function deleteModelFromHistory(providerId, modelId) {
+        // For now, we can try to call an API to remove saved credentials
+        try {
+            const token = AppConfig.getAuthToken();
+
+            const response = await fetch(AppConfig.getApiUrl('/api/provider/saved/' + providerId), {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                }
+            });
+
+            if (response.ok) {
+                if (window.Modals && window.Modals.toast) {
+                    window.Modals.toast(`Removed ${modelId} configuration`, 'success');
+                }
+            }
+        } catch (e) {
+            console.warn('[ModelSelector] Could not delete from server:', e);
+        }
+
+        // Also clear from localStorage if it matches
+        const savedProvider = localStorage.getItem('agentry-active-provider');
+        const savedModel = localStorage.getItem('agentry-active-model');
+
+        if (savedProvider === providerId && savedModel === modelId) {
+            localStorage.removeItem('agentry-active-provider');
+            localStorage.removeItem('agentry-active-model');
+            localStorage.removeItem('agentry-active-model-type');
+        }
+
+        // Re-render the list
+        renderManageModelsList();
+        renderProviderPopup();
     }
 
     /**
@@ -365,8 +794,86 @@ const ModelSelector = (function () {
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 closeDropdown();
+                closeManageModelsModal();
             }
         });
+
+        // Manage Models Modal close handlers
+        const manageModelsOverlay = document.getElementById('manage-models-overlay');
+        const manageModelsCloseBtn = document.getElementById('manage-models-close-btn');
+
+        if (manageModelsOverlay) {
+            manageModelsOverlay.addEventListener('click', (e) => {
+                if (e.target === manageModelsOverlay) {
+                    closeManageModelsModal();
+                }
+            });
+        }
+
+        if (manageModelsCloseBtn) {
+            manageModelsCloseBtn.addEventListener('click', () => {
+                closeManageModelsModal();
+            });
+        }
+
+        // Add New Model button
+        const addModelBtn = document.getElementById('manage-models-add-btn');
+        if (addModelBtn) {
+            addModelBtn.addEventListener('click', () => {
+                closeManageModelsModal();
+                window.location.href = '/setup.html';
+            });
+        }
+
+        // Config Editor buttons
+        const configEditorBack = document.getElementById('config-editor-back');
+        const configCancelBtn = document.getElementById('config-cancel-btn');
+        const configSaveBtn = document.getElementById('config-save-btn');
+        const toggleApiKeyVisibility = document.getElementById('toggle-api-key-visibility');
+
+        if (configEditorBack) {
+            configEditorBack.addEventListener('click', () => {
+                closeConfigEditor();
+            });
+        }
+
+        if (configCancelBtn) {
+            configCancelBtn.addEventListener('click', () => {
+                closeConfigEditor();
+            });
+        }
+
+        if (configSaveBtn) {
+            configSaveBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                saveConfigFromEditor();
+            });
+        }
+
+        if (toggleApiKeyVisibility) {
+            toggleApiKeyVisibility.addEventListener('click', () => {
+                const apiKeyInput = document.getElementById('config-api-key');
+                if (apiKeyInput) {
+                    if (apiKeyInput.type === 'password') {
+                        apiKeyInput.type = 'text';
+                        toggleApiKeyVisibility.innerHTML = `
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                <line x1="1" y1="1" x2="23" y2="23"></line>
+                            </svg>
+                        `;
+                    } else {
+                        apiKeyInput.type = 'password';
+                        toggleApiKeyVisibility.innerHTML = `
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        `;
+                    }
+                }
+            });
+        }
     }
 
     /**
@@ -512,7 +1019,11 @@ const ModelSelector = (function () {
         PROVIDERS,
         updateCurrentModel,
         syncCurrentModel,
-        refresh
+        refresh,
+        openManageModelsModal,
+        closeManageModelsModal,
+        openConfigEditor,
+        closeConfigEditor
     };
 })();
 

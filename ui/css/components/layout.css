@@ -231,7 +231,9 @@
     padding: var(--space-1);
     transition: all var(--transition-default);
     font-size: 1rem;
-    /* Unified font size */
+    overflow: hidden;
+    max-height: 220px;
+    min-height: 52px;
 }
 
 .input-wrapper textarea,
