@@ -27,7 +27,8 @@ class UserRegistration(BaseModel):
 
 
 class UserProfileUpdate(BaseModel):
-    email: EmailStr
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
 
 
 class PasswordChange(BaseModel):

@@ -5,6 +5,8 @@ import os
 import sqlite3
 import hashlib
 import uuid
+import time
+import logging
 from pathlib import Path
 from typing import Optional, Dict, List, Any
 from datetime import datetime
@@ -13,6 +15,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Depe
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic import BaseModel
 import httpx
 
@@ -33,12 +36,53 @@ from agentry.providers.azure_provider import AzureProvider
 from agentry.providers.capability_detector import detect_model_capabilities, get_known_capability, ModelCapabilities
 from agentry.memory.storage import PersistentMemoryStore
 
+# ============== Logging Setup ==============
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+logger = logging.getLogger("agentry.server")
+
 # ============== FastAPI App ==============
 app = FastAPI(
     title="Agentry AI Agent",
     description="A powerful AI agent with tool capabilities",
     version="1.0.0"
 )
+
+# ============== Middleware ==============
+class RequestLoggingMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        start_time = time.time()
+        
+        # Log Request
+        logger.info(f"Incoming Request: {request.method} {request.url.path}")
+        
+        try:
+            response = await call_next(request)
+            
+            # Log Response
+            process_time = time.time() - start_time
+            logger.info(
+                f"Completed Request: {request.method} {request.url.path} "
+                f"- Status: {response.status_code} "
+                f"- Duration: {process_time:.4f}s"
+            )
+            
+            return response
+        except Exception as e:
+            process_time = time.time() - start_time
+            logger.error(
+                f"Request Failed: {request.method} {request.url.path} "
+                f"- Error: {str(e)} "
+                f"- Duration: {process_time:.4f}s"
+            )
+            raise
+
+app.add_middleware(RequestLoggingMiddleware)
 
 # CORS for local development
 app.add_middleware(

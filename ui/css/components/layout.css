@@ -22,14 +22,17 @@
 
 /* Chat Header */
 .chat-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
     display: grid;
     grid-template-columns: 1fr auto 1fr;
     align-items: center;
     padding: var(--space-3) var(--space-4);
-    border-bottom: 1px solid var(--card-border);
-    background: var(--bg-secondary);
-    position: relative;
-    z-index: var(--z-sticky);
+    border: none !important;
+    background: var(--bg-primary) !important;
+    z-index: var(--z-fixed);
 }
 
 .chat-header-left {
@@ -196,31 +199,48 @@
     opacity: 1;
 }
 
-/* Input Area */
+/* Input Area - Gradient Background to hide scrolling text */
 .input-area {
-    padding: var(--space-4) var(--space-6);
-    background: var(--bg-secondary);
-    border-top: 1px solid var(--card-border);
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: var(--z-sticky);
+    padding: var(--space-4);
+    background: var(--bg-primary) !important;
+    border: none !important;
+    pointer-events: none;
 }
 
 .input-container {
     max-width: 800px;
     margin: 0 auto;
-    padding: 0 var(--space-6);
     display: flex;
     gap: var(--space-3);
     align-items: flex-end;
+    pointer-events: auto;
 }
 
 .input-wrapper {
     flex: 1;
     display: flex;
     align-items: center;
-    background: var(--input-bg);
-    border: 1.5px solid var(--input-border);
-    border-radius: var(--radius-xl);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-2xl);
     padding: var(--space-1);
     transition: all var(--transition-default);
+    font-size: 1rem;
+    overflow: hidden;
+    max-height: 220px;
+    min-height: 52px;
+}
+
+.input-wrapper textarea,
+.input-wrapper input {
+    font-size: 1rem;
+    font-family: inherit;
+    line-height: var(--leading-relaxed);
 }
 
 .input-wrapper:focus-within {

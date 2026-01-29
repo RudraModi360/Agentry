@@ -11,6 +11,18 @@ const Messages = {
     thinkingText: '',
     selectedImagesData: [],
 
+    _pendingMediaResults: [], // Buffer for media_search results
+    mediaRegistry: {}, // Store resolved media items by query/type
+    _lastFormattedIdx: 0, // Track up to where we've formatted the text in a stream
+    _formattedCache: '', // Cache for stable rendered HTML
+    _lastContentRaw: '', // Copy of raw content for change detection
+    // Streaming optimization state
+    _streamBuffer: '',
+    _streamRenderTimer: null,
+    _streamRenderDelay: 50, // ms between renders
+    _lastRenderTime: 0,
+    _pendingMediaResults: [], // Buffer for media_search results
+
     // Elements
     container: null,
     emptyState: null,
@@ -113,15 +125,16 @@ const Messages = {
                 ${imagesHtml}
                 <div class="message-actions">
                     <button class="message-action-btn edit-btn" title="Edit message">
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                         </svg>
                     </button>
                     <button class="message-action-btn delete-btn" title="Delete message">
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="3 6 5 6 21 6"></polyline>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 6h18"></path>
+                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
                         </svg>
                     </button>
                 </div>
@@ -174,37 +187,171 @@ const Messages = {
     },
 
     /**
-     * Update assistant message text
+     * Update assistant message text with streaming optimization
+     * Uses debounced rendering to prevent UI freezes during fast token streaming
      */
-    updateAssistantMessageText(msgElement, content) {
+    /**
+     * Update assistant message text with streaming optimization
+     * Uses debounced rendering to prevent UI freezes during fast token streaming
+     */
+    updateAssistantMessageText(msgElement, content, forceRender = false, msgData = null) {
         if (content && content.length > 0) {
             this.removeLoadingIndicators(msgElement);
         }
 
         if (!content || !content.trim()) return;
 
-        const contentDiv = msgElement.querySelector('.message-content');
-        const toolsContainer = contentDiv.querySelector('.tool-calls-container');
+        // Store the content
+        this._streamBuffer = content;
 
-        if (toolsContainer) {
-            let afterTextDiv = toolsContainer.nextElementSibling;
-            if (!afterTextDiv || !afterTextDiv.classList.contains('message-text-after')) {
-                afterTextDiv = DOM.create('div', { class: 'message-text message-text-after' });
-                toolsContainer.parentNode.insertBefore(afterTextDiv, toolsContainer.nextSibling);
-            }
-            afterTextDiv.innerHTML = this.formatMessage(content);
-            afterTextDiv.style.display = 'block';
-        } else {
-            let textDiv = contentDiv.querySelector('.message-text');
-            if (!textDiv) {
-                textDiv = DOM.create('div', { class: 'message-text' });
-                contentDiv.appendChild(textDiv);
-            }
-            textDiv.innerHTML = this.formatMessage(content);
-            textDiv.style.display = 'block';
+
+        const now = Date.now();
+        const timeSinceLastRender = now - this._lastRenderTime;
+
+        // Clear any pending render
+        if (this._streamRenderTimer) {
+            clearTimeout(this._streamRenderTimer);
+            this._streamRenderTimer = null;
         }
 
+        // If enough time has passed or forceRender, render immediately
+        if (forceRender || timeSinceLastRender >= this._streamRenderDelay) {
+            this._renderStreamContent(msgElement, content, msgData);
+            this._lastRenderTime = now;
+        } else {
+            // Schedule a render for later
+            this._streamRenderTimer = setTimeout(() => {
+                this._renderStreamContent(msgElement, this._streamBuffer, msgData);
+                this._lastRenderTime = Date.now();
+                this._streamRenderTimer = null;
+            }, this._streamRenderDelay - timeSinceLastRender);
+        }
+    },
+
+    /**
+     * Internal method to actually render the streamed content
+     */
+    _renderStreamContent(msgElement, content, msgData = null) {
+        if (!msgElement || !content) return;
+
+        const contentDiv = msgElement.querySelector('.message-content');
+        if (!contentDiv) return;
+
+        // Optimization: Only re-render if content changed significantly 
+        // or contains active placeholders/markdown that might change
+        if (content === this._lastContentRaw) return;
+
+        const toolsContainer = contentDiv.querySelector('.tool-calls-container');
+        let targetDiv;
+
+        if (toolsContainer) {
+            targetDiv = contentDiv.querySelector('.message-text-after');
+            if (!targetDiv) {
+                targetDiv = DOM.create('div', { class: 'message-text message-text-after' });
+                contentDiv.appendChild(targetDiv);
+            }
+        } else {
+            targetDiv = contentDiv.querySelector('.message-text');
+            if (!targetDiv) {
+                targetDiv = DOM.create('div', { class: 'message-text' });
+                contentDiv.appendChild(targetDiv);
+            }
+        }
+
+        // Update HTML
+        targetDiv.innerHTML = this.formatMessage(content, msgData);
+        targetDiv.style.display = 'block';
+
+        this._lastContentRaw = content;
         this.scrollToBottom();
+    },
+
+    /**
+     * Force render any pending stream content (call on message complete)
+     */
+    flushStreamBuffer(msgElement) {
+        if (this._streamRenderTimer) {
+            clearTimeout(this._streamRenderTimer);
+            this._streamRenderTimer = null;
+        }
+        if (this._streamBuffer && msgElement) {
+            this._renderStreamContent(msgElement, this._streamBuffer);
+        }
+        this._streamBuffer = '';
+        this._lastContentRaw = '';
+        this._lastRenderTime = 0;
+    },
+
+    /**
+     * Helper to render the actual media HTML once results are available
+     */
+    renderMediaHTML(query, mediaType, results) {
+        if (!results || results.length === 0) return '';
+
+        if (mediaType === 'image') {
+            return `<div class="inline-media-carousel loaded"><div class="media-carousel-items">${results.map(item => `
+<div class="media-carousel-item" onclick="window.open('${item.url}', '_blank')">
+<img src="${item.url}" alt="${item.title}" loading="lazy" />
+<div class="media-carousel-item-info">
+<span class="media-item-title">${item.title}</span>
+<span class="media-item-source">${item.source}</span>
+</div>
+</div>`).join('')}</div></div>`;
+        } else if (mediaType === 'video') {
+            const video = results[0];
+            return `<div class="youtube-embed-card" onclick="window.open('${video.url}', '_blank')">
+<div class="youtube-thumbnail">
+<img src="${video.thumbnail}" alt="${video.title}" />
+<div class="youtube-play-btn">
+<svg viewBox="0 0 68 48" width="68" height="48"><path d="M66.52,7.74c-0.78-2.93-2.49-5.41-5.42-6.19C55.79,.13,34,0,34,0S12.21,.13,6.9,1.55 C3.97,2.33,2.27,4.81,1.48,7.74C0.06,13.05,0,24,0,24s0.06,10.95,1.48,16.26c0.78,2.93,2.49,5.41,5.42-6.19 C12.21,47.87,34,48,34,48s21.79-0.13,27.1-1.55c2.93-0.78,4.64-3.26,5.42-6.19C67.94,34.95,68,24,68,24S67.94,13.05,66.52,7.74z" fill="#f00"/><path d="M 45,24 27,14 27,34" fill="#fff"/></svg>
+</div>
+</div>
+<div class="youtube-info">
+<div class="youtube-title">${video.title}</div>
+<div class="youtube-channel">${video.channel || 'YouTube'}</div>
+</div>
+</div>`;
+        }
+        return '';
+    },
+
+    /**
+     * Render the Gemini-style skeleton loader
+     */
+    renderSkeletonHTML(mediaType) {
+        if (mediaType === 'image') {
+            return `<div class="semantic-media-loading"><div class="semantic-media-skeleton"><div class="skeleton-item"></div><div class="skeleton-item"></div><div class="skeleton-item"></div></div></div>`;
+        } else {
+            return `<div class="semantic-media-loading"><div class="skeleton-video"></div></div>`;
+        }
+    },
+
+    /**
+     * Resolve all placeholders for a specific media search result
+     */
+    resolveMedia(query, mediaType, results) {
+        console.log(`[Messages] Resolving media for query: ${query}, type: ${mediaType}`);
+
+        // Store in registry for future formatMessage calls
+        const key = `${mediaType}:${query}`;
+        this.mediaRegistry[key] = results;
+
+        // Find all placeholders with this query and type
+        const placeholders = document.querySelectorAll(`.semantic-media-placeholder.loading[data-query="${CSS.escape(query)}"][data-type="${mediaType}"]`);
+
+        placeholders.forEach(el => {
+            // If results are empty, vanish the block
+            if (!results || results.length === 0) {
+                el.remove();
+                return;
+            }
+
+            el.classList.remove('loading');
+            el.innerHTML = this.renderMediaHTML(query, mediaType, results);
+        });
+
+        // Smooth scroll after hydration to account for height changes
+        this.scrollToBottom(true);
     },
 
     /**
@@ -250,9 +397,34 @@ const Messages = {
 
     /**
      * Add tool call to message
+     * Special handling for media_search - renders inline carousel instead of collapsible
      */
     addToolCall(msgElement, toolName, args) {
         const contentDiv = msgElement.querySelector('.message-content');
+
+        // Special handling for media_search - create a minimal inline indicator
+        if (toolName === 'media_search' || toolName === 'image_search') {
+            // Create or get media container
+            let mediaCarousel = contentDiv.querySelector('.inline-media-carousel');
+            if (!mediaCarousel) {
+                mediaCarousel = DOM.create('div', { class: 'inline-media-carousel' });
+                mediaCarousel.innerHTML = `
+                    <div class="media-carousel-header">
+                        <span class="media-carousel-icon">🔍</span>
+                        <span class="media-carousel-text">Searching for media...</span>
+                    </div>
+                    <div class="media-carousel-items"></div>
+                `;
+                const textDiv = contentDiv.querySelector('.message-text');
+                if (textDiv) {
+                    contentDiv.insertBefore(mediaCarousel, textDiv.nextSibling);
+                } else {
+                    contentDiv.appendChild(mediaCarousel);
+                }
+            }
+            this.scrollToBottom();
+            return;
+        }
 
         let toolsContainer = contentDiv.querySelector('.tool-calls-container');
         if (!toolsContainer) {
@@ -316,9 +488,18 @@ const Messages = {
 
     /**
      * Update tool call with result
+     * Special handling for media_search - renders inline carousel
      */
     updateToolCallResult(msgElement, toolName, result) {
         const contentDiv = msgElement.querySelector('.message-content');
+
+        // Special handling for media_search - render inline carousel
+        if (toolName === 'media_search' || toolName === 'image_search') {
+            this._renderMediaCarouselResult(contentDiv, result);
+            this.scrollToBottom();
+            return;
+        }
+
         const toolDivs = contentDiv.querySelectorAll('.tool-call');
 
         let targetToolDiv = null;
@@ -363,6 +544,77 @@ const Messages = {
             targetToolDiv.classList.add('collapsed');
             this.scrollToBottom();
         }
+    },
+
+    /**
+     * Render media search results in a horizontal carousel
+     */
+    _renderMediaCarouselResult(contentDiv, result) {
+        const carousel = contentDiv.querySelector('.inline-media-carousel');
+        if (!carousel) return;
+
+        // Parse result
+        let mediaItems = [];
+        try {
+            if (typeof result === 'string') {
+                // Try to parse JSON from result
+                const jsonMatch = result.match(/\[[\s\S]*\]/);
+                if (jsonMatch) {
+                    mediaItems = JSON.parse(jsonMatch[0]);
+                }
+            } else if (Array.isArray(result)) {
+                mediaItems = result;
+            } else if (result && result.results) {
+                mediaItems = result.results;
+            } else if (result && result.images) {
+                mediaItems = result.images;
+            }
+        } catch (e) {
+            console.warn('Failed to parse media results:', e);
+        }
+
+        // Update header
+        const header = carousel.querySelector('.media-carousel-header');
+        if (header) {
+            if (mediaItems.length > 0) {
+                header.innerHTML = `
+                    <span class="media-carousel-icon">🖼️</span>
+                    <span class="media-carousel-text">Found ${mediaItems.length} ${mediaItems.length === 1 ? 'image' : 'images'}</span>
+                `;
+            } else {
+                header.innerHTML = `
+                    <span class="media-carousel-icon">📷</span>
+                    <span class="media-carousel-text">No images found</span>
+                `;
+            }
+        }
+
+        // Render items in carousel
+        const itemsContainer = carousel.querySelector('.media-carousel-items');
+        if (itemsContainer && mediaItems.length > 0) {
+            itemsContainer.innerHTML = mediaItems.slice(0, 10).map(item => {
+                const url = item.url || item.image_url || item.thumbnail || item.src || '';
+                const title = item.title || item.alt || item.description || '';
+                const source = item.source || item.domain || '';
+                const link = item.link || item.page_url || url;
+
+                if (!url) return '';
+
+                return `
+                    <div class="media-carousel-item" onclick="window.open('${DOM.escapeHtml(link)}', '_blank')">
+                        <img src="${DOM.escapeHtml(url)}" alt="${DOM.escapeHtml(title)}" 
+                             onerror="this.parentElement.style.display='none'" 
+                             loading="lazy" />
+                        <div class="media-carousel-item-info">
+                            <span class="media-item-title">${DOM.escapeHtml(title.substring(0, 40) || 'Image')}</span>
+                            ${source ? `<span class="media-item-source">${DOM.escapeHtml(source)}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        carousel.classList.add('loaded');
     },
 
     /**
@@ -416,7 +668,7 @@ const Messages = {
 
                 const content = typeof msg.content === 'string' ? msg.content : (msg.content || '');
                 if (content) {
-                    this.updateAssistantMessageText(currentAssistantEl, content);
+                    this.updateAssistantMessageText(currentAssistantEl, content, true, msg);
                 }
 
                 if (msg.tool_calls && Array.isArray(msg.tool_calls)) {
@@ -642,8 +894,21 @@ const Messages = {
     /**
      * Format message content with markdown
      */
-    formatMessage(content) {
+    formatMessage(content, msgData = null) {
         if (!content) return '';
+
+        // If we have persisted media data, seed the registry
+        if (msgData && msgData.media) {
+            for (const [placeholder, results] of Object.entries(msgData.media)) {
+                // Determine type and query from placeholder string
+                const match = placeholder.match(/!\[(SEARCH|VIDEO):\s*"([^"]+)"\]/);
+                if (match) {
+                    const type = match[1].toLowerCase() === 'search' ? 'image' : 'video';
+                    const query = match[2];
+                    this.mediaRegistry[`${type}:${query}`] = results;
+                }
+            }
+        }
 
         if (Array.isArray(content)) {
             return content.map(part => {
@@ -662,6 +927,14 @@ const Messages = {
         if (typeof content !== 'string') return '';
 
         try {
+            // Pre-process: Convert YouTube markers to rich embeds
+            content = this.processYouTubeEmbeds(content);
+
+            // Pre-process: Enhance inline images with better styling
+            content = this.processInlineImages(content);
+
+            // Pre-process: Handle semantic media anchors ![SEARCH: "query"] and ![VIDEO: "query"]
+            content = this.processSemanticMediaAnchors(content);
             const renderer = new marked.Renderer();
 
             renderer.code = (codeOrToken, language) => {
@@ -682,7 +955,7 @@ const Messages = {
                     highlightedCode = DOM.escapeHtml(code);
                 }
 
-                const blockId = 'code-' + Math.random().toString(36).substr(2, 9);
+                const blockId = 'code-' + this._simpleHash(code);
                 return `
                     <div class="code-block-container" data-block-id="${blockId}">
                         <div class="code-block-header">
@@ -706,6 +979,135 @@ const Messages = {
             console.error('Markdown parsing error:', e);
             return content;
         }
+    },
+
+    /**
+     * Process YouTube embed markers and convert to rich cards
+     */
+    processYouTubeEmbeds(content) {
+        // Match <!-- YOUTUBE:VIDEO_ID --> followed by markdown image link
+        const youtubePattern = /<!-- YOUTUBE:([a-zA-Z0-9_-]{11}) -->\s*\n?\[!\[([^\]]*)\]\(([^)]+)\)\]\(([^)]+)\)\s*\n?\*([^*]+)\*/g;
+
+        return content.replace(youtubePattern, (match, videoId, title, thumbnail, url, channel) => {
+            // Clean up the title (remove emoji if present)
+            const cleanTitle = title.replace(/🎬\s*/, '').trim();
+            const cleanChannel = channel.replace(/📺\s*/, '').trim();
+
+            return `
+<div class="youtube-embed-card" onclick="window.open('${url}', '_blank')">
+    <div class="youtube-thumbnail">
+        <img src="${thumbnail}" alt="${cleanTitle}" onerror="this.src='https://img.youtube.com/vi/${videoId}/hqdefault.jpg'" />
+        <div class="youtube-play-btn">
+            <svg viewBox="0 0 68 48" width="68" height="48">
+                <path class="youtube-play-bg" d="M66.52,7.74c-0.78-2.93-2.49-5.41-5.42-6.19C55.79,.13,34,0,34,0S12.21,.13,6.9,1.55 C3.97,2.33,2.27,4.81,1.48,7.74C0.06,13.05,0,24,0,24s0.06,10.95,1.48,16.26c0.78,2.93,2.49,5.41,5.42,6.19 C12.21,47.87,34,48,34,48s21.79-0.13,27.1-1.55c2.93-0.78,4.64-3.26,5.42-6.19C67.94,34.95,68,24,68,24S67.94,13.05,66.52,7.74z" fill="#f00"/>
+                <path d="M 45,24 27,14 27,34" fill="#fff"/>
+            </svg>
+        </div>
+    </div>
+    <div class="youtube-info">
+        <div class="youtube-title">${cleanTitle}</div>
+        <div class="youtube-channel">${cleanChannel}</div>
+    </div>
+</div>
+`;
+        });
+    },
+
+    /**
+     * Process inline images to add better styling and containers
+     */
+    processInlineImages(content) {
+        // Match markdown images: ![alt](url)
+        // Followed by optional source line: *Source: [text](url)*
+        const imageWithSourcePattern = /!\[([^\]]*)\]\(([^)]+)\)\s*\n?\*Source:\s*\[([^\]]*)\]\(([^)]+)\)\*/g;
+
+        content = content.replace(imageWithSourcePattern, (match, alt, imageUrl, sourceName, sourceUrl) => {
+            return `
+<div class="inline-media-card">
+    <div class="inline-media-image">
+        <img src="${imageUrl}" alt="${alt}" onclick="window.open('${imageUrl}', '_blank')" 
+             onerror="this.parentElement.style.display='none'" />
+    </div>
+    <div class="inline-media-source">
+        <a href="${sourceUrl}" target="_blank" rel="noopener">${sourceName || 'Source'}</a>
+    </div>
+</div>
+`;
+        });
+
+        // Handle standalone markdown images without source
+        const standaloneImagePattern = /!\[([^\]]*)\]\((https?:\/\/[^)]+)\)(?!\s*\n?\*Source)/g;
+
+        content = content.replace(standaloneImagePattern, (match, alt, imageUrl) => {
+            // Skip YouTube thumbnails (they're handled by processYouTubeEmbeds)
+            if (imageUrl.includes('youtube.com') || imageUrl.includes('ytimg.com')) {
+                return match;
+            }
+
+            return `
+<div class="inline-media-image standalone">
+    <img src="${imageUrl}" alt="${alt}" onclick="window.open('${imageUrl}', '_blank')"
+         onerror="this.parentElement.style.display='none'" />
+</div>
+`;
+        });
+
+        return content;
+    },
+
+    /**
+    /**
+     * Process semantic media anchors: ![SEARCH: "query"] or ![VIDEO: "query"]
+     * Uses deterministic IDs to prevent UI jitter during streaming.
+     */
+    processSemanticMediaAnchors(content) {
+        let imageCount = 0;
+        let videoCount = 0;
+
+        // Handle images
+        const searchPattern = /!\[SEARCH:\s*"([^"]+)"\]/g;
+        content = content.replace(searchPattern, (match, query) => {
+            imageCount++;
+            // Stable hash to prevent UI flicker
+            const hash = this._simpleHash(query);
+            const stableId = `media-img-${hash}-${imageCount}`;
+            const key = `image:${query}`;
+
+            if (this.mediaRegistry[key]) {
+                const results = this.mediaRegistry[key];
+                if (!results || results.length === 0) return '';
+                return `<div class="semantic-media-placeholder image" id="${stableId}" data-query="${DOM.escapeHtml(query)}" data-type="image">
+                    ${this.renderMediaHTML(query, 'image', results)}
+                </div>`;
+            }
+
+            return `<div class="semantic-media-placeholder loading image" id="${stableId}" data-query="${DOM.escapeHtml(query)}" data-type="image">
+                ${this.renderSkeletonHTML('image')}
+            </div>`;
+        });
+
+        // Handle videos
+        const videoPattern = /!\[VIDEO:\s*"([^"]+)"\]/g;
+        content = content.replace(videoPattern, (match, query) => {
+            videoCount++;
+            const hash = this._simpleHash(query);
+            const stableId = `media-vid-${hash}-${videoCount}`;
+            const key = `video:${query}`;
+
+            if (this.mediaRegistry[key]) {
+                const results = this.mediaRegistry[key];
+                if (!results || results.length === 0) return '';
+                return `<div class="semantic-media-placeholder video" id="${stableId}" data-query="${DOM.escapeHtml(query)}" data-type="video">
+                    ${this.renderMediaHTML(query, 'video', results)}
+                </div>`;
+            }
+
+            return `<div class="semantic-media-placeholder loading video" id="${stableId}" data-query="${DOM.escapeHtml(query)}" data-type="video">
+                ${this.renderSkeletonHTML('video')}
+            </div>`;
+        });
+
+        return content;
     },
 
     /**
@@ -750,18 +1152,46 @@ const Messages = {
     },
 
     /**
-     * Scroll to bottom
+     * Scroll to bottom with behavior control
      */
     scrollToBottom(force = false) {
         if (!this.container) return;
+
+        // Use smooth scrolling if hydrate is happening late
+        const behavior = force ? 'smooth' : 'auto';
+
         if (force || App.state.isAutoScrollEnabled) {
-            this.container.scrollTop = this.container.scrollHeight;
+            // Check if we're already near bottom before scrolling
+            const threshold = 100;
+            const isNearBottom = this.container.scrollHeight - this.container.scrollTop - this.container.clientHeight < threshold;
+
+            if (force || isNearBottom) {
+                this.container.scrollTo({
+                    top: this.container.scrollHeight,
+                    behavior: behavior
+                });
+            }
+
             if (force) {
                 App.state.isAutoScrollEnabled = true;
                 const scrollBtn = DOM.byId('scroll-bottom-btn');
                 if (scrollBtn) scrollBtn.classList.remove('visible');
             }
         }
+    },
+
+    /**
+     * Simple string hash for internal tracking
+     */
+    _simpleHash(str) {
+        let hash = 0;
+        if (!str) return '0';
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32bit integer
+        }
+        return Math.abs(hash).toString(36);
     }
 };
 

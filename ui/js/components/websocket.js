@@ -105,16 +105,20 @@ const WebSocketManager = {
                 }
                 Messages.removeLoadingIndicators(Messages.currentAssistantMessage);
 
+                // Remove existing indicator if any
+                const existingIndicator = Messages.currentAssistantMessage.querySelector('.thinking-indicator');
+                if (existingIndicator) existingIndicator.remove();
+
                 const contentDiv = Messages.currentAssistantMessage.querySelector('.message-content');
-                Messages.thinkingContainer = DOM.create('div', { class: 'thinking-indicator' });
+                Messages.thinkingContainer = DOM.create('div', { class: 'thinking-indicator collapsed' });
                 Messages.thinkingContainer.dataset.startTime = Date.now();
                 Messages.thinkingContainer.innerHTML = `
                     <div class="thinking-header">
                         <span class="thinking-text">
                             <span class="thinking-dots"><span></span><span></span><span></span></span>
-                            Thinking
+                            Thinking...
                         </span>
-                        <span class="thinking-toggle">›</span>
+                        <span class="thinking-toggle">▼</span>
                     </div>
                     <div class="thinking-content"></div>
                 `;
@@ -125,6 +129,7 @@ const WebSocketManager = {
                     Messages.thinkingContainer.classList.toggle('collapsed');
                 });
 
+                // Prepended to contentDiv so it's always at the top of the message
                 contentDiv.prepend(Messages.thinkingContainer);
                 Messages.thinkingText = '';
                 Messages.scrollToBottom();
@@ -135,8 +140,11 @@ const WebSocketManager = {
                     Messages.thinkingText += data.content;
                     const thinkingContentDiv = Messages.thinkingContainer.querySelector('.thinking-content');
                     if (thinkingContentDiv) {
-                        thinkingContentDiv.textContent = Messages.thinkingText;
+                        // Use formatMessage for markdown support in reasoning
+                        thinkingContentDiv.innerHTML = Messages.formatMessage(Messages.thinkingText);
                     }
+                    // Auto-expand on first bit of content if it's currently collapsed and we want to show it
+                    // Actually, keep it collapsed by default as requested by "minimal" style
                     Messages.scrollToBottom();
                 }
                 break;
@@ -189,12 +197,17 @@ const WebSocketManager = {
                 break;
 
             case 'complete':
+                // Flush any pending stream content first
+                if (Messages.currentAssistantMessage) {
+                    Messages.flushStreamBuffer(Messages.currentAssistantMessage);
+                }
+
                 if (data.content && data.content.trim()) {
                     if (!Messages.currentAssistantMessage) {
                         Messages.currentAssistantMessage = Messages.createAssistantMessage();
                     }
                     Messages.removeLoadingIndicators(Messages.currentAssistantMessage);
-                    Messages.updateAssistantMessageText(Messages.currentAssistantMessage, data.content);
+                    Messages.updateAssistantMessageText(Messages.currentAssistantMessage, data.content, true);
                 } else if (Messages.currentAssistantMessage) {
                     Messages.removeLoadingIndicators(Messages.currentAssistantMessage);
                 }
@@ -251,6 +264,16 @@ const WebSocketManager = {
             case 'media_saved':
                 if (data.media && typeof Media !== 'undefined') {
                     Media.addItem(data.media, true);
+                }
+                break;
+
+            case 'media_resolved':
+                if (data.query && data.results) {
+                    // Update registry
+                    const key = `${data.media_type}:${data.query}`;
+                    Messages.mediaRegistry[key] = data.results;
+                    // Resolve all placeholders
+                    Messages.resolveMedia(data.query, data.media_type, data.results);
                 }
                 break;
 

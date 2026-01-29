@@ -62,7 +62,15 @@ class CORSRequestHandler(SimpleHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-        self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate')
+        
+        # Smart caching for development - cache static assets for 5 seconds
+        # This speeds up normal navigation while allowing quick iteration
+        path = getattr(self, 'path', '').split('?')[0]  # Remove query string
+        if path.endswith(('.css', '.js', '.woff2', '.woff', '.ttf', '.png', '.jpg', '.svg', '.ico')):
+            self.send_header('Cache-Control', 'public, max-age=5')
+        else:
+            self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate')
+        
         super().end_headers()
 
     def do_OPTIONS(self):
@@ -166,6 +174,7 @@ def run_backend_server(host: str = BACKEND_HOST, port: int = BACKEND_PORT):
             host=host,
             port=port,
             reload=True,
+            reload_dirs=[os.path.join(current_dir, "backend"), os.path.join(current_dir, "agentry")],
             log_level="info"
         )
     except ImportError:

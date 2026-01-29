@@ -1,0 +1,124 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'backend/**'
+      - 'agentry/**'
+      - 'kubernetes/**'
+      - '.github/workflows/deploy-backend.yml'
+  workflow_dispatch:
+
+env:
+  ACR_REGISTRY: agentryacr.azurecr.io
+  AKS_CLUSTER: agentry-aks
+  AKS_RESOURCE_GROUP: agentry-rg
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.tag.outputs.tag }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set image tag
+      id: tag
+      run: echo "tag=${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
+    
+    - name: Login to Azure Container Registry
+      uses: azure/docker-login@v1
+      with:
+        login-server: ${{ env.ACR_REGISTRY }}
+        username: ${{ secrets.ACR_USERNAME }}
+        password: ${{ secrets.ACR_PASSWORD }}
+    
+    - name: Build and push Docker image
+      run: |
+        docker build -t $ACR_REGISTRY/agentry-backend:${{ steps.tag.outputs.tag }} \
+          -t $ACR_REGISTRY/agentry-backend:latest \
+          -f backend/Dockerfile .
+        docker push $ACR_REGISTRY/agentry-backend:${{ steps.tag.outputs.tag }}
+        docker push $ACR_REGISTRY/agentry-backend:latest
+
+  deploy-dev:
+    # Deploy to dev for any branch EXCEPT main (includes develop, feature branches, and manual runs)
+    needs: build-and-push
+    if: github.ref != 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Set AKS context
+      uses: azure/aks-set-context@v3
+      with:
+        cluster-name: ${{ env.AKS_CLUSTER }}
+        resource-group: ${{ env.AKS_RESOURCE_GROUP }}
+    
+    - name: Create namespace if not exists
+      run: |
+        kubectl create namespace agentry-dev --dry-run=client -o yaml | kubectl apply -f -
+    
+    - name: Create secrets
+      run: |
+        kubectl create secret generic agentry-secrets \
+          --namespace=agentry-dev \
+          --from-literal=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
+          --from-literal=SUPABASE_KEY=${{ secrets.SUPABASE_KEY }} \
+          --from-literal=BLOB_READ_WRITE_TOKEN=${{ secrets.BLOB_READ_WRITE_TOKEN }} \
+          --dry-run=client -o yaml | kubectl apply -f -
+    
+    - name: Deploy to dev
+      run: |
+        cd kubernetes/overlays/dev
+        kubectl apply -k .
+        kubectl rollout status deployment/agentry-backend -n agentry-dev --timeout=300s
+
+  deploy-prod:
+    # Deploy to production ONLY on main branch
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Set AKS context
+      uses: azure/aks-set-context@v3
+      with:
+        cluster-name: ${{ env.AKS_CLUSTER }}
+        resource-group: ${{ env.AKS_RESOURCE_GROUP }}
+    
+    - name: Create namespace if not exists
+      run: |
+        kubectl create namespace agentry-prod --dry-run=client -o yaml | kubectl apply -f -
+    
+    - name: Create secrets
+      run: |
+        kubectl create secret generic agentry-secrets \
+          --namespace=agentry-prod \
+          --from-literal=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
+          --from-literal=SUPABASE_KEY=${{ secrets.SUPABASE_KEY }} \
+          --from-literal=BLOB_READ_WRITE_TOKEN=${{ secrets.BLOB_READ_WRITE_TOKEN }} \
+          --dry-run=client -o yaml | kubectl apply -f -
+    
+    - name: Deploy to prod
+      run: |
+        cd kubernetes/overlays/prod
+        kubectl apply -k .
+        kubectl rollout status deployment/agentry-backend -n agentry-prod --timeout=300s

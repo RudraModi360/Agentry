@@ -17,15 +17,21 @@ from backend.config import DB_PATH, UI_DIR
 from backend.core.dependencies import get_user_from_token
 from backend.services.auth_service import AuthService
 from backend.services.agent_cache import agent_cache
+from backend.services.simplemem_middleware import (
+    get_simplemem_context,
+    store_response_in_simplemem,
+    augment_prompt_with_context,
+    is_simplemem_enabled
+)
 
-from scratchy import Agent
-from scratchy.agents import SmartAgent, SmartAgentMode
-from scratchy.session_manager import SessionManager
-from scratchy.providers.ollama_provider import OllamaProvider
-from scratchy.providers.groq_provider import GroqProvider
-from scratchy.providers.gemini_provider import GeminiProvider
-from scratchy.providers.azure_provider import AzureProvider
-from scratchy.providers.capability_detector import detect_model_capabilities
+from agentry import Agent
+from agentry.agents import SmartAgent, SmartAgentMode
+from agentry.session_manager import SessionManager
+from agentry.providers.ollama_provider import OllamaProvider
+from agentry.providers.groq_provider import GroqProvider
+from agentry.providers.gemini_provider import GeminiProvider
+from agentry.providers.azure_provider import AzureProvider
+from agentry.providers.capability_detector import detect_model_capabilities
 
 router = APIRouter()
 
@@ -102,6 +108,75 @@ def save_media_to_disk(user_id: int, image_data: str, filename: str = None) -> d
         "mime_type": mime_type,
         "created_at": datetime.now().isoformat()
     }
+
+
+async def resolve_media_inline(query: str, media_type: str, placeholder: str, websocket: WebSocket, session_id: str = None, session_manager: SessionManager = None, media_state: dict = None):
+    """Background task to resolve an inline media search request with persistence."""
+    from backend.services.media_orchestrator import media_orchestrator
+    try:
+        print(f"[Server] Resolving inline media: {media_type} for '{query}'")
+        # Find only required and relevant ones, limit to 4 to avoid being "too mediatic"
+        results = await media_orchestrator.search_media(query, [media_type])
+        
+        # Format and limit results
+        formatted_results = []
+        for r in results:
+            if r.get("type") == media_type:
+                formatted_results.append({
+                    "url": r.get("url") or r.get("thumbnail"),
+                    "title": r.get("title", "Media"),
+                    "source": r.get("source") or r.get("channel") or "Source",
+                    "thumbnail": r.get("thumbnail"),
+                    "link": r.get("url")
+                })
+            if len(formatted_results) >= 4:
+                break
+        
+        # Update shared state
+        if media_state is not None:
+            media_state["data"][placeholder] = formatted_results
+            
+            # If main loop already finished (committed), we must patch the DB ourselves
+            if media_state.get("committed") and session_id and session_manager:
+                print(f"[Server] Late media resolution for '{query}' - Patching DB...")
+                messages = session_manager.load_session(session_id)
+                if messages:
+                    # Find latest assistant message
+                    for i in range(len(messages) - 1, -1, -1):
+                        msg = messages[i]
+                        if msg.get("role") == "assistant":
+                            # Verify this message actually contains our placeholder
+                            # (Simple check to ensure we attach to the right message)
+                            content = msg.get("content", "")
+                            if isinstance(content, str) and placeholder in content:
+                                if "media" not in msg:
+                                    msg["media"] = {}
+                                msg["media"][placeholder] = formatted_results
+                                session_manager.save_session(session_id, messages)
+                                print(f"[Server] DB patched successfully for '{query}'")
+                            break
+
+        if websocket:
+            await websocket.send_json({
+                "type": "media_resolved",
+                "query": query,
+                "media_type": media_type,
+                "placeholder": placeholder,
+                "results": formatted_results
+            })
+            print(f"[Server] Sent media_resolved for '{query}' with {len(formatted_results)} items")
+    except Exception as e:
+        print(f"[Server] Media inline resolution failed for '{query}': {e}")
+        # Send empty results to trigger "vanishing" on frontend if desired
+        if websocket:
+            await websocket.send_json({
+                "type": "media_resolved",
+                "query": query,
+                "media_type": media_type,
+                "placeholder": placeholder,
+                "results": [],
+                "error": str(e)
+            })
 
 
 async def generate_title(session_id: str, messages: list, provider, session_manager: SessionManager, websocket: WebSocket = None):
@@ -200,7 +275,7 @@ async def websocket_chat(websocket: WebSocket):
                 config = cached["config"]
                 capabilities_dict = cached["capabilities"]
                 
-                from scratchy.providers.capability_detector import ModelCapabilities
+                from agentry.providers.capability_detector import ModelCapabilities
                 capabilities = ModelCapabilities.from_dict(capabilities_dict)
                 
                 # Check agent type configuration
@@ -518,10 +593,15 @@ async def websocket_chat(websocket: WebSocket):
                 # Track thinking state
                 in_thinking = False
                 stream_buffer = ""
+                # Media detection state
+                all_text_buffer = ""
+                detected_placeholders = set()
+                # Shared state for persistence tracking
+                media_state = {"committed": False, "data": {}}
                 
                 # Define callbacks for streaming
                 async def on_token(token_text: str):
-                    nonlocal ws_connected, in_thinking, stream_buffer
+                    nonlocal ws_connected, in_thinking, stream_buffer, all_text_buffer, detected_placeholders
                     
                     print(token_text, end="", flush=True)
                     
@@ -530,38 +610,83 @@ async def websocket_chat(websocket: WebSocket):
                         
                     try:
                         stream_buffer += token_text
+                        all_text_buffer += token_text
+                        
+                        # 1. Detect Media Placeholders in the growing buffer
+                        # Pattern: ![SEARCH: "query"] or ![VIDEO: "query"]
+                        import re
+                        media_patterns = [
+                            (r'!\[SEARCH:\s*"([^"]+)"\]', 'image'),
+                            (r'!\[VIDEO:\s*"([^"]+)"\]', 'video')
+                        ]
+                        
+                        for pattern, m_type in media_patterns:
+                            matches = re.finditer(pattern, all_text_buffer)
+                            for match in matches:
+                                full_placeholder = match.group(0)
+                                query = match.group(1)
+                                if full_placeholder not in detected_placeholders:
+                                    detected_placeholders.add(full_placeholder)
+                                    # Trigger background resolution with persistence info
+                                    asyncio.create_task(resolve_media_inline(
+                                        query, m_type, full_placeholder, websocket, 
+                                        session_id=session_id, session_manager=session_manager,
+                                        media_state=media_state
+                                    ))
+
+                        # 2. Existing thinking tag logic
+                        # List of potential thinking tags to handle
+                        start_tags = ["<thinking>", "<thought>"]
+                        end_tags = ["</thinking>", "</thought>"]
                         
                         while stream_buffer:
                             if not in_thinking:
-                                if stream_buffer.startswith("<thinking>"):
+                                # Check for any start tag
+                                found_start = None
+                                for tag in start_tags:
+                                    if stream_buffer.startswith(tag):
+                                        found_start = tag
+                                        break
+                                
+                                if found_start:
                                     in_thinking = True
                                     await websocket.send_json({"type": "thinking_start"})
-                                    stream_buffer = stream_buffer[len("<thinking>"):]
+                                    stream_buffer = stream_buffer[len(found_start):]
                                     continue
                                 
-                                start_idx = stream_buffer.find("<thinking>")
-                                if start_idx != -1:
-                                    text_chunk = stream_buffer[:start_idx]
-                                    await websocket.send_json({
-                                        "type": "token",
-                                        "content": text_chunk
-                                    })
-                                    stream_buffer = stream_buffer[start_idx:]
+                                # Check if a start tag might be appearing (partial match at end)
+                                earliest_start = -1
+                                for tag in start_tags:
+                                    idx = stream_buffer.find(tag)
+                                    if idx != -1 and (earliest_start == -1 or idx < earliest_start):
+                                        earliest_start = idx
+                                
+                                if earliest_start != -1:
+                                    text_chunk = stream_buffer[:earliest_start]
+                                    if text_chunk:
+                                        await websocket.send_json({
+                                            "type": "token",
+                                            "content": text_chunk
+                                        })
+                                    stream_buffer = stream_buffer[earliest_start:]
                                     continue
                                 
+                                # Handle partial tags at the very end of the buffer
                                 partial_match = False
-                                for i in range(1, len("<thinking>")):
-                                    suffix = stream_buffer[-i:]
-                                    if "<thinking>".startswith(suffix):
-                                        partial_match = True
-                                        if len(stream_buffer) > i:
-                                            safe_chunk = stream_buffer[:-i]
-                                            await websocket.send_json({
-                                                "type": "token",
-                                                "content": safe_chunk
-                                            })
-                                            stream_buffer = suffix
-                                        break
+                                for tag in start_tags:
+                                    for i in range(1, len(tag)):
+                                        suffix = stream_buffer[-i:]
+                                        if tag.startswith(suffix):
+                                            partial_match = True
+                                            if len(stream_buffer) > i:
+                                                safe_chunk = stream_buffer[:-i]
+                                                await websocket.send_json({
+                                                    "type": "token",
+                                                    "content": safe_chunk
+                                                })
+                                                stream_buffer = suffix
+                                            break
+                                    if partial_match: break
                                 
                                 if partial_match:
                                     break
@@ -573,35 +698,51 @@ async def websocket_chat(websocket: WebSocket):
                                 stream_buffer = ""
                                 
                             else:
-                                if stream_buffer.startswith("</thinking>"):
+                                # Check for any end tag
+                                found_end = None
+                                for tag in end_tags:
+                                    if stream_buffer.startswith(tag):
+                                        found_end = tag
+                                        break
+                                
+                                if found_end:
                                     in_thinking = False
                                     await websocket.send_json({"type": "thinking_end"})
-                                    stream_buffer = stream_buffer[len("</thinking>"):]
+                                    stream_buffer = stream_buffer[len(found_end):]
                                     continue
                                     
-                                end_idx = stream_buffer.find("</thinking>")
-                                if end_idx != -1:
-                                    thought_chunk = stream_buffer[:end_idx]
-                                    await websocket.send_json({
-                                        "type": "thinking_delta",
-                                        "content": thought_chunk
-                                    })
-                                    stream_buffer = stream_buffer[end_idx:]
+                                earliest_end = -1
+                                for tag in end_tags:
+                                    idx = stream_buffer.find(tag)
+                                    if idx != -1 and (earliest_end == -1 or idx < earliest_end):
+                                        earliest_end = idx
+                                
+                                if earliest_end != -1:
+                                    thought_chunk = stream_buffer[:earliest_end]
+                                    if thought_chunk:
+                                        await websocket.send_json({
+                                            "type": "thinking_delta",
+                                            "content": thought_chunk
+                                        })
+                                    stream_buffer = stream_buffer[earliest_end:]
                                     continue
                                 
+                                # Handle partial end tags
                                 partial_match = False
-                                for i in range(1, len("</thinking>")):
-                                    suffix = stream_buffer[-i:]
-                                    if "</thinking>".startswith(suffix):
-                                        partial_match = True
-                                        if len(stream_buffer) > i:
-                                            safe_chunk = stream_buffer[:-i]
-                                            await websocket.send_json({
-                                                "type": "thinking_delta",
-                                                "content": safe_chunk
-                                            })
-                                            stream_buffer = suffix
-                                        break
+                                for tag in end_tags:
+                                    for i in range(1, len(tag)):
+                                        suffix = stream_buffer[-i:]
+                                        if tag.startswith(suffix):
+                                            partial_match = True
+                                            if len(stream_buffer) > i:
+                                                safe_chunk = stream_buffer[:-i]
+                                                await websocket.send_json({
+                                                    "type": "thinking_delta",
+                                                    "content": safe_chunk
+                                                })
+                                                stream_buffer = suffix
+                                            break
+                                    if partial_match: break
                                 
                                 if partial_match:
                                     break
@@ -647,23 +788,34 @@ async def websocket_chat(websocket: WebSocket):
                 async def on_tool_approval(sess, name: str, args: dict):
                     return True
                 
-                # Set callbacks
-                agent.set_callbacks(
-                    on_token=on_token,
-                    on_tool_start=on_tool_start,
-                    on_tool_end=on_tool_end,
-                    on_tool_approval=on_tool_approval
-                )
+                # Prepare callbacks for this specific chat call
+                chat_callbacks = {
+                    "on_token": on_token,
+                    "on_tool_start": on_tool_start,
+                    "on_tool_end": on_tool_end,
+                    "on_tool_approval": on_tool_approval
+                }
                 
                 try:
                     print(f"[Server] Calling agent.chat with session_id: {session_id}")
+                    
+                    # SimpleMem: Get relevant context for the message
+                    original_content = content
+                    if is_simplemem_enabled() and isinstance(content, str):
+                        contexts = await get_simplemem_context(str(user_id), session_id, content)
+                        if contexts:
+                            print(f"[SimpleMem] Retrieved {len(contexts)} memory contexts:")
+                            for i, ctx in enumerate(contexts):
+                                display_ctx = ctx[:200] + "..." if len(ctx) > 200 else ctx
+                                print(f" - [{i+1}] {display_ctx}")
+                    
                     if isinstance(content, list):
                         has_images = any(p.get("type") == "image" for p in content)
                         print(f"[Server] Content is multimodal. Has images: {has_images}")
                     else:
                         print(f"[Server] Content is plain text.")
                         
-                    response = await agent.chat(content, session_id=session_id)
+                    response = await agent.chat(content, session_id=session_id, callbacks=chat_callbacks)
                     print()
                     
                     session = agent.get_session(session_id)
@@ -677,7 +829,23 @@ async def websocket_chat(websocket: WebSocket):
                             "model_type": conf.get("model_type")
                         }
                     
+                    # Merge captured media into the final message before saving
+                    if media_state["data"]:
+                        if session.messages and session.messages[-1]["role"] == "assistant":
+                            # Ensure we don't overwrite if something is already there (though unlikely for new msg)
+                            if "media" not in session.messages[-1]:
+                                session.messages[-1]["media"] = {}
+                            session.messages[-1]["media"].update(media_state["data"])
+                            print(f"[Server] Merged {len(media_state['data'])} media items into final message")
+
+                    # Mark as committed so late-finishing tasks know to patch DB directly
+                    media_state["committed"] = True
+
                     session_manager.save_session(session_id, session.messages, metadata=save_metadata)
+                    
+                    # SimpleMem: Store the response in memory
+                    if is_simplemem_enabled() and response:
+                        await store_response_in_simplemem(str(user_id), session_id, response)
                     
                     if ws_connected:
                         await websocket.send_json({

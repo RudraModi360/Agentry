@@ -90,9 +90,46 @@ For detailed information, visit the [full documentation](https://rudramodi360.gi
 
 ---
 
+## Deployment Modes
+
+Agentry supports two deployment modes:
+
+### 🏠 Local Mode (Default)
+Perfect for development and privacy-focused users.
+```bash
+export AGENTRY_MODE=local
+python -m backend.main
+```
+- All data stored locally (SQLite, local files)
+- Works offline with no cloud dependencies
+- Full privacy - your data stays on your machine
+
+### ☁️ Cloud Mode
+Production deployment with cloud services.
+```bash
+export AGENTRY_MODE=cloud
+export SUPABASE_URL=https://your-project.supabase.co
+export SUPABASE_KEY=your-key
+export BLOB_READ_WRITE_TOKEN=vercel_blob_rw_xxx
+python -m backend.main
+```
+- Multi-device sync via Supabase
+- CDN-backed media storage via Vercel Blob
+- Performance analytics and metrics
+- Scalable Kubernetes deployment (Azure AKS)
+
+---
+
 ## Contributing
 
 Contributions are welcome! See [Contributing Guide](https://rudramodi360.github.io/Agentry/CONTRIBUTING).
+
+---
+
+## Acknowledgments
+
+Special thanks to:
+- **[SimpleMem](https://github.com/aiming-lab/SimpleMem)** by aiming-lab - Efficient lifelong memory for LLM agents through Semantic Lossless Compression. Their groundbreaking work on context engineering powers Agentry's memory system.
 
 ---
 

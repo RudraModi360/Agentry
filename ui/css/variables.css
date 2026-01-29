@@ -11,64 +11,65 @@
  */
 
 :root {
-    /* ==================== Color Palette (Black & White) ==================== */
+    /* ==================== Color Palette (Orange/Amber) ==================== */
 
-    /* Primary Colors - Grayscale */
-    --color-primary-50: #ffffff;
-    --color-primary-100: #f5f5f5;
-    --color-primary-200: #e5e5e5;
-    --color-primary-300: #d4d4d4;
-    --color-primary-400: #a3a3a3;
-    --color-primary-500: #737373;
-    --color-primary-600: #525252;
-    --color-primary-700: #404040;
-    --color-primary-800: #262626;
-    --color-primary-900: #171717;
+    /* Primary Colors - Orange/Amber Scale */
+    --color-primary-50: #fffbeb;
+    --color-primary-100: #fef3c7;
+    --color-primary-200: #fde68a;
+    --color-primary-300: #fcd34d;
+    --color-primary-400: #fbbf24;
+    --color-primary-500: #f59e0b;
+    --color-primary-600: #d97706;
+    --color-primary-700: #b45309;
+    --color-primary-800: #92400e;
+    --color-primary-900: #78350f;
 
-    /* Neutral Colors (Pure Grayscale) */
-    --color-neutral-50: #ffffff;
-    --color-neutral-100: #f5f5f5;
-    --color-neutral-200: #e5e5e5;
-    --color-neutral-300: #d4d4d4;
-    --color-neutral-400: #a3a3a3;
-    --color-neutral-500: #737373;
-    --color-neutral-600: #525252;
-    --color-neutral-700: #404040;
-    --color-neutral-800: #262626;
-    --color-neutral-900: #171717;
-    --color-neutral-950: #0a0a0a;
+    /* Neutral Colors (Warm Gray) */
+    --color-neutral-50: #fafaf9;
+    --color-neutral-100: #f5f5f4;
+    --color-neutral-200: #e7e5e4;
+    --color-neutral-300: #d6d3d1;
+    --color-neutral-400: #a8a29e;
+    --color-neutral-500: #78716c;
+    --color-neutral-600: #57534e;
+    --color-neutral-700: #44403c;
+    --color-neutral-800: #292524;
+    --color-neutral-900: #1c1917;
+    --color-neutral-950: #0c0a09;
 
-    /* Status Colors - Grayscale */
-    --color-success-light: #e5e5e5;
-    --color-success: #525252;
-    --color-success-dark: #404040;
+    /* Status Colors - Vibrant */
+    --color-success-light: #dcfce7;
+    --color-success: #22c55e;
+    --color-success-dark: #16a34a;
 
-    --color-warning-light: #e5e5e5;
-    --color-warning: #737373;
-    --color-warning-dark: #525252;
+    --color-warning-light: #fef3c7;
+    --color-warning: #f59e0b;
+    --color-warning-dark: #d97706;
 
-    --color-error-light: #e5e5e5;
-    --color-error: #404040;
-    --color-error-dark: #262626;
+    --color-error-light: #fee2e2;
+    --color-error: #ef4444;
+    --color-error-dark: #dc2626;
 
-    --color-info-light: #e5e5e5;
-    --color-info: #525252;
-    --color-info-dark: #404040;
+    --color-info-light: #dbeafe;
+    --color-info: #3b82f6;
+    --color-info-dark: #2563eb;
 
-    /* Accent Colors - Grayscale */
-    --color-cyan: #737373;
-    --color-pink: #a3a3a3;
-    --color-violet: #525252;
-    --color-emerald: #737373;
+    /* Accent Colors - Warm Palette */
+    --color-cyan: #06b6d4;
+    --color-pink: #ec4899;
+    --color-violet: #8b5cf6;
+    --color-emerald: #10b981;
 
     /* ==================== Semantic Colors (Light Mode) ==================== */
 
-    /* Backgrounds */
-    --bg-primary: var(--color-neutral-50);
-    --bg-secondary: #ffffff;
-    --bg-tertiary: var(--color-neutral-100);
+    /* Backgrounds - Refined Contrast */
+    /* Backgrounds - Refined Warm/Creamy White */
+    --bg-primary: #fdfbf7;
+    --bg-secondary: #faf6f0;
+    --bg-tertiary: #f8f1eb;
     --bg-elevated: #ffffff;
-    --bg-overlay: rgba(0, 0, 0, 0.5);
+    --bg-overlay: rgba(0, 0, 0, 0.4);
 
     /* Text */
     --text-primary: var(--color-neutral-950);
@@ -87,15 +88,15 @@
     --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
     --card-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 
-    /* Accent - Black & White */
-    --accent: #404040;
-    --accent-hover: #262626;
-    --accent-active: #171717;
-    --accent-light: rgba(64, 64, 64, 0.1);
-    --accent-glow: rgba(64, 64, 64, 0.4);
+    /* Accent - Orange/Amber */
+    --accent: #f59e0b;
+    --accent-hover: #d97706;
+    --accent-active: #b45309;
+    --accent-light: rgba(245, 158, 11, 0.15);
+    --accent-glow: rgba(245, 158, 11, 0.4);
 
     /* Input */
-    --input-bg: #ffffff;
+    --input-bg: var(--color-neutral-100);
     --input-border: rgba(0, 0, 0, 0.2);
     --input-focus-ring: rgba(99, 102, 241, 0.25);
     --input-placeholder: var(--color-neutral-400);
@@ -134,8 +135,8 @@
     /* ==================== Typography ==================== */
 
     /* Font Families */
-    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-    --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Monaco, 'Cascadia Code', monospace;
+    --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
 
     /* Font Sizes (based on 16px root) */
     --text-xs: 0.75rem;
@@ -323,41 +324,45 @@
 /* ==================== Dark Theme ==================== */
 
 [data-theme="dark"] {
-    /* Backgrounds */
-    --bg-primary: var(--color-neutral-950);
-    --bg-secondary: var(--color-neutral-900);
-    --bg-tertiary: var(--color-neutral-800);
-    --bg-elevated: var(--color-neutral-800);
+    /* Backgrounds - ChatGPT-Style Professional Contrast */
+    /* Main canvas: Lighter dark gray for the message areas */
+    --bg-primary: #212121;
+    /* Sidebar: Darker gray for the persistent left menu */
+    --bg-secondary: #171717;
+    /* Headers & Navigation: Matching sidebar for unified chrome */
+    --bg-tertiary: #171717;
+    /* Elevated elements: Surface Slate for tooltips/popups */
+    --bg-elevated: #2f2f2f;
     --bg-overlay: rgba(0, 0, 0, 0.7);
 
-    /* Text */
-    --text-primary: var(--color-neutral-50);
-    --text-secondary: var(--color-neutral-400);
-    --text-muted: var(--color-neutral-600);
-    --text-inverted: var(--color-neutral-950);
+    /* Text - High Readability */
+    --text-primary: #ececec;
+    --text-secondary: #b4b4b4;
+    --text-muted: #8e8e8e;
+    --text-inverted: #0d0d0d;
 
     /* Borders */
     --border-default: rgba(255, 255, 255, 0.08);
     --border-strong: rgba(255, 255, 255, 0.15);
 
     /* Cards & Components */
-    --card-bg: rgba(24, 24, 27, 0.8);
-    --card-border: rgba(255, 255, 255, 0.08);
+    --card-bg: rgba(47, 47, 47, 0.4);
+    --card-border: rgba(255, 255, 255, 0.1);
     --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
     --card-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
 
-    /* Accent - Black & White (brighter for dark mode) */
-    --accent: #a3a3a3;
-    --accent-hover: #d4d4d4;
-    --accent-active: #737373;
-    --accent-light: rgba(163, 163, 163, 0.15);
-    --accent-glow: rgba(163, 163, 163, 0.5);
+    /* Accent - Orange/Amber (Dark Mode) */
+    --accent: #fbbf24;
+    --accent-hover: #fcd34d;
+    --accent-active: #f59e0b;
+    --accent-light: rgba(251, 191, 36, 0.15);
+    --accent-glow: rgba(251, 191, 36, 0.5);
 
-    /* Input */
-    --input-bg: var(--color-neutral-900);
-    --input-border: rgba(255, 255, 255, 0.15);
-    --input-focus-ring: rgba(163, 163, 163, 0.25);
-    --input-placeholder: var(--color-neutral-600);
+    /* Input - Integrated look */
+    --input-bg: transparent;
+    --input-border: rgba(255, 255, 255, 0.2);
+    --input-focus-ring: rgba(236, 236, 236, 0.1);
+    --input-placeholder: #8e8e8e;
 
     /* Legacy Compatibility Aliases for Dark Theme */
     --dark-bg: var(--bg-primary);
@@ -416,4 +421,21 @@
         --border-default: rgba(255, 255, 255, 0.3);
         --border-strong: rgba(255, 255, 255, 0.5);
     }
+}
+
+/* ==================== Base Typography Application ==================== */
+
+html,
+body {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+code,
+pre,
+kbd,
+samp {
+    font-family: var(--font-mono);
 }

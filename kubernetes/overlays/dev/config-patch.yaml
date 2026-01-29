@@ -1,0 +1,17 @@
+# Dev environment patches
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agentry-backend
+spec:
+  template:
+    spec:
+      containers:
+      - name: backend
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "250m"

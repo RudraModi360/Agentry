@@ -6,6 +6,9 @@ from datetime import datetime
 from scratchy.providers.base import LLMProvider
 from scratchy.tools import ALL_TOOL_SCHEMAS, DANGEROUS_TOOLS, APPROVAL_REQUIRED_TOOLS, SAFE_TOOLS, execute_tool
 from scratchy.config.prompts import get_system_prompt
+import logging
+
+logger = logging.getLogger(__name__)
 
 import sys
 import os
@@ -13,7 +16,6 @@ from scratchy.mcp_client import MCPClientManager
 # from scratchy.user_profile_manager import UserProfileManager
 from scratchy.memory.storage import PersistentMemoryStore
 from scratchy.memory.middleware import MemoryMiddleware
-from scratchy.memory.vfs import VirtualFileSystem
 
 class AgentSession:
     """Represents a conversation session."""
@@ -23,7 +25,7 @@ class AgentSession:
         self.created_at = datetime.now()
         self.last_activity = datetime.now()
         self.metadata: Dict[str, Any] = {}
-        self.files: Dict[str, str] = {} # VFS: Filename -> Content
+        self.metadata: Dict[str, Any] = {}
     
     def add_message(self, message: Dict[str, Any]):
         self.messages.append(message)
@@ -97,8 +99,7 @@ class Agent:
         from scratchy.memory.context_middleware import ContextMiddleware
         self.context_middleware = ContextMiddleware(self.provider, token_threshold=100000)
         
-        # Virtual File System
-        self.vfs = VirtualFileSystem(self.memory_store)
+        
         
         # Tool support flag - set when load_default_tools is called
         self.supports_tools = False
@@ -295,9 +296,6 @@ class Agent:
             # Ensure session exists in persistent memory store
             self.memory_store.create_session(session_id)
             
-            # Load VFS files
-            self.sessions[session_id].files = self.vfs.load_session_files(session_id)
-                
         return self.sessions[session_id]
 
     def clear_session(self, session_id: str = "default"):
@@ -310,9 +308,14 @@ class Agent:
         """Set callbacks: on_tool_start, on_tool_end, on_tool_approval, on_final_message, on_token."""
         self.callbacks.update(kwargs)
 
-    async def chat(self, user_input: Union[str, List[Dict[str, Any]]], session_id: str = "default") -> str:
-        """Main chat loop."""
+    async def chat(self, user_input: Union[str, List[Dict[str, Any]]], session_id: str = "default", callbacks: Dict[str, Callable] = None) -> str:
+        """Main chat loop with per-call callback support."""
         from scratchy.providers.utils import extract_content
+
+        # Merge local callbacks with agent-level callbacks
+        active_callbacks = self.callbacks.copy()
+        if callbacks:
+            active_callbacks.update(callbacks)
 
         session = self.get_session(session_id)
         
@@ -329,6 +332,15 @@ class Agent:
         # Extract insights and retrieve relevant memories
         if self.debug: print(f"[Agent] Middleware: Processing user input for memory...")
         relevant_memories = await self.memory_middleware.process_user_input(session_id, text_for_memory)
+        
+        # Log retrieved memories
+        if self.debug and relevant_memories:
+            print(f"[Agent] Middleware: Retrieved {len(relevant_memories)} memories:")
+            for m in relevant_memories:
+                m_content = m.get('content', str(m)) if isinstance(m, dict) else getattr(m, 'content', str(m))
+                m_type = m.get('type', '?') if isinstance(m, dict) else getattr(m, 'type', '?')
+                display_content = m_content[:200] + "..." if len(m_content) > 200 else m_content
+                print(f" - [{m_type}] {display_content}")
         
         # Format memories for injection
         memory_context = ""
@@ -393,8 +405,13 @@ class Agent:
                         llm_messages.append(m_copy)
 
                 # Use streaming if on_token callback is set and provider supports it
-                on_token = self.callbacks.get("on_token")
-                if on_token and hasattr(self.provider, 'chat_stream'):
+                on_token = active_callbacks.get("on_token")
+                has_stream = hasattr(self.provider, 'chat_stream')
+                
+                if self.debug:
+                    print(f"[Agent] Streaming check: on_token={on_token is not None}, has_chat_stream={has_stream}")
+                
+                if on_token and has_stream:
                     if self.debug:
                         model_name = getattr(self.provider, 'model_name', 'LLM')
                         print(f"[Agent] Streaming response from {model_name}...")
@@ -455,8 +472,8 @@ class Agent:
                             error_msg = f"I encountered an error from the model: {str(fallback_error)}. Please try again."
                             if self.debug: 
                                 print(f"[Agent] All retries failed: {fallback_error}")
-                            if self.callbacks["on_final_message"]:
-                                self.callbacks["on_final_message"](session_id, error_msg)
+                            if active_callbacks["on_final_message"]:
+                                active_callbacks["on_final_message"](session_id, error_msg)
                             return error_msg
                 else:
                     # Different error
@@ -534,8 +551,8 @@ class Agent:
                 # Awaiting ensures it's saved before the next turn.
                 await self.memory_middleware.process_agent_output(session_id, content)
 
-                if self.callbacks["on_final_message"]:
-                    self.callbacks["on_final_message"](session_id, content)
+                if active_callbacks["on_final_message"]:
+                    active_callbacks["on_final_message"](session_id, content)
                 return content
 
             # 4. Execute Tools - Show what tools are being called
@@ -577,8 +594,8 @@ class Agent:
                         else:
                             print(f"[Agent]   - args: {str(args)[:100]}")
 
-                    if self.callbacks["on_tool_start"]:
-                        callback = self.callbacks["on_tool_start"]
+                    if active_callbacks["on_tool_start"]:
+                        callback = active_callbacks["on_tool_start"]
                         if inspect.iscoroutinefunction(callback):
                             await callback(session_id, name, args)
                         else:
@@ -590,9 +607,9 @@ class Agent:
                         if self.debug:
                             print(f"[Agent]   Waiting for approval...")
                         
-                        if self.callbacks["on_tool_approval"]:
+                        if active_callbacks["on_tool_approval"]:
                             try:
-                                approval_result = await self.callbacks["on_tool_approval"](session_id, name, args)
+                                approval_result = await active_callbacks["on_tool_approval"](session_id, name, args)
                                 
                                 if isinstance(approval_result, dict):
                                     # User modified arguments
@@ -630,8 +647,8 @@ class Agent:
                                 print(f"[Agent]   Status: SUCCESS")
                                 print(f"[Agent]   Result: {result_preview}")
 
-                    if self.callbacks["on_tool_end"]:
-                        callback = self.callbacks["on_tool_end"]
+                    if active_callbacks["on_tool_end"]:
+                        callback = active_callbacks["on_tool_end"]
                         if inspect.iscoroutinefunction(callback):
                             await callback(session_id, name, result)
                         else:
@@ -684,33 +701,48 @@ class Agent:
         return True
 
     async def _execute_tool(self, name: str, args: Dict, session_id: str) -> Any:
+        # Logging Tool Execution
+        logger.info(f"Tool Execution Start: {name} | Args: {args}")
+        start_time = datetime.now()
+        result = None
+
         try:
             # 0. VFS Tools
             if name in ["write_virtual_file", "read_virtual_file", "list_virtual_files"]:
                 session = self.get_session(session_id)
-                return self.vfs.execute_tool(session.files, session_id, name, args)
+                result = self.vfs.execute_tool(session.files, session_id, name, args)
 
             # 1. Custom Tools
-            if name in self.custom_tool_executors:
+            elif name in self.custom_tool_executors:
                 result = self.custom_tool_executors[name](**args)
                 if inspect.iscoroutine(result):
-                    return await result
-                return result
+                    result = await result
             
             # 2. MCP Tools
-            for manager in self.mcp_managers:
-                if name in manager.server_tools_map:
-                    try:
-                        return await manager.execute_tool(name, args)
-                    except Exception as e:
-                        return {"error": str(e)}
+            elif any(name in manager.server_tools_map for manager in self.mcp_managers):
+                 for manager in self.mcp_managers:
+                    if name in manager.server_tools_map:
+                        try:
+                            result = await manager.execute_tool(name, args)
+                            break
+                        except Exception as e:
+                            logger.error(f"Tool Error (MCP): {name} | Error: {e}")
+                            return {"error": str(e)}
 
             # 3. Internal Default Tools
-            return execute_tool(name, args)
+            else:
+                result = execute_tool(name, args)
+
+            duration = (datetime.now() - start_time).total_seconds()
+            logger.info(f"Tool Execution End: {name} | Duration: {duration:.4f}s | Result: {str(result)[:200]}...") # Truncate result for logs
+            return result
 
         except Exception as e:
             if self.debug:
                 print(f"[Agent] Tool Execution Error: {e}")
+            
+            duration = (datetime.now() - start_time).total_seconds()
+            logger.error(f"Tool Execution Failed: {name} | Duration: {duration:.4f}s | Error: {e}")
             return {"error": f"Tool execution failed: {str(e)}"}
 
     async def cleanup(self):

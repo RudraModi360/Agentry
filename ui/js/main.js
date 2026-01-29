@@ -101,6 +101,11 @@ const App = {
         // Sessions
         Sessions.init();
 
+        // Projects
+        if (typeof Projects !== 'undefined') {
+            Projects.init();
+        }
+
         // Image upload
         ImageUpload.init();
 
@@ -161,17 +166,10 @@ const App = {
             const initial = (response.user?.username || 'U')[0].toUpperCase();
             DOM.text('user-avatar', initial);
 
-            // Add click listener for profile modal
             const userSection = document.querySelector('.footer-section.user-section');
             if (userSection) {
                 userSection.style.cursor = 'pointer';
                 userSection.setAttribute('title', 'Click to edit profile');
-                userSection.onclick = (e) => {
-                    e.stopPropagation(); // Prevent bubbling
-                    if (typeof ProfileModal !== 'undefined') {
-                        ProfileModal.open();
-                    }
-                };
             }
 
             // Update provider info
@@ -282,6 +280,21 @@ const App = {
      */
     async saveAgentType(type, mode = 'solo', projectId = null) {
         try {
+            // Force reset processing state if switching while generating
+            if (this.state.isProcessing) {
+                console.log('[Agentry] Interrupting generation for agent switch...');
+                this.state.isProcessing = false;
+
+                const sendBtn = DOM.byId('send-btn');
+                if (sendBtn) sendBtn.disabled = false;
+
+                if (typeof Messages !== 'undefined' && Messages.currentAssistantMessage) {
+                    Messages.removeLoadingIndicators(Messages.currentAssistantMessage);
+                    Messages.addErrorMessage('Response interrupted by agent switch.');
+                    Messages.currentAssistantMessage = null;
+                }
+            }
+
             await API.post('/api/agent-config', {
                 agent_type: type,
                 mode: mode,
@@ -346,18 +359,6 @@ const App = {
         // Send button click
         if (sendBtn) {
             DOM.on(sendBtn, 'click', () => this.sendMessage());
-        }
-
-        // Logout button
-        const logoutBtn = DOM.byId('header-logout-btn');
-        if (logoutBtn) {
-            DOM.on(logoutBtn, 'click', async () => {
-                try {
-                    await API.post('/api/auth/logout');
-                } catch (e) { }
-                Storage.remove(AppConfig.auth.tokenKey);
-                window.location.href = AppConfig.auth.loginPath;
-            });
         }
     },
 
@@ -453,6 +454,37 @@ const App = {
      * Setup global event listeners
      */
     setupGlobalEvents() {
+        // Toggle theme - Handled in Theme.init()
+
+        // Projects Button
+        const projectsBtn = DOM.byId('projects-sidebar-btn');
+        if (projectsBtn) {
+            DOM.on(projectsBtn, 'click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof Projects !== 'undefined') {
+                    Projects.open();
+                } else {
+                    console.error('[Agentry] Projects component not found');
+                }
+            });
+        }
+
+        // Profile / User Section (whole item in sidebar footer)
+        const userSection = document.querySelector('.footer-compact-item.user-profile-only');
+        if (userSection) {
+            userSection.style.cursor = 'pointer';
+            DOM.on(userSection, 'click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof ProfileModal !== 'undefined') {
+                    ProfileModal.open();
+                } else {
+                    console.error('[Agentry] ProfileModal component not found');
+                }
+            });
+        }
+
         // Handle browser back/forward
         window.addEventListener('popstate', () => {
             const params = new URLSearchParams(window.location.search);
@@ -470,6 +502,18 @@ const App = {
         const menuBtn = DOM.byId('mobile-menu-btn');
         if (menuBtn) {
             DOM.on(menuBtn, 'click', () => Sidebar.toggleMobile());
+        }
+
+        // Logout button
+        const logoutBtn = DOM.byId('header-logout-btn');
+        if (logoutBtn) {
+            DOM.on(logoutBtn, 'click', async () => {
+                try {
+                    await API.post('/api/auth/logout');
+                } catch (e) { }
+                Storage.remove(AppConfig.auth.tokenKey);
+                window.location.href = AppConfig.auth.loginPath;
+            });
         }
     }
 };

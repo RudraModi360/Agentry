@@ -1,0 +1,75 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'ui/**'
+      - '.github/workflows/deploy-frontend.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy-preview:
+    # Deploy to dev for any branch EXCEPT main (includes develop, feature branches, and manual runs)
+    if: github.ref != 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    
+    - name: Install Vercel CLI
+      run: npm install -g vercel
+    
+    - name: Set API URL for dev
+      run: |
+        echo "window.AGENTRY_API_URL = 'https://dev-api.agentry.io';" > ui/js/env.js
+        echo "window.AGENTRY_WS_URL = 'wss://dev-api.agentry.io/ws';" >> ui/js/env.js
+    
+    - name: Deploy to Vercel (Preview)
+      run: |
+        cd ui
+        vercel deploy --token=${{ secrets.VERCEL_TOKEN }} \
+          --scope ${{ secrets.VERCEL_ORG_ID }} \
+          --yes
+      env:
+        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+  deploy-prod:
+    # Deploy to production ONLY on main branch
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    
+    - name: Install Vercel CLI
+      run: npm install -g vercel
+    
+    - name: Set API URL for prod
+      run: |
+        echo "window.AGENTRY_API_URL = 'https://api.agentry.io';" > ui/js/env.js
+        echo "window.AGENTRY_WS_URL = 'wss://api.agentry.io/ws';" >> ui/js/env.js
+    
+    - name: Deploy to Vercel (Production)
+      run: |
+        cd ui
+        vercel deploy --token=${{ secrets.VERCEL_TOKEN }} \
+          --scope ${{ secrets.VERCEL_ORG_ID }} \
+          --prod \
+          --yes
+      env:
+        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}

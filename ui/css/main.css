@@ -10,10 +10,15 @@
 
 /* Import the complete original styles */
 @import url('./original-styles.css');
+@import url('./variables.css');
 @import url('./legacy-compat.css');
 
 /* Import component styles */
 @import url('./components/navbar.css');
 @import url('./components/sidebar.css');
-@import url('./components/input-editor.css');
+@import url('./components/layout.css');
+@import url('./components/messages.css');
 @import url('./components/header-refinement.css');
+@import url('./components/modals.css');
+@import url('./components/tools.css');
+@import url('./components/inline-media.css');
