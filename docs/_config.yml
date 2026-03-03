@@ -25,7 +25,7 @@ nav_sort: case_sensitive
 # Aux links in header
 aux_links:
   GitHub: https://github.com/RudraModi360/Agentry
-  PyPI: https://pypi.org/project/agentry-community/
+  PyPI: https://pypi.org/project/logicore/
 
 aux_links_new_tab: true
 

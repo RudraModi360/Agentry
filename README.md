@@ -2,7 +2,7 @@
 
 **A Modular AI Agent Framework for Python**
 
-[![PyPI](https://img.shields.io/pypi/v/agentry-community)](https://pypi.org/project/agentry-community/)
+[![PyPI](https://img.shields.io/pypi/v/logicore)](https://pypi.org/project/logicore/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://rudramodi360.github.io/Agentry/)
 
@@ -19,7 +19,7 @@ Agentry is a powerful, privacy-focused AI agent framework designed for flexibili
 ### Installation
 
 ```bash
-pip install agentry_community
+pip install logicore
 ```
 
 ### Basic Usage

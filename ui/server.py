@@ -23,16 +23,16 @@ parent_dir = os.path.dirname(current_dir)
 if parent_dir not in sys.path:
     sys.path.insert(0, parent_dir)
 
-# Import from existing scratchy modules
-from scratchy import Agent
-from scratchy.agents import SmartAgent, SmartAgentMode
-from scratchy.session_manager import SessionManager
-from scratchy.providers.ollama_provider import OllamaProvider
-from scratchy.providers.groq_provider import GroqProvider
-from scratchy.providers.gemini_provider import GeminiProvider
-from scratchy.providers.azure_provider import AzureProvider
-from scratchy.providers.capability_detector import detect_model_capabilities, get_known_capability, ModelCapabilities
-from scratchy.memory.storage import PersistentMemoryStore
+# Import from agentry modules
+from agentry import Agent
+from agentry.agents import SmartAgent, SmartAgentMode
+from agentry.session_manager import SessionManager
+from agentry.providers.ollama_provider import OllamaProvider
+from agentry.providers.groq_provider import GroqProvider
+from agentry.providers.gemini_provider import GeminiProvider
+from agentry.providers.azure_provider import AzureProvider
+from agentry.providers.capability_detector import detect_model_capabilities, get_known_capability, ModelCapabilities
+from agentry.memory.storage import PersistentMemoryStore
 
 # ============== FastAPI App ==============
 app = FastAPI(

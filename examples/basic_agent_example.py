@@ -1,5 +1,5 @@
 import asyncio
-from scratchy.agents import BasicAgent, tool
+from agentry.agents import BasicAgent, tool
 
 
 # --- Define Custom Tools as Functions ---

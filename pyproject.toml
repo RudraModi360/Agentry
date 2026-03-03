@@ -4,67 +4,92 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agentry_community"
-version = "1.0.6"
-description = """
-A modular AI agent framework built from scratch in Python, designed to evolve
-into a real-time voice-driven assistant for task automation.
-"""
+version = "1.1.0"
+description = "A modular AI agent framework for Python — multi-provider LLM support, built-in tools, MCP integration, streaming callbacks, and multimodal capabilities."
 readme = "README.md"
 requires-python = ">=3.11"
+license = {text = "MIT"}
+
+authors = [
+    {name = "Rudra Modi", email = "rudramodi9560@gmail.com"}
+]
+
+keywords = [
+    "ai-agent", "llm", "agent-framework", "ollama", "groq", "gemini",
+    "openai", "azure", "mcp", "tool-calling", "multimodal", "streaming",
+    "copilot", "chatbot", "ai-assistant", "python-agent", "agentry",
+    "ai-framework", "function-calling", "vision", "audio",
+]
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Operating System :: OS Independent",
+]
+
+# Core deps only — lightweight base install (~50MB instead of ~2GB)
 dependencies = [
-    "ddgs>=9.9.1",
-    "google>=3.0.0",
-    "google-api-python-client>=2.187.0",
-    "google-generativeai>=0.8.5",
-    "groq>=0.36.0",
-    "langchain-community>=0.4.1",
-    "mcp>=1.22.0",
     "ollama>=0.6.1",
-    "py-toon-format>=0.1.0",
-    "pydantic[email]>=2.12.4",
+    "httpx>=0.27.0",
+    "pydantic>=2.12.4",
+    "rich>=13.0.0",
     "requests>=2.32.5",
-    "textual>=6.7.1",
-    "watchdog>=6.0.0",
+    "Pillow>=10.0.0",
+    "aiohttp>=3.9.0",
+]
+
+[project.optional-dependencies]
+groq = ["groq>=0.36.0"]
+gemini = ["google-generativeai>=0.8.5"]
+azure = ["anthropic"]
+all-providers = [
+    "groq>=0.36.0",
+    "google-generativeai>=0.8.5",
+    "anthropic",
+]
+tools = [
     "pypdf>=5.1.0",
     "python-docx>=1.1.2",
     "python-pptx>=1.0.2",
     "openpyxl>=3.1.5",
-    "fastapi>=0.124.2",
-    "uvicorn[standard]>=0.38.0",
-    "rich>=13.0.0",
-    "httpx>=0.27.0",
-    "anthropic",
-    "websocket",
-    "email-validator",
-    # SimpleMem & Context Engineering
+    "ddgs>=9.9.1",
+]
+memory = [
     "lancedb>=0.5.0",
     "pyarrow>=14.0.0",
     "sentence-transformers>=2.2.0",
-    # Cloud Mode (optional)
-    "supabase>=2.0.0",
+]
+server = [
+    "fastapi>=0.124.2",
+    "uvicorn[standard]>=0.38.0",
+    "email-validator",
+]
+cloud = ["supabase>=2.0.0"]
+mcp = ["mcp>=1.22.0"]
+full = [
+    "agentry_community[all-providers,tools,memory,server,mcp,cloud]",
 ]
 
+[project.urls]
+Homepage = "https://github.com/RudraModi360/Agentry"
+Documentation = "https://rudramodi360.github.io/Agentry/"
+Repository = "https://github.com/RudraModi360/Agentry"
+"Bug Tracker" = "https://github.com/RudraModi360/Agentry/issues"
+Changelog = "https://github.com/RudraModi360/Agentry/releases"
+
 [project.scripts]
-# CLI/TUI Commands - Interactive terminal interface
 agentry = "agentry.cli:main"
-agentry_cli = "agentry.cli:main"
-agentry-cli = "agentry.cli:main"
-agentry_tui = "agentry.cli:main"
-agentry-tui = "agentry.cli:main"
-
-# GUI Commands - Web interface (backend only)
-agentry_gui = "agentry.gui:main"
-agentry-gui = "agentry.gui:main"
-
-# Full Stack Commands - Backend + Frontend together
-agentry_ui = "agentry_runner:agentry_ui"
-agentry-ui = "agentry_runner:agentry_ui"
-agentry_run = "agentry_runner:agentry_run"
-agentry-run = "agentry_runner:agentry_run"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["agentry*", "backend*"]
+include = ["agentry*"]
 
 [tool.setuptools]
-py-modules = ["agentry_runner"]
+py-modules = []

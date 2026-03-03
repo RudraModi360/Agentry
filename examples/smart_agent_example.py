@@ -1,5 +1,5 @@
 import asyncio
-from scratchy.agents import SmartAgent, SmartAgentMode
+from agentry.agents import SmartAgent, SmartAgentMode
 
 
 async def solo_mode_example():

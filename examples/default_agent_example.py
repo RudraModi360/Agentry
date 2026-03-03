@@ -1,5 +1,5 @@
 import asyncio
-from scratchy import Agent
+from agentry import Agent
 
 
 async def main():

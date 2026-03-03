@@ -53,7 +53,7 @@ Before installing Agentry, ensure you have the following:
 ### Option 1: Install from PyPI (Recommended)
 
 ```bash
-pip install agentry_community
+pip install logicore
 ```
 
 ### Option 2: Install from Source (Development)

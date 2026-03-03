@@ -1,5 +1,5 @@
 import asyncio
-from scratchy.agents import CopilotAgent
+from agentry.agents import CopilotAgent
 
 
 async def main():

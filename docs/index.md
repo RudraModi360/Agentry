@@ -45,7 +45,7 @@ Agentry has been tested with various models across different providers:
 ## Quick Installation
 
 ```bash
-pip install agentry_community
+pip install logicore
 ```
 
 ---

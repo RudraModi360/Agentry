@@ -33,10 +33,10 @@ Common issues and their solutions when working with Agentry.
 
 ```bash
 # Verify installation
-pip show agentry-community
+pip show logicore
 
 # If not installed
-pip install agentry-community
+pip install logicore
 
 # If installed from source, ensure you're in the correct directory
 cd Agentry
