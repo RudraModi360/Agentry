@@ -223,6 +223,18 @@ class GeminiGateway(ProviderGateway):
         content = ""
         tool_calls = []
         
+        # GeminiProvider.chat() returns a pre-parsed dict, not the raw SDK response
+        if isinstance(response, dict):
+            content = response.get('content', "")
+            tool_calls = response.get('tool_calls', [])
+            role = response.get('role', 'assistant')
+            return NormalizedMessage(
+                role=role,
+                content=content,
+                tool_calls=tool_calls or []
+            )
+        
+        # Fallback: handle raw SDK response objects (if provider ever returns them)
         if hasattr(response, 'text'):
             content = response.text or ""
         
@@ -328,11 +340,21 @@ class OllamaGateway(ProviderGateway):
     
     async def normalize_response(self, response: Any) -> NormalizedMessage:
         """Convert Ollama response to normalized format."""
-        content = getattr(response, 'content', "")
+        # Ollama returns a dict: {'role': ..., 'content': ..., 'tool_calls': ...}
+        if isinstance(response, dict):
+            content = response.get('content', "")
+            tool_calls = response.get('tool_calls', [])
+            role = response.get('role', 'assistant')
+        else:
+            # Fallback for object-based responses
+            content = getattr(response, 'content', "")
+            tool_calls = getattr(response, 'tool_calls', [])
+            role = getattr(response, 'role', 'assistant')
+        
         return NormalizedMessage(
-            role=getattr(response, 'role', 'assistant'),
+            role=role,
             content=content,
-            tool_calls=[]
+            tool_calls=tool_calls or []
         )
     
     async def chat(self, messages: List[Dict[str, Any]], tools: Optional[List[Dict[str, Any]]] = None) -> NormalizedMessage:

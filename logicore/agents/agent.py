@@ -10,6 +10,7 @@ from logicore.tools import ALL_TOOL_SCHEMAS, DANGEROUS_TOOLS, APPROVAL_REQUIRED_
 from logicore.config.prompts import get_system_prompt
 from logicore.telemetry import TelemetryTracker
 from logicore.simplemem import AgentrySimpleMem
+from logicore.execution_summary import ExecutionSummary, ToolCallStatus
 import logging
 
 logger = logging.getLogger(__name__)
@@ -76,6 +77,7 @@ class Agent:
         self.llm = self.provider # Alias for consistency
 
         self.default_system_message = system_message or get_system_prompt(self.model_name, role)
+        self._custom_system_message = system_message  # Store original if user provided one
         self.debug = debug
         self.max_iterations = max_iterations
         self.role = role # Store role for simplemem initialization
@@ -126,13 +128,36 @@ class Agent:
         # Session Management
         self.sessions: Dict[str, AgentSession] = {}
         
+        # Execution Tracking
+        self.execution_summary: Optional[ExecutionSummary] = None
+        
         # Tool support flag - set when load_default_tools is called
         self.supports_tools = False
         self.tools_disabled_reason = None  # Optional message explaining why tools are disabled
         
-        # Handle tools parameter - if True, load default tools
-        if tools is True or (isinstance(tools, list) and len(tools) > 0):
+        # Handle tools parameter
+        if tools is True:
+            # If tools=True, load all default tools
             self.load_default_tools()
+        elif isinstance(tools, list) and len(tools) > 0:
+            # If tools is a list, register those specific tools (don't load defaults)
+            for tool in tools:
+                if callable(tool):
+                    # Register callable functions as custom tools
+                    self.register_tool_from_function(tool)
+                elif isinstance(tool, dict):
+                    # If dict schema is provided, add it directly
+                    self.internal_tools.append(tool)
+                    tool_name = tool.get("function", {}).get("name")
+                    if tool_name:
+                        self.custom_tool_executors[tool_name] = tool  # Store schema reference
+            
+            # Mark tools as supported
+            if len(self.internal_tools) > 0:
+                self.supports_tools = True
+                self._rebuild_system_prompt_with_tools()
+                if self.debug:
+                    print(f"[Agent] Loaded {len(self.internal_tools)} custom tool(s) (default tools NOT loaded)")
         
         # Callbacks
         self.callbacks = {
@@ -142,6 +167,45 @@ class Agent:
             "on_final_message": None,
             "on_token": None  # For streaming token updates
         }
+
+    @property
+    def system_prompt(self) -> str:
+        """Access the current system prompt being used by the agent."""
+        return self.default_system_message
+
+    def _rebuild_system_prompt_with_tools(self):
+        """Regenerate the system prompt to include currently registered tools."""
+        # Format tools from internal_tools schemas with full parameter details
+        from logicore.config.prompts import _format_tools
+        tools_section = _format_tools(self.internal_tools)
+        if tools_section:
+           tools_section = f"\n\n<available_tools>\n{tools_section}\n</available_tools>"  # Add leading newline for spacing
+        
+        # Decide whether to use custom or auto-generated system message
+        if self._custom_system_message:
+            # User provided a custom system message - append tools to it
+            self.default_system_message = self._custom_system_message + tools_section
+            if self.debug:
+                print(f"[Agent] System prompt (custom + tools): {len(self._custom_system_message)} chars + tools")
+        else:
+            # Use auto-generated system prompt with tools
+            from logicore.config.prompts import get_system_prompt
+            base_prompt = get_system_prompt(
+                model_name=self.model_name, 
+                role=self.role,
+                tools=self.internal_tools  # Pass schemas, the function will format them
+            )
+            self.default_system_message = base_prompt
+            if self.debug:
+                print(f"[Agent] System prompt (auto-generated with tools): {len(base_prompt)} chars")
+        
+        # Update system message in all existing sessions
+        for session in self.sessions.values():
+            if session.messages and session.messages[0].get("role") == "system":
+                session.messages[0]["content"] = self.default_system_message
+        
+        if self.debug:
+            print(f"[Agent] System prompt updated with {len(self.internal_tools)} tools")
 
     def _create_provider(self, provider_name: str, model: str, api_key: str, endpoint: str = None) -> LLMProvider:
         """
@@ -187,8 +251,19 @@ class Agent:
         self.internal_tools.extend(ALL_TOOL_SCHEMAS)
         # VFS tools removed - SimpleMem handles memory now
         self.supports_tools = True  # Mark that tools are loaded and supported
+        self._rebuild_system_prompt_with_tools()  # Update system prompt with tools
         if self.debug:
             print(f"[Agent] Loaded {len(ALL_TOOL_SCHEMAS)} default tools.")
+    
+    def set_system_message(self, system_message: str):
+        """
+        Update the system message (preserves existing tools).
+        Useful for changing behavior instructions while keeping loaded tools.
+        """
+        self._custom_system_message = system_message
+        self._rebuild_system_prompt_with_tools()
+        if self.debug:
+            print(f"[Agent] System message updated")
     
     def disable_tools(self, reason: str = None):
         """Disable tool support for this agent."""
@@ -221,6 +296,8 @@ class Agent:
         tool_name = schema.get("function", {}).get("name")
         if tool_name:
             self.custom_tool_executors[tool_name] = executor
+            self.supports_tools = True  # Mark tools as supported when first tool is added
+            self._rebuild_system_prompt_with_tools()  # Update system prompt with tools
             if self.debug:
                 print(f"[Agent] Added custom tool: {tool_name}")
 
@@ -230,9 +307,49 @@ class Agent:
         Generates the schema from the function's signature and docstring.
         """
         import inspect
+        import re
         
         name = func.__name__
-        description = func.__doc__ or "No description provided."
+        raw_doc = func.__doc__ or "No description provided."
+        
+        # Parse docstring: extract main description and per-param descriptions
+        # Supports Google-style (Args:) and Sphinx-style (:param name:) docstrings
+        doc_lines = raw_doc.strip().split('\n')
+        description_lines = []
+        param_docs = {}
+        
+        in_args_section = False
+        for line in doc_lines:
+            stripped = line.strip()
+            
+            # Sphinx style: :param name: description
+            sphinx_match = re.match(r':param\s+(\w+)\s*:(.*)', stripped)
+            if sphinx_match:
+                param_docs[sphinx_match.group(1)] = sphinx_match.group(2).strip()
+                continue
+            
+            # Google style: "Args:" header
+            if stripped.lower() in ('args:', 'arguments:', 'parameters:', 'params:'):
+                in_args_section = True
+                continue
+            
+            # Google style: "Returns:", "Raises:", etc. ends the Args section
+            if stripped.lower().rstrip(':') in ('returns', 'raises', 'yields', 'examples', 'note', 'notes'):
+                in_args_section = False
+                continue
+            
+            if in_args_section and stripped:
+                # Google style: "param_name (type): description" or "param_name: description"
+                arg_match = re.match(r'(\w+)\s*(?:\([^)]*\))?\s*:(.*)', stripped)
+                if arg_match:
+                    param_docs[arg_match.group(1)] = arg_match.group(2).strip()
+                continue
+            
+            if not in_args_section and stripped:
+                description_lines.append(stripped)
+        
+        description = ' '.join(description_lines) if description_lines else raw_doc.strip()
+        
         sig = inspect.signature(func)
         type_hints = get_type_hints(func)
         
@@ -254,9 +371,12 @@ class Agent:
             elif py_type == list: json_type = "array"
             elif py_type == dict: json_type = "object"
             
+            # Use parsed docstring description, fallback to readable default
+            pdesc = param_docs.get(param_name, f"The {param_name.replace('_', ' ')} value")
+            
             parameters["properties"][param_name] = {
                 "type": json_type,
-                "description": f"Parameter {param_name}"
+                "description": pdesc
             }
             
             if param.default == inspect.Parameter.empty:
@@ -334,6 +454,15 @@ class Agent:
         """Main chat loop."""
         from logicore.providers.utils import extract_content
         
+        # Initialize execution summary for this chat
+        self.execution_summary = ExecutionSummary(agent_name=self.__class__.__name__, session_id=session_id)
+        
+        # Record user's request
+        if isinstance(user_input, str):
+            self.execution_summary.set_user_request(user_input)
+        else:
+            self.execution_summary.set_user_request(str(user_input)[:200])
+        
         # Merge ephemeral callbacks
         active_callbacks = self.callbacks.copy()
         if callbacks:
@@ -350,9 +479,6 @@ class Agent:
         text_for_memory = user_input
         if isinstance(user_input, list):
             text_for_memory, _ = extract_content(user_input)
-
-        # Note: Memory context retrieval is now handled at WebSocket level
-        # via backend.services.simplemem_middleware for non-blocking operation
         
         # If memory is enabled natively, enrich context
         if self.memory_enabled and self.simplemem:
@@ -363,7 +489,7 @@ class Agent:
         
         # --- Dynamic Capability Detection ---
         if self.capabilities.detection_method == "default":
-            if self.debug: print(f"[Agent] Detecting capabilities for {self.model_name}...")
+            if self.debug: print(f"[Agent] 🔍 Detecting capabilities for {self.model_name}...")
             from logicore.providers.capability_detector import detect_model_capabilities
             try:
                 self.capabilities = await detect_model_capabilities(
@@ -372,14 +498,17 @@ class Agent:
                     provider_instance=self.llm
                 )
                 if self.debug:
-                    print(f"[Agent] Detected: tools={self.capabilities.supports_tools}, vision={self.capabilities.supports_vision} (via {self.capabilities.detection_method})")
+                    print(f"[Agent] ✓ Detected: tools={self.capabilities.supports_tools}, vision={self.capabilities.supports_vision} (via {self.capabilities.detection_method})")
             except Exception as e:
-                if self.debug: print(f"[Agent] Capability detection failed: {e}")
+                if self.debug: print(f"[Agent] ⚠️ Capability detection failed: {e}")
 
         # --- Input Validation ---
         is_valid, error = self.capabilities.validate_input(session.messages)
         if not is_valid:
             if self.debug: print(f"[Agent] Input validation failed: {error}")
+            # Finalize summary with validation error
+            if self.execution_summary:
+                self.execution_summary.finalize(status="failed", error=f"Input validation failed: {error}")
             return error
 
         start_time = time.time()
@@ -387,7 +516,7 @@ class Agent:
 
         session.add_message({"role": "user", "content": user_input})
 
-        # --- Input Validation ---
+        # --- Input Validation (second check) ---
         is_valid, error = self.capabilities.validate_input(session.messages)
         if not is_valid:
             if self.debug: print(f"[Agent] Input validation failed: {error}")
@@ -398,21 +527,18 @@ class Agent:
         if self.supports_tools:
             all_tools = await self.get_all_tools()
             if self.debug and all_tools:
-                print(f"[Agent] Using {len(all_tools)} tools")
+                print(f"[Agent] 🛠️ Loaded {len(all_tools)} available tools")
         else:
             if self.debug:
-                print(f"[Agent] Tool-free mode: {self.tools_disabled_reason or 'Model does not support tools'}")
-        # Ensure we have a robust error handling strategy around provider calls
-        # This will catch JSON serialization errors and internal server errors
-        # and allow the chat session to continue.
-        # We’ll wrap the main iteration loop in a try/except block.
-        # The errors are logged via simple print statements for visibility.
-        # If an error occurs, we’ll return an informative message instead of crashing.
+                print(f"[Agent] ℹ️ Tool-free mode: {self.tools_disabled_reason or 'Model does not support tools'}")
 
-        
         for i in range(self.max_iterations):
             if self.debug:
-                print(f"[Agent] Iteration {i+1}/{self.max_iterations}")
+                print(f"\n[Agent] 🔄 ITERATION {i+1}/{self.max_iterations}")
+            
+            # Track iteration in execution summary
+            if self.execution_summary:
+                self.execution_summary.start_iteration(i + 1)
             
             # 1. Get response from LLM
             response = None
@@ -434,18 +560,18 @@ class Agent:
                 has_stream = hasattr(self.provider, 'chat_stream')
                 
                 if self.debug:
-                    print(f"[Agent] Streaming check: on_token={on_token is not None}, has_chat_stream={has_stream}")
+                    print(f"[Agent] 🎯 Streaming: on_token={on_token is not None}, support={has_stream}")
                 
                 if on_token and has_stream:
                     if self.debug:
                         model_name = getattr(self.provider, 'model_name', 'LLM')
-                        print(f"[Agent] Streaming response from {model_name}...")
+                        print(f"[Agent] 📡 Streaming response from {model_name}...")
                     response = await self.gateway.chat_stream(llm_messages, tools=all_tools, on_token=on_token)
                 else:
                     if self.debug:
                         model_name = getattr(self.provider, 'model_name', 'LLM')
                         has_tools = " (with tools)" if all_tools else ""
-                        print(f"[Agent] Generating response from {model_name}{has_tools}...")
+                        print(f"[Agent] 🤖 Generating response from {model_name}{has_tools}...")
                     response = await self.gateway.chat(llm_messages, tools=all_tools)
             except Exception as e:
                 # Error handling & Retry logic
@@ -464,28 +590,23 @@ class Agent:
                     or "status code: 500" in error_str
                 ):
                     if self.debug or "internal server error" in error_str: 
-                        print(f"[Agent] ⚠️  Response/Provider error: {error_str}. Retrying...")
+                        print(f"[Agent] ⚠️ Provider error: {error_str[:80]}... Retrying...")
                     
                     # Retry loop with tools
                     retry_success = False
-                    for attempt in range(3):
-                        try:
-                            if self.debug: print(f"[Agent] Retry attempt {attempt+1} with tools...")
-                            await asyncio.sleep(1) # Short delay
-                            response = await self.gateway.chat(session.messages, tools=all_tools)
-                            retry_success = True
-                            break
-                        except Exception as retry_error:
-                            retry_error_str = str(retry_error).lower()
-                            if "does not support tools" in retry_error_str:
-                                if self.debug: print(f"[Agent] Model doesn't support tools. Aborting tool retries.")
-                                break # Stop retrying with tools immediately
-                            
-                            if self.debug: print(f"[Agent] Retry {attempt+1} failed: {retry_error}")
-                    
+                    try:
+                        await asyncio.sleep(1) # Short delay
+                        response = await self.gateway.chat(session.messages, tools=all_tools)
+                        retry_success = True
+                    except Exception as retry_error:
+                        retry_error_str = str(retry_error).lower()
+                        if "does not support tools" in retry_error_str:
+                            if self.debug: print(f"[Agent] ⚠️ Model doesn't support tools. Switching to no-tool mode.")
+                            break # Stop retrying with tools immediately
+                                            
                     if not retry_success:
                         # Fallback to no tools as a last resort
-                        if self.debug: print(f"[Agent] Falling back to no tools...")
+                        if self.debug: print(f"[Agent] 🔄 Falling back to inference without tools...")
                         try:
                             await asyncio.sleep(1)
                             response = await self.gateway.chat(session.messages, tools=None)
@@ -493,16 +614,22 @@ class Agent:
                             # Last resort: return friendly error message
                             error_msg = f"I encountered an error from the model: {str(fallback_error)}. Please try again."
                             if self.debug: 
-                                print(f"[Agent] All retries failed: {fallback_error}")
+                                print(f"[Agent] ❌ All retries exhausted: {fallback_error}")
+                            # Finalize summary with error
+                            if self.execution_summary:
+                                self.execution_summary.finalize(status="failed", error=str(fallback_error))
                             if active_callbacks["on_final_message"]:
                                 active_callbacks["on_final_message"](session_id, error_msg)
                             return error_msg
                 else:
                     # Different error
-                    print(f"\n[Agent] ⚠️  Runtime Error: {e}")
+                    print(f"\n[Agent] ❌ Runtime Error: {e}")
                     # Don't crash, just break or continue?
                     # User asked to continue session chat.
                     # We will return the error as a message to the user so they know something happened.
+                    # Finalize summary with error
+                    if self.execution_summary:
+                        self.execution_summary.finalize(status="failed", error=str(e))
                     return f"Error during execution: {str(e)}"
             
             # If we still don't have a response, skip this iteration
@@ -522,6 +649,15 @@ class Agent:
                     content = getattr(response, 'content', str(response))
                     tool_calls = getattr(response, 'tool_calls', [])
                 
+                if self.debug:
+                    print(f"[Agent] Response parsed - Content length: {len(content) if content else 0}, Tool calls: {len(tool_calls) if tool_calls else 0}")
+                    if content:
+                        print(f"[Agent] Content preview: {content[:100]}...")
+                    if tool_calls:
+                        for idx, tc in enumerate(tool_calls):
+                            tool_name = tc['function']['name'] if isinstance(tc, dict) else tc.function.name
+                            print(f"[Agent]   Tool call {idx+1}: '{tool_name}'")
+                
                 # Convert to dict for session history
                 msg_dict = {
                     "role": "assistant",
@@ -534,6 +670,9 @@ class Agent:
                     
             except Exception as parse_error:
                 print(f"[Agent] ⚠️  Response Parsing Error (Ignored): {parse_error}")
+                if self.debug:
+                    import traceback
+                    traceback.print_exc()
                 # We can try to recover by adding a text message only
                 try:
                      content_safe = getattr(response, 'content', str(response))
@@ -545,13 +684,22 @@ class Agent:
             if not tool_calls:
                 # Note: Memory storage is now handled at WebSocket level
                 # via backend.services.simplemem_middleware
+                
+                if self.debug:
+                    print(f"[Agent] ✅ No tool calls required. Returning response.")
+                
+                # Mark convergence in execution summary
+                if self.execution_summary:
+                    self.execution_summary.mark_convergence(i + 1)
+                    self.execution_summary.finalize(status="completed", final_response=content)
 
                 if active_callbacks["on_final_message"]:
                     active_callbacks["on_final_message"](session_id, content)
                 return content
 
             # 4. Execute Tools
-            for tc in tool_calls:
+            for tc in tool_calls:       
+                
                 # Extract details
                 if isinstance(tc, dict):
                     name = tc['function']['name']
@@ -569,8 +717,13 @@ class Agent:
                     except json.JSONDecodeError:
                         # If it's not valid JSON, keep it as is and let execution fail gracefully
                         pass
+                
 
-                    # Increment tool call telemetry if enabled
+                # Format tool parameters for logging (first 100 words)
+                params_str = json.dumps(args) if isinstance(args, dict) else str(args)
+                params_preview = (params_str[:150] + "...") if len(params_str) > 150 else params_str
+
+                # Increment tool call telemetry if enabled
                 if self.telemetry_enabled:
                     try:
                         # Ensure session exists (creates if needed)
@@ -587,6 +740,12 @@ class Agent:
                         await callback(session_id, name, args)
                     else:
                         callback(session_id, name, args)
+
+                # Clear logging: Show tool being called with params
+                tool_call_log = f"[Agent] 🔧 TOOL CALL: '{name}' | Params: {params_preview}"
+                print(tool_call_log)
+                if self.debug:
+                    logger.info(tool_call_log)
 
                 # Approval
                 approved = True
@@ -607,8 +766,63 @@ class Agent:
 
                 if not approved:
                     result = {"error": "Denied by user"}
+                    tool_fail_log = f"[Agent] ❌ EXECUTION DENIED: '{name}'"
+                    print(tool_fail_log)
+                    logger.warning(tool_fail_log)
+                    # Track denied tool call in summary
+                    if self.execution_summary:
+                        self.execution_summary.record_tool_call(
+                            iteration=i + 1,
+                            tool_name=name,
+                            parameters=args if isinstance(args, dict) else {},
+                            status=ToolCallStatus.SKIPPED,
+                            error="Denied by user"
+                        )
                 else:
+                    # Record tool call start time
+                    start_time_tool = time.time()
                     result = await self._execute_tool(name, args, session_id)
+                    duration_ms = (time.time() - start_time_tool) * 1000
+                    
+                    # Check if tool execution was successful
+                    is_error = isinstance(result, dict) and ("error" in result or "exception" in result)
+                    
+                    if is_error:
+                        error_msg = result.get("error", result.get("exception", "Unknown error"))
+                        tool_fail_log = f"[Agent] ❌ TOOL FAILED: '{name}' | Error: {str(error_msg)[:80]}..."
+                        print(tool_fail_log)
+                        logger.error(tool_fail_log)
+                        # Track failed tool call in summary
+                        if self.execution_summary:
+                            self.execution_summary.record_tool_call(
+                                iteration=i + 1,
+                                tool_name=name,
+                                parameters=args if isinstance(args, dict) else {},
+                                status=ToolCallStatus.FAILED,
+                                error=error_msg,
+                                duration_ms=duration_ms
+                            )
+                    else:
+                        # Format result summary (up to 100 words)
+                        if isinstance(result, dict):
+                            result_str = json.dumps(result)
+                        else:
+                            result_str = str(result)
+                        result_preview = (result_str[:120] + "...") if len(result_str) > 120 else result_str
+                        tool_success_log = f"[Agent] ✅ TOOL SUCCESS: '{name}' | Result: {result_preview}"
+                        print(tool_success_log)
+                        if self.debug:
+                            logger.info(tool_success_log)
+                        # Track successful tool call in summary
+                        if self.execution_summary:
+                            self.execution_summary.record_tool_call(
+                                iteration=i + 1,
+                                tool_name=name,
+                                parameters=args if isinstance(args, dict) else {},
+                                status=ToolCallStatus.SUCCESS,
+                                result=result_preview,
+                                duration_ms=duration_ms
+                            )
 
                 if active_callbacks["on_tool_end"]:
                     callback = active_callbacks["on_tool_end"]
@@ -617,17 +831,31 @@ class Agent:
                     else:
                         callback(session_id, name, result)
 
-
-                # Add result to history
+                # Add result to history - use better formatting for LLM clarity
+                # Format: "Tool 'name' executed successfully. Result: {result_summary}"
+                result_summary = result
+                if isinstance(result, dict):
+                    if "error" in result:
+                        result_summary = f"Error: {result['error']}"
+                    elif "message" in result and "status" in result:
+                        result_summary = f"{result.get('status', 'executed')}: {result['message']}"
+                    else:
+                        result_summary = json.dumps(result)
+                
                 tool_msg = {
                     "role": "tool",
                     "name": name,
-                    "content": json.dumps(result)
+                    "content": str(result_summary)  # Keep it human-readable
                 }
-                if tc_id: tool_msg["tool_call_id"] = tc_id
+                if tc_id: 
+                    tool_msg["tool_call_id"] = tc_id
                 
                 session.add_message(tool_msg)
 
+        # Max iterations reached
+        if self.execution_summary:
+            self.execution_summary.finalize(status="timeout", error="Max iterations reached")
+        
         return "Max iterations reached."
 
     def _requires_approval(self, name: str) -> bool:
@@ -683,6 +911,28 @@ class Agent:
             duration = (datetime.now() - start_time).total_seconds()
             logger.error(f"Tool Execution Failed: {name} | Duration: {duration:.4f}s | Error: {e}")
             return {"error": f"Tool execution failed: {str(e)}"}
+
+    def get_execution_summary(self) -> Optional[ExecutionSummary]:
+        """Get the current execution summary for the last chat."""
+        return self.execution_summary
+    
+    def print_execution_summary(self) -> str:
+        """Print a formatted text summary of the last execution."""
+        if not self.execution_summary:
+            return "No execution summary available - run chat() first"
+        return self.execution_summary.get_summary_text()
+    
+    def get_execution_summary_dict(self) -> Optional[Dict[str, Any]]:
+        """Get the execution summary as a dictionary."""
+        if not self.execution_summary:
+            return None
+        return self.execution_summary.to_dict()
+    
+    def get_execution_summary_json(self) -> Optional[str]:
+        """Get the execution summary as JSON."""
+        if not self.execution_summary:
+            return None
+        return self.execution_summary.to_json()
 
     async def cleanup(self):
         """Clean up resources."""

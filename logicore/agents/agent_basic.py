@@ -175,7 +175,7 @@ You are ready to help. Use your tools effectively.
 """
     
     def _get_tool_descriptions(self) -> str:
-        """Get formatted descriptions of all tools."""
+        """Get formatted descriptions of all tools with full parameter schema."""
         if not self.custom_tools:
             return "You have no tools available. Respond using your knowledge only."
         
@@ -184,16 +184,39 @@ You are ready to help. Use your tools effectively.
         
         for tool in self.custom_tools:
             if isinstance(tool, BaseTool):
-                lines.append(f"**{tool.name}**")
-                lines.append(f"  {tool.description}")
+                lines.append(f"### `{tool.name}`")
+                lines.append(f"{tool.description}")
+                # Include parameter schema from BaseTool
+                params = tool.schema.get("function", {}).get("parameters", {})
+                properties = params.get("properties", {})
+                required = params.get("required", [])
+                if properties:
+                    lines.append("**Parameters:**")
+                    for pname, pinfo in properties.items():
+                        ptype = pinfo.get("type", "string")
+                        pdesc = pinfo.get("description", "")
+                        req = " *(required)*" if pname in required else " *(optional)*"
+                        if pdesc:
+                            lines.append(f"- `{pname}` ({ptype}){req}: {pdesc}")
+                        else:
+                            lines.append(f"- `{pname}` ({ptype}){req}")
             elif callable(tool):
                 name = tool.__name__
                 doc = tool.__doc__ or "No description provided"
-                lines.append(f"**{name}**")
-                lines.append(f"  {doc.strip()}")
+                lines.append(f"### `{name}`")
+                lines.append(f"{doc.strip()}")
+                # Include parameter info from function signature
+                sig = inspect.signature(tool)
+                params_list = [(p, v) for p, v in sig.parameters.items() if p != 'self']
+                if params_list:
+                    lines.append("**Parameters:**")
+                    for pname, param in params_list:
+                        ptype = param.annotation.__name__ if param.annotation != inspect.Parameter.empty else "string"
+                        req = " *(required)*" if param.default == inspect.Parameter.empty else " *(optional)*"
+                        lines.append(f"- `{pname}` ({ptype}){req}")
             lines.append("")
         
-        lines.append("Use tools when they would help accomplish the user's request.")
+        lines.append("Use ONLY the exact parameter names listed above when calling tools.")
         return "\n".join(lines)
     
     def _register_tools(self):
@@ -205,12 +228,42 @@ You are ready to help. Use your tools effectively.
                 self._agent.custom_tool_executors[tool.name] = tool.run
             elif callable(tool):
                 # Convert function to tool
-                self._register_function_as_tool(tool)
+                self.register_tool_from_function(tool)
     
-    def _register_function_as_tool(self, func: Callable):
-        """Convert a Python function to a tool and register it."""
+    def register_tool_from_function(self, func: Callable):
+        """Convert a Python function to a tool and register it with docstring-parsed param descriptions."""
+        import re
+        
         name = func.__name__
-        description = func.__doc__ or f"Execute {name}"
+        raw_doc = func.__doc__ or f"Execute {name}"
+        
+        # Parse docstring for param descriptions (Google + Sphinx style)
+        doc_lines = raw_doc.strip().split('\n')
+        description_lines = []
+        param_docs = {}
+        in_args = False
+        
+        for line in doc_lines:
+            stripped = line.strip()
+            sphinx = re.match(r':param\s+(\w+)\s*:(.*)', stripped)
+            if sphinx:
+                param_docs[sphinx.group(1)] = sphinx.group(2).strip()
+                continue
+            if stripped.lower() in ('args:', 'arguments:', 'parameters:', 'params:'):
+                in_args = True
+                continue
+            if stripped.lower().rstrip(':') in ('returns', 'raises', 'yields', 'examples', 'note', 'notes'):
+                in_args = False
+                continue
+            if in_args and stripped:
+                arg_match = re.match(r'(\w+)\s*(?:\([^)]*\))?\s*:(.*)', stripped)
+                if arg_match:
+                    param_docs[arg_match.group(1)] = arg_match.group(2).strip()
+                continue
+            if not in_args and stripped:
+                description_lines.append(stripped)
+        
+        description = ' '.join(description_lines) if description_lines else raw_doc.strip()
         
         # Get function signature
         sig = inspect.signature(func)
@@ -221,13 +274,11 @@ You are ready to help. Use your tools effectively.
         required = []
         
         for param_name, param in params.items():
-            # Get type annotation or default to string
             if param.annotation != inspect.Parameter.empty:
                 param_type = param.annotation
             else:
                 param_type = str
             
-            # Map Python types to JSON schema types
             type_mapping = {
                 str: "string",
                 int: "integer",
@@ -238,16 +289,16 @@ You are ready to help. Use your tools effectively.
             }
             json_type = type_mapping.get(param_type, "string")
             
+            pdesc = param_docs.get(param_name, f"The {param_name.replace('_', ' ')} value")
+            
             properties[param_name] = {
                 "type": json_type,
-                "description": f"Parameter: {param_name}"
+                "description": pdesc
             }
             
-            # Required if no default value
             if param.default == inspect.Parameter.empty:
                 required.append(param_name)
         
-        # Create tool schema
         schema = {
             "type": "function",
             "function": {
@@ -261,7 +312,6 @@ You are ready to help. Use your tools effectively.
             }
         }
         
-        # Create executor wrapper
         def executor(**kwargs):
             try:
                 result = func(**kwargs)
@@ -269,7 +319,6 @@ You are ready to help. Use your tools effectively.
             except Exception as e:
                 return ToolResult(success=False, error=str(e))
         
-        # Register with agent
         self._agent.internal_tools.append(schema)
         self._agent.custom_tool_executors[name] = executor
         
@@ -346,6 +395,15 @@ You are ready to help. Use your tools effectively.
         """Add multiple tools at once."""
         for tool in tools:
             self.add_tool(tool)
+    
+    async def get_all_tools(self) -> List[Dict[str, Any]]:
+        """
+        Get all available tools (internal + MCP).
+        
+        Returns:
+            List of tool schemas with function definition and parameters
+        """
+        return await self._agent.get_all_tools()
     
     def clear_history(self, session_id: str = "default"):
         """Clear conversation history for a session."""

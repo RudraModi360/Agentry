@@ -21,6 +21,7 @@ class CopilotAgent(Agent):
         api_key: str = None,
         system_message: str = None,
         debug: bool = False,
+        tools: list|bool = True,
         capabilities: Any = None,
         telemetry: bool = False,
         memory: bool = False
@@ -37,6 +38,7 @@ class CopilotAgent(Agent):
             system_message=system_message,
             role="copilot",
             debug=debug,
+            tools=tools,
             capabilities=capabilities,
             telemetry=telemetry,
             memory=memory

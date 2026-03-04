@@ -90,3 +90,4 @@ tests/
 example/
 docs/
 .agent/
+test_*

@@ -34,6 +34,13 @@
       "supports_text": true,
       "supports_audio": false,
       "last_tested": "2026-03-04"
+    },
+    "moonshotai/kimi-k2-instruct-0905": {
+      "supports_tools": true,
+      "supports_vision": false,
+      "supports_text": true,
+      "supports_audio": false,
+      "last_tested": "2026-03-04"
     }
   },
   "gemini": {

@@ -83,9 +83,13 @@ class SmartAgent(Agent):
         model_name = getattr(self.provider, "model_name", "Unknown")
         
         if self.mode == SmartAgentMode.PROJECT and self.project_context:
-            self.default_system_message = self._get_project_system_prompt(model_name)
+            base_prompt = self._get_project_system_prompt(model_name)
         else:
-            self.default_system_message = self._get_solo_system_prompt(model_name)
+            base_prompt = self._get_solo_system_prompt(model_name)
+        
+        # Store as custom system message so _rebuild_system_prompt_with_tools appends tools
+        self._custom_system_message = base_prompt
+        self.default_system_message = base_prompt
     
     def _get_solo_system_prompt(self, model_name: str) -> str:
         """Get system prompt for solo chat mode - Claude-style sophisticated prompt."""
@@ -101,35 +105,14 @@ Your core traits:
 - **Adaptive**: You match your communication style to the user's preferences
 </identity>
 
-<tools>
-You have access to 6 tools. Use them judiciously:
-
-1. **web_search** - Search the internet for current information
-   - Use when: You need facts, current events, or information you don't have
-   - Don't use when: The question is about reasoning, opinions, or you already know the answer
-
-2. **media_search syntax** - Embed images and videos inline in your response
-   - **Syntax**: `![SEARCH: "query"]` for images, `![VIDEO: "query"]` for YouTube videos
-   - Use when: The topic is visual (architecture, art, animals, places, diagrams, charts, products)
-   - Use when: Showing visuals would significantly enhance understanding
-   - Position: Embed placeholders DIRECTLY in your text at the exact semantic location
-   - Example: "Here is a diagram of the process: ![SEARCH: "process diagram"]"
-
-3. **memory** - Store and retrieve learnings, patterns, and approaches
-   - Use when: You discover something valuable worth remembering, or need to recall past context
-   - Actions: store (save new), search (find relevant), list (show recent), export (get all)
-
-4. **notes** - Personal note-taking for temporary information
-   - Use when: You need to track information within a session, make quick reminders
-   - Actions: add, list, search, get, delete
-
-5. **datetime** - Get current date and time
-   - Use when: User asks about time, or you need to timestamp something
-
-6. **bash** - Execute shell commands
-   - Use when: User needs system operations, file manipulation, or command execution
-   - Always explain what a command will do before running potentially impactful ones
-</tools>
+<tool_usage_guidelines>
+Use your tools judiciously:
+- Use tools when the task benefits from them, not for every request
+- You MUST use the EXACT parameter names defined in the tool schema
+- For system operations and file tasks, use bash
+- For visual topics, embed images using media_search syntax: `![SEARCH: "query"]`
+- For capturing insights, use the memory tool to store and recall context
+</tool_usage_guidelines>
 
 <thinking_approach>
 When presented with a task or question:
@@ -215,28 +198,16 @@ Your approach in project mode:
 - **Efficient**: You stay focused on what moves the project forward
 </identity>
 
-<tools>
-You have access to exactly 5 tools:
-
-1. **web_search** - Research for the project
-   - Use for: Finding documentation, best practices, solutions to project challenges
-
-2. **media_search syntax** - Embed project-related visuals inline
-   - **Syntax**: `![SEARCH: "query"]` or `![VIDEO: "query"]`
-   - Use for: Diagrams, technical illustrations, or video tutorials related to the project
-
-3. **memory** - Project knowledge management (critical for project mode)
-   - **store**: Save learnings, approaches, and key decisions with project_id="{project.project_id}"
-   - **search**: Find relevant past insights before tackling challenges
-   - **list**: Review what you've learned about this project
-   - Memory types: approach, learning, key_step, pattern, decision
-
-3. **notes** - Quick project notes and temporary tracking
-
-4. **datetime** - Time-related operations
-
-5. **bash** - Execute commands for the project
-</tools>
+<tool_usage_guidelines>
+Use your tools to support the project:
+- Use tools when the task benefits from them, not for every request
+- You MUST use the EXACT parameter names defined in the tool schema
+- For project research, use web_search
+- For visual content, use media_search syntax: `![SEARCH: "query"]`
+- For project knowledge, use memory with project_id="{project.project_id}"
+  - Memory types: approach, learning, key_step, pattern, decision
+- For system tasks, use bash
+</tool_usage_guidelines>
 
 <project_workflow>
 When helping with this project:
@@ -309,6 +280,9 @@ You are ready to help with {project.title}. Focus on the project goal and build 
         
         # IMPORTANT: Mark that tools are loaded and supported
         self.supports_tools = True
+        
+        # Rebuild system prompt with full tool schema dynamically
+        self._rebuild_system_prompt_with_tools()
         
         if self.debug:
             tool_names = [t.get("function", {}).get("name") for t in self.internal_tools]
