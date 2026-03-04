@@ -425,6 +425,16 @@ You are ready to help. Use your tools effectively.
         """Get the current system prompt."""
         return self._system_prompt
     
+    @property
+    def telemetry(self) -> Dict[str, Any]:
+        """
+        Get telemetry summary for the agent's sessions.
+        
+        Returns:
+            Dictionary with token usage, performance metrics, and context info.
+        """
+        return self._agent.telemetry
+
     async def cleanup(self):
         """Cleanup resources."""
         await self._agent.cleanup()

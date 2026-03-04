@@ -59,7 +59,7 @@ class ContextWindowFetcher:
         """Register a custom context window fetcher for a provider."""
         self._fetchers[provider] = fetcher
     
-    def get_context_window(self, model: str, provider: str) -> int:
+    def get_context_window(self, model: str, provider: str) -> Optional[int]:
         """
         Get context window for a model from cache or by fetching from provider.
         
@@ -68,7 +68,7 @@ class ContextWindowFetcher:
             provider: Provider name (e.g., "openai", "anthropic")
         
         Returns:
-            Context window size in tokens, or 4096 as fallback
+            Context window size in tokens, or None if unknown
         """
         cache_key = f"{provider}:{model}"
         
@@ -86,8 +86,7 @@ class ContextWindowFetcher:
             except Exception as e:
                 print(f"Warning: Failed to fetch context window for {model} from {provider}: {e}")
         
-        # Fallback to default
-        return 4096
+        return None
     
     def _fetch_openai(self, model: str) -> Optional[int]:
         """Fetch OpenAI model context window from API."""
@@ -95,145 +94,107 @@ class ContextWindowFetcher:
             import openai
             client = openai.OpenAI()
             mod = client.models.retrieve(model)
-            # OpenAI typically provides context_window in model object
             if hasattr(mod, 'context_window'):
                 return mod.context_window
-            # Fallback to known values
-            openai_windows = {
-                "gpt-4o": 128000,
-                "gpt-4-turbo": 128000,
-                "gpt-4": 8192,
-                "gpt-4-32k": 32768,
-                "gpt-3.5-turbo": 4096,
-            }
-            return openai_windows.get(model)
-        except Exception as e:
-            # Fallback: return known values
-            openai_windows = {
-                "gpt-4o": 128000,
-                "gpt-4-turbo": 128000,
-                "gpt-4": 8192,
-                "gpt-4-32k": 32768,
-                "gpt-3.5-turbo": 4096,
-            }
-            return openai_windows.get(model)
+        except Exception:
+            pass
+        return None
     
     def _fetch_anthropic(self, model: str) -> Optional[int]:
         """Fetch Anthropic model context window from API."""
-        try:
-            import anthropic
-            client = anthropic.Anthropic()
-            # Anthropic publishes model capabilities
-            # Use their known model specs
-            anthropic_windows = {
-                "claude-3-opus": 200000,
-                "claude-3-opus-20240229": 200000,
-                "claude-3-sonnet": 200000,
-                "claude-3-sonnet-20240229": 200000,
-                "claude-3-haiku": 200000,
-                "claude-3-haiku-20240307": 200000,
-                "claude-2.1": 100000,
-                "claude-2": 100000,
-                "claude-instant-1.2": 100000,
-            }
-            return anthropic_windows.get(model)
-        except Exception as e:
-            # Fallback
-            anthropic_windows = {
-                "claude-3-opus": 200000,
-                "claude-3-sonnet": 200000,
-                "claude-3-haiku": 200000,
-                "claude-2": 100000,
-                "claude-instant": 100000,
-            }
-            return anthropic_windows.get(model)
+        return None
     
     def _fetch_google(self, model: str) -> Optional[int]:
         """Fetch Google Gemini model context window from API."""
         try:
             import google.generativeai as genai
-            # List available models and get their specs
             models = genai.list_models()
             for m in models:
-                model_name = m.name.split('/')[-1]  # Extract model ID from 'models/gemini-pro'
+                model_name = m.name.split('/')[-1]
                 if model_name == model or m.name == model:
-                    # Try to get input token limit
                     if hasattr(m, 'input_token_limit'):
                         return m.input_token_limit
-            
-            # Fallback to known values
-            google_windows = {
-                "gemini-pro": 32000,
-                "gemini-1.5-pro": 1000000,
-                "gemini-1.5-flash": 1000000,
-                "gemini-2.0-flash": 1000000,
-            }
-            return google_windows.get(model)
-        except Exception as e:
-            # Fallback to known values
-            google_windows = {
-                "gemini-pro": 32000,
-                "gemini-1.5-pro": 1000000,
-                "gemini-1.5-flash": 1000000,
-                "gemini-2.0-flash": 1000000,
-            }
-            return google_windows.get(model)
+        except Exception:
+            pass
+        return None
     
     def _fetch_groq(self, model: str) -> Optional[int]:
         """
         Fetch Groq model context window from API.
-        
-        Uses Groq's models API: https://console.groq.com/docs/models#get-all-available-models
         """
         try:
             from groq import Groq
             client = Groq()
-            # Get list of all available models from Groq API
             models_response = client.models.list()
-            
-            # Iterate through available models
             for m in models_response.data:
                 if m.id == model:
-                    # Try to get context window from model info
                     if hasattr(m, 'context_window'):
                         return m.context_window
-                    # Some models might have context_length instead
                     if hasattr(m, 'context_length'):
                         return m.context_length
-            
-            # Fallback to known values if not found in API response
-            groq_windows = {
-                "mixtral-8x7b-32768": 32768,
-                "llama-3-70b-8192": 8192,
-                "llama-3.1-70b-versatile": 131072,
-                "llama-2-7b-chat": 4096,
-                "llama-2-13b-chat": 4096,
-                "llama-2-70b-chat": 4096,
-            }
-            return groq_windows.get(model)
-        except Exception as e:
-            # Fallback to known values if API call fails
-            groq_windows = {
-                "mixtral-8x7b-32768": 32768,
-                "llama-3-70b-8192": 8192,
-                "llama-3.1-70b-versatile": 131072,
-                "llama-2-7b-chat": 4096,
-            }
-            return groq_windows.get(model)
+        except Exception:
+            pass
+        return None
     
     def _fetch_ollama(self, model: str) -> Optional[int]:
         """Fetch Ollama model context window from local instance."""
         try:
+            import subprocess
+            import json
+            result = subprocess.run(
+                ["ollama", "show", model, "--json"],
+                capture_output=True,
+                text=True,
+                check=False
+            )
+            if result.returncode == 0:
+                data = json.loads(result.stdout)
+                num_ctx = data.get("parameters", {}).get("num_ctx")
+                if num_ctx:
+                    if isinstance(num_ctx, list) and len(num_ctx) > 0:
+                        return int(num_ctx[0])
+                    return int(num_ctx)
+                
+                model_info = data.get("model_info", {})
+                for key, val in model_info.items():
+                    if "context_length" in key:
+                        return int(val)
+        except Exception:
+            pass
+
+        # Fallback to python ollama API if the subprocess --json fails
+        try:
             import ollama
-            # Get model info from local Ollama instance
             info = ollama.show(model)
-            # Extract context window from parameters
-            if "parameters" in info and "num_ctx" in info["parameters"]:
-                return info["parameters"]["num_ctx"]
-            return None
-        except Exception as e:
-            # Fallback: return default, Ollama is local
-            return 4096
+            
+            # Check for python client output format
+            if hasattr(info, "parameters"):
+                # some older versions return objects
+                return int(info.parameters.get("num_ctx"))
+                
+            if isinstance(info, dict) and "parameters" in info:
+                # new versions return dict, but parameters could be a string block
+                params = info.get("parameters", "")
+                if isinstance(params, str):
+                    for line in params.split("\n"):
+                        if "num_ctx" in line:
+                            return int(line.split()[-1])
+                elif isinstance(params, dict) and "num_ctx" in params:
+                    num_ctx = params["num_ctx"]
+                    if isinstance(num_ctx, list) and len(num_ctx) > 0:
+                        return int(num_ctx[0])
+                    return int(num_ctx)
+            
+            # Also check model_info
+            if isinstance(info, dict) and "model_info" in info:
+                model_info = info["model_info"]
+                for key, val in model_info.items():
+                    if "context_length" in key:
+                        return int(val)
+        except Exception:
+            pass
+            
+        return None
     
     def clear_cache(self):
         """Clear the context window cache."""
@@ -266,57 +227,30 @@ class TokenBreakdown:
             + self.other
         )
 
-    def to_dict(self) -> dict:
-        """Export as dictionary with percentages."""
+    def to_dict(self, context_window: Optional[int] = None) -> dict:
+        """Export as dictionary. Percentages are included only if context_window is provided."""
         total = self.total
-        if total == 0:
-            return {
-                "system_instructions": 0,
-                "tool_definitions": 0,
-                "file_content": 0,
-                "messages": 0,
-                "tool_results": 0,
-                "other": 0,
-                "total": 0,
-                "percentages": {
-                    "system_instructions": 0.0,
-                    "tool_definitions": 0.0,
-                    "file_content": 0.0,
-                    "messages": 0.0,
-                    "tool_results": 0.0,
-                    "other": 0.0,
-                }
-            }
-
-        return {
+        base_dict = {
             "system_instructions": self.system_instructions,
             "tool_definitions": self.tool_definitions,
             "file_content": self.file_content,
             "messages": self.messages,
             "tool_results": self.tool_results,
             "other": self.other,
-            "total": total,
-            "percentages": {
-                "system_instructions": round(
-                    (self.system_instructions / total) * 100, 1
-                ),
-                "tool_definitions": round(
-                    (self.tool_definitions / total) * 100, 1
-                ),
-                "file_content": round(
-                    (self.file_content / total) * 100, 1
-                ),
-                "messages": round(
-                    (self.messages / total) * 100, 1
-                ),
-                "tool_results": round(
-                    (self.tool_results / total) * 100, 1
-                ),
-                "other": round(
-                    (self.other / total) * 100, 1
-                ),
-            }
+            "total": total
         }
+
+        if context_window and context_window > 0:
+            base_dict["percentages"] = {
+                "system_instructions": round((self.system_instructions / context_window) * 100, 1),
+                "tool_definitions": round((self.tool_definitions / context_window) * 100, 1),
+                "file_content": round((self.file_content / context_window) * 100, 1),
+                "messages": round((self.messages / context_window) * 100, 1),
+                "tool_results": round((self.tool_results / context_window) * 100, 1),
+                "other": round((self.other / context_window) * 100, 1),
+            }
+        
+        return base_dict
 
 
 @dataclass
@@ -362,7 +296,7 @@ class SessionMetrics:
     last_request_at: Optional[datetime] = None
     requests: List[RequestMetrics] = field(default_factory=list)
 
-    def _get_context_window(self) -> int:
+    def _get_context_window(self) -> Optional[int]:
         """Get context window for the model by fetching from provider."""
         return _context_fetcher.get_context_window(self.model, self.provider)
 
@@ -370,7 +304,7 @@ class SessionMetrics:
     def context_used_percent(self) -> float:
         """Percentage of context window used."""
         window = self._get_context_window()
-        if window == 0:
+        if not window:
             return 0.0
         return round((self.total_tokens / window) * 100, 2)
 
@@ -411,21 +345,13 @@ class SessionMetrics:
         duration_secs = round(self.total_duration_ms / 1000, 1) if self.total_duration_ms else 0
         context_window = self._get_context_window()
         
-        return {
+        res = {
             "session_id": self.session_id,
             "model": self.model,
             "provider": self.provider,
             
-            # Context Information
-            "context": {
-                "window_size": context_window,
-                "used_tokens": self.total_tokens,
-                "used_percent": self.context_used_percent,
-                "remaining_tokens": max(0, context_window - self.total_tokens),
-            },
-            
             # Token Breakdown & Percentages
-            "token_breakdown": self.cumulative_token_breakdown.to_dict(),
+            "token_breakdown": self.cumulative_token_breakdown.to_dict(context_window),
             
             # Token Metrics
             "tokens": {
@@ -455,6 +381,21 @@ class SessionMetrics:
             "started_at": self.started_at.isoformat() if self.started_at else None,
             "last_request_at": self.last_request_at.isoformat() if self.last_request_at else None,
         }
+
+        if context_window:
+            res["context"] = {
+                "window_size": context_window,
+                "used_tokens": self.total_tokens,
+                "used_percent": self.context_used_percent,
+                "remaining_tokens": max(0, context_window - self.total_tokens),
+            }
+        else:
+            res["context"] = {
+                "window_size": "unknown",
+                "used_tokens": self.total_tokens,
+            }
+            
+        return res
 
 
 

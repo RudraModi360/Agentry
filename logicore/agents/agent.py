@@ -172,6 +172,19 @@ class Agent:
         """Access the current system prompt being used by the agent."""
         return self.default_system_message
 
+    @property
+    def telemetry(self) -> dict:
+        """Access telemetry data directly. Returns summary of all sessions or the single active session."""
+        if not self.telemetry_enabled:
+            return {"error": "Telemetry is not enabled. Set telemetry=True when initializing the Agent."}
+        
+        session_ids = self.telemetry_tracker.get_session_ids()
+        if len(session_ids) == 1:
+            return self.telemetry_tracker.get_session_summary(session_ids[0])
+        elif len(session_ids) == 0:
+            return {"message": "No telemetry data recorded yet."}
+        return self.telemetry_tracker.get_total_summary()
+
     def _rebuild_system_prompt_with_tools(self):
         """Regenerate the system prompt to include currently registered tools."""
         # Format tools from internal_tools schemas with full parameter details
@@ -534,6 +547,9 @@ class Agent:
             # Track iteration in execution summary
             self.execution_log.append(f"--- Iteration {i+1} ---")
             
+            # Track LLM request duration for telemetry
+            llm_start_time = time.time()
+            
             # 1. Get response from LLM
             response = None
             try:
@@ -668,6 +684,44 @@ class Agent:
                     msg_dict["tool_calls"] = tool_calls
                 
                 session.add_message(msg_dict)
+                
+                # Record telemetry if enabled
+                if self.telemetry_enabled:
+                    try:
+                        from logicore.telemetry import TokenBreakdown
+                        
+                        llm_end_time = time.time()
+                        duration_ms = (llm_end_time - llm_start_time) * 1000
+                        
+                        # Approximate token counts currently (1 token ~ 4 chars)
+                        system_chars = sum(len(str(m.get("content", ""))) for m in session.messages if m.get("role") == "system")
+                        message_chars = sum(len(str(m.get("content", ""))) for m in session.messages if m.get("role") != "system" and m.get("role") != "assistant")
+                        tools_chars = len(json.dumps(all_tools)) if all_tools else 0
+                        output_chars = len(str(content or ""))
+                        
+                        breakdown = TokenBreakdown(
+                            system_instructions=system_chars // 4,
+                            tool_definitions=tools_chars // 4,
+                            messages=message_chars // 4
+                        )
+                        
+                        input_tokens = (system_chars + message_chars + tools_chars) // 4
+                        output_tokens = output_chars // 4
+                        provider_name = getattr(self.llm, 'provider_name', 'unknown')
+                        
+                        self.telemetry_tracker.record_request(
+                            session_id=session_id,
+                            input_tokens=input_tokens,
+                            output_tokens=output_tokens,
+                            model=self.model_name,
+                            provider=provider_name,
+                            duration_ms=duration_ms,
+                            token_breakdown=breakdown,
+                            tool_calls=len(tool_calls) if tool_calls else 0
+                        )
+                    except Exception as telemetry_err:
+                        if self.debug:
+                            print(f"[Agent] ⚠️ Telemetry tracking error: {telemetry_err}")
                     
             except Exception as parse_error:
                 print(f"[Agent] ⚠️  Response Parsing Error (Ignored): {parse_error}")
