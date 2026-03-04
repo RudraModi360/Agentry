@@ -56,7 +56,7 @@ Agent(
 **Example:**
 
 ```python
-from agentry import Agent
+from logicore import Agent
 
 agent = Agent(
     llm="groq",
@@ -341,7 +341,7 @@ SessionManager(history_dir: str = None)
 
 | Parameter | Type | Default | Description |
 |:----------|:-----|:--------|:------------|
-| `history_dir` | str | None | Directory for session files (default: `agentry/session_history/`) |
+| `history_dir` | str | None | Directory for session files (default: `logicore/session_history/`) |
 
 ---
 
@@ -460,7 +460,7 @@ session.clear_history(keep_system=True)
 ### OllamaProvider
 
 ```python
-from agentry.providers import OllamaProvider
+from logicore.providers import OllamaProvider
 
 provider = OllamaProvider(
     model="llama3.2",
@@ -480,7 +480,7 @@ provider = OllamaProvider(
 ### GroqProvider
 
 ```python
-from agentry.providers import GroqProvider
+from logicore.providers import GroqProvider
 
 provider = GroqProvider(
     model="llama-3.3-70b-versatile",
@@ -500,7 +500,7 @@ provider = GroqProvider(
 ### GeminiProvider
 
 ```python
-from agentry.providers import GeminiProvider
+from logicore.providers import GeminiProvider
 
 provider = GeminiProvider(
     model="gemini-2.0-flash",
@@ -520,7 +520,7 @@ provider = GeminiProvider(
 ### AzureProvider
 
 ```python
-from agentry.providers import AzureProvider
+from logicore.providers import AzureProvider
 
 provider = AzureProvider(
     model="gpt-4",

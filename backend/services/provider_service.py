@@ -10,13 +10,13 @@ from typing import Any, Dict, Optional
 from backend.config import DB_PATH
 from backend.models.provider import ProviderConfig
 
-# Import from agentry modules
-from agentry import Agent
-from agentry.providers.ollama_provider import OllamaProvider
-from agentry.providers.groq_provider import GroqProvider
-from agentry.providers.gemini_provider import GeminiProvider
-from agentry.providers.azure_provider import AzureProvider
-from agentry.providers.capability_detector import detect_model_capabilities, ModelCapabilities
+# Import from logicore modules
+from logicore import Agent
+from logicore.providers.ollama_provider import OllamaProvider
+from logicore.providers.groq_provider import GroqProvider
+from logicore.providers.gemini_provider import GeminiProvider
+from logicore.providers.azure_provider import AzureProvider
+from logicore.providers.capability_detector import detect_model_capabilities, ModelCapabilities
 
 from .agent_cache import agent_cache
 from .auth_service import AuthService

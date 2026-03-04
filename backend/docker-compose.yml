@@ -9,7 +9,7 @@ services:
       args:
         PORT: ${PORT:-8000}
         ENV: ${ENVIRONMENT:-production}
-    container_name: agentry-backend
+    container_name: logicore-backend
     ports:
       - "${PORT:-8000}:${PORT:-8000}"
     environment:

@@ -14,7 +14,7 @@ def is_simplemem_enabled() -> bool:
     """Check if SimpleMem is enabled (requires LanceDB)."""
     try:
         import lancedb
-        from agentry.config.settings import settings
+        from logicore.config.settings import settings
         return settings.SIMPLEMEM_ENABLED
     except ImportError:
         print("[SimpleMem] LanceDB not installed - memory disabled")
@@ -32,13 +32,13 @@ async def get_simplemem_context(user_id: str, session_id: str, user_message: str
     start_time = time.time()
     
     try:
-        from agentry.simplemem import AgentrySimpleMem
+        from logicore.simplemem import AgentrySimpleMem
         
         cache_key = f"{user_id}:{session_id}"
         
         # Create or get SimpleMem instance
         if cache_key not in _simplemem_instances:
-            from agentry.config.settings import settings
+            from logicore.config.settings import settings
             print(f"[SimpleMem] Creating new instance for user {user_id}")
             _simplemem_instances[cache_key] = AgentrySimpleMem(
                 user_id=str(user_id),
@@ -160,7 +160,7 @@ async def search_memories_simplemem(user_id: str, query: str, limit: int = 10) -
         return []
     
     try:
-        from agentry.simplemem import AgentrySimpleMem
+        from logicore.simplemem import AgentrySimpleMem
         
         # Use a generic session for API queries
         cache_key = f"{user_id}:api"
@@ -189,7 +189,7 @@ async def add_memory_simplemem(user_id: str, content: str, memory_type: str = "m
         return False
     
     try:
-        from agentry.simplemem import AgentrySimpleMem
+        from logicore.simplemem import AgentrySimpleMem
         
         cache_key = f"{user_id}:api"
         

@@ -109,11 +109,11 @@ Central configuration for the application:
 ```javascript
 const AppConfig = {
     api: { baseUrl: '' },
-    auth: { tokenKey: 'agentry_token', loginPath: '/login' },
+    auth: { tokenKey: 'logicore_token', loginPath: '/login' },
     websocket: { reconnectDelay: 3000, pingInterval: 30000 },
     agents: { /* agent type definitions */ },
     tools: { /* tool configuration */ },
-    theme: { storageKey: 'agentry_theme', default: 'dark' },
+    theme: { storageKey: 'logicore_theme', default: 'dark' },
     debug: false
 };
 ```

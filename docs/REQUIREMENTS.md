@@ -1,6 +1,6 @@
 # Agentry Requirements Guide
 
-A comprehensive list of all credentials, user-side requirements, and developer requirements for running Agentry.
+A comprehensive list of all credentials, user-side requirements, and developer requirements for running logicore.
 
 ---
 
@@ -114,7 +114,7 @@ DEBUG=false
 
 | Path | Purpose |
 |------|---------|
-| `./agentry/user_data/lancedb_data` | LanceDB vector storage |
+| `./logicore/user_data/lancedb_data` | LanceDB vector storage |
 | `./ui/scratchy_users.db` | SQLite user database |
 | `./ui/media/` | Uploaded media files |
 
@@ -172,9 +172,9 @@ OLLAMA_URL=http://ollama-service:11434  # K8s internal
 
 | Variable | Description |
 |----------|-------------|
-| `ACR_REGISTRY` | Azure Container Registry URL (e.g., `agentryacr.azurecr.io`) |
-| `AKS_CLUSTER` | AKS Cluster Name (e.g., `agentry-aks`) |
-| `AKS_RESOURCE_GROUP` | Azure Resource Group (e.g., `agentry-rg`) |
+| `ACR_REGISTRY` | Azure Container Registry URL (e.g., `logicoreacr.azurecr.io`) |
+| `AKS_CLUSTER` | AKS Cluster Name (e.g., `logicore-aks`) |
+| `AKS_RESOURCE_GROUP` | Azure Resource Group (e.g., `logicore-rg`) |
 
 ---
 
@@ -184,7 +184,7 @@ OLLAMA_URL=http://ollama-service:11434  # K8s internal
 
 ```bash
 # Clone the repository
-git clone https://github.com/RudraModi360/Agentry.git
+git clone https://github.com/RudraModi360/logicore.git
 cd Agentry
 
 # Copy environment file
@@ -202,17 +202,17 @@ pip install -e .
 
 ```bash
 # Full stack (backend + frontend)
-python agentry_runner.py
+python logicore_runner.py
 # OR
-agentry_run
+logicore_run
 
 # Backend only (API server)
-agentry_gui
+logicore_gui
 # OR
 python -m backend.main
 
 # CLI/TUI only
-agentry_cli
+logicore_cli
 ```
 
 ### Docker Development
@@ -255,7 +255,7 @@ SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your_email@gmail.com
 SMTP_PASSWORD=your_app_password  # Use App Password, not regular password
-SMTP_FROM_EMAIL=Agentry <notifications@agentry.ai>
+SMTP_FROM_EMAIL=Agentry <notifications@logicore.ai>
 SMTP_USE_TLS=true
 ```
 
@@ -360,12 +360,12 @@ GOOGLE_CX=...
 | File | Purpose |
 |------|---------|
 | `.env` | Environment variables (secrets) |
-| `agentry.toml` | Application configuration |
+| `logicore.toml` | Application configuration |
 | `mcp.json` | MCP server definitions |
 | `pyproject.toml` | Python dependencies |
 | `docker-compose.yml` | Docker services |
 
-**Priority:** Environment Variables > `agentry.toml` > Defaults
+**Priority:** Environment Variables > `logicore.toml` > Defaults
 
 ---
 

@@ -114,7 +114,7 @@ class EmailService:
         <html>
         <body>
             <h2>Welcome to Agentry, {username}!</h2>
-            <p>You have successfully registered into Agentry. We're excited to have you on board!</p>
+            <p>You have successfully registered into logicore. We're excited to have you on board!</p>
             <br>
             <p>Best regards,<br>The Agentry Team</p>
         </body>

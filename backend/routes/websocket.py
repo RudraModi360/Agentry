@@ -24,14 +24,14 @@ from backend.services.simplemem_middleware import (
     is_simplemem_enabled
 )
 
-from agentry import Agent
-from agentry.agents import SmartAgent, SmartAgentMode
-from agentry.session_manager import SessionManager
-from agentry.providers.ollama_provider import OllamaProvider
-from agentry.providers.groq_provider import GroqProvider
-from agentry.providers.gemini_provider import GeminiProvider
-from agentry.providers.azure_provider import AzureProvider
-from agentry.providers.capability_detector import detect_model_capabilities
+from logicore import Agent
+from logicore.agents import SmartAgent, SmartAgentMode
+from logicore.session_manager import SessionManager
+from logicore.providers.ollama_provider import OllamaProvider
+from logicore.providers.groq_provider import GroqProvider
+from logicore.providers.gemini_provider import GeminiProvider
+from logicore.providers.azure_provider import AzureProvider
+from logicore.providers.capability_detector import detect_model_capabilities
 
 router = APIRouter()
 
@@ -275,7 +275,7 @@ async def websocket_chat(websocket: WebSocket):
                 config = cached["config"]
                 capabilities_dict = cached["capabilities"]
                 
-                from agentry.providers.capability_detector import ModelCapabilities
+                from logicore.providers.capability_detector import ModelCapabilities
                 capabilities = ModelCapabilities.from_dict(capabilities_dict)
                 
                 # Check agent type configuration

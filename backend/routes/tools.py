@@ -88,7 +88,7 @@ async def get_available_tools(user: Dict = Depends(get_current_user)):
     
     # If no agent cached, return all available default tools from registry
     if not builtin_tools:
-        from agentry.tools import ALL_TOOL_SCHEMAS
+        from logicore.tools import ALL_TOOL_SCHEMAS
         for schema in ALL_TOOL_SCHEMAS:
             if isinstance(schema, dict) and 'function' in schema:
                 func = schema['function']

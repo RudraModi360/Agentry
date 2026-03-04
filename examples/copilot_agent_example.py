@@ -1,5 +1,5 @@
 import asyncio
-from agentry.agents import CopilotAgent
+from logicore.agents import CopilotAgent
 
 
 async def main():

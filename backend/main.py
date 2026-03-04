@@ -5,7 +5,7 @@ Run with: uvicorn backend.main:app --reload
 import os
 import sys
 
-# Add parent directory to path for agentry imports
+# Add parent directory to path for logicore imports
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 if parent_dir not in sys.path:

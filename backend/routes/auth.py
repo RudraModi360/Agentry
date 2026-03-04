@@ -267,7 +267,7 @@ async def test_smtp(data: Dict, user: Dict = Depends(get_current_user)):
     if notto_email:
         raise HTTPException(status_code=400, detail="Target email required")
     
-    success = EmailService.send_email(to_email, "SMTP Test", "This is a test email from Agentry.")
+    success = EmailService.send_email(to_email, "SMTP Test", "This is a test email from logicore.")
     if not success:
         raise HTTPException(status_code=500, detail="Failed to send test email. Check server logs.")
     return {"message": "Test email sent"}

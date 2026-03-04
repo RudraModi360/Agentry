@@ -1,5 +1,5 @@
 import asyncio
-from agentry import Agent
+from logicore import Agent
 
 
 async def main():

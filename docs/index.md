@@ -54,7 +54,7 @@ pip install logicore
 
 ```python
 import asyncio
-from agentry import Agent
+from logicore import Agent
 
 async def main():
     agent = Agent(llm="ollama", model="gpt-oss:20b:cloud")
@@ -72,13 +72,14 @@ asyncio.run(main())
 
 | Section | Description |
 |:--------|:------------|
-| [Getting Started](getting-started) | Installation and first steps |
-| [Core Concepts](core-concepts) | Architecture and fundamentals |
+| [Getting Started](https://rudramodi360.github.io/Agentry/getting-started) | Installation guide |
+| [Beginner Guide (Blog)](https://rudramodi360.github.io/Agentry/beginner-guide-blog) | Friendly intro |
+| [Core Concepts](https://rudramodi360.github.io/Agentry/core-concepts) | Architecture and fundamentals |
 | [API Reference](api-reference) | Complete API documentation |
 | [Custom Tools](custom-tools) | Creating your own tools |
 | [MCP Integration](mcp-integration) | External tool servers |
 | [Examples](examples) | Practical code examples |
-| [Troubleshooting](troubleshooting) | Common issues |
+| [Troubleshooting & FAQs](troubleshooting) | Common issues |
 
 ---
 

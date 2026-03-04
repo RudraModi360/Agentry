@@ -1,0 +1,381 @@
+/**
+ * ============================================================
+ * AGENTRY UI - Math/LaTeX Rendering Styles
+ * ============================================================
+ * Styles for KaTeX rendered mathematical formulas
+ * - Display math: Centered block with subtle background
+ * - Inline math: Seamless with surrounding text
+ * - Enhanced typography for mathematical content
+ */
+
+/* ==================== Display Math Blocks ==================== */
+
+.katex-display-block {
+    display: block;
+    margin: 24px 0;
+    padding: 20px 24px;
+    background: var(--bg-tertiary);
+    border-radius: 12px;
+    border: 1px solid var(--card-border);
+    overflow-x: auto;
+    text-align: center;
+}
+
+.katex-display-block .katex-display {
+    margin: 0 !important;
+    padding: 0;
+}
+
+.katex-display-block .katex-display > .katex {
+    white-space: normal;
+    text-align: center;
+}
+
+.katex-display-block .katex {
+    font-size: 1.25em;
+    color: var(--text-primary);
+    letter-spacing: 0.02em;
+}
+
+/* ==================== Inline Math - Seamless with text ==================== */
+
+.katex-inline {
+    display: inline !important;
+    background: none !important;
+    border: none !important;
+    padding: 0 2px !important;
+    margin: 0 !important;
+    vertical-align: baseline;
+}
+
+.katex-inline .katex {
+    font-size: 1.05em;
+    color: var(--text-primary);
+    background: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Ensure inline math flows with text */
+.katex-inline .katex-html {
+    display: inline;
+    white-space: nowrap;
+}
+
+/* Italic math variables in text (matches images) */
+.katex-inline .katex .mathit {
+    font-style: italic;
+    color: var(--text-primary);
+}
+
+/* ==================== KaTeX Base Overrides ==================== */
+
+/* Ensure KaTeX respects our color scheme */
+.katex {
+    color: var(--text-primary);
+    font-size: 1.1em;
+}
+
+/* Fraction lines */
+.katex .frac-line {
+    border-bottom-color: var(--text-primary);
+}
+
+/* Square root lines */
+.katex .sqrt-line {
+    border-top-color: var(--text-primary);
+}
+
+/* ==================== Error States - Show raw LaTeX as fallback ==================== */
+
+.katex-error {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    color: var(--text-secondary);
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+/* Display block errors get minimal styling */
+.katex-display-block.katex-error {
+    padding: 8px 12px;
+    background: var(--bg-tertiary);
+    font-style: italic;
+}
+
+/* ==================== Scrollbar for overflow math ==================== */
+
+.katex-display-block::-webkit-scrollbar {
+    height: 6px;
+}
+
+.katex-display-block::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.katex-display-block::-webkit-scrollbar-thumb {
+    background: var(--text-muted);
+    border-radius: 3px;
+}
+
+.katex-display-block::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
+/* ==================== Dark Theme Adjustments ==================== */
+
+[data-theme="dark"] .katex-display-block {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .katex {
+    color: #e8e8e8;
+}
+
+/* Better contrast for subscripts/superscripts in dark mode */
+[data-theme="dark"] .katex .msupsub {
+    color: #e8e8e8;
+}
+
+/* Greek letters and operators */
+[data-theme="dark"] .katex .mord.mathnormal,
+[data-theme="dark"] .katex .mord.mathit {
+    color: #f0f0f0;
+}
+
+/* Fraction lines in dark mode */
+[data-theme="dark"] .katex .frac-line {
+    border-bottom-color: #d0d0d0;
+}
+
+/* Operators like sum, integral */
+[data-theme="dark"] .katex .mop {
+    color: #e8e8e8;
+}
+
+/* Brackets and delimiters */
+[data-theme="dark"] .katex .mopen,
+[data-theme="dark"] .katex .mclose {
+    color: #d0d0d0;
+}
+
+/* ==================== Matrix and Table Styling ==================== */
+
+.katex .mtable {
+    margin: 4px 0;
+}
+
+.katex .arraycolsep {
+    width: 0.5em;
+}
+
+/* ==================== Large Operators ==================== */
+
+.katex .mop {
+    margin: 0 0.15em;
+}
+
+/* ==================== Equation Numbers ==================== */
+
+.katex-display-block .tag {
+    position: absolute;
+    right: 16px;
+    color: var(--text-muted);
+    font-size: 0.9em;
+}
+
+/* ==================== Mobile Responsiveness ==================== */
+
+@media (max-width: 768px) {
+    .katex-display-block {
+        margin: 16px 0;
+        padding: 16px 14px;
+        font-size: 0.95em;
+        border-radius: 8px;
+    }
+
+    .katex-display-block .katex {
+        font-size: 1.1em;
+    }
+    
+    .message-text strong,
+    .message-text b {
+        font-size: 1.05em;
+        margin-top: 20px;
+    }
+    
+    .message-text ul,
+    .message-text ol {
+        padding-left: 20px;
+    }
+}
+
+/* ==================== Mathematical Content Typography ==================== */
+
+/* Section headers like "Parameter Estimation", "Key Assumptions" */
+.message-text strong,
+.message-text b {
+    display: block;
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-top: 24px;
+    margin-bottom: 12px;
+    letter-spacing: -0.01em;
+}
+
+/* First strong element - no top margin */
+.message-text > strong:first-child,
+.message-text > p:first-child > strong:first-child {
+    margin-top: 0;
+}
+
+/* Inline strong within paragraphs */
+.message-text p strong,
+.message-text li strong {
+    display: inline;
+    margin: 0;
+}
+
+/* "Where:" style definition lists */
+.message-text p:has(+ ul) {
+    margin-bottom: 8px;
+}
+
+/* Mathematical definition lists */
+.message-text ul {
+    list-style: disc;
+    padding-left: 24px;
+    margin: 16px 0;
+}
+
+.message-text ul li {
+    margin-bottom: 10px;
+    line-height: 1.7;
+    color: var(--text-primary);
+}
+
+/* Bullet points with math variables */
+.message-text ul li .katex-inline {
+    font-weight: 500;
+}
+
+/* Numbered lists (Key Assumptions style) */
+.message-text ol {
+    list-style: decimal;
+    padding-left: 28px;
+    margin: 16px 0;
+}
+
+.message-text ol li {
+    margin-bottom: 8px;
+    line-height: 1.6;
+    padding-left: 4px;
+}
+
+/* Parenthetical explanations like "(constant error variance)" */
+.message-text li em,
+.message-text p em {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* "or equivalently" style transitions */
+.message-text p {
+    margin: 12px 0;
+    line-height: 1.7;
+}
+
+/* Equation labels like "y = mx + b" text */
+.message-text code:not([class]) {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    background: var(--bg-tertiary);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--text-primary);
+}
+
+/* ==================== Print Styles ==================== */
+
+@media print {
+    .katex-display-block {
+        background: #f8f8f8;
+        border-color: #ddd;
+        page-break-inside: avoid;
+    }
+
+    .katex {
+        color: #000;
+    }
+}
+
+/* ==================== Loading States ==================== */
+
+/* Display block loading - minimal indicator */
+.katex-display-block:not(.katex-rendered):not(.katex-error) {
+    min-height: 50px;
+    background: var(--bg-tertiary);
+}
+
+/* Inline math loading - invisible placeholder */
+.katex-inline:not(.katex-rendered):not(.katex-error) {
+    display: inline !important;
+    background: none !important;
+    min-width: 0;
+}
+
+/* Rendered states */
+.katex-display-block.katex-rendered {
+    background: var(--bg-tertiary);
+}
+
+.katex-inline.katex-rendered {
+    background: none !important;
+}
+
+[data-theme="dark"] .katex-display-block.katex-rendered {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+/* ==================== Special Math Contexts ==================== */
+
+/* Matrix display */
+.katex .mtable {
+    margin: 8px 0;
+}
+
+/* Summation, Product, Integral - larger display */
+.katex-display-block .katex .mop.op-symbol.large-op {
+    font-size: 1.3em;
+}
+
+/* Subscript/superscript on large operators */
+.katex-display-block .katex .msupsub > span {
+    font-size: 0.75em;
+}
+
+/* ==================== Enhanced Dark Theme for Math Content ==================== */
+
+[data-theme="dark"] .message-text strong,
+[data-theme="dark"] .message-text b {
+    color: #f0f0f0;
+}
+
+[data-theme="dark"] .message-text ul li,
+[data-theme="dark"] .message-text ol li {
+    color: #e0e0e0;
+}
+
+[data-theme="dark"] .message-text li em,
+[data-theme="dark"] .message-text p em {
+    color: #a0a0a0;
+}
+
+[data-theme="dark"] .message-text code:not([class]) {
+    background: rgba(255, 255, 255, 0.06);
+    color: #e0e0e0;
+}

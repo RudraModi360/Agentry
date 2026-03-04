@@ -7,7 +7,7 @@ description: "Working with persistent sessions and conversation history"
 
 # Session Management
 
-Complete guide to session management in Agentry.
+Complete guide to session management in logicore.
 
 ## Table of Contents
 
@@ -45,7 +45,7 @@ Sessions maintain conversation context across multiple interactions. Agentry pro
 ### Creating and Using Sessions
 
 ```python
-from agentry import Agent
+from logicore import Agent
 
 agent = Agent(llm="ollama")
 agent.load_default_tools()
@@ -60,7 +60,7 @@ await agent.chat("Hello", session_id="my_project")
 ### Session Persistence
 
 ```python
-from agentry import SessionManager
+from logicore import SessionManager
 
 sm = SessionManager()
 
@@ -144,10 +144,10 @@ Resumed session: 'coding_task' (3 messages)
 
 ### Location
 
-Sessions are stored in `agentry/session_history/`:
+Sessions are stored in `logicore/session_history/`:
 
 ```
-agentry/
+logicore/
 └── session_history/
     ├── default_chat.toon
     ├── my_project_chat.toon
@@ -186,7 +186,7 @@ Sessions use `.toon` format (JSON-based):
 ### Programmatic Access
 
 ```python
-from agentry import Agent, SessionManager
+from logicore import Agent, SessionManager
 
 agent = Agent(llm="ollama")
 sm = SessionManager()

@@ -1,5 +1,5 @@
 import asyncio
-from agentry.agents import SmartAgent, SmartAgentMode
+from logicore.agents import SmartAgent, SmartAgentMode
 
 
 async def solo_mode_example():

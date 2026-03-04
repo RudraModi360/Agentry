@@ -1,5 +1,5 @@
 import asyncio
-from agentry.agents import BasicAgent, tool
+from logicore.agents import BasicAgent, tool
 
 
 # --- Define Custom Tools as Functions ---

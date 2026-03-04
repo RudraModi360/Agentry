@@ -18,20 +18,20 @@ python -m uvicorn backend.main:app --reload --port 8000
 
 ```bash
 # From the project root directory
-docker build -f backend/Dockerfile -t agentry-backend:latest .
+docker build -f backend/Dockerfile -t logicore-backend:latest .
 ```
 
 #### Run the Container
 
 ```bash
 docker run -d \
-  --name agentry-backend \
+  --name logicore-backend \
   -p 8000:8000 \
   -e PORT=8000 \
   -e CORS_ORIGINS="http://localhost:3000,https://your-frontend-domain.com" \
   -e OPENAI_API_KEY="your-key" \
   -e ANTHROPIC_API_KEY="your-key" \
-  agentry-backend:latest
+  logicore-backend:latest
 ```
 
 ### Docker Compose Deployment
@@ -118,12 +118,12 @@ backend/
 
 ```bash
 # Build and push to Google Container Registry
-docker build -f backend/Dockerfile -t gcr.io/YOUR_PROJECT/agentry-backend:latest .
-docker push gcr.io/YOUR_PROJECT/agentry-backend:latest
+docker build -f backend/Dockerfile -t gcr.io/YOUR_PROJECT/logicore-backend:latest .
+docker push gcr.io/YOUR_PROJECT/logicore-backend:latest
 
 # Deploy to Cloud Run
-gcloud run deploy agentry-backend \
-  --image gcr.io/YOUR_PROJECT/agentry-backend:latest \
+gcloud run deploy logicore-backend \
+  --image gcr.io/YOUR_PROJECT/logicore-backend:latest \
   --platform managed \
   --region us-central1 \
   --allow-unauthenticated \
@@ -140,6 +140,6 @@ Build and push to Azure Container Registry, then deploy as a Container App.
 
 ## Notes
 
-- The backend requires the `scratchy` and `agentry` packages to be available
+- The backend requires the `scratchy` and `logicore` packages to be available
 - Static files (CSS, JS, assets) can optionally be served from the backend or separately via a CDN
 - The SQLite database is persisted in the `/app/ui` directory - use a volume mount for persistence

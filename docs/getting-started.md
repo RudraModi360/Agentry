@@ -60,7 +60,7 @@ pip install logicore
 
 ```bash
 # Clone the repository
-git clone https://github.com/RudraModi360/Agentry.git
+git clone https://github.com/RudraModi360/logicore.git
 cd Agentry
 
 # Create virtual environment (recommended)
@@ -79,7 +79,7 @@ pip install -e .
 ### Option 3: Using uv (Fast)
 
 ```bash
-git clone https://github.com/RudraModi360/Agentry.git
+git clone https://github.com/RudraModi360/logicore.git
 cd Agentry
 uv sync
 ```
@@ -162,7 +162,7 @@ Create a file named `my_first_agent.py`:
 
 ```python
 import asyncio
-from agentry import Agent
+from logicore import Agent
 
 async def main():
     # Initialize agent with Ollama provider
@@ -190,7 +190,7 @@ python my_first_agent.py
 If you're using Jupyter Notebook or Google Colab, use `await` directly instead of `asyncio.run()`:
 
 ```python
-from agentry import Agent
+from logicore import Agent
 
 # Create agent
 agent = Agent(llm="groq", model="llama-3.3-70b-versatile", api_key="your-key")
@@ -208,7 +208,7 @@ import nest_asyncio
 nest_asyncio.apply()
 
 import asyncio
-from agentry import Agent
+from logicore import Agent
 
 async def main():
     agent = Agent(llm="groq", model="llama-3.3-70b-versatile", api_key="your-key")
@@ -226,7 +226,7 @@ asyncio.run(main())
 ### Groq Provider
 
 ```python
-from agentry import Agent
+from logicore import Agent
 
 agent = Agent(
     llm="groq",
@@ -239,7 +239,7 @@ agent.load_default_tools()
 ### Gemini Provider
 
 ```python
-from agentry import Agent
+from logicore import Agent
 
 agent = Agent(
     llm="gemini",
@@ -252,7 +252,7 @@ agent.load_default_tools()
 ### Azure Provider
 
 ```python
-from agentry import Agent
+from logicore import Agent
 
 agent = Agent(
     llm="azure",
@@ -272,7 +272,7 @@ agent.load_default_tools()
 Launch the terminal-based interface:
 
 ```bash
-agentry_cli
+logicore_cli
 ```
 
 CLI options:
@@ -288,7 +288,7 @@ CLI options:
 **Example:**
 
 ```bash
-agentry_cli -p groq -m llama-3.3-70b-versatile
+logicore_cli -p groq -m llama-3.3-70b-versatile
 ```
 
 ### Web Interface (GUI)
@@ -296,7 +296,7 @@ agentry_cli -p groq -m llama-3.3-70b-versatile
 Launch the browser-based interface:
 
 ```bash
-agentry_gui
+logicore_gui
 ```
 
 Then open [http://localhost:8000](http://localhost:8000) in your browser.
@@ -308,7 +308,7 @@ Then open [http://localhost:8000](http://localhost:8000) in your browser.
 You can customize the agent's behavior with a system message:
 
 ```python
-from agentry import Agent
+from logicore import Agent
 
 agent = Agent(
     llm="ollama",
@@ -326,7 +326,7 @@ agent.load_default_tools()
 Agentry includes a specialized agent for coding tasks:
 
 ```python
-from agentry import CopilotAgent
+from logicore import CopilotAgent
 
 copilot = CopilotAgent(llm="ollama", model="codellama")
 
@@ -345,7 +345,7 @@ Run this script to verify your installation is working:
 
 ```python
 import asyncio
-from agentry import Agent
+from logicore import Agent
 
 async def verify():
     try:

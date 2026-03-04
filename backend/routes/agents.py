@@ -19,7 +19,7 @@ from backend.services.simplemem_middleware import (
     is_simplemem_enabled
 )
 
-from agentry.agents import SmartAgent, SmartAgentMode
+from logicore.agents import SmartAgent, SmartAgentMode
 
 router = APIRouter()
 

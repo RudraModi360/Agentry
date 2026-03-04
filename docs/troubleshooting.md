@@ -7,7 +7,7 @@ description: "Common issues and their solutions"
 
 # Troubleshooting Guide
 
-Common issues and their solutions when working with Agentry.
+Common issues and their solutions when working with logicore.
 
 ## Table of Contents
 
@@ -25,7 +25,7 @@ Common issues and their solutions when working with Agentry.
 
 ## Installation Issues
 
-### Import Error: No module named 'agentry'
+### Import Error: No module named 'logicore'
 
 **Problem:** Python cannot find the Agentry module.
 
@@ -48,7 +48,7 @@ Or add to your Python path:
 ```python
 import sys
 sys.path.insert(0, '/path/to/Agentry')
-from agentry import Agent
+from logicore import Agent
 ```
 
 ---
@@ -298,7 +298,7 @@ print([t['function']['name'] for t in tools])
 
 1. **Test the tool directly:**
    ```python
-   from agentry.tools import execute_tool
+   from logicore.tools import execute_tool
    result = execute_tool("read_file", {"path": "test.txt"})
    print(result)
    ```
@@ -369,7 +369,7 @@ if os.path.exists("myfile.txt"):
 **Solution:**
 
 ```python
-from agentry.session_manager import SessionManager
+from logicore.session_manager import SessionManager
 
 sm = SessionManager(storage_dir="./sessions")
 
@@ -603,7 +603,7 @@ curl http://localhost:11434/api/tags
 
 ```bash
 python --version
-pip list | grep agentry
+pip list | grep logicore
 ```
 
 ### Check MCP Configuration

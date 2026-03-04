@@ -26,7 +26,7 @@ pip install logicore
 
 ```python
 import asyncio
-from agentry import Agent
+from logicore import Agent
 
 async def main():
     # Create an agent with Ollama
@@ -44,13 +44,13 @@ asyncio.run(main())
 ### Launch CLI
 
 ```bash
-agentry_cli
+logicore_cli
 ```
 
 ### Launch Web UI
 
 ```bash
-agentry_gui
+logicore_gui
 ```
 
 ---
@@ -81,6 +81,7 @@ agentry_gui
 For detailed information, visit the [full documentation](https://rudramodi360.github.io/Agentry/):
 
 - [Getting Started](https://rudramodi360.github.io/Agentry/getting-started) - Installation guide
+- [Beginner Guide (Blog)](https://rudramodi360.github.io/Agentry/beginner-guide-blog) - Friendly intro
 - [Core Concepts](https://rudramodi360.github.io/Agentry/core-concepts) - Architecture
 - [API Reference](https://rudramodi360.github.io/Agentry/api-reference) - Complete API
 - [Custom Tools](https://rudramodi360.github.io/Agentry/custom-tools) - Create tools

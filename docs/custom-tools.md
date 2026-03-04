@@ -41,7 +41,7 @@ Custom tools are Python functions that extend your agent's capabilities beyond t
 ### Simple Function Registration
 
 ```python
-from agentry import Agent
+from logicore import Agent
 
 def greet_user(name: str, language: str = "english") -> str:
     """Greet a user in the specified language."""
@@ -369,7 +369,7 @@ These tools automatically require approval:
 ### Custom Approval
 
 ```python
-from agentry.tools import APPROVAL_REQUIRED_TOOLS
+from logicore.tools import APPROVAL_REQUIRED_TOOLS
 
 # Add your tool to the approval list
 APPROVAL_REQUIRED_TOOLS.add("send_email")

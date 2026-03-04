@@ -13,6 +13,7 @@ from .agents import router as agents_router
 from .media import router as media_router
 from .pages import router as pages_router
 from .websocket import router as websocket_router
+from .telemetry_routes import router as telemetry_router
 
 # Main router that includes all sub-routers
 router = APIRouter()
@@ -23,7 +24,7 @@ async def health_check():
     """Health check endpoint for Docker and load balancer health probes."""
     return {
         "status": "healthy",
-        "service": "agentry-backend",
+        "service": "logicore-backend",
         "version": "1.0.0"
     }
 
@@ -36,6 +37,7 @@ router.include_router(mcp_router, prefix="/api/mcp", tags=["MCP"])
 router.include_router(tools_router, prefix="/api/tools", tags=["Tools"])
 router.include_router(agents_router, prefix="/api", tags=["Agents"])
 router.include_router(media_router, prefix="/api/media", tags=["Media"])
+router.include_router(telemetry_router, prefix="/api", tags=["Telemetry"])
 router.include_router(websocket_router, tags=["WebSocket"])
 
 __all__ = ["router"]

@@ -75,10 +75,10 @@ Frontend available at `http://localhost:3000`.
 
 ```bash
 # Build the image
-docker build -t agentry:latest .
+docker build -t logicore:latest .
 
 # Run the container
-docker run -p 8000:8000 agentry:latest
+docker run -p 8000:8000 logicore:latest
 ```
 
 ### Docker Compose
@@ -89,7 +89,7 @@ Create a `docker-compose.yml`:
 version: '3.8'
 
 services:
-  agentry:
+  logicore:
     build: .
     ports:
       - "8000:8000"
@@ -167,7 +167,7 @@ server {
 
 ### Using systemd (Linux)
 
-Create `/etc/systemd/system/agentry.service`:
+Create `/etc/systemd/system/logicore.service`:
 
 ```ini
 [Unit]
@@ -189,14 +189,14 @@ WantedBy=multi-user.target
 Enable and start:
 
 ```bash
-sudo systemctl enable agentry
-sudo systemctl start agentry
+sudo systemctl enable logicore
+sudo systemctl start logicore
 ```
 
 ### Using PM2 (Node.js)
 
 ```bash
-pm2 start "python -m backend.main" --name agentry
+pm2 start "python -m backend.main" --name logicore
 pm2 save
 pm2 startup
 ```
@@ -211,8 +211,8 @@ Agentry uses SQLite by default. For production:
 
 ```bash
 # Database location
-./agentry_users.db
-./agentry_sessions.db
+./logicore_users.db
+./logicore_sessions.db
 ```
 
 ### PostgreSQL (Production)
@@ -220,7 +220,7 @@ Agentry uses SQLite by default. For production:
 Update configuration in `backend/config.py`:
 
 ```python
-DATABASE_URL = "postgresql://user:password@localhost/agentry"
+DATABASE_URL = "postgresql://user:password@localhost/logicore"
 ```
 
 ---
@@ -255,7 +255,7 @@ LOGGING = {
     'handlers': {
         'file': {
             'class': 'logging.FileHandler',
-            'filename': '/var/log/agentry/app.log',
+            'filename': '/var/log/logicore/app.log',
         },
     },
     'root': {
@@ -278,7 +278,7 @@ Use a load balancer with multiple instances:
 version: '3.8'
 
 services:
-  agentry:
+  logicore:
     build: .
     deploy:
       replicas: 3
@@ -309,16 +309,16 @@ CACHE_URL = "redis://localhost:6379/0"
 
 ```bash
 # SQLite backup
-sqlite3 agentry_users.db ".backup '/backups/agentry_users_$(date +%Y%m%d).db'"
+sqlite3 logicore_users.db ".backup '/backups/logicore_users_$(date +%Y%m%d).db'"
 
 # PostgreSQL backup
-pg_dump agentry > /backups/agentry_$(date +%Y%m%d).sql
+pg_dump logicore > /backups/logicore_$(date +%Y%m%d).sql
 ```
 
 ### Session Data Backup
 
 ```bash
-tar -czf /backups/sessions_$(date +%Y%m%d).tar.gz ./agentry/session_history/
+tar -czf /backups/sessions_$(date +%Y%m%d).tar.gz ./logicore/session_history/
 ```
 
 ---

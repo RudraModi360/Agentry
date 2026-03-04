@@ -7,7 +7,7 @@ from datetime import datetime
 
 from .base import MetricsBase
 
-logger = logging.getLogger("agentry.metrics")
+logger = logging.getLogger("logicore.metrics")
 
 
 class LocalMetrics(MetricsBase):

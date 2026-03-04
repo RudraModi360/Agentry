@@ -7,7 +7,7 @@ description: "Practical code examples and use cases for Agentry"
 
 # Examples
 
-Practical code examples and use cases for Agentry.
+Practical code examples and use cases for logicore.
 
 ## Table of Contents
 
@@ -27,7 +27,7 @@ Practical code examples and use cases for Agentry.
 
 ```python
 import asyncio
-from agentry import Agent
+from logicore import Agent
 
 async def main():
     agent = Agent(llm="ollama", model="llama3.2")
@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
 ```python
 import asyncio
-from agentry import Agent
+from logicore import Agent
 
 async def main():
     agent = Agent(llm="ollama", model="llama3.2")
@@ -68,7 +68,7 @@ if __name__ == "__main__":
 
 ```python
 import asyncio
-from agentry import Agent
+from logicore import Agent
 
 async def main():
     agent = Agent(llm="ollama", model="llama3.2")
@@ -85,7 +85,7 @@ if __name__ == "__main__":
 
 ```python
 import asyncio
-from agentry import Agent
+from logicore import Agent
 
 async def main():
     agent = Agent(llm="ollama", model="llama3.2")
@@ -106,7 +106,7 @@ if __name__ == "__main__":
 
 ```python
 import asyncio
-from agentry import Agent
+from logicore import Agent
 
 def calculate_bmi(weight_kg: float, height_m: float) -> str:
     """Calculate BMI given weight in kg and height in meters."""
@@ -129,7 +129,7 @@ if __name__ == "__main__":
 ```python
 import asyncio
 import requests
-from agentry import Agent
+from logicore import Agent
 
 def get_weather(city: str) -> str:
     """Get current weather for a city."""
@@ -152,7 +152,7 @@ if __name__ == "__main__":
 ```python
 import asyncio
 import sqlite3
-from agentry import Agent
+from logicore import Agent
 
 def query_database(sql: str) -> str:
     """Execute SQL query on the 'users.db' database."""
@@ -185,7 +185,7 @@ if __name__ == "__main__":
 
 ```python
 import asyncio
-from agentry import Agent
+from logicore import Agent
 
 async def main():
     agent = Agent(llm="ollama", model="llama3.2")
@@ -203,7 +203,7 @@ if __name__ == "__main__":
 
 ```python
 import asyncio
-from agentry import Agent, SessionManager
+from logicore import Agent, SessionManager
 
 async def main():
     agent = Agent(llm="ollama", model="llama3.2")
@@ -229,7 +229,7 @@ if __name__ == "__main__":
 
 ```python
 import asyncio
-from agentry import Agent
+from logicore import Agent
 
 async def main():
     agent = Agent(llm="ollama", model="llama3.2")
@@ -257,7 +257,7 @@ if __name__ == "__main__":
 
 ```python
 import asyncio
-from agentry import Agent
+from logicore import Agent
 
 async def main():
     # Coding specialist
@@ -291,7 +291,7 @@ if __name__ == "__main__":
 
 ```python
 import asyncio
-from agentry import Agent
+from logicore import Agent
 
 async def main():
     manager = Agent(llm="groq", model="llama-3.3-70b-versatile", api_key="...")
@@ -323,7 +323,7 @@ if __name__ == "__main__":
 
 ```python
 import asyncio
-from agentry import Agent
+from logicore import Agent
 
 async def main():
     agent = Agent(llm="ollama", model="llama3.2")
@@ -344,7 +344,7 @@ if __name__ == "__main__":
 
 ```python
 import asyncio
-from agentry import Agent
+from logicore import Agent
 
 async def main():
     agent = Agent(llm="ollama", model="llama3.2")
@@ -375,7 +375,7 @@ if __name__ == "__main__":
 ```python
 import asyncio
 import os
-from agentry import CopilotAgent
+from logicore import CopilotAgent
 
 async def review_repo(repo_path):
     copilot = CopilotAgent(llm="ollama", model="codellama")
@@ -400,7 +400,7 @@ if __name__ == "__main__":
 
 ```python
 import asyncio
-from agentry import Agent, CopilotAgent
+from logicore import Agent, CopilotAgent
 
 async def generate_docs():
     reader = Agent(llm="ollama", model="llama3.2")
@@ -425,7 +425,7 @@ if __name__ == "__main__":
 
 ```python
 import asyncio
-from agentry import Agent
+from logicore import Agent
 
 async def analyze_data():
     agent = Agent(llm="groq", model="llama-3.3-70b-versatile", api_key="...")
@@ -451,7 +451,7 @@ if __name__ == "__main__":
 
 ```python
 import asyncio
-from agentry import Agent
+from logicore import Agent
 
 async def devops_task():
     agent = Agent(llm="ollama", model="llama3.2")
@@ -475,7 +475,7 @@ if __name__ == "__main__":
 
 ```python
 import asyncio
-from agentry import Agent
+from logicore import Agent
 
 async def support_bot():
     agent = Agent(
@@ -521,7 +521,7 @@ if __name__ == "__main__":
 
 ```python
 import asyncio
-from agentry import Agent
+from logicore import Agent
 
 def on_tool_start(session_id, tool_name, args):
     print(f"🔧 Tool Start: {tool_name}")
@@ -548,7 +548,7 @@ if __name__ == "__main__":
 
 ```python
 import asyncio
-from agentry import Agent
+from logicore import Agent
 
 async def on_approval(session_id, tool_name, args):
     print(f"⚠️ Tool '{tool_name}' requires approval.")

@@ -7,7 +7,7 @@ import json
 import asyncio
 from typing import List, Dict, Any, Optional
 
-from agentry.tools.media_search import media_search_tool
+from logicore.tools.media_search import media_search_tool
 
 class MediaOrchestrator:
     """

@@ -192,7 +192,7 @@ await agent.chat("What's my name?", session_id="user_123")
 Sessions are saved to disk in `.toon` format:
 
 ```python
-from agentry.session_manager import SessionManager
+from logicore.session_manager import SessionManager
 
 manager = SessionManager(storage_dir="./sessions")
 
@@ -294,7 +294,7 @@ Create an `mcp.json` file in your project:
 ### Using MCP in Code
 
 ```python
-from agentry import Agent
+from logicore import Agent
 
 agent = Agent(llm="ollama")
 agent.load_default_tools()

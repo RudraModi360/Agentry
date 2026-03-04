@@ -23,16 +23,16 @@ parent_dir = os.path.dirname(current_dir)
 if parent_dir not in sys.path:
     sys.path.insert(0, parent_dir)
 
-# Import from agentry modules
-from agentry import Agent
-from agentry.agents import SmartAgent, SmartAgentMode
-from agentry.session_manager import SessionManager
-from agentry.providers.ollama_provider import OllamaProvider
-from agentry.providers.groq_provider import GroqProvider
-from agentry.providers.gemini_provider import GeminiProvider
-from agentry.providers.azure_provider import AzureProvider
-from agentry.providers.capability_detector import detect_model_capabilities, get_known_capability, ModelCapabilities
-from agentry.memory.storage import PersistentMemoryStore
+# Import from logicore modules
+from logicore import Agent
+from logicore.agents import SmartAgent, SmartAgentMode
+from logicore.session_manager import SessionManager
+from logicore.providers.ollama_provider import OllamaProvider
+from logicore.providers.groq_provider import GroqProvider
+from logicore.providers.gemini_provider import GeminiProvider
+from logicore.providers.azure_provider import AzureProvider
+from logicore.providers.capability_detector import detect_model_capabilities, get_known_capability, ModelCapabilities
+from logicore.memory.storage import PersistentMemoryStore
 
 # ============== FastAPI App ==============
 app = FastAPI(
@@ -2727,7 +2727,7 @@ async def get_agent_config(user: Dict = Depends(get_current_user)):
 @app.get("/api/projects")
 async def list_projects(user: Dict = Depends(get_current_user)):
     """List all projects for the user."""
-    from agentry.memory.project_memory import get_project_memory
+    from logicore.memory.project_memory import get_project_memory
     
     memory = get_project_memory()
     projects = memory.list_projects()
@@ -2739,7 +2739,7 @@ async def list_projects(user: Dict = Depends(get_current_user)):
 @app.post("/api/projects")
 async def create_project(config: ProjectConfig, user: Dict = Depends(get_current_user)):
     """Create a new project."""
-    from agentry.memory.project_memory import get_project_memory
+    from logicore.memory.project_memory import get_project_memory
     
     memory = get_project_memory()
     project = memory.create_project(
@@ -2758,7 +2758,7 @@ async def create_project(config: ProjectConfig, user: Dict = Depends(get_current
 @app.get("/api/projects/{project_id}")
 async def get_project(project_id: str, user: Dict = Depends(get_current_user)):
     """Get a specific project."""
-    from agentry.memory.project_memory import get_project_memory
+    from logicore.memory.project_memory import get_project_memory
     
     memory = get_project_memory()
     project = memory.get_project(project_id)
@@ -2771,7 +2771,7 @@ async def get_project(project_id: str, user: Dict = Depends(get_current_user)):
 @app.put("/api/projects/{project_id}/focus")
 async def update_project_focus(project_id: str, focus: str, user: Dict = Depends(get_current_user)):
     """Update the current focus of a project."""
-    from agentry.memory.project_memory import get_project_memory
+    from logicore.memory.project_memory import get_project_memory
     
     memory = get_project_memory()
     memory.update_project_focus(project_id, focus)
@@ -2788,7 +2788,7 @@ async def get_memories(
     user: Dict = Depends(get_current_user)
 ):
     """Get memories with optional filters."""
-    from agentry.memory.project_memory import get_project_memory, MemoryType as MemType
+    from logicore.memory.project_memory import get_project_memory, MemoryType as MemType
     
     memory = get_project_memory()
     mem_type = MemType(memory_type) if memory_type else None
@@ -2803,7 +2803,7 @@ async def get_memories(
 @app.post("/api/memory")
 async def add_memory(entry: MemoryEntry, user: Dict = Depends(get_current_user)):
     """Add a new memory entry."""
-    from agentry.memory.project_memory import get_project_memory, MemoryType as MemType
+    from logicore.memory.project_memory import get_project_memory, MemoryType as MemType
     
     memory = get_project_memory()
     mem = memory.add_memory(
@@ -2824,7 +2824,7 @@ async def search_memories(
     user: Dict = Depends(get_current_user)
 ):
     """Search memories."""
-    from agentry.memory.project_memory import get_project_memory
+    from logicore.memory.project_memory import get_project_memory
     
     memory = get_project_memory()
     results = memory.search_memories(
@@ -2842,7 +2842,7 @@ async def export_memory(
     user: Dict = Depends(get_current_user)
 ):
     """Export memory in LLM-friendly format."""
-    from agentry.memory.project_memory import get_project_memory
+    from logicore.memory.project_memory import get_project_memory
     
     memory = get_project_memory()
     content = memory.export_for_llm(project_id=project_id, format=format)
@@ -2852,7 +2852,7 @@ async def export_memory(
 @app.delete("/api/memory/{memory_id}")
 async def delete_memory(memory_id: int, user: Dict = Depends(get_current_user)):
     """Delete a memory entry."""
-    from agentry.memory.project_memory import get_project_memory
+    from logicore.memory.project_memory import get_project_memory
     
     memory = get_project_memory()
     memory.delete_memory(memory_id)

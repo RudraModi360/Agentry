@@ -131,7 +131,7 @@ Create an `mcp.json` file in your project root:
 
 ```python
 import asyncio
-from agentry import Agent
+from logicore import Agent
 
 async def main():
     agent = Agent(llm="ollama", model="llama3.2")
@@ -167,8 +167,8 @@ The `MCPAgent` class provides enhanced multi-session support for MCP-based appli
 ### Initialization
 
 ```python
-from agentry.agents.agent_mcp import MCPAgent
-from agentry.providers import OllamaProvider
+from logicore.agents.agent_mcp import MCPAgent
+from logicore.providers import OllamaProvider
 
 provider = OllamaProvider(model="llama3.2")
 
@@ -335,8 +335,8 @@ agent.set_session_callbacks(
 
 ```python
 import asyncio
-from agentry.agents.agent_mcp import MCPAgent
-from agentry.providers import GroqProvider
+from logicore.agents.agent_mcp import MCPAgent
+from logicore.providers import GroqProvider
 
 async def handle_user_message(agent, user_id, message):
     session_id = f"user_{user_id}"

@@ -33,7 +33,7 @@ Guidelines for contributing to the Agentry project.
 2. Clone your fork locally:
 
 ```bash
-git clone https://github.com/YOUR-USERNAME/Agentry.git
+git clone https://github.com/YOUR-USERNAME/logicore.git
 cd Agentry
 ```
 
@@ -80,7 +80,7 @@ pytest
 pytest tests/test_agent.py
 
 # Run with coverage
-pytest --cov=agentry
+pytest --cov=logicore
 ```
 
 ### Code Style
@@ -89,13 +89,13 @@ Follow PEP 8 guidelines:
 
 ```bash
 # Format code
-black agentry/
+black logicore/
 
 # Check style
-flake8 agentry/
+flake8 logicore/
 
 # Type checking
-mypy agentry/
+mypy logicore/
 ```
 
 ---
@@ -164,10 +164,10 @@ docs(readme): update installation instructions
 
 ### Adding a New Provider
 
-1. Create provider file in `agentry/providers/`:
+1. Create provider file in `logicore/providers/`:
 
 ```python
-# agentry/providers/new_provider.py
+# logicore/providers/new_provider.py
 from .base import LLMProvider
 
 class NewProvider(LLMProvider):
@@ -180,9 +180,9 @@ class NewProvider(LLMProvider):
         pass
 ```
 
-2. Add to `agentry/providers/__init__.py`
+2. Add to `logicore/providers/__init__.py`
 
-3. Update agent initialization in `agentry/agents/agent.py`
+3. Update agent initialization in `logicore/agents/agent.py`
 
 4. Add tests in `tests/test_providers.py`
 
@@ -190,10 +190,10 @@ class NewProvider(LLMProvider):
 
 ### Adding a New Tool
 
-1. Create tool file in `agentry/tools/`:
+1. Create tool file in `logicore/tools/`:
 
 ```python
-# agentry/tools/new_tool.py
+# logicore/tools/new_tool.py
 
 def new_tool(param: str) -> str:
     """Description of what the tool does.
@@ -204,7 +204,7 @@ def new_tool(param: str) -> str:
     return result
 ```
 
-2. Register in `agentry/tools/__init__.py`
+2. Register in `logicore/tools/__init__.py`
 
 3. Add tests in `tests/test_tools.py`
 
@@ -244,7 +244,7 @@ bundle exec jekyll serve
 
 ```python
 import pytest
-from agentry import Agent
+from logicore import Agent
 
 class TestAgent:
     def test_initialization(self):
