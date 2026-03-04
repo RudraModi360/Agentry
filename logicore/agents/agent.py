@@ -61,7 +61,8 @@ class Agent:
         max_iterations: int = 40,
         capabilities: Any = None,
         telemetry: bool = False,
-        memory: bool = False
+        memory: bool = False,
+        context_compression: bool = False
     ):
         if isinstance(llm, str):
             self.provider = self._create_provider(llm, model, api_key, endpoint)
@@ -116,8 +117,15 @@ class Agent:
         
         self.memory_enabled = memory
         from logicore.simplemem import AgentrySimpleMem
-        self.simplemem = AgentrySimpleMem(user_id=self.role, session_id="default") if memory else None
-        
+        self.simplemem = AgentrySimpleMem(user_id=self.role, session_id="default", debug=self.debug) if memory else None
+
+        # Context compression middleware (summarizes old messages when context grows long)
+        self.context_compression = context_compression
+        self.context_middleware = None
+        if context_compression:
+            from logicore.memory.context_middleware import ContextMiddleware
+            self.context_middleware = ContextMiddleware(self.provider)
+
         # Tool Management
         self.internal_tools = []  # List of schemas
         self.mcp_managers: List[MCPClientManager] = []
@@ -190,13 +198,24 @@ class Agent:
         # Format tools from internal_tools schemas with full parameter details
         from logicore.config.prompts import _format_tools
         tools_section = _format_tools(self.internal_tools)
-        if tools_section:
-           tools_section = f"\n\n<available_tools>\n{tools_section}\n</available_tools>"  # Add leading newline for spacing
+        # Note: _format_tools() already returns the complete <available_tools>...</available_tools> block
+        # NO NEED to wrap it again!
         
         # Decide whether to use custom or auto-generated system message
         if self._custom_system_message:
-            # User provided a custom system message - append tools to it
-            self.default_system_message = self._custom_system_message + tools_section
+            # User provided a custom system message - replace any empty tools section or append
+            if "<available_tools>" in self._custom_system_message:
+                # Replace the empty <available_tools> section with actual formatter tools
+                import re
+                self.default_system_message = re.sub(
+                    r'<available_tools>\s*</available_tools>',
+                    tools_section.strip() if tools_section else "",
+                    self._custom_system_message
+                )
+            else:
+                # No existing tools section, just append
+                self.default_system_message = self._custom_system_message + tools_section
+            
             if self.debug:
                 print(f"[Agent] System prompt (custom + tools): {len(self._custom_system_message)} chars + tools")
         else:
@@ -210,6 +229,14 @@ class Agent:
             self.default_system_message = base_prompt
             if self.debug:
                 print(f"[Agent] System prompt (auto-generated with tools): {len(base_prompt)} chars")
+        
+        # Update system message in all existing sessions
+        for session in self.sessions.values():
+            if session.messages and session.messages[0].get("role") == "system":
+                session.messages[0]["content"] = self.default_system_message
+        
+        if self.debug:
+            print(f"[Agent] System prompt updated with {len(self.internal_tools)} tools")
         
         # Update system message in all existing sessions
         for session in self.sessions.values():
@@ -276,7 +303,41 @@ class Agent:
         self._rebuild_system_prompt_with_tools()
         if self.debug:
             print(f"[Agent] System message updated")
-    
+
+    async def set_project_context(self, project_id: str, session_id: str = "default"):
+        """
+        Load a ProjectMemory context and inject it as a system message for the session.
+        Injects the project's stored approaches, patterns, decisions, and preferences.
+        Safe to call multiple times — replaces previous project context if already set.
+        """
+        from logicore.memory.project_memory import ProjectMemory
+        pm = ProjectMemory()
+        context_md = pm.export_project_context(project_id)
+        if not context_md:
+            if self.debug:
+                print(f"[Agent] ⚠️ No project context found for project_id='{project_id}'")
+            return
+
+        session = self.get_session(session_id)
+        project_msg = {
+            "role": "system",
+            "content": f"<project_context>\n{context_md}\n</project_context>"
+        }
+
+        # Replace existing project context if already present
+        for i, msg in enumerate(session.messages):
+            if msg.get("role") == "system" and "<project_context>" in msg.get("content", ""):
+                session.messages[i] = project_msg
+                if self.debug:
+                    print(f"[Agent] 🗂️ Replaced project context for '{project_id}'")
+                return
+
+        # Otherwise insert after the base system message
+        insert_idx = 1 if session.messages and session.messages[0].get("role") == "system" else 0
+        session.messages.insert(insert_idx, project_msg)
+        if self.debug:
+            print(f"[Agent] 🗂️ Loaded project context for '{project_id}' ({len(context_md)} chars)")
+
     def disable_tools(self, reason: str = None):
         """Disable tool support for this agent."""
         self.supports_tools = False
@@ -483,19 +544,16 @@ class Agent:
             stream = True
 
         session = self.get_session(session_id)
-        
+
+        # Sync memory session ID so per-session isolation works correctly
+        if self.memory_enabled and self.simplemem:
+            self.simplemem.session_id = session_id
+
         # --- Handle Multimodal Input ---
         text_for_memory = user_input
         if isinstance(user_input, list):
             text_for_memory, _ = extract_content(user_input)
-        
-        # If memory is enabled natively, enrich context
-        if self.memory_enabled and self.simplemem:
-            memory_context = await self.simplemem.on_user_message(text_for_memory)
-            if memory_context:
-                user_input_with_memory = f"Context:\n{memory_context}\n\nUser query:\n{text_for_memory}"
-                session.messages[-1]["content"] = user_input_with_memory
-        
+
         # --- Dynamic Capability Detection ---
         if self.capabilities.detection_method == "default":
             if self.debug: print(f"[Agent] 🔍 Detecting capabilities for {self.model_name}...")
@@ -521,8 +579,22 @@ class Agent:
 
         start_time = time.time()
 
-
         session.add_message({"role": "user", "content": user_input})
+
+        # --- Memory Context Injection ---
+        # Retrieve relevant past memories and inject as a system message before the user turn.
+        # Must happen AFTER add_message so session.messages[-1] is correctly the user message.
+        if self.memory_enabled and self.simplemem:
+            memory_context = await self.simplemem.on_user_message(text_for_memory)
+            if memory_context:
+                context_str = "\n".join(f"- {c}" for c in memory_context)
+                # Insert the memory block immediately before the user message
+                session.messages.insert(-1, {
+                    "role": "system",
+                    "content": f"<memory_context>\nRelevant memories from past conversations:\n{context_str}\n</memory_context>"
+                })
+                if self.debug:
+                    print(f"[Agent] 🧠 Injected {len(memory_context)} memory entries into context")
 
         # --- Input Validation (second check) ---
         is_valid, error = self.capabilities.validate_input(session.messages)
@@ -555,15 +627,21 @@ class Agent:
             try:
                 # Prepare messages for provider: strip images if vision not supported
                 llm_messages = session.messages
+
+                # Apply context compression if enabled (summarizes old messages when context grows long)
+                if self.context_compression and self.context_middleware:
+                    llm_messages = await self.context_middleware.manage_context(llm_messages)
+
                 if not self.capabilities.supports_vision:
                     from logicore.providers.utils import extract_content
-                    llm_messages = []
-                    for m in session.messages:
+                    stripped = []
+                    for m in llm_messages:
                         m_copy = m.copy()
                         if m.get("role") == "user" and isinstance(m.get("content"), list):
                             text, _ = extract_content(m.get("content"))
                             m_copy["content"] = text
-                        llm_messages.append(m_copy)
+                        stripped.append(m_copy)
+                    llm_messages = stripped
 
                 # Use streaming if on_token callback is set and provider supports it
                 on_token = active_callbacks.get("on_token")
@@ -737,9 +815,13 @@ class Agent:
 
             # 3. Handle Final Response
             if not tool_calls:
-                # Note: Memory storage is now handled at WebSocket level
-                # via backend.services.simplemem_middleware
-                
+                # Store assistant response in memory and flush to vector store
+                if self.memory_enabled and self.simplemem:
+                    await self.simplemem.on_assistant_message(content)
+                    await self.simplemem.process_pending()
+                    if self.debug:
+                        print(f"[Agent] 🧠 Memory stored for session '{session_id}'")
+
                 if self.debug:
                     print(f"[Agent] ✅ No tool calls required. Returning response.")
                 
@@ -1021,3 +1103,11 @@ class Agent:
         """Clean up resources."""
         for manager in self.mcp_managers:
             await manager.cleanup()
+
+        # Flush any unprocessed memories to vector store on teardown
+        if self.memory_enabled and self.simplemem:
+            try:
+                await self.simplemem.process_pending()
+            except Exception as e:
+                if self.debug:
+                    print(f"[Agent] ⚠️ Memory flush on cleanup failed: {e}")

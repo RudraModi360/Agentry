@@ -19,7 +19,6 @@ class EmbeddingModel:
     
     Priority:
     1. Ollama (fast, local, preferred for deployment)
-    2. HuggingFace Sentence Transformers (fallback)
     """
     
     # Model mappings
@@ -29,13 +28,7 @@ class EmbeddingModel:
         "all-minilm": 384,
         "mxbai-embed-large": 1024,
     }
-    
-    HF_MODELS = {
-        "Qwen/Qwen3-Embedding-0.6B": 1024,
-        "sentence-transformers/all-MiniLM-L6-v2": 384,
-        "BAAI/bge-small-en-v1.5": 384,
-    }
-    
+
     def __init__(
         self,
         model_name: str = None,
@@ -119,41 +112,6 @@ class EmbeddingModel:
                 print(f"[Embedding] Ollama init failed: {e}")
             return False
     
-    def _try_huggingface(self) -> bool:
-        """Try to initialize HuggingFace backend."""
-        try:
-            from sentence_transformers import SentenceTransformer
-            
-            # Map Ollama model to HF equivalent
-            hf_model = self.model_name
-            if self.model_name in self.OLLAMA_MODELS:
-                # Use a default HF model
-                hf_model = "sentence-transformers/all-MiniLM-L6-v2"
-            
-            if self.debug:
-                print(f"[Embedding] Loading HuggingFace model: {hf_model}")
-            
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                self.model = SentenceTransformer(hf_model, trust_remote_code=True)
-            
-            self.backend = "huggingface"
-            self.dimension = self.model.get_sentence_embedding_dimension()
-            
-            if self.debug:
-                print(f"[Embedding] Using HuggingFace: {hf_model} (dim={self.dimension})")
-            
-            return True
-            
-        except ImportError:
-            if self.debug:
-                print("[Embedding] sentence-transformers not installed")
-            return False
-        except Exception as e:
-            if self.debug:
-                print(f"[Embedding] HuggingFace init failed: {e}")
-            return False
-    
     def encode_single(self, text: str, is_query: bool = False) -> np.ndarray:
         """Encode a single text."""
         return self.encode([text], is_query=is_query)[0]
@@ -202,13 +160,3 @@ class EmbeddingModel:
         
         return np.array(embeddings, dtype=np.float32)
     
-    def _encode_huggingface(self, texts: List[str], is_query: bool = False) -> np.ndarray:
-        """Encode using HuggingFace model."""
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            embeddings = self.model.encode(
-                texts,
-                convert_to_numpy=True,
-                normalize_embeddings=True
-            )
-        return embeddings.astype(np.float32)
