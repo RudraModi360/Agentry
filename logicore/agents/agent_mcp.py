@@ -118,7 +118,8 @@ class MCPAgent(Agent):
             deferred_tools: Enable deferred tool loading (dynamic discovery)
             tool_threshold: Auto-enable deferred mode if tool count exceeds this
         """
-        # Initialize base Agent (tools=False initially if deferred, we'll manage them)
+        # Initialize base Agent with tools=True first to load default tools
+        # We'll manage deferred mode after checking total tool count
         super().__init__(
             llm=provider,
             model=model,
@@ -130,7 +131,7 @@ class MCPAgent(Agent):
             telemetry=telemetry,
             memory=memory,
             max_iterations=max_iterations,
-            tools=not deferred_tools  # Only load default tools if not deferred
+            tools=True  # Always load default tools initially
         )
         
         # MCP-specific configuration
@@ -140,28 +141,34 @@ class MCPAgent(Agent):
         self._mcp_initialized = False
         
         # Deferred tool loading configuration
-        self.deferred_tools = deferred_tools
+        self.deferred_tools = deferred_tools  # User explicitly requested deferred mode
         self.tool_threshold = tool_threshold
         self._tool_registry: Dict[str, Dict[str, Any]] = {}  # name -> full schema
         self._loaded_tools: Set[str] = set()  # Tools currently loaded for use
         self._auto_deferred = False  # Tracks if deferred mode was auto-enabled
+        self._default_tools_count = len(self.internal_tools)  # Track default tools
         
-        # If deferred mode, populate the registry with default tools
-        if deferred_tools:
-            self._register_default_tools_deferred()
+        # NOTE: Don't register default tools in deferred registry here.
+        # We'll decide on deferred mode only after MCP servers are loaded
+        # and we know the total tool count (default + MCP).
         
         # Session lifecycle callbacks
         self.on_session_created: Optional[Callable[[str], None]] = None
         self.on_session_destroyed: Optional[Callable[[str], None]] = None
     
-    def _register_default_tools_deferred(self):
-        """Register default tools in the deferred registry."""
-        for tool in ALL_TOOL_SCHEMAS:
+    def _register_all_tools_in_registry(self):
+        """
+        Register all tools (both default internal tools and any loaded MCP tools)
+        in the tool registry for deferred mode. Called when total tools >= threshold.
+        """
+        # Register default tools
+        for tool in self.internal_tools:
             name = tool.get("function", {}).get("name")
-            if name:
+            if name and name not in self._tool_registry:
                 self._tool_registry[name] = tool
+        
         if self.debug:
-            print(f"[MCPAgent] 📦 Registered {len(self._tool_registry)} tools in deferred registry")
+            print(f"[MCPAgent] [+] Registered {len(self._tool_registry)} tools in deferred registry")
     
     def _search_tools(self, pattern: str, limit: int = 10) -> List[Dict[str, Any]]:
         """
@@ -234,35 +241,47 @@ class MCPAgent(Agent):
         """
         Get tools for the current mode.
         
-        In deferred mode: Returns only tool_search_regex + any loaded tools
-        In normal mode: Returns all tools (inherited behavior)
+        Rule: If total tools >= threshold (default 15), enable deferred (dynamic) loading.
+              If total tools < threshold, load all tools normally (no dynamic selection).
+        
+        In deferred mode: Returns only tool_search_regex + any currently loaded tools
+        In normal mode: Returns all tools from parent
         """
-        if not self.deferred_tools:
-            # Check if we should auto-enable deferred mode
+        # Check if we need to activate deferred mode based on total tool count
+        if self.deferred_tools and not self._auto_deferred:
+            # User explicitly requested deferred mode
+            # Register all tools in the registry for deferred access
+            self._register_all_tools_in_registry()
+            if self.debug:
+                print(f"[MCPAgent] [*] Deferred mode explicitly enabled - registered {len(self._tool_registry)} tools")
+        
+        if not self.deferred_tools and not self._auto_deferred:
+            # Normal mode: Get all tools from parent
             all_tools = await super().get_all_tools()
-            if len(all_tools) > self.tool_threshold and not self._auto_deferred:
+            
+            # Check if we should auto-enable deferred mode based on threshold
+            if len(all_tools) >= self.tool_threshold:
                 if self.debug:
-                    print(f"[MCPAgent] ⚠️ Tool count ({len(all_tools)}) exceeds threshold ({self.tool_threshold})")
-                    print(f"[MCPAgent] 🔄 Auto-enabling deferred tool mode...")
+                    print(f"[MCPAgent] [!] Tool count ({len(all_tools)}) >= threshold ({self.tool_threshold})")
+                    print(f"[MCPAgent] [*] Auto-enabling deferred tool mode for dynamic tool selection...")
                 
                 # Switch to deferred mode
                 self.deferred_tools = True
                 self._auto_deferred = True
                 
-                # Move existing tools to registry
-                for tool in all_tools:
-                    name = tool.get("function", {}).get("name")
-                    if name:
-                        self._tool_registry[name] = tool
+                # Register all tools in the registry
+                self._register_all_tools_in_registry()
                 
-                # Clear internal tools from parent (we'll manage them via registry)
-                self.internal_tools = []
-                
-                return await self.get_all_tools()  # Recurse with deferred mode
+                # Recurse to get deferred tools
+                return await self.get_all_tools()
+            
+            # Tools < threshold: Load all tools normally
+            if self.debug and len(all_tools) < self.tool_threshold:
+                print(f"[MCPAgent] [OK] Tool count ({len(all_tools)}) < threshold ({self.tool_threshold}) - loading all tools normally")
             
             return all_tools
         
-        # Deferred mode: Return search tool + loaded tools
+        # Deferred mode is active: Return search tool + loaded tools
         tools = [TOOL_SEARCH_SCHEMA]
         
         for tool_name in self._loaded_tools:
@@ -278,7 +297,7 @@ class MCPAgent(Agent):
         Call this method explicitly after creating the agent if you provided mcp_config_path or mcp_config.
         This must be called from within an async context (e.g., inside an async function).
         
-        In deferred mode, MCP tools are registered in the deferred registry.
+        Rule: Deferred mode activates when total tools (default + MCP) >= threshold (default 15).
         
         Example:
             agent = MCPAgent(..., mcp_config_path="mcp.json")
@@ -286,12 +305,12 @@ class MCPAgent(Agent):
         """
         if self._mcp_initialized:
             if self.debug:
-                print("[MCPAgent] ℹ️ MCP servers already initialized")
+                print("[MCPAgent] [i] MCP servers already initialized")
             return
         
         if not (self.mcp_config_path or self.mcp_config):
             if self.debug:
-                print("[MCPAgent] ℹ️ No MCP config provided, skipping initialization")
+                print("[MCPAgent] [i] No MCP config provided, skipping initialization")
             return
         
         try:
@@ -300,24 +319,45 @@ class MCPAgent(Agent):
                 config=self.mcp_config
             )
             
-            # In deferred mode, register MCP tools in the deferred registry
-            if self.deferred_tools or self._auto_deferred:
-                for manager in self.mcp_managers:
-                    mcp_tools = await manager.get_tools()
-                    for tool in mcp_tools:
-                        name = tool.get("function", {}).get("name")
-                        if name:
-                            self._tool_registry[name] = tool
-                    if self.debug:
-                        print(f"[MCPAgent] 📦 Registered {len(mcp_tools)} MCP tools in deferred registry")
+            # Collect all MCP tools
+            total_mcp_tools = 0
+            for manager in self.mcp_managers:
+                mcp_tools = await manager.get_tools()
+                total_mcp_tools += len(mcp_tools)
+                for tool in mcp_tools:
+                    name = tool.get("function", {}).get("name")
+                    if name:
+                        self._tool_registry[name] = tool
+                if self.debug:
+                    print(f"[MCPAgent] [+] Registered {len(mcp_tools)} MCP tools in registry")
+            
+            # Calculate total tools including default tools
+            total_tools = self._default_tools_count + total_mcp_tools
+            
+            # Check if total tools >= threshold and enable deferred mode if needed
+            if total_tools >= self.tool_threshold and not self.deferred_tools and not self._auto_deferred:
+                if self.debug:
+                    print(f"[MCPAgent] [!] Total tools ({total_tools} = {self._default_tools_count} default + {total_mcp_tools} MCP) >= threshold ({self.tool_threshold})")
+                    print(f"[MCPAgent] [*] Auto-enabling deferred tool mode for dynamic selection...")
+                # Switch to deferred mode for dynamic tool loading
+                self.deferred_tools = True
+                self._auto_deferred = True
+                # Register all tools in the registry
+                self._register_all_tools_in_registry()
+            elif self.debug and not self.deferred_tools:
+                # Only print this if deferred mode wasn't enabled and isn't explicitly requested
+                print(f"[MCPAgent] [OK] Total tools ({total_tools} = {self._default_tools_count} default + {total_mcp_tools} MCP) < threshold ({self.tool_threshold}) - all tools will be loaded normally")
+            elif self.debug and self.deferred_tools and not self._auto_deferred:
+                # User explicitly requested deferred mode
+                print(f"[MCPAgent] [OK] Deferred mode explicitly enabled - {total_tools} total tools ({self._default_tools_count} default + {total_mcp_tools} MCP)")
             
             self._mcp_initialized = True
             if self.debug:
-                print("[MCPAgent] ✅ MCP servers initialized successfully")
-                print(f"[MCPAgent] 📊 Total tools in registry: {len(self._tool_registry)}")
+                print("[MCPAgent] [OK] MCP servers initialized successfully")
+                print(f"[MCPAgent] [*] Tool summary: {self._default_tools_count} default + {total_mcp_tools} MCP = {total_tools} total")
         except Exception as e:
             if self.debug:
-                print(f"[MCPAgent] ⚠️ Failed to initialize MCP servers: {e}")
+                print(f"[MCPAgent] [!] Failed to initialize MCP servers: {e}")
             raise
     
     async def _lazy_init_mcp(self):
@@ -346,8 +386,8 @@ class MCPAgent(Agent):
             if self.debug:
                 loaded_count = len(self._loaded_tools)
                 registry_count = len(self._tool_registry)
-                print(f"[MCPAgent] 🔍 Tool search: '{pattern}' -> {result.get('total_matches', 0)} matches")
-                print(f"[MCPAgent] 📊 Loaded: {loaded_count}/{registry_count} tools")
+                print(f"[MCPAgent] [?] Tool search: '{pattern}' -> {result.get('total_matches', 0)} matches")
+                print(f"[MCPAgent] [*] Loaded: {loaded_count}/{registry_count} tools")
             
             return result
         
@@ -367,7 +407,7 @@ class MCPAgent(Agent):
         self.on_session_created = on_session_created
         self.on_session_destroyed = on_session_destroyed
         if self.debug:
-            print("[MCPAgent] Session callbacks registered")
+            print("[MCPAgent] [OK] Session callbacks registered")
     
     def register_tool_deferred(self, schema: Dict[str, Any], preload: bool = False):
         """
@@ -384,7 +424,7 @@ class MCPAgent(Agent):
                 self._loaded_tools.add(name)
             if self.debug:
                 state = "loaded" if preload else "deferred"
-                print(f"[MCPAgent] 📦 Registered tool '{name}' ({state})")
+                print(f"[MCPAgent] [+] Registered tool '{name}' ({state})")
     
     def preload_tools(self, tool_names: List[str]):
         """
@@ -402,7 +442,7 @@ class MCPAgent(Agent):
                     print(f"[MCPAgent] ⚡ Preloaded tool: {name}")
             else:
                 if self.debug:
-                    print(f"[MCPAgent] ⚠️ Tool not found in registry: {name}")
+                    print(f"[MCPAgent] [!] Tool not found in registry: {name}")
     
     def get_registry_stats(self) -> Dict[str, Any]:
         """Get statistics about the tool registry."""
@@ -435,7 +475,7 @@ class MCPAgent(Agent):
                     self._tool_registry[name] = schema
                     self._loaded_tools.add(name)  # Custom tools are preloaded
                     if self.debug:
-                        print(f"[MCPAgent] 📦 Custom tool '{name}' added to registry (preloaded)")
+                        print(f"[MCPAgent] [+] Custom tool '{name}' added to registry (preloaded)")
     
     def create_session(
         self, 
@@ -462,7 +502,7 @@ class MCPAgent(Agent):
             self.on_session_created(session_id)
         
         if self.debug:
-            print(f"[MCPAgent] ✅ Created session: {session_id}")
+            print(f"[MCPAgent] [OK] Created session: {session_id}")
         
         return session
     
@@ -477,7 +517,7 @@ class MCPAgent(Agent):
             self.on_session_destroyed(session_id)
         
         if self.debug:
-            print(f"[MCPAgent] ✅ Destroyed session: {session_id}")
+            print(f"[MCPAgent] [OK] Destroyed session: {session_id}")
         
         return True
     
@@ -508,7 +548,7 @@ class MCPAgent(Agent):
             self.destroy_session(session_id)
         
         if self.debug and stale_sessions:
-            print(f"[MCPAgent] 🧹 Cleaned up {len(stale_sessions)} stale sessions")
+            print(f"[MCPAgent] [*] Cleaned up {len(stale_sessions)} stale sessions")
         
         return len(stale_sessions)
     
@@ -561,7 +601,7 @@ class MCPAgent(Agent):
             json.dump(config, f, indent=2)
         
         if self.debug:
-            print(f"[MCPAgent] ✅ Exported configuration to {filepath}")
+            print(f"[MCPAgent] [OK] Exported configuration to {filepath}")
     
     async def chat(
         self, 
