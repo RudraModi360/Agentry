@@ -1,0 +1,98 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "logicore"
+version = "0.1.0"
+description = "A modular, multi-provider AI agent framework for building intelligent tool-using agents with Gemini, Groq, Ollama, Azure OpenAI, and Anthropic."
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "RudraModi360", email = "rudramodi360@gmail.com"},
+]
+keywords = [
+    "AI agents",
+    "LLM framework",
+    "tool-use",
+    "function-calling",
+    "MCP",
+    "multi-provider",
+    "Gemini",
+    "Groq",
+    "Ollama",
+    "Azure OpenAI",
+    "Anthropic",
+    "AI copilot",
+    "agentic AI",
+    "smart agents",
+    "model context protocol",
+    "logicore",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Operating System :: OS Independent",
+    "Typing :: Typed",
+]
+
+dependencies = [
+    "pydantic>=2.0",
+    "requests>=2.28",
+    "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+gemini = ["google-genai>=1.0"]
+groq = ["groq>=0.4"]
+ollama = ["ollama>=0.1"]
+azure = ["openai>=1.0", "httpx>=0.24"]
+anthropic = ["anthropic>=0.20"]
+mcp = ["mcp>=0.9"]
+tools = ["pypdf>=3.0", "python-docx>=0.8", "openpyxl>=3.0"]
+reloader = ["watchdog>=3.0"]
+all = [
+    "google-genai>=1.0",
+    "groq>=0.4",
+    "ollama>=0.1",
+    "openai>=1.0",
+    "httpx>=0.24",
+    "anthropic>=0.20",
+    "mcp>=0.9",
+    "pypdf>=3.0",
+    "python-docx>=0.8",
+    "openpyxl>=3.0",
+    "watchdog>=3.0",
+]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "build>=1.0",
+    "twine>=4.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/RudraModi360/Agentry"
+Documentation = "https://rudramodi360.github.io/Agentry/"
+Repository = "https://github.com/RudraModi360/Agentry"
+"Bug Tracker" = "https://github.com/RudraModi360/Agentry/issues"
+Changelog = "https://github.com/RudraModi360/Agentry/blob/main/deploy/CHANGELOG.md"
+
+[tool.setuptools.packages.find]
+include = ["logicore*"]
+exclude = ["tests*", "deploy*", "docs*"]
+
+[tool.setuptools.package-data]
+logicore = ["py.typed"]
+
+[tool.logicore]
+built-by = "Rudra Modi"

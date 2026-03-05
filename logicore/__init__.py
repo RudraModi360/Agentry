@@ -1,3 +1,5 @@
+__version__ = "0.1.0"
+
 from .agents.agent import Agent
 from .agents.copilot import CopilotAgent
 from .agents.agent_mcp import MCPAgent

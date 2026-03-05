@@ -88,6 +88,11 @@ ui/media/
 .env
 tests/
 example/
-docs/
+# docs/
 .agent/
 test_*
+
+# Deploy build artifacts
+*.whl
+*.tar.gz
+dist/
