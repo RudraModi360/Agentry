@@ -97,7 +97,7 @@
     "prompt": "Search Logicore documentation..."
   },
   "modeToggle": {
-    "default": "dark",
+    "default": "light",
     "isHidden": false
   },
   "analytics": {
