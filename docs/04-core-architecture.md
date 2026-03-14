@@ -13,26 +13,32 @@ Every call to `agent.chat()` follows the same flow. Understanding this is key to
 ```mermaid
 graph TD
     A["User Input<br/>agent.chat(message)"] --> B["Create/Retrieve Session"]
-    B --> C["Inject Memory Context<br/>(if enabled)"]
-    C --> D["Gather Available Tools<br/>(internal + skills + MCP)"]
-    D --> E["Apply Context Compression<br/>(if enabled)"]
-    E --> F["Format Messages<br/>for Provider"]
-    F --> G["Call ProviderGateway"]
-    G --> H["LLM Response"]
-    H --> I{Tool Calls?}
-    I -->|Yes| J["For Each Tool Call"]
-    J --> K["Validate Tool Exists"]
-    K --> L["Check Approval<br/>(if needed)"]
-    L --> M["Execute Tool"]
-    M --> N["Add Result to Messages"]
-    N --> G
-    I -->|No| O["Store in Memory<br/>(if enabled)"]
-    O --> P["Return Response<br/>to User"]
+    B --> C["Preview Memory Context<br/>(if enabled)"]
+    C --> D["Judge Memory Relevance<br/>(out-of-band LLM call)"]
+    D --> E{Memory<br/>Relevant?}
+    E -->|Yes| F["Inject Memory Context"]
+    E -->|No| G["Skip Memory Injection"]
+    F --> H["Gather Available Tools<br/>(internal + skills + MCP)"]
+    G --> H
+    H --> I["Apply Context Compression<br/>(if enabled)"]
+    I --> J["Format Messages<br/>for Provider"]
+    J --> K["Call ProviderGateway"]
+    K --> L["LLM Response"]
+    L --> M{Tool Calls?}
+    M -->|Yes| N["For Each Tool Call"]
+    N --> O["Validate Tool Exists"]
+    O --> P["Check Approval<br/>(if needed)"]
+    P --> Q["Execute Tool"]
+    Q --> R["Add Result to Messages"]
+    R --> K
+    M -->|No| S["Store in Memory<br/>(if enabled)"]
+    S --> T["Return Response<br/>to User"]
     
     style A fill:#e1f5ff
-    style G fill:#fff3e0
-    style O fill:#f3e5f5
-    style P fill:#c8e6c9
+    style D fill:#ffe0b2
+    style K fill:#fff3e0
+    style S fill:#f3e5f5
+    style T fill:#c8e6c9
 ```
 
 ### **Detailed Flow with Code**
@@ -52,21 +58,35 @@ session.add_message({
     "content": "What's 2 + 2?"
 })
 
-# Step 3: Inject memory context (if enabled)
+# Step 3: Preview and judge memory (NEW - Out-of-Band Judge System)
+# This prevents injection of stale event/fact data while trusting personal data
+memory_to_inject = None
 if agent.enable_memory:
-    relevant_memories = agent.memory.search(
-        query="What's 2 + 2?",
-        session_id=session.id,
-        top_k=3
-    )
-    # Prepend to system prompt
-    system_prompt += f"\nPrevious knowledge:\n{relevant_memories}"
+    # Pure read - no side-effects like double-queuing
+    preview = agent.memory._fast_retrieve("What's 2 + 2?")
+    
+    if preview:
+        # Judge call uses same provider, completely outside session
+        # No session history, no tools, pure judgment call
+        judge_verdict = await agent._judge_memory_relevance(
+            user_input="What's 2 + 2?",
+            memory_entries=preview
+        )
+        # If judge says stale or irrelevant → Don't inject
+        # If judge says relevant → Inject
+        
+        if judge_verdict:
+            memory_to_inject = preview
 
 # Step 4: Build message list for LLM
 messages = [
     {"role": "system", "content": system_prompt},
     {"role": "user", "content": "What's 2 + 2?"}
 ]
+
+# If memory judge approved injection, add it to system prompt
+if memory_to_inject:
+    messages[0]["content"] += f"\nRelevant knowledge from memory:\n{memory_to_inject}"
 
 # Step 5: Get all available tools
 tools = [
@@ -135,6 +155,90 @@ return response.content
 2. **Tool Loop**: LLM → Tools → LLM → Tools until no more tools (or max iterations hit)
 3. **Memory is Optional**: Works with or without persistent memory
 4. **Provider Agnostic**: Same flow regardless of LLM provider
+5. **Memory Judgment**: Out-of-band judge call prevents stale data injection before LLM sees context
+
+### **The Memory Judgment System (NEW)**
+
+Before memory context is injected into the main conversation, a lightweight out-of-band judge call decides if the retrieved memory is still relevant and temporally current.
+
+**Why This Matters:**
+```
+PROBLEM:
+User (2026): "What was India's semi-final score?"
+Memory (2023): "India vs NZ, Nov 15, 2023, Wankhede Stadium, 397/4"
+Agent injects old data → LLM returns 2023 match instead of searching for current match ❌
+
+SOLUTION:
+Judge call (outside session): "Today is March 6, 2026. User asking about semi-final. 
+Memory is from 2023. This is a PAST EVENT that could be outdated. → SUPPRESS INJECTION"
+Memory not injected → Agent web_searches for 2026 match ✅
+```
+
+**Judge Decision Criteria:**
+
+| Memory Type | Decision | Reason |
+|-------------|----------|--------|
+| Personal user data (name, preferences) | APPROVE | Trust directly, no verification needed |
+| Timeless knowledge (definitions, how things work) | APPROVE | Age-independent, relevant if matching query |
+| Factual events/results (match scores, news) from past | REJECT | Likely outdated, needs current verification |
+| Rankings/versions of technology | REJECT | Become stale quickly, should be re-verified |
+| Irrelevant to current question | REJECT | Noise, don't inject |
+
+**Implementation Flow:**
+
+```
+User Query
+    ↓
+Memory._fast_retrieve() ← Pure read, no side-effects
+    ↓ (if memory found)
+Judge Call (outside session):
+  - Same provider/model as agent
+  - Clean state (no session history, no tools)
+  - Today's date passed explicitly
+  - Returns: True (INJECT) or False (SKIP)
+    ↓
+Try/Finally Pattern:
+  - If judge=False: Set memory_enabled=False
+  - Call super().chat() ← respects memory_enabled
+  - Finally: Always restore memory_enabled=True
+    ↓
+Response
+```
+
+**Code Pattern:**
+```python
+# In SmartAgent.chat():
+async def chat(self, user_input, session_id="default", ...):
+    memory_was_disabled = False
+    
+    # Preview memory & judge relevance
+    if isinstance(user_input, str) and self.memory_enabled and self.simplemem:
+        try:
+            preview = self.simplemem._fast_retrieve(user_input)
+            if preview:
+                should_inject = await self._judge_memory_relevance(user_input, preview)
+                if not should_inject:
+                    self.memory_enabled = False
+                    memory_was_disabled = True
+        except Exception:
+            pass  # Safe fallback
+    
+    try:
+        response = await super().chat(user_input, session_id, ...)
+    finally:
+        if memory_was_disabled:
+            self.memory_enabled = True  # Always restore
+    
+    return response
+```
+
+**Key Properties:**
+
+1. **Lightweight**: One extra LLM call per chat (same model/provider, minimal overhead)
+2. **Isolated**: Judge has no access to session history or tools
+3. **Safe**: Try/finally guarantees memory_enabled restored even on exception
+4. **Fallback**: If judge fails, defaults to injecting memory (conservative)
+5. **Transparent**: No impact on non-factual queries (personal data, timeless knowledge)
 
 ---
 

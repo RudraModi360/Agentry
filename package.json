@@ -1,0 +1,14 @@
+{
+  "name": "logicore-docs",
+  "version": "1.0.0",
+  "description": "Logicore AI Agent Framework Documentation",
+  "scripts": {
+    "dev": "mintlify dev",
+    "build": "mintlify build",
+    "preview": "mintlify preview"
+  },
+  "dependencies": {
+    "mintlify": "^6.0.0"
+  },
+  "devDependencies": {}
+}

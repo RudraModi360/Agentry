@@ -237,7 +237,193 @@ All **Agent** parameters, plus:
 
 ---
 
-## Session Classes
+### **SmartAgent**
+
+**Description:** Advanced conversational agent with intelligent memory management, real-time awareness, and temporal context judgment. Optimized for both solo chat and project-based work with automatic context verification.
+
+**Purpose:** 
+- **Solo Mode**: General-purpose chat with web search intelligence and current events awareness
+- **Project Mode**: Project-centric conversations with tech stack detection and automatic learning capture
+
+**Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `llm` | Union[LLMProvider, str] | `"ollama"` | LLM provider instance or string name |
+| `model` | str | None | Model identifier (auto-detected if None) |
+| `api_key` | str | None | API key (reads environment if None) |
+| `mode` | str | `"solo"` | Operation mode: "solo" for general chat, "project" for project-based work |
+| `project_id` | str | None | Project identifier (required if mode="project") |
+| `memory` | bool | `True` | Enable SimpleMem vector store for fast semantic search |
+| `debug` | bool | `False` | Enable detailed logging |
+| `telemetry` | bool | `False` | Enable usage tracking |
+
+**Key Features:**
+
+- **Memory Judgment System**: Out-of-band LLM judge call validates memory relevance before injection
+- **Temporal Awareness**: Auto-detects and handles time-sensitive queries (scores, news, events)
+- **Web Search Intelligence**: Knows when to verify facts vs. trust personal data
+- **Project Context**: Maintains and evolves project-specific knowledge
+- **Current Awareness**: Proactively surfaces trending and viral content
+
+**Usage Example:**
+
+```python
+from logicore.agents import SmartAgent, SmartAgentMode
+
+# Solo chat mode
+agent = SmartAgent(
+    llm="openai",
+    model="gpt-4",
+    mode=SmartAgentMode.SOLO,
+    memory=True,
+    debug=False
+)
+
+response = await agent.chat("What was India's semi-final score?")
+# Judge detects: event query, might have stale memory
+# If memory found → Judge decides relevance → If stale, triggers web_search ✅
+
+# Project mode
+project_agent = SmartAgent(
+    llm="openai",
+    mode=SmartAgentMode.PROJECT,
+    project_id="my_app",
+    memory=True
+)
+
+project_agent.create_project(
+    project_id="my_app",
+    title="Python Django App",
+    goal="Build scalable REST API"
+)
+
+response = await project_agent.chat("What's our tech stack?")
+# Project context: ["Python 3.11", "Django 4.2", "PostgreSQL 15"]
+```
+
+**Core Methods:**
+
+```python
+# Main chat with memory judgment
+async def chat(
+    user_input: Union[str, List[Dict[str, Any]]],
+    session_id: str = "default",
+    stream: bool = False,
+    generate_walkthrough: bool = True,
+    **kwargs
+) -> str:
+    """
+    Send message and get response with intelligent memory management.
+    
+    Uses out-of-band judge call to validate memory relevance before injection.
+    Returns response text.
+    
+    Args:
+        user_input: User message or message list
+        session_id: Conversation session identifier
+        stream: Stream response tokens if True
+        generate_walkthrough: Include reasoning in response
+    
+    Returns:
+        Response string or async generator if stream=True
+    """
+
+# Memory judgment (internal)
+async def _judge_memory_relevance(
+    self,
+    user_input: str,
+    memory_entries: list
+) -> bool:
+    """
+    Lightweight out-of-band LLM call to judge memory relevance.
+    
+    Uses same provider/model but completely outside session.
+    No session history, no tools, pure judgment call.
+    
+    Decision criteria:
+    - Personal user data → APPROVE (trust directly)
+    - Timeless knowledge → APPROVE (if relevant)
+    - Stale events/facts from past → REJECT (needs verification)
+    - Irrelevant context → REJECT
+    
+    Args:
+        user_input: User's question
+        memory_entries: Preview of retrieved memories
+    
+    Returns:
+        True to inject memory, False to suppress
+    """
+
+# Project management
+def create_project(
+    self,
+    project_id: str,
+    title: str,
+    goal: str = "",
+    environment: Dict[str, str] = None,
+    key_files: List[str] = None
+) -> ProjectContext:
+    """Create and switch to new project context."""
+
+def switch_to_project(self, project_id: str) -> Optional[ProjectContext]:
+    """Switch to existing project."""
+
+def switch_to_solo(self):
+    """Switch to solo mode."""
+
+def list_projects(self) -> List[ProjectContext]:
+    """List all available projects."""
+
+def get_project_context_for_llm(self) -> str:
+    """Get project context for injection into prompts."""
+
+# Reasoning shortcuts
+async def reason(self, problem: str, session_id: str = "default") -> str:
+    """Explicit reasoning mode - encourages step-by-step thinking."""
+
+async def remember(
+    self,
+    memory_type: str,
+    title: str,
+    content: str,
+    tags: List[str] = None
+) -> str:
+    """Manually store memory entry."""
+
+async def recall(self, query: str, limit: int = 5) -> List:
+    """Manually retrieve memory entries."""
+
+def status(self) -> Dict[str, Any]:
+    """Get agent status and configuration."""
+```
+
+**System Prompt Enhancements:**
+
+SmartAgent includes sophisticated system prompts with:
+
+1. **Memory Verification Policy**
+   - Explicit rules for personal data (trust) vs factual content (verify)
+   - Examples of each category for clarity
+
+2. **Web Search Intelligence**
+   - When to search despite having memory context
+   - How to recognize stale information
+   - Integration with judge decision
+
+3. **Current Awareness**
+   - Directive to proactively surface trending/viral content
+   - Real-time consciousness without explicit tools
+   - Time-sensitive query detection
+
+4. **Project Workflow** (project mode only)
+   - Tech stack verification and version awareness
+   - Automatic learning capture
+   - Context evolution over time
+
+---
+
+
 
 ### **AgentSession**
 

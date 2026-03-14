@@ -1,0 +1,109 @@
+{
+  "name": "Logicore",
+  "logo": {
+    "dark": "/logo/dark.svg",
+    "light": "/logo/light.svg"
+  },
+  "favicon": "/favicon.ico",
+  "colors": {
+    "primary": "#0066FF",
+    "light": "#E6F0FF",
+    "dark": "#004DD9",
+    "anchors": {
+      "from": "#0066FF",
+      "to": "#004DD9"
+    }
+  },
+  "topbarLinks": [
+    {
+      "name": "GitHub",
+      "url": "https://github.com/RudraModi360/Logicore"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "Get Started",
+    "url": "https://github.com/RudraModi360/Logicore"
+  },
+  "tabs": [
+    {
+      "name": "Documentation",
+      "url": "docs"
+    },
+    {
+      "name": "API Reference",
+      "url": "api"
+    },
+    {
+      "name": "Guides",
+      "url": "guides"
+    }
+  ],
+  "navigation": [
+    {
+      "group": "Get Started",
+      "pages": [
+        "docs/introduction",
+        "docs/installation",
+        "docs/quickstart"
+      ]
+    },
+    {
+      "group": "Core Concepts",
+      "pages": [
+        "docs/concepts/agents",
+        "docs/concepts/providers",
+        "docs/concepts/tools",
+        "docs/concepts/skills",
+        "docs/concepts/memory"
+      ]
+    },
+    {
+      "group": "Guides & Tutorials",
+      "pages": [
+        "guides/your-first-agent",
+        "guides/multi-provider-patterns",
+        "guides/tool-integration",
+        "guides/streaming-async",
+        "guides/vision-multimodal",
+        "guides/memory-management",
+        "guides/production-deployment"
+      ]
+    },
+    {
+      "group": "API Reference",
+      "pages": [
+        "api/agent-class",
+        "api/providers",
+        "api/tools",
+        "api/memory",
+        "api/utilities"
+      ]
+    },
+    {
+      "group": "Resources",
+      "pages": [
+        "docs/changelog",
+        "docs/contributing",
+        "docs/faq"
+      ]
+    }
+  ],
+  "footerSocials": {
+    "github": "https://github.com/RudraModi360/Logicore",
+    "discord": "https://discord.gg/logicore",
+    "twitter": "https://twitter.com/LogicoreAI"
+  },
+  "search": {
+    "prompt": "Search Logicore documentation..."
+  },
+  "modeToggle": {
+    "default": "dark",
+    "isHidden": false
+  },
+  "analytics": {
+    "ga4": {
+      "measurementId": "YOUR_GA4_ID"
+    }
+  },
+  "openapi": "/openapi.json"
+}

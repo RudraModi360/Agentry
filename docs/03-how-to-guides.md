@@ -324,18 +324,140 @@ response = agent.chat("What's the server status?")
 
 ---
 
-### **Comparison: Memory Strategies**
+### **Approach 5: Intelligent Memory Judgment (SmartAgent - NEW)**
 
-| Strategy | Users | Isolation | Scale | Best For |
-|----------|-------|-----------|-------|----------|
-| Simple | 1 | None | ~500 convs | Solo projects |
-| Session-based | Many | Per-user | Unlimited | SaaS, support bots |
-| Filtered | Many | By tags | Unlimited | Enterprise, sensitive data |
-| None | 1-Many | Complete | Unlimited | APIs, privacy-first |
+SmartAgent automatically judges whether retrieved memories are relevant and temporally current before injecting them. Perfect for knowledge-intensive applications needing real-time accuracy.
+
+```python
+from logicore.agents import SmartAgent
+
+# Enable intelligent memory with built-in judge
+agent = SmartAgent(
+    llm="openai",
+    model="gpt-4",
+    mode="solo",
+    memory=True,  # Enables SimpleMem + judge system
+    debug=True    # See judge decisions
+)
+
+# Conversation: Event-based query (time-sensitive)
+agent.chat("What was India's semi-final cricket score?")
+# Memory found: "India vs NZ, Nov 15, 2023, Wankhede Stadium, 397/4"
+# Judge decides: Event from 2023, user asking in 2026 → STALE
+# Result: Memory suppressed, web_search triggered, current match returned ✅
+
+# Conversation: Personal data query (always trust memory)
+agent.chat("What's my preferred programming language?")
+# Memory found: "User prefers Python for data science"
+# Judge decides: Personal user preference → RELEVANT
+# Result: Memory injected, agent responds from memory ✅
+
+# Conversation: Timeless knowledge (trust if relevant)
+agent.chat("How do I implement binary search?")
+# Memory found: "Binary search requires sorted array, O(log n) complexity"
+# Judge decides: Algorithm knowledge, age-independent → RELEVANT
+# Result: Memory injected, agent confirms and builds on it ✅
+```
+
+**Judge Decision Criteria:**
+
+```python
+# SmartAgent's memory judgment rules (built into system prompt)
+
+APPROVE memory if:
+  ✅ Personal user data (name, preferences, history)
+  ✅ Timeless knowledge (how things work, definitions, algorithms)
+  ✅ Evergreen facts (gravity = 9.8 m/s², pi ≈ 3.14159)
+  ✅ Relevant to current question (query-matching)
+
+REJECT memory if:
+  ❌ Event/result from past (match score, news headline, stock price)
+  ❌ Technology version/ranking (outdated from 2 years ago)
+  ❌ Irrelevant to current query (different topic)
+  ❌ Explicitly outdated (tagged with past dates)
+```
+
+**How the Judge Works:**
+
+```python
+# Internal process (automatic, transparent to user)
+
+1. User asks: "What was India's semi-final score?"
+    ↓
+2. Memory retrieval: "India vs NZ, Nov 15, 2023, 397/4"
+    ↓
+3. Judge call (outside session):
+   - Same LLM, no session history, no tools
+   - Given: today's date (March 6, 2026), user query, memory preview
+   - Decision: Event from 2023, likely stale → REJECT
+    ↓
+4. memory_enabled = False (suppress injection for this call only)
+    ↓
+5. Agent sees no memory context, recognizes need for current info
+    ↓
+6. Triggers web_search → Finds 2026 semi-final → Returns current result ✅
+    ↓
+7. memory_enabled = True (restored for next converstion)
+```
+
+**Best for:**
+- Knowledge-intensive applications
+- Real-time awareness needed
+- Preventing stale information injection
+- Hybrid personal + factual data
+- Production systems handling diverse query types
+
+**Pros:**
+- ✅ Automatic judgment (no manual intervention)
+- ✅ Prevents outdated data confusion
+- ✅ Trusts personal data without web search
+- ✅ Single extra LLM call overhead (efficient)
+- ✅ Completely isolated judge (no session contamination)
+- ✅ Safe fallback if judge fails (defaults to injecting memory)
+
+**Cons:**
+- ⚠️ One extra LLM call per chat (minimal overhead, same model)
+- ⚠️ Judge prompt is fixed (customizable if needed)
+- ⚠️ Requires same provider for judge (not a limitation, same provider used anyway)
+
+**Configuration & Debugging:**
+
+```python
+# Enable detailed judge logging
+agent = SmartAgent(
+    memory=True,
+    debug=True  # Prints: "[SmartAgent] 🔍 Memory judge → USE ✅" or "SKIP 🚫"
+)
+
+# Access judge decision in callbacks
+def on_judge_verdict(query, memory, decision):
+    print(f"Query: {query}")
+    print(f"Memory: {memory}")
+    print(f"Judge says: {'INJECT' if decision else 'SKIP'}")
+
+# Manually retrieve + judge if needed
+preview = agent.simplemem._fast_retrieve("Your query")
+decision = await agent._judge_memory_relevance("Your query", preview)
+print(f"Memory should be injected: {decision}")
+```
 
 ---
 
-## 3. Working with Language Model Providers
+### **Comparison: Memory Strategies (Updated)**
+
+| Strategy | Users | Isolation | Real-Time | Best For |
+|----------|-------|-----------|-----------|----------|
+| Simple | 1 | None | No | Basic projects |
+| Session-based | Many | Per-user | No | SaaS, support |
+| Filtered | Many | By tags | No | Enterprise, multi-env |
+| None | 1-Many | Complete | N/A | Stateless APIs |
+| **SmartAgent Judge** | 1-Many | Per-user | **Yes** | **Knowledge-intensive, real-time** |
+
+Key distinction: **SmartAgent is the only strategy that actively prevents stale information injection while still trusting personal data.**
+
+---
+
+
 
 Switch providers without changing agent code.
 
