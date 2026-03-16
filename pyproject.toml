@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "logicore"
-version = "0.1.1"
+version = "1.0.2"
 description = "A modular, multi-provider AI agent framework for building intelligent tool-using agents with Gemini, Groq, Ollama, Azure OpenAI, and Anthropic."
 readme = "README.md"
 license = {text = "MIT"}
@@ -58,7 +58,13 @@ ollama = ["ollama>=0.1"]
 azure = ["openai>=1.0", "httpx>=0.24"]
 anthropic = ["anthropic>=0.20"]
 mcp = ["mcp>=0.9"]
-tools = ["pypdf>=3.0", "python-docx>=0.8", "openpyxl>=3.0"]
+tools = [
+    "pypdf>=3.0",
+    "python-docx>=0.8",
+    "python-pptx>=1.0",
+    "openpyxl>=3.0",
+    "playwright>=1.49"
+]
 reloader = ["watchdog>=3.0"]
 all = [
     "google-genai>=1.0",
@@ -70,7 +76,9 @@ all = [
     "mcp>=0.9",
     "pypdf>=3.0",
     "python-docx>=0.8",
+    "python-pptx>=1.0",
     "openpyxl>=3.0",
+    "playwright>=1.49",
     "watchdog>=3.0",
 ]
 dev = [
