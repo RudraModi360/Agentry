@@ -1,4 +1,4 @@
-__version__ = "1.0.2"
+__version__ = "1.0.3"
 
 from .agents.agent import Agent
 from .agents.copilot import CopilotAgent

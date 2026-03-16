@@ -184,6 +184,9 @@ class Agent:
             "on_final_message": None,
             "on_token": None  # For streaming token updates
         }
+        
+        # Tool Approval Control
+        self.auto_approve_all = False  # Set to True to skip all approval checks
 
     @property
     def system_prompt(self) -> str:
@@ -1243,8 +1246,19 @@ class Agent:
             if self.debug: print(f"[Agent] ⚠️ Failed generating walkthrough summary: {e}")
             return f"Walkthrough unavailable. Check logs. error={e}"
 
+    def set_auto_approve_all(self, enabled: bool = True):
+        """Enable/disable auto-approval for all tools (bypasses approval checks)."""
+        self.auto_approve_all = enabled
+        if self.debug:
+            status = "enabled" if enabled else "disabled"
+            print(f"[Agent] Auto-approval for all tools {status}")
+
     def _requires_approval(self, name: str) -> bool:
         """Check if a tool requires user approval."""
+        # 0. If auto_approve_all is enabled, skip all approval checks
+        if self.auto_approve_all:
+            return False
+        
         # 1. Allow Safe Tools Explicitly
         if name in SAFE_TOOLS:
             return False
