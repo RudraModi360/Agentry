@@ -44,7 +44,6 @@ Make sure you have [Ollama](https://ollama.com) installed and a model pulled (`o
 
 ```python
 import asyncio
-from logicore.providers.ollama_provider import OllamaProvider
 from logicore.agents.agent import Agent
 
 # 1. Define a robust custom tool
@@ -55,11 +54,9 @@ def check_weather(location: str, **kwargs) -> str:
     return "65°F and cloudy."
 
 async def main():
-    # 2. Initialize provider and agent
-    provider = OllamaProvider(model_name="qwen3.5:0.8b")
-    
+    # 2. Initialize agent with Ollama by provider name
     agent = Agent(
-        llm=provider,
+        llm="ollama",
         role="Weather Assistant",
         system_message="Use the provided tools to answer user questions accurately.",
         tools=[check_weather],
