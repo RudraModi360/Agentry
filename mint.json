@@ -1,10 +1,10 @@
 {
   "name": "Logicore",
   "logo": {
-    "dark": "/logo/logo.png",
-    "light": "/logo/logo.png"
+    "dark": "/logicore/artifacts/image-removebg-preview (1) copy.png",
+    "light": "/logicore/artifacts/image-removebg-preview (3).png"
   },
-  "favicon": "/logo/favicon.png",
+  "favicon": "/logicore/artifacts/image-removebg-preview (1) copy.png",
   "colors": {
     "primary": "#2563EB",
     "light": "#EEF2FF",
