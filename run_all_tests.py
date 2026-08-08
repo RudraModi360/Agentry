@@ -21,6 +21,8 @@ import os
 from datetime import datetime
 from pathlib import Path
 
+from logicore.utils.colors import colored, error, success, warning, info, banner, section, bold, BLUE
+
 
 TEST_SUITES = {
     "unit": {
@@ -71,16 +73,16 @@ TEST_SUITES = {
 
 def print_summary():
     """Print test suite summary."""
-    print("\n" + "=" * 60)
-    print("TEST SUITE SUMMARY")
-    print("=" * 60)
+    print("\n" + banner("=" * 60))
+    print(banner("TEST SUITE SUMMARY"))
+    print(banner("=" * 60))
     for suite_id, suite in TEST_SUITES.items():
-        print(f"\n  {suite['name']} ({suite_id})")
+        print(f"\n  {colored(suite['name'], BLUE)} ({suite_id})")
         print(f"    {suite['description']}")
-        print(f"    Path: {suite['path']}")
+        print(f"    Path: {info(suite['path'])}")
         for test in suite["tests"]:
             print(f"      - {test}")
-    print("\n" + "=" * 60)
+    print("\n" + banner("=" * 60))
 
 
 def resolve_test_paths(test_type, project_root):
@@ -123,7 +125,7 @@ def run_tests(test_type="all", verbose=False, generate_report=False):
     # Resolve test paths
     test_paths = resolve_test_paths(test_type, project_root)
     if not test_paths:
-        print(f"\nNo test paths found for type: {test_type}")
+        print(f"\n{warning('No test paths found for type:')} {test_type}")
         return 1
 
     # Build pytest command
@@ -148,29 +150,31 @@ def run_tests(test_type="all", verbose=False, generate_report=False):
         cmd.extend([f"--html={html_report}", "--self-contained-html"])
         cmd.extend([f"--junitxml={junit_report}"])
 
-    print(f"\n{'=' * 60}")
-    print(f"Logicore v1.0.3 - Production Validation")
-    print(f"{'=' * 60}")
+    print(f"\n{banner('=' * 60)}")
+    print(banner("Logicore v1.0.3 - Production Validation"))
+    print(banner("=" * 60))
     print(f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"Test Type: {test_type.upper()}")
+    print(f"Test Type: {colored(test_type.upper(), BLUE)}")
     print(f"Paths: {', '.join(str(p) for p in test_paths)}")
-    print(f"{'=' * 60}\n")
+    print(f"{banner('=' * 60)}\n")
 
     print_summary()
 
-    print(f"\nRunning: pytest {test_type} tests...\n")
+    print(f"\n{info('Running:')} pytest {test_type} tests...\n")
 
     result = subprocess.run(cmd, cwd=str(project_root))
 
-    print(f"\n{'=' * 60}")
-    print(f"TEST RUN COMPLETE")
-    print(f"{'=' * 60}")
+    print(f"\n{banner('=' * 60)}")
+    print(banner("TEST RUN COMPLETE"))
+    print(banner("=" * 60))
     print(f"Exit Code: {result.returncode}")
-    print(f"Status: {'PASSED' if result.returncode == 0 else 'FAILED'}")
+    status_text = 'PASSED' if result.returncode == 0 else 'FAILED'
+    status_fn = success if result.returncode == 0 else error
+    print(f"Status: {status_fn(status_text)}")
     if generate_report and html_report:
-        print(f"HTML Report: {html_report}")
-        print(f"JUnit Report: {junit_report}")
-    print(f"{'=' * 60}\n")
+        print(f"HTML Report: {info(str(html_report))}")
+        print(f"JUnit Report: {info(str(junit_report))}")
+    print(f"{banner('=' * 60)}\n")
 
     return result.returncode
 

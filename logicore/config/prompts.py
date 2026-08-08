@@ -12,6 +12,7 @@ Tools are passed dynamically - either at agent initialization or registered late
 import os
 import platform
 from datetime import datetime
+from pathlib import Path
 
 
 def _extract_param_type(pinfo: dict) -> str:
@@ -371,9 +372,9 @@ Each execution instance (chat session) has its own isolated session with:
 
 ### Using Sessions Effectively
 - **Automatic Isolation**: Each new task execution gets a fresh session with clean plan/progress files
-- **Manual Creation**: Use `create_session(tags={"project": "name"})` for custom sessions
-- **Find by Tags**: Use `get_session_by_tags({"project": "myapp"})` to locate sessions
-- **List Sessions**: Use `list_sessions()` to see all active sessions
+- **Manual Creation**: Use `agent.create_session(tags={"project": "name"})` for custom sessions
+- **Find by Tags**: Use `agent.get_session_by_tags({"project": "myapp"})` to locate sessions
+- **List Sessions**: Use `agent.list_sessions()` to see all active sessions
 
 ### Benefits
 - **No Plan Confusion**: Each session starts with empty plan.md and progress.md
@@ -397,6 +398,76 @@ def _structured_tool_contract() -> str:
 - Error shape: `{\"success\": false, \"error\": \"...\"}`
 - Always inspect `success` first before using `content`.
 
+## System Guardrail Signals (IMPORTANT)
+**When you see these signals in tool results, take the specified action immediately:**
+
+### Signal: `[Tool loop hard stop: repeated_exact_failure_block]`
+- **Meaning:** You called the same tool with identical arguments multiple times and it failed each time
+- **Action:** STOP calling this tool with these arguments. Try a completely different approach:
+  - Different tool
+  - Different arguments
+  - Different method entirely
+
+### Signal: `[Tool loop hard stop: idempotent_no_progress_block]`
+- **Meaning:** A read-only tool returned the same result multiple times (you're stuck in a loop)
+- **Action:** STOP calling this tool. The result won't change. Move on to a different approach.
+
+### Signal: `[Tool loop hard stop: same_tool_failure_halt]`
+- **Meaning:** This tool has failed multiple times with different arguments — the tool itself may be broken
+- **Action:** STOP using this tool entirely. Try a different tool or explain the issue to the user.
+
+### Signal: `[Tool loop warning: repeated_exact_failure_warn]`
+- **Meaning:** You're about to hit a hard stop — this is your last chance to change approach
+- **Action:** Change your approach NOW. Do not call this tool again with these arguments.
+
+### Signal: `[Tool loop warning: same_tool_failure_warn]`
+- **Meaning:** This tool keeps failing with different arguments — something is fundamentally wrong
+- **Action:** Consider using a completely different tool or approach.
+
+### Signal: `[Tool loop warning: idempotent_no_progress_warn]`
+- **Meaning:** This read-only tool is returning the same result repeatedly
+- **Action:** The result won't change. Move on to a different task or approach.
+
+### Signal: `[Validation Notes]`
+- **Meaning:** The tool output has been validated and contains warnings about quality
+- **Action:** Read the validation notes carefully and address the issues mentioned.
+
+### Signal: `[Guardrail blocked]`
+- **Meaning:** The tool call was blocked by safety guardrails
+- **Action:** Do not retry this tool call. It violates safety policies.
+
+**CRITICAL RULE:** When you see a `[Tool loop hard stop]` signal, you MUST NOT call the same tool with the same arguments again. The system has already determined this will fail. Change your approach immediately.
+
+## Error Recovery Strategy (CRITICAL)
+**When a tool fails, follow this exact sequence:**
+
+### Step 1: Read the Error Message Carefully
+- Extract the specific error type (e.g., `SyntaxError`, `TypeError`, `ModuleNotFoundError`)
+- Identify the root cause from the traceback or error details
+
+### Step 2: Decide Recovery Path
+| Error Type | Recovery Action | Example |
+|------------|----------------|---------|
+| `SyntaxError`, `IndentationError` | Fix the code syntax, do NOT retry same code | Missing colon, wrong indentation |
+| `TypeError`, `AttributeError` | Check variable types and attributes | Wrong argument type, missing method |
+| `ModuleNotFoundError`, `ImportError` | Install missing module or fix import path | `pip install module_name` |
+| `FileNotFoundError` | Verify path exists before operations | Check with `list_files` first |
+| `PermissionError` | Use different path or approach | Avoid protected directories |
+| `TimeoutError` | Simplify approach or increase timeout | Break into smaller steps |
+| Network/Connection error | Retry ONCE after brief wait | Transient issue |
+
+### Step 3: Apply Recovery
+- **For code errors**: Fix the code, do NOT retry the same failing code
+- **For missing files**: Verify path with `list_files` before retrying
+- **For missing modules**: Run `pip install module_name` first
+- **For timeouts**: Simplify the command or split into smaller steps
+
+### Step 4: If Recovery Fails
+- Try a fundamentally different approach (different tool, different method)
+- If still failing after 2 attempts, explain the issue to the user with specific error details
+
+**NEVER:** Retry the same exact code/command more than once. If it failed, something needs to change.
+
 ## Bash Tool Timeout Guidelines
 **IMPORTANT: Set appropriate timeouts for bash commands to avoid premature termination.**
 - **Quick commands** (ls, pwd, file checks): Use `timeout: 10-15` seconds
@@ -405,6 +476,15 @@ def _structured_tool_contract() -> str:
 - **Interactive scripts** (chatbots, servers): Use `timeout: 300` seconds OR run in background with `background: true`
 - **NEVER use timeout below 10 seconds** — commands need time to initialize
 - If unsure, use `timeout: 60` as a safe default
+
+## File Content Formatting (IMPORTANT)
+**When creating files with `create_file`:**
+- **DO NOT escape backslashes** — write the path as it should appear: `C:\\Users\\name` not `C:\\\\\\Users\\\\name`
+- **DO NOT escape quotes** — write `"hello"` not `\\\"hello\\\"`
+- **DO NOT add extra escaping** — write the content as it should appear in the file
+- The `create_file` tool writes content directly to disk — what you pass is what gets written
+- For Python strings containing backslashes, use raw strings: `r"C:\\path"` or write without escaping
+- For JSON/HTML content, write it exactly as it should appear in the file
 
 ## Output Style
 - Final user-facing answer should be concise Markdown with short sections or bullets.
@@ -546,7 +626,7 @@ bash(command="pip install -r requirements.txt", timeout=120)
 **User:** "Create a new Python script for data processing"
 **Correct approach:**
 1. First check existing structure: `list_files(path="src/")`
-2. Then create: `write_file(path="src/data_processor.py", content="...")`
+2. Then create: `create_file(path="src/data_processor.py", content="...")`
 
 ### Example 6: Multi-Step Task
 **User:** "Refactor the authentication module"
@@ -656,6 +736,8 @@ def get_system_prompt(
 
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     cwd = os.getcwd()
+    username = os.getlogin() if hasattr(os, 'getlogin') else os.environ.get("USERNAME", "unknown")
+    home_dir = str(Path.home()) if 'Path' in dir() else os.path.expanduser("~")
     tools_section = _format_tools(tools)
     contract_section = _structured_tool_contract()
     
@@ -704,6 +786,8 @@ Core traits:
 ## Runtime Context
 - Time: {current_time}
 - Working directory: {cwd}
+- Username: {username}
+- Home directory: {home_dir}
 - Model: {model_name}
 
 ## Self-Validation (MANDATORY before delivering results)
@@ -822,6 +906,8 @@ If both local and web search fail, tell the user:
 ## Runtime Context
 - Time: {current_time}
 - Working directory: {cwd}
+- Username: {username}
+- Home directory: {home_dir}
 - Model: {model_name}
 
 ## Self-Validation (recommended before delivering results)
@@ -985,6 +1071,8 @@ If both local and web search fail, tell the user:
 ## Runtime Context
 - Time: {current_time}
 - Working directory: {cwd}
+- Username: {username}
+- Home directory: {home_dir}
 - Operating system: {platform.system()}
 - Model: {model_name}
 - Local filesystem access: ENABLED (your tools run on the user's actual machine)
@@ -1091,6 +1179,8 @@ You can accomplish tasks involving:
 ## Runtime Context
 - Time: {current_time}
 - Working directory: {cwd}
+- Username: {username}
+- Home directory: {home_dir}
 - Model: {model_name}
 
 You are ready to help. Search for tools, discover solutions, and take action."""

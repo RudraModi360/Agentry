@@ -205,6 +205,45 @@ class CreateFileTool(BaseTool):
     description = "Create NEW files or directories. Check if file exists first."
     args_schema = CreateFileParams
 
+    def _sanitize_content(self, content: str, file_path: str) -> str:
+        """Sanitize file content to fix common LLM escaping issues.
+        
+        LLMs often generate content with:
+        - Double-escaped backslashes: \\\\ instead of \\
+        - Escaped quotes: \\" instead of "
+        - Unnecessary escaping in string literals
+        
+        This method detects and fixes these patterns.
+        """
+        import re
+        
+        # Don't sanitize binary files or specific formats
+        ext = os.path.splitext(file_path)[1].lower() if file_path else ''
+        binary_extensions = {'.png', '.jpg', '.jpeg', '.gif', '.bmp', '.ico', '.pdf', '.zip', '.tar', '.gz'}
+        if ext in binary_extensions:
+            return content
+        
+        # Fix double-escaped backslashes (common in Windows paths)
+        # Pattern: \\\\ followed by a letter (path separator)
+        # Only fix if it looks like a path pattern, not intentional escaping
+        if '\\\\' in content:
+            # Count double backslashes vs single
+            double_bs = content.count('\\\\')
+            single_bs = content.count('\\') - (double_bs * 2)
+            
+            # If there are many double backslashes and few single, likely escaping issue
+            if double_bs > 3 and single_bs < double_bs:
+                content = content.replace('\\\\', '\\')
+        
+        # Fix escaped quotes in content
+        # Pattern: \\" or \\'
+        if '\\"' in content and content.count('\\"') > 2:
+            content = content.replace('\\"', '"')
+        if "\\'" in content and content.count("\\'") > 2:
+            content = content.replace("\\'", "'")
+        
+        return content
+
     def run(self, file_path: str, content: str, file_type: str = 'file', overwrite: bool = False) -> ToolResult:
         try:
             is_valid, err = validate_path(file_path)
@@ -214,6 +253,9 @@ class CreateFileTool(BaseTool):
             abs_path = os.path.abspath(file_path)
             if os.path.exists(abs_path) and not overwrite:
                 return ToolResult(success=False, error="File already exists. Use overwrite=true to replace.")
+
+            # Sanitize content to fix common LLM escaping issues
+            content = self._sanitize_content(content, file_path)
 
             if file_type == 'directory':
                 os.makedirs(abs_path, exist_ok=True)

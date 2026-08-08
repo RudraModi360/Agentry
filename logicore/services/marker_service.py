@@ -1,6 +1,8 @@
 import subprocess
 import os
 
+from logicore.utils.colors import colored, info, error, success, warning
+
 class MarkerService:
     # Define output directory relative to CWD
     OUTPUT_DIR = os.path.abspath(os.path.join(os.getcwd(), "marker_outputs"))
@@ -25,7 +27,7 @@ class MarkerService:
             cls.OUTPUT_DIR
         ]
         
-        print(f"[MarkerService] Running conversion on {os.path.basename(file_path)}...")
+        print(f"{info('[MarkerService]')} Running conversion on {os.path.basename(file_path)}...")
         
         try:
             # Run command directly
@@ -33,7 +35,7 @@ class MarkerService:
             
             if result.returncode != 0:
                 error_msg = result.stderr.strip()
-                print(f"[MarkerService] Error: {error_msg}")
+                print(f"{error('[MarkerService]')} Error: {error_msg}")
                 raise RuntimeError(f"Marker CLI Failed: {error_msg}")
             
             # Find output
@@ -47,15 +49,15 @@ class MarkerService:
             md_path = os.path.join(result_dir, f"{stem}.md")
             
             if os.path.exists(md_path):
-                print(f"[MarkerService] Conversion successful. Reading {md_path}...")
+                print(f"{success('[MarkerService]')} Conversion successful. Reading {md_path}...")
                 with open(md_path, "r", encoding="utf-8") as f:
                     return f.read()
             else:
                 # Debugging: List output dir content if specific file missed
                 err = f"Marker output file not found at {md_path}"
-                print(f"[MarkerService] {err}")
+                print(f"{warning('[MarkerService]')} {err}")
                 if os.path.exists(result_dir):
-                     print(f"Contents of {result_dir}: {os.listdir(result_dir)}")
+                     print(f"  Contents of {result_dir}: {os.listdir(result_dir)}")
                 raise FileNotFoundError(err)
                 
         except Exception as e:

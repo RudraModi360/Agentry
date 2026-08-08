@@ -11,6 +11,8 @@ attach a stream handler and lower the level so those traces become visible.
 import logging
 import sys
 
+from logicore.utils.colors import ColoredFormatter
+
 _CONFIGURED = False
 
 # Components to surface at DEBUG when debug mode is on. Broadening this list
@@ -40,12 +42,10 @@ def setup_debug_logging(level: int = logging.DEBUG) -> None:
     # Avoid clobbering an already-configured handler setup by the host app.
     if not root.handlers:
         handler = logging.StreamHandler(sys.stderr)
-        handler.setFormatter(
-            logging.Formatter(
-                "%(asctime)s %(levelname)-5s %(name)s | %(message)s",
-                datefmt="%H:%M:%S",
-            )
-        )
+        handler.setFormatter(ColoredFormatter(
+            "%(asctime)s %(levelname)-5s %(name)s | %(message)s",
+            datefmt="%H:%M:%S",
+        ))
         root.addHandler(handler)
         root.setLevel(level)
     else:
@@ -59,7 +59,8 @@ def setup_debug_logging(level: int = logging.DEBUG) -> None:
     # focused on LogiCore's own traces (gateway/tool/orchestration/etc.).
     # These SDKs inherit the root level and would otherwise dump the full
     # request payload (system prompt, tool schemas, ...) on every call.
-    for noisy in ("httpx", "httpcore", "urllib3", "openai", "anthropic", "groq"):
+    for noisy in ("httpx", "httpcore", "urllib3", "openai", "anthropic", "groq",
+                   "ollama", "http.client"):
         logging.getLogger(noisy).setLevel(logging.WARNING)
 
     _CONFIGURED = True

@@ -10,7 +10,7 @@ Public surface:
 See ``docs/concepts/streaming.md`` for the full event model and frontend wiring.
 """
 
-from .events import StreamEvent, StreamEventType
+from .events import StreamEvent, StreamEventType, get_current_emitter, set_current_emitter
 from .emitter import StreamEmitter
 from .result import AgentRunResult
 from .sse import as_sse, events_to_sse, SSE_DONE
@@ -23,4 +23,6 @@ __all__ = [
     "as_sse",
     "events_to_sse",
     "SSE_DONE",
+    "get_current_emitter",
+    "set_current_emitter",
 ]

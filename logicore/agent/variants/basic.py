@@ -90,6 +90,7 @@ class BasicAgent:
         provider: str = "ollama",
         model: str = None,
         api_key: str = None,
+        endpoint: str = None,
         tools: List[Union[Callable, BaseTool]] = None,
         system_prompt: str = None,
         debug: bool = False,
@@ -110,6 +111,7 @@ class BasicAgent:
             provider: LLM provider - "ollama", "groq", or "gemini"
             model: Model name (provider-specific)
             api_key: API key for cloud providers (groq, gemini)
+            endpoint: Custom endpoint URL for providers with custom endpoints
             tools: List of tools - can be functions or BaseTool instances
             system_prompt: Custom system prompt (optional, auto-generated if not provided)
             debug: Enable debug logging
@@ -125,16 +127,23 @@ class BasicAgent:
         self.custom_tools = tools or []
         self.custom_system_prompt = system_prompt
         
-        # Create the underlying agent first.
-        # An explicit empty list `tools=[]` is forwarded as an opt-out flag so
-        # the base agent loads NO internal tools and NO default/workspace skills.
-        # For any other value (None or a non-empty custom list) we let the base
-        # agent keep its default tool loading, then register custom tools on top.
-        agent_tools = tools if tools == [] else None
+        # Create the underlying agent.
+        # When no tools are provided, default to "chatbot" preset
+        # (web_search + datetime + plan + task + skills) — ideal for
+        # general-purpose QA / chatbot use cases.
+        # When custom tools are provided, load ONLY those tools.
+        if tools:
+            agent_tools = tools
+            agent_preset = None
+        else:
+            agent_tools = []
+            agent_preset = tool_preset or "chatbot"
+        
         self._agent = Agent(
             provider=provider,
             model=model,
             api_key=api_key,
+            endpoint=endpoint,
             system_prompt=system_prompt or "",
             debug=debug,
             telemetry=telemetry,
@@ -142,7 +151,7 @@ class BasicAgent:
             tools=agent_tools,
             skills=skills,
             workspace_root=workspace_root,
-            tool_preset=tool_preset,
+            tool_preset=agent_preset,
             storage=storage,
         )
         
@@ -268,14 +277,15 @@ You are ready to help. Use your tools effectively.
         """Cancel an in-flight streaming run."""
         self._agent.cancel_run(run)
 
-    def stream_sync(self, message: Union[str, List[Dict[str, Any]]], session_id: str = None, on_event: Callable = None, **kwargs) -> str:
+    def stream_sync(self, message: Union[str, List[Dict[str, Any]]], session_id: str = None, on_event: Callable = None, on_token: Callable = None, **kwargs) -> str:
         """
         Synchronous streaming — no server or async framework required.
 
         See :meth:`logicore.agent.base.Agent.stream_sync`. Each event is passed
-        to ``on_event`` as it arrives.
+        to ``on_event`` as it arrives.  ``on_token`` is a convenience shortcut
+        that receives only text token deltas.
         """
-        return self._agent.stream_sync(message, session_id=session_id, on_event=on_event, **kwargs)
+        return self._agent.stream_sync(message, session_id=session_id, on_event=on_event, on_token=on_token, **kwargs)
 
     def chat_sync(self, message: str, session_id: str = None, generate_walkthrough: bool = False) -> str:
         """

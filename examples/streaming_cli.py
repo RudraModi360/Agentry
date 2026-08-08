@@ -31,6 +31,7 @@ from typing import Optional
 
 from logicore.agent import Agent
 from logicore.stream.events import StreamEventType
+from logicore.utils.colors import colored, error, success, tool_call, tool_result, thinking, info, warning, banner, BLUE, GREEN, RED, GRAY, RESET, DIM
 
 
 # ---------------------------------------------------------------------------
@@ -41,29 +42,30 @@ def create_provider(provider_name: str, model: str, endpoint: Optional[str] = No
     """Create a provider instance based on name."""
     if provider_name == "ollama":
         from logicore.providers.ollama_provider import OllamaProvider
-        return OllamaProvider(model_name=model)
+        return OllamaProvider(model_name=model, endpoint=endpoint)
     
     elif provider_name == "groq":
         from logicore.providers.groq_provider import GroqProvider
         key = api_key or os.environ.get("GROQ_API_KEY")
         if not key:
             raise ValueError("GROQ_API_KEY environment variable required for Groq provider")
-        return GroqProvider(model_name=model, api_key=key)
+        return GroqProvider(model_name=model, api_key=key, endpoint=endpoint)
     
     elif provider_name == "gemini":
         from logicore.providers.gemini_provider import GeminiProvider
-        return GeminiProvider(model_name=model)
+        key = api_key or os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+        return GeminiProvider(model_name=model, api_key=key, endpoint=endpoint)
     
     elif provider_name == "openai":
         from logicore.providers.openai_provider import OpenAIProvider
         key = api_key or os.environ.get("OPENAI_API_KEY")
         if not key:
             raise ValueError("OPENAI_API_KEY environment variable required for OpenAI provider")
-        return OpenAIProvider(model_name=model, api_key=key)
+        return OpenAIProvider(model_name=model, api_key=key, endpoint=endpoint)
     
     elif provider_name == "azure":
         from logicore.providers.azure_provider import AzureProvider
-        return AzureProvider(model_name=model)
+        return AzureProvider(model_name=model, endpoint=endpoint, api_key=api_key)
     
     elif provider_name == "custom":
         from logicore.providers.custom_provider import CustomProvider
@@ -122,7 +124,6 @@ def _raw_stream(provider, model: str, prompt: str, debug: bool = False) -> None:
     
     asyncio.run(stream())
     
-    # Process events
     in_thinking = False
     for event in events:
         event_type = event.get("type")
@@ -130,34 +131,34 @@ def _raw_stream(provider, model: str, prompt: str, debug: bool = False) -> None:
         
         if event_type == "token":
             if in_thinking:
-                print("</THINKING>", flush=True)
+                print(f"{RESET}</THINKING>{RESET}", flush=True)
                 in_thinking = False
             print(data.get("delta", ""), end="", flush=True)
         
         elif event_type == "reasoning":
             if not in_thinking:
-                print("<THINKING>", end="", flush=True)
+                print(f"{GRAY}<THINKING>{RESET}", end="", flush=True)
                 in_thinking = True
             print(data.get("delta", ""), end="", flush=True)
         
         elif event_type == "tool_call_chunk":
             if in_thinking:
-                print("</THINKING>", flush=True)
+                print(f"{RESET}</THINKING>{RESET}", flush=True)
                 in_thinking = False
             if data.get("args_delta") == "":
-                print(f"\n[tool] {data.get('name')}()", flush=True)
+                print(f"\n{tool_call(data.get('name', '?'))}()", flush=True)
         
         elif event_type == "error":
             if in_thinking:
-                print("</THINKING>", flush=True)
+                print(f"{RESET}</THINKING>{RESET}", flush=True)
                 in_thinking = False
-            print(f"\n[error] {data.get('message')}", flush=True)
+            print(f"\n{error('[error]')} {data.get('message')}", flush=True)
         
         elif debug:
-            print(f"\n[{event_type}] {data}", flush=True)
+            print(f"\n{DIM}[{event_type}]{RESET} {data}", flush=True)
     
     if in_thinking:
-        print("</THINKING>", flush=True)
+        print(f"{RESET}</THINKING>{RESET}", flush=True)
     print()
 
 
@@ -172,44 +173,53 @@ def _agent_stream_sync(agent: Agent, prompt: str, debug: bool = False) -> None:
     def on_event(ev):
         if ev.type == StreamEventType.TOKEN:
             if in_thinking[0]:
-                print("</THINKING>", flush=True)
+                print(f"{RESET}</THINKING>{RESET}", flush=True)
                 in_thinking[0] = False
             print(ev.data.get("delta", ""), end="", flush=True)
         elif ev.type == StreamEventType.REASONING:
             if not in_thinking[0]:
-                print("<THINKING>", end="", flush=True)
+                print(f"{GRAY}<THINKING>{RESET}", end="", flush=True)
                 in_thinking[0] = True
             print(ev.data.get("delta", ""), end="", flush=True)
         elif ev.type == StreamEventType.TOOL_CALL_CHUNK:
             if in_thinking[0]:
-                print("</THINKING>", flush=True)
+                print(f"{RESET}</THINKING>{RESET}", flush=True)
                 in_thinking[0] = False
             if ev.data.get("args_delta") == "":
-                print(f"\n[tool] {ev.data.get('name')}()", flush=True)
+                print(f"\n{tool_call(ev.data.get('name', '?'))}()", flush=True)
         elif ev.type == StreamEventType.TOOL_CALL_START:
             if in_thinking[0]:
-                print("</THINKING>", flush=True)
+                print(f"{RESET}</THINKING>{RESET}", flush=True)
                 in_thinking[0] = False
-            print(f"\n[tool:start] {ev.data.get('name')}({ev.data.get('args')})", flush=True)
+            print(f"\n{tool_call(ev.data.get('name', '?'))}({ev.data.get('args')})", flush=True)
         elif ev.type == StreamEventType.TOOL_CALL_END:
             status = "ok" if ev.data.get("success") else "FAILED"
             preview = ev.data.get("preview", "")
-            print(f"[tool:{status}] {preview[:120]}", flush=True)
+            print(f"{tool_result(ev.data.get('success'), f'{status} {preview[:120]}')}", flush=True)
+        elif ev.type == StreamEventType.TOOL_OUTPUT:
+            stream = ev.data.get("stream", "stdout")
+            line = ev.data.get("line", "")
+            if stream == "stderr":
+                print(f"{DIM}[stderr]{RESET} {line}", flush=True)
+            else:
+                print(line, flush=True)
         elif ev.type == StreamEventType.ERROR:
             if in_thinking[0]:
-                print("</THINKING>", flush=True)
+                print(f"{RESET}</THINKING>{RESET}", flush=True)
                 in_thinking[0] = False
-            print(f"\n[error] {ev.data.get('message')}", flush=True)
+            print(f"\n{error('[error]')} {ev.data.get('message')}", flush=True)
+            import traceback
+            traceback.print_exc()
         elif ev.type == StreamEventType.DONE:
             if in_thinking[0]:
-                print("</THINKING>", flush=True)
+                print(f"{RESET}</THINKING>{RESET}", flush=True)
                 in_thinking[0] = False
-        elif debug:
-            print(f"\n[{ev.type}] {ev.data}", flush=True)
+        elif debug or ev.type == StreamEventType.ERROR:
+            print(f"\n{DIM}[{ev.type}]{RESET} {ev.data}", flush=True)
 
     agent.stream_sync(prompt, on_event=on_event)
     if in_thinking[0]:
-        print("</THINKING>", flush=True)
+        print(f"{RESET}</THINKING>{RESET}", flush=True)
     print()
 
 
@@ -221,10 +231,10 @@ def main() -> None:
     import argparse
     
     parser = argparse.ArgumentParser(description="Logicore Streaming CLI")
-    parser.add_argument("--provider", "-p", default="groq", 
+    parser.add_argument("--provider", "-p", default="ollama", 
                        choices=["ollama", "groq", "gemini", "openai", "azure", "custom"],
                        help="Provider to use (default: groq)")
-    parser.add_argument("--model", "-m", default=None, help="Model name")
+    parser.add_argument("--model", "-m", default="gpt-oss:20b-cloud", help="Model name")
     parser.add_argument("--endpoint", "-e", default=None, help="Custom provider endpoint URL")
     parser.add_argument("--api-key", "-k", default=None, help="API key (or use env var)")
     parser.add_argument("--raw", action="store_true", help="Use raw provider mode (no agent)")
@@ -248,16 +258,16 @@ def main() -> None:
     
     title = f"Logicore Streaming CLI ({args.provider.upper()})"
     mode = "Raw Provider" if args.raw else "Agent API"
-    print(f"{title}")
-    print(f"Model: {model}  |  Mode: {mode}")
+    print(f"{banner(title)}")
+    print(f"Model: {colored(model, BLUE)}  |  Mode: {mode}")
     print(f"Type 'quit' to exit")
-    print(f"{'=' * 60}")
+    print(f"{banner('=' * 60)}")
     
     # Create provider
     try:
         provider = create_provider(args.provider, model, args.endpoint, args.api_key)
     except Exception as e:
-        print(f"Error creating provider: {e}")
+        print(f"{error('Error creating provider:')} {e}")
         sys.exit(1)
     
     if args.raw:
@@ -273,19 +283,19 @@ def main() -> None:
         try:
             prompt = input("\nYou: ").strip()
             if prompt.lower() in ("quit", "exit", "q"):
-                print("\nGoodbye!")
+                print(f"\n{success('Goodbye!')}")
                 break
             if not prompt:
                 continue
             stream_fn(prompt)
         except KeyboardInterrupt:
-            print("\n\nInterrupted. Goodbye!")
+            print(f"\n\n{warning('Interrupted.')} Goodbye!")
             break
         except EOFError:
-            print("\n\nGoodbye!")
+            print(f"\n{success('Goodbye!')}")
             break
         except Exception as e:
-            print(f"\n[error] {e}")
+            print(f"\n{error('[error]')} {e}")
             if args.debug:
                 import traceback
                 traceback.print_exc()

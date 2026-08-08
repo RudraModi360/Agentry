@@ -17,6 +17,11 @@ import logging
 
 from logicore.tools import execute_tool, SAFE_TOOLS
 from logicore.tools.dedup import result_cache, semantic_analyzer, hash_tool_call
+from logicore.utils.colors import (
+    colored, success, error, warning, info, bold, label, 
+    tool_call, tool_result, step, section, banner, header, DIM, RESET,
+    BLUE, GREEN, RED, YELLOW
+)
 
 logger = logging.getLogger(__name__)
 
@@ -250,21 +255,21 @@ class ToolExecutor:
         # hanging indefinitely.
         if not sys.stdin.isatty():
             logger.info(
-                f"[ToolExecutor] Headless mode detected — auto-denying approval for '{tool_name}'"
+                f"{warning('[headless]')} Auto-denying approval for '{tool_name}' (no TTY)"
             )
             return ApprovalDecision.DENY
 
         args_preview = json.dumps(args, default=str)[:200] if args else "{}"
 
         if group == "network_egress":
-            print(f"\n{'='*60}")
-            print(f"INTERNET ACCESS REQUESTED (session: {session_id})")
-            print(f"{'='*60}")
+            print(f"\n{banner('='*60)}")
+            print(f"{warning('INTERNET ACCESS REQUESTED')} (session: {session_id})")
+            print(f"{banner('='*60)}")
             print(f"The agent wants to use web tools (e.g. `{tool_name}`) which send")
             print("your query to a third-party API. Allow this for the rest of the")
             print("current session? It will not ask again this session.")
-            print(f"Args: {args_preview}")
-            print(f"{'='*60}")
+            print(f"Args: {DIM}{args_preview}{RESET}")
+            print(f"{banner('='*60)}")
             prompt = "Allow internet access for this session? (yes/no): "
             while True:
                 try:
@@ -274,20 +279,20 @@ class ToolExecutor:
                     elif response in ('no', 'n'):
                         return ApprovalDecision.DENY
                     else:
-                        print("Please enter 'yes' or 'no'")
+                        print(warning("Please enter 'yes' or 'no'"))
                 except (EOFError, KeyboardInterrupt):
-                    print("\nApproval denied (no input)")
+                    print(f"\n{error('Approval denied (no input)')}")
                     return ApprovalDecision.DENY
 
-        print(f"\n{'='*60}")
-        print("TOOL APPROVAL REQUIRED")
-        print(f"{'='*60}")
-        print(f"Tool: {tool_name}")
-        print(f"Args: {args_preview}")
-        print("  [y] Yes            - allow just this call")
-        print("  [a] Yes, this session - allow and don't ask again this session")
-        print("  [n] No             - deny")
-        print(f"{'='*60}")
+        print(f"\n{banner('='*60)}")
+        print(f"{warning('TOOL APPROVAL REQUIRED')}")
+        print(f"{banner('='*60)}")
+        print(f"Tool: {colored(tool_name, BLUE)}")
+        print(f"Args: {DIM}{args_preview}{RESET}")
+        print(f"  {colored('[y]', GREEN)} Yes            - allow just this call")
+        print(f"  {colored('[a]', YELLOW)} Yes, this session - allow and don't ask again this session")
+        print(f"  {colored('[n]', RED)} No             - deny")
+        print(f"{banner('='*60)}")
         prompt = "Approve? (y/a/n): "
 
         while True:
@@ -300,9 +305,9 @@ class ToolExecutor:
                 elif response in ('no', 'n'):
                     return ApprovalDecision.DENY
                 else:
-                    print("Please enter 'y', 'a', or 'n'")
+                    print(warning("Please enter 'y', 'a', or 'n'"))
             except (EOFError, KeyboardInterrupt):
-                print("\nApproval denied (no input)")
+                print(f"\n{error('Approval denied (no input)')}")
                 return ApprovalDecision.DENY
 
     def _approval_group(self, name: str) -> Optional[str]:
@@ -414,7 +419,7 @@ class ToolExecutor:
 
         if self.debug:
             args_preview = json.dumps(args, default=str)[:300] if args else "{}"
-            logger.debug(f"[ToolExecutor] ▶ execute '{name}' args={args_preview}")
+            logger.debug(f"{tool_call(name)} {DIM}args={args_preview}{RESET}")
         
         # Check approval
         approved = True
@@ -431,7 +436,7 @@ class ToolExecutor:
                 approved = cached
                 if self.debug:
                     logger.debug(
-                        f"[ToolExecutor] Reusing session approval={approved} for '{cache_key}'"
+                        f"{info('[cached]')} Reusing session approval={approved} for '{cache_key}'"
                     )
             elif self.callbacks.get("on_tool_approval"):
                 try:
@@ -444,7 +449,7 @@ class ToolExecutor:
                         approval_result = await self.callbacks["on_tool_approval"](session_id, name, args)
                 except asyncio.TimeoutError:
                     logger.warning(
-                        f"[ToolExecutor] Approval timed out ({self.approval_timeout}s) for '{name}'"
+                        f"{warning('[timeout]')} Approval timed out ({self.approval_timeout}s) for '{name}'"
                     )
                     return self._needs_approval_result(
                         name, args,
@@ -473,7 +478,7 @@ class ToolExecutor:
                         approval_result = await self._default_approval_callback(session_id, name, args, group)
                 except asyncio.TimeoutError:
                     logger.warning(
-                        f"[ToolExecutor] Approval timed out ({self.approval_timeout}s) for '{name}'"
+                        f"{warning('[timeout]')} Approval timed out ({self.approval_timeout}s) for '{name}'"
                     )
                     return self._needs_approval_result(
                         name, args,
@@ -510,7 +515,7 @@ class ToolExecutor:
                             cached_result = cached_val
                             reused_cached_result = True
                             if self.debug:
-                                logger.debug(f"[ToolExecutor] Semantic dedup: '{name}' matches earlier call")
+                                logger.debug(f"{info('[dedup]')} Semantic: '{name}' matches earlier call")
                             break
         
         if reused_cached_result:
@@ -536,14 +541,14 @@ class ToolExecutor:
                 # Apply recovery based on the classified action
                 if classified.recovery_action == RecoveryAction.ROTATE_CREDENTIAL:
                     if self._rotate_credentials(name):
-                        logger.info(f"[ToolExecutor] Rotated credentials, retrying '{name}'")
+                        logger.info(f"{success('[rotate]')} Credentials rotated, retrying '{name}'")
                         result = self.normalize_tool_result(name, await self._dispatch(name, args, session_id))
                         duration_ms = (time.time() - start_time) * 1000
                 
                 elif classified.recovery_action == RecoveryAction.RETRY_SAME:
                     # Transient error — single retry with backoff
                     if classified.should_backoff:
-                        logger.info(f"[ToolExecutor] Retrying '{name}' (transient error)")
+                        logger.info(f"{info('[retry]')} Retrying '{name}' (transient error)")
                         await asyncio.sleep(0.5)  # Brief backoff
                         result = self.normalize_tool_result(name, await self._dispatch(name, args, session_id))
                         duration_ms = (time.time() - start_time) * 1000
@@ -561,7 +566,7 @@ class ToolExecutor:
                         else:
                             backoff_time = 1.0
                     backoff_time = float(backoff_time)
-                    logger.info(f"[ToolExecutor] Backing off {backoff_time}s then retrying '{name}' (transient error)")
+                    logger.info(f"{warning('[backoff]')} Waiting {backoff_time}s then retrying '{name}'")
                     await asyncio.sleep(backoff_time)
                     result = self.normalize_tool_result(name, await self._dispatch(name, args, session_id))
                     duration_ms = (time.time() - start_time) * 1000
@@ -599,15 +604,16 @@ class ToolExecutor:
             if self.debug:
                 ok = bool(result.get("success", True))
                 preview = str(result.get("content") or result.get("error") or "")[:200]
+                status_str = success("OK") if ok else error("FAILED")
                 logger.debug(
-                    f"[ToolExecutor] ◀ '{name}' {'OK' if ok else 'FAILED'} "
-                    f"({duration_ms:.0f}ms): {preview}"
+                    f"{tool_result(ok, '')} {status_str} "
+                    f"{DIM}({duration_ms:.0f}ms){RESET}: {preview}"
                 )
 
             return result
             
         except Exception as e:
-            logger.error(f"Tool execution failed: {name} | Error: {e}")
+            logger.error(f"{error('[failed]')} Tool execution failed: {name} | {e}")
             return {"success": False, "error": f"Tool execution failed: {str(e)}"}
     
     async def _dispatch(self, name: str, args: Dict[str, Any], session_id: str) -> Any:
@@ -665,7 +671,7 @@ class ToolExecutor:
                             return ok
                         return bool(ok)
                     except Exception as e:
-                        logger.warning(f"[ToolExecutor] Credential rotation failed for '{name}': {e}")
+                        logger.warning(f"{error('[rotate]')} Credential rotation failed for '{name}': {e}")
                         return False
                 # No explicit rotate hook — treat as attempted (manager may
                 # refresh lazily on next call).

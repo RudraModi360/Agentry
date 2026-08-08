@@ -115,9 +115,9 @@ async def _dispatch_event(on_event, type: str, data: Dict[str, Any]) -> None:
         else:
             on_event(event)
             await asyncio.sleep(0)  # yield so consumer can drain the event
-    except Exception:
+    except Exception as exc:
         # Isolation: a failing consumer must not crash the provider stream.
-        pass
+        logger.warning("on_event callback raised %s: %s", type(exc).__name__, exc)
 
 
 async def _dispatch_stream_text(on_token, text: str):
@@ -125,6 +125,22 @@ async def _dispatch_stream_text(on_token, text: str):
     if not text:
         return
     await _dispatch_token(on_token, text)
+
+
+async def _dispatch_stream_reasoning(on_token, on_event, text: str):
+    """Dual-dispatch reasoning/thinking tokens.
+
+    Like tokens, reasoning is emitted through *both* channels so that legacy
+    ``on_token`` callbacks (``chat(streaming_funct=...)``) receive thinking text
+    when no ``on_event`` sink is available.  When ``on_event`` is set the
+    structured ``reasoning`` event is the primary path; ``on_token`` serves as
+    a fallback for consumers that only implement the raw-callback interface.
+    """
+    if not text:
+        return
+    await _dispatch_event(on_event, "reasoning", {"delta": text})
+    if not on_event:
+        await _dispatch_token(on_token, text)
 
 
 # Keys that belong to non-OpenAI providers (Anthropic, Gemini, ...).

@@ -22,6 +22,7 @@ from logicore.gateway.gateway import NormalizedMessage
 from logicore.security.input_sanitizer import InputSanitizer, InjectionAction
 from logicore.stream.events import StreamEvent, StreamEventType
 from logicore.stream.emitter import StreamEmitter
+from logicore.stream.events import set_current_emitter
 from logicore.runtime.loop_detection.engine import AgentEventType
 from logicore.agent.tool_guardrails import (
     ToolCallGuardrailController,
@@ -323,6 +324,13 @@ class ChatOrchestrator:
         if emitter:
             emitter.emit(StreamEvent.create(StreamEventType.RUN_START, {}))
 
+        # Bind the emitter to the current context so tools (e.g. execute_command)
+        # can emit intermediate TOOL_OUTPUT events without receiving the emitter
+        # explicitly through their argument schema.
+        # Reset first to clear any stale emitter from a previous call.
+        set_current_emitter(None)
+        _emitter_token = set_current_emitter(emitter) if emitter else None
+
         # Extract text for reminder routing and reasoning (needed early)
         text_for_reminder = user_input
         if isinstance(user_input, list):
@@ -403,12 +411,13 @@ class ChatOrchestrator:
             except Exception as e:
                 logger.debug(f"[ChatOrchestrator] Debug message save failed: {e}")
         
-        # Reset tool guardrails and retry state once per run() call (one user turn)
+        # Reset tool guardrails once per run() call (one user turn)
         self.tool_guardrails.reset_for_turn()
         self._tool_guardrail_halt_decision = None
-        self._turn_retry_state = TurnRetryState()
 
         for i in range(self.agent.max_iterations):
+            # Reset retry state per iteration so each LLM call gets fresh retry budget
+            self._turn_retry_state = TurnRetryState()
             if self.debug:
                 logger.debug(f"\n[ChatOrchestrator] ITERATION {i+1}/{self.agent.max_iterations}")
 
@@ -1009,6 +1018,10 @@ class ChatOrchestrator:
                 self.agent.context_engine.inject_hint(session.messages, lessons_text)
                 injected_hints.append(lessons_text)
 
+        # Reset the emitter context var so it doesn't leak into subsequent
+        # calls or other tasks sharing this thread.
+        set_current_emitter(None)
+
         self._clear_injected_hints(session, injected_hints)
         if emitter:
             emitter.emit(StreamEvent.create(StreamEventType.DONE, {"content": "Max iterations reached."}))
@@ -1111,7 +1124,8 @@ class ChatOrchestrator:
         if self.debug:
             logger.warning(
                 f"[ChatOrchestrator] LLM error classified: {classified.reason.value} "
-                f"(recovery={classified.recovery_action.value}, retryable={classified.retryable})"
+                f"(recovery={classified.recovery_action.value}, retryable={classified.retryable}) "
+                f"Actual error: {type(error).__name__}: {error}"
             )
         
         # Non-retryable errors: surface immediately
@@ -1523,9 +1537,18 @@ class ChatOrchestrator:
                                 logger.debug(f"[ChatOrchestrator] Auto-completed orphaned task {tid}")
                         except Exception:
                             pass
-                elif self.debug:
+                else:
+                    # Summary does NOT imply completion — auto-fail abandoned tasks
+                    # so they don't stay stuck in_progress forever.
+                    for tid in orphaned:
+                        try:
+                            self.agent._task_manager.fail_task(tid, reason="Session ended without completing task")
+                            if self.debug:
+                                logger.debug(f"[ChatOrchestrator] Auto-failed abandoned task {tid}")
+                        except Exception:
+                            pass
                     logger.warning(
-                        f"[ChatOrchestrator] {len(orphaned)} task(s) still in_progress at finalize: {orphaned}"
+                        f"[ChatOrchestrator] {len(orphaned)} task(s) abandoned at finalize (auto-failed): {orphaned}"
                     )
 
         # Reminder verification

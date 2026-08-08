@@ -54,7 +54,7 @@ def ocr_from_image(image: Image.Image) -> str:
         except Exception as e:
             logger.debug(f"pytesseract failed: {e}, trying VLM fallback")
 
-    # 2. Fallback: Ollama VLM (gemma3:4b-cloud)
+    # 2. Fallback: Ollama VLM (jpmarindiaz/lfm2.5-vl-450m:latest)
     return _vlm_ocr(image)
 
 

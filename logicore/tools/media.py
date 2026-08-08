@@ -12,6 +12,8 @@ from typing import Literal, List, Dict, Optional
 from pydantic import BaseModel, Field
 from .base import BaseTool, ToolResult
 
+from logicore.utils.colors import colored, error
+
 
 class MediaSearchParams(BaseModel):
     query: str = Field(..., description='Search query for finding relevant media (images/videos).')
@@ -87,7 +89,7 @@ class MediaSearchTool(BaseTool):
             return results
             
         except Exception as e:
-            print(f"[MediaSearch] Image search error: {e}")
+            print(f"{error('[MediaSearch]')} Image search error: {e}")
             return []
 
     def _search_youtube(self, query: str, num_results: int = 2) -> List[Dict[str, str]]:
@@ -137,7 +139,7 @@ class MediaSearchTool(BaseTool):
             return self._search_youtube_via_google(query, num_results)
             
         except Exception as e:
-            print(f"[MediaSearch] YouTube search error: {e}")
+            print(f"{error('[MediaSearch]')} YouTube search error: {e}")
             return self._search_youtube_via_google(query, num_results)
 
     def _search_youtube_via_google(self, query: str, num_results: int = 2) -> List[Dict[str, str]]:
@@ -182,7 +184,7 @@ class MediaSearchTool(BaseTool):
             return results
             
         except Exception as e:
-            print(f"[MediaSearch] Google YouTube fallback error: {e}")
+            print(f"{error('[MediaSearch]')} Google YouTube fallback error: {e}")
             return []
 
     def _extract_youtube_id(self, url: str) -> Optional[str]:

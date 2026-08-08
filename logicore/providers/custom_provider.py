@@ -90,6 +90,12 @@ class CustomProvider(LLMProvider):
             **kwargs,
         )
 
+        # Detect Ollama endpoints for compatibility adjustments
+        self._is_ollama = False
+        if endpoint:
+            ep_lower = endpoint.lower()
+            self._is_ollama = "11434" in ep_lower or "ollama" in ep_lower
+
     def get_model_name(self) -> str:
         return self.model_name
 

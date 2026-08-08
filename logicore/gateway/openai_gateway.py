@@ -5,12 +5,15 @@ OpenAI-compatible gateway for providers like OpenAI and Groq.
 from typing import List, Dict, Any, Optional
 import json
 import asyncio
+import queue
+import threading
 
 from .base import (
     ProviderGateway,
     NormalizedMessage,
     _gateway_debug,
     _dispatch_stream_text,
+    _dispatch_stream_reasoning,
     _dispatch_event,
     _convert_local_images_to_base64,
     _normalize_openai_tool_calls,
@@ -292,9 +295,6 @@ class OpenAIGateway(ProviderGateway):
             raise
 
     async def chat_stream(self, messages, tools=None, on_token=None, on_event=None, max_tokens=None) -> NormalizedMessage:
-        import queue
-        import threading
-
         messages = _convert_local_images_to_base64(messages)
         messages = _strip_provider_specific_fields(messages)
         messages = _serialize_tool_call_arguments(messages)
@@ -305,7 +305,12 @@ class OpenAIGateway(ProviderGateway):
         return await self._chat_stream_completions(messages, tools, on_token, on_event, max_tokens)
 
     async def _chat_stream_completions(self, messages, tools, on_token, on_event, max_tokens) -> NormalizedMessage:
-        kwargs = {"model": self.model_name, "messages": messages, "stream": True, "stream_options": {"include_usage": True}}
+        # Ollama doesn't support stream_options, so omit it for Ollama endpoints
+        is_ollama = getattr(self.provider, "_is_ollama", False)
+        if is_ollama:
+            kwargs = {"model": self.model_name, "messages": messages, "stream": True}
+        else:
+            kwargs = {"model": self.model_name, "messages": messages, "stream": True, "stream_options": {"include_usage": True}}
         if tools:
             kwargs["tools"] = tools
             kwargs["tool_choice"] = "auto"
@@ -345,7 +350,7 @@ class OpenAIGateway(ProviderGateway):
                 delta = chunk.choices[0].delta
 
                 if hasattr(delta, "reasoning_content") and delta.reasoning_content:
-                    await _dispatch_event(on_event, "reasoning", {"delta": delta.reasoning_content})
+                    await _dispatch_stream_reasoning(on_token, on_event, delta.reasoning_content)
 
                 if hasattr(delta, "content") and delta.content:
                     accumulated_content += delta.content
@@ -478,7 +483,7 @@ class OpenAIGateway(ProviderGateway):
                     delta = ev.get("delta", "")
                     if delta:
                         accumulated_reasoning += delta
-                        await _dispatch_event(on_event, "reasoning", {"delta": delta})
+                        await _dispatch_stream_reasoning(on_token, on_event, delta)
 
                 elif event_type == "response.function_call_arguments.delta":
                     delta = ev.get("delta", "")

@@ -25,6 +25,8 @@ from logicore.runtime.context.token_budget import TokenBudget, TokenCategory
 from logicore.runtime.context.compression import CompressionService, CompressionResult, CompressionStatus
 from logicore.runtime.context.masking import ToolOutputMaskingService, MaskingResult
 
+from logicore.utils.colors import colored, warning, info, success, error, banner, step
+
 logger = logging.getLogger(__name__)
 
 
@@ -205,7 +207,7 @@ class ContextWindowManager:
             f"Starting context management pipeline..."
         )
         print(
-            f"\n[ContextWindowManager] ⚠️ Token budget exceeded: "
+            f"\n{warning('[ContextWindowManager]')} Token budget exceeded: "
             f"{result.original_tokens}/{self.budget.compression_threshold} tokens. "
             f"Starting context management..."
         )
@@ -237,7 +239,7 @@ class ContextWindowManager:
             return result, current_messages
         
         # Stage 2: Compression (needs LLM)
-        print("[ContextWindowManager] 🔄 Running context compression (this may take a moment)...")
+        print(info("[ContextWindowManager]") + " Running context compression (this may take a moment)...")
         compression_result = await self.compression_service.compress(
             current_messages,
             session_id,
@@ -252,12 +254,12 @@ class ContextWindowManager:
             result.compression_result = compression_result
             result.tokens_saved += compression_result.tokens_saved
             print(
-                f"[ContextWindowManager] ✅ Compression complete: "
+                f"{success('[ContextWindowManager]')} Compression complete: "
                 f"{result.original_tokens} → {self._estimate_messages_tokens(current_messages)} tokens"
             )
         else:
             print(
-                f"[ContextWindowManager] ⚠️ Compression {compression_result.status.value}: "
+                f"{warning('[ContextWindowManager]')} Compression {compression_result.status.value}: "
                 f"{compression_result.error or 'unknown reason'}"
             )
         
@@ -462,7 +464,7 @@ class ContextEngine:
         except Exception as e:
             # If context management fails (e.g., compression timeout), return original messages
             if self.debug:
-                print(f"[ContextEngine] ⚠️ Context management failed: {e}. Using original messages.")
+                print(f"{warning('[ContextEngine]')} Context management failed: {e}. Using original messages.")
             result.final_tokens = result.original_tokens
             return result, messages
 
@@ -476,8 +478,8 @@ class ContextEngine:
 
         if result.any_action_taken and self.debug:
             print(
-                f"[ContextEngine] Pipeline: {result.original_tokens} → {result.final_tokens} tokens "
-                f"(saved {result.tokens_saved}). "
+                f"{info('[ContextEngine]')} Pipeline: {result.original_tokens} → {result.final_tokens} tokens "
+                f"(saved {success(str(result.tokens_saved))}). "
                 f"masked={result.masked} compressed={result.compressed} truncated={result.truncated}"
             )
 

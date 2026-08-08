@@ -46,6 +46,9 @@ class TaskManager:
         """
         Create a new task.
         
+        If a pending or in_progress task with the same subject already exists,
+        returns the existing task instead of creating a duplicate.
+        
         Args:
             subject: Short title
             description: Detailed description
@@ -55,8 +58,15 @@ class TaskManager:
             metadata: Arbitrary metadata
             
         Returns:
-            Created task with assigned ID
+            Created (or existing) task with assigned ID
         """
+        # Duplicate detection: check for existing task with same subject
+        normalized_subject = subject.strip().lower()
+        for existing in self.store.list_all():
+            if existing.status in (TaskStatus.PENDING, TaskStatus.IN_PROGRESS):
+                if existing.subject.strip().lower() == normalized_subject:
+                    return existing
+
         task = Task(
             id="0",  # Will be assigned by store
             subject=subject,
@@ -265,13 +275,25 @@ class TaskManager:
         if not available:
             return None
         
+        # Safety check: re-verify each candidate is truly available
+        # (guards against stale disk reads or race conditions)
+        verified = []
+        for task in available:
+            # Re-read from disk to ensure freshness
+            fresh = self.store.get(task.id)
+            if fresh and fresh.is_available:
+                verified.append(fresh)
+        
+        if not verified:
+            return None
+        
         # Prefer tasks already claimed by this agent
         if agent_id:
-            agent_tasks = [t for t in available if t.owner == agent_id]
+            agent_tasks = [t for t in verified if t.owner == agent_id]
             if agent_tasks:
                 return agent_tasks[0]
         
-        return available[0]
+        return verified[0]
     
     def is_agent_busy(self, agent_id: str, exclude_task_id: Optional[str] = None) -> bool:
         """

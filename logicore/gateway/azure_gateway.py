@@ -11,6 +11,7 @@ from .base import (
     NormalizedMessage,
     _gateway_debug,
     _dispatch_stream_text,
+    _dispatch_stream_reasoning,
     _dispatch_event,
     _convert_local_images_to_base64,
     _normalize_openai_tool_calls,
@@ -123,6 +124,9 @@ class AzureGateway(ProviderGateway):
                 if not chunk or not hasattr(chunk, "choices") or not chunk.choices:
                     continue
                 delta = chunk.choices[0].delta
+
+                if hasattr(delta, "reasoning_content") and delta.reasoning_content:
+                    await _dispatch_stream_reasoning(on_token, on_event, delta.reasoning_content)
 
                 if hasattr(delta, "content") and delta.content:
                     accumulated += delta.content
@@ -311,7 +315,7 @@ class AzureGateway(ProviderGateway):
                     await _dispatch_stream_text(on_token, event.delta.text)
                     await _dispatch_event(on_event, "token", {"delta": event.delta.text})
                 elif event.type == "content_block_delta" and hasattr(event.delta, "thinking"):
-                    await _dispatch_event(on_event, "reasoning", {"delta": event.delta.thinking})
+                    await _dispatch_stream_reasoning(on_token, on_event, event.delta.thinking)
                 elif event.type == "content_block_start" and event.content_block.type == "tool_use":
                     acc_tools.append({"id": event.content_block.id, "name": event.content_block.name, "args": ""})
                     await _dispatch_event(

@@ -123,6 +123,8 @@ class MCPAgent(Agent):
                          If None, loads all default tools (tools=True).
         """
         # Initialize base Agent with tool_preset or tools
+        # MCPAgent: all tools + MCP, NO skills by default
+        effective_skills = skills if skills is not None else []
         if tool_preset:
             # Use preset instead of loading all tools
             super().__init__(
@@ -137,7 +139,7 @@ class MCPAgent(Agent):
                 max_iterations=max_iterations,
                 tools=tools or [],
                 tool_preset=tool_preset,
-                skills=skills,
+                skills=effective_skills,
                 workspace_root=workspace_root,
                 storage=storage,
             )
@@ -154,7 +156,7 @@ class MCPAgent(Agent):
                 telemetry=telemetry,
                 max_iterations=max_iterations,
                 tools=tools if tools is not None else True,  # Load default tools if no custom tools
-                skills=skills,
+                skills=effective_skills,
                 workspace_root=workspace_root,
                 storage=storage,
             )

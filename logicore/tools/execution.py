@@ -11,6 +11,7 @@ from typing import Literal, Optional, Dict, List, Any
 from pydantic import BaseModel, Field
 from .base import BaseTool, ToolResult
 from .bash import validate_command
+from logicore.stream.events import StreamEvent, StreamEventType, get_current_emitter
 
 
 # --- Background Process Manager ---
@@ -668,6 +669,23 @@ def _is_likely_python_code(command: str) -> bool:
     Heuristic to detect if a command string is actually Python code.
     This avoids the agent having to specify command_type='python'.
     """
+    stripped = command.strip()
+    
+    # Exclude shell commands that invoke Python (e.g., python -c "...", python3 script.py)
+    python_invocation_patterns = [
+        r'^python\s+',
+        r'^python3\s+',
+        r'^py\s+',
+        r'^python\s+-c\s+',
+        r'^python3\s+-c\s+',
+        r'^py\s+-c\s+',
+        r'^\S*python\s+',
+        r'^\S*python3\s+',
+    ]
+    for pattern in python_invocation_patterns:
+        if re.match(pattern, stripped, re.IGNORECASE):
+            return False
+    
     # Strong Python indicators
     python_indicators = [
         'import ', 'from ', 'def ', 'class ', 'print(', 
@@ -684,7 +702,6 @@ def _is_likely_python_code(command: str) -> bool:
         return True
     
     # If starts with common Python patterns
-    stripped = command.strip()
     if stripped.startswith(('import ', 'from ', 'def ', 'class ', 'print(')):
         return True
     
@@ -767,6 +784,71 @@ class ExecuteCodeParams(BaseModel):
     )
 
 
+def _stream_subprocess(
+    cmd_list: list,
+    cwd: str,
+    timeout: int,
+    emitter=None,
+) -> tuple:
+    """
+    Execute a subprocess with real-time line-by-line output streaming.
+
+    Returns (returncode, stdout_text, stderr_text).
+    If *emitter* is provided, each line of stdout/stderr is emitted as a
+    TOOL_OUTPUT StreamEvent so the UI can display progress live.
+    """
+    stdout_lines: List[str] = []
+    stderr_lines: List[str] = []
+    lock = threading.Lock()
+
+    def _reader(stream, dest, stream_name):
+        try:
+            for raw in iter(stream.readline, b''):
+                if not raw:
+                    break
+                line = raw.decode('utf-8', errors='replace').rstrip('\n\r')
+                with lock:
+                    dest.append(line)
+                if emitter:
+                    try:
+                        emitter.emit(StreamEvent.create(
+                            StreamEventType.TOOL_OUTPUT,
+                            {"stream": stream_name, "line": line},
+                        ))
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+        finally:
+            try:
+                stream.close()
+            except Exception:
+                pass
+
+    process = subprocess.Popen(
+        cmd_list,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        cwd=cwd,
+    )
+
+    t_out = threading.Thread(target=_reader, args=(process.stdout, stdout_lines, "stdout"), daemon=True)
+    t_err = threading.Thread(target=_reader, args=(process.stderr, stderr_lines, "stderr"), daemon=True)
+    t_out.start()
+    t_err.start()
+
+    try:
+        process.wait(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait()
+
+    t_out.join(timeout=5)
+    t_err.join(timeout=5)
+
+    return process.returncode, "\n".join(stdout_lines), "\n".join(stderr_lines)
+
+
 # --- Tools ---
 
 class ExecuteCommandTool(BaseTool):
@@ -798,6 +880,7 @@ class ExecuteCommandTool(BaseTool):
 
     def _run_python_code(self, code: str, cwd: str, timeout: int, ignore_error: bool) -> ToolResult:
         """Execute Python code by writing to a temp file."""
+        emitter = get_current_emitter()
         try:
             fd, tmp_path = tempfile.mkstemp(suffix='.py')
             try:
@@ -805,19 +888,15 @@ class ExecuteCommandTool(BaseTool):
                 with os.fdopen(fd, 'w', encoding='utf-8') as tmp:
                     tmp.write(code)
 
-                result = subprocess.run(
-                    [sys.executable, tmp_path],
-                    capture_output=True,
-                    text=True,
-                    cwd=cwd,
-                    timeout=timeout
+                returncode, stdout, stderr = _stream_subprocess(
+                    [sys.executable, '-u', tmp_path], cwd, timeout, emitter,
                 )
             finally:
                 if os.path.exists(tmp_path):
                     os.remove(tmp_path)
 
-            stdout = result.stdout.strip()
-            stderr = result.stderr.strip()
+            stdout = stdout.strip()
+            stderr = stderr.strip()
             output_parts = []
             if stdout:
                 output_parts.append(f"STDOUT:\n{stdout}")
@@ -825,17 +904,15 @@ class ExecuteCommandTool(BaseTool):
                 output_parts.append(f"STDERR:\n{stderr}")
             output = "\n".join(output_parts) if output_parts else "(No output)"
 
-            if result.returncode == 0 or ignore_error:
+            if returncode == 0 or ignore_error:
                 return ToolResult(success=True, content=output)
             else:
                 return ToolResult(
                     success=False, 
                     content=output, 
-                    error=f"Python execution failed (Exit Code {result.returncode})"
+                    error=f"Python execution failed (Exit Code {returncode})"
                 )
 
-        except subprocess.TimeoutExpired:
-            return ToolResult(success=False, error=f"Python code timed out after {timeout}s.")
         except Exception as e:
             return ToolResult(success=False, error=f"Failed to execute Python code: {e}")
 
@@ -889,17 +966,14 @@ class ExecuteCommandTool(BaseTool):
             if _is_likely_python_code(command):
                 return self._run_python_code(command, cwd, timeout, ignore_error)
 
-            # Execute
-            result = subprocess.run(
-                cmd_list,
-                capture_output=True,
-                text=True,
-                cwd=cwd,
-                timeout=timeout
+            # Execute with streaming output
+            emitter = get_current_emitter()
+            returncode, stdout, stderr = _stream_subprocess(
+                cmd_list, cwd, timeout, emitter,
             )
 
-            stdout = result.stdout.strip()
-            stderr = result.stderr.strip()
+            stdout = stdout.strip()
+            stderr = stderr.strip()
             output_parts = []
             if stdout:
                 output_parts.append(f"STDOUT:\n{stdout}")
@@ -907,17 +981,15 @@ class ExecuteCommandTool(BaseTool):
                 output_parts.append(f"STDERR:\n{stderr}")
             output = "\n".join(output_parts) if output_parts else "(No output)"
 
-            if result.returncode == 0 or ignore_error:
+            if returncode == 0 or ignore_error:
                 return ToolResult(success=True, content=output)
             else:
                 return ToolResult(
                     success=False, 
                     content=output, 
-                    error=f"Command failed (Exit Code {result.returncode})"
+                    error=f"Command failed (Exit Code {returncode})"
                 )
 
-        except subprocess.TimeoutExpired:
-            return ToolResult(success=False, error=f"Command timed out after {timeout} seconds.")
         except FileNotFoundError:
             os_name = _detect_host_os()
             return ToolResult(
@@ -965,6 +1037,7 @@ class CodeExecuteTool(BaseTool):
     args_schema = ExecuteCodeParams
 
     def run(self, code: str, timeout: int = 60) -> ToolResult:
+        emitter = get_current_emitter()
         try:
             # Enforce minimum timeout to prevent premature termination
             timeout = max(10, min(timeout, 300))
@@ -974,15 +1047,12 @@ class CodeExecuteTool(BaseTool):
                 with os.fdopen(fd, 'w', encoding='utf-8') as tmp:
                     tmp.write(code)
 
-                result = subprocess.run(
-                    [sys.executable, tmp_path],
-                    capture_output=True,
-                    text=True,
-                    timeout=timeout
+                returncode, stdout, stderr = _stream_subprocess(
+                    [sys.executable, '-u', tmp_path], None, timeout, emitter,
                 )
 
-                stdout = result.stdout.strip()
-                stderr = result.stderr.strip()
+                stdout = stdout.strip()
+                stderr = stderr.strip()
                 output_parts = []
                 if stdout:
                     output_parts.append(f"STDOUT:\n{stdout}")
@@ -990,20 +1060,26 @@ class CodeExecuteTool(BaseTool):
                     output_parts.append(f"STDERR:\n{stderr}")
                 output = "\n".join(output_parts) if output_parts else "(No output)"
 
-                if result.returncode == 0:
+                if returncode == 0:
                     return ToolResult(success=True, content=output)
                 else:
+                    # Enhance error with diagnostic hints
+                    error_detail = f"Execution failed (Exit Code {returncode})"
+                    if returncode == -9 or returncode == 137:
+                        error_detail += "\nHINT: Process was killed (timeout or memory). Try increasing timeout or simplifying the code."
+                    elif returncode == 1 and not stderr:
+                        error_detail += "\nHINT: Script exited with error but no traceback was printed. Ensure exceptions are not silently caught."
+                    if not stderr and returncode != 0:
+                        error_detail += "\nHINT: No stderr output. The script may be catching exceptions internally. Add 'import traceback; traceback.print_exc()' to your except blocks."
                     return ToolResult(
                         success=False, 
                         content=output, 
-                        error=f"Execution failed (Exit Code {result.returncode})"
+                        error=error_detail
                     )
             finally:
                 if os.path.exists(tmp_path):
                     os.remove(tmp_path)
 
-        except subprocess.TimeoutExpired:
-            return ToolResult(success=False, error=f"Code execution timed out after {timeout}s.")
         except Exception as e:
             return ToolResult(success=False, error=f"Failed to execute code: {e}")
 

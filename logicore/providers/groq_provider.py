@@ -11,23 +11,32 @@ class GroqProvider(LLMProvider):
     
     Also provides an OpenAI client for the Responses API (Groq SDK
     doesn't support responses endpoint).
+    
+    Supports custom endpoints for Groq-compatible servers:
+        provider = GroqProvider(model_name="llama-3.3-70b", api_key="xxx", endpoint="http://localhost:8000")
     """
     provider_name = "groq"
 
-    def __init__(self, model_name: str, api_key: Optional[str] = None, **kwargs):
+    def __init__(self, model_name: str, api_key: Optional[str] = None, endpoint: Optional[str] = None, **kwargs):
         from groq import Groq
 
         self.model_name = model_name
         self.api_key = api_key or get_api_key("groq")
         if not self.api_key:
             raise ValueError("Groq API key is required.")
-        self.client = Groq(api_key=self.api_key, timeout=120.0)
+        
+        self.endpoint = endpoint
+        if endpoint:
+            self.client = Groq(api_key=self.api_key, base_url=endpoint, timeout=120.0)
+        else:
+            self.client = Groq(api_key=self.api_key, timeout=120.0)
 
         # OpenAI client for Responses API (Groq SDK lacks responses endpoint)
         from openai import OpenAI
+        base_url = endpoint or "https://api.groq.com/openai/v1"
         self._responses_client = OpenAI(
             api_key=self.api_key,
-            base_url="https://api.groq.com/openai/v1",
+            base_url=base_url,
             timeout=120.0,
         )
 

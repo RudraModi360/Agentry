@@ -75,6 +75,20 @@ TOOL_PRESETS = {
         "web_search", "url_fetch",
         # V2 Task Management
         "task_create", "task_get", "task_update", "task_list", "task_next",
+        # Plan
+        "enter_plan_mode", "submit_plan", "view_plan",
+        # Skill Management
+        "load_skill",
+    ],
+    "chatbot": [
+        # Chatbot - general purpose QA with web + datetime + plan + skills
+        "web_search", "datetime",
+        # V2 Task Management
+        "task_create", "task_get", "task_update", "task_list", "task_next",
+        # Plan
+        "enter_plan_mode", "submit_plan", "view_plan",
+        # Skill Management
+        "load_skill",
     ],
     "full": "__all__",  # Load all tools
     "minimal": [
@@ -87,6 +101,33 @@ TOOL_PRESETS = {
         "list_processes", "kill_process", "get_process_output",
         "web_search", "url_fetch"
     ],
+}
+
+# Tool categories — maps a category name to the list of tool names it contains.
+# Used by Agent._resolve_tools() so users can pass e.g. tools=["filesystem"]
+# to load all filesystem tools at once.
+TOOL_CATEGORIES = {
+    "filesystem": [
+        "read_file", "create_file", "edit_file", "delete_file",
+        "list_files", "search_files", "fast_grep",
+    ],
+    "execution": ["execute_command", "code_execute"],
+    "process": [
+        "list_processes", "kill_process", "get_process_info",
+        "get_process_output", "tail_process_output", "watch_process",
+    ],
+    "web": ["web_search", "image_search", "url_fetch"],
+    "git": ["git_command"],
+    "document": ["read_document", "convert_document"],
+    "media": ["media_search"],
+    "cron": ["add_cron_job", "list_cron_jobs", "remove_cron_job", "get_crons"],
+    "smart": ["bash", "datetime", "notes", "think"],
+    "plan": [
+        "enter_plan_mode", "submit_plan", "exit_plan_mode",
+        "update_plan_progress", "view_plan",
+    ],
+    "task": ["task_create", "task_get", "task_update", "task_list", "task_next"],
+    "skill": ["load_skill"],
 }
 
 class ToolRegistry:

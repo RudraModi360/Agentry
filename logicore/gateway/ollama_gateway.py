@@ -11,6 +11,7 @@ from .base import (
     NormalizedMessage,
     _gateway_debug,
     _dispatch_stream_text,
+    _dispatch_stream_reasoning,
     _dispatch_event,
 )
 
@@ -399,7 +400,12 @@ class OllamaGateway(ProviderGateway):
                 await _dispatch_stream_text(on_token, item["text"])
                 await _dispatch_event(on_event, "token", {"delta": item["text"]})
             elif item["kind"] == "event":
-                await _dispatch_event(on_event, item["event"]["type"], item["event"].get("data", {}))
+                ev_type = item["event"]["type"]
+                ev_data = item["event"].get("data", {})
+                if ev_type == "reasoning":
+                    await _dispatch_stream_reasoning(on_token, on_event, ev_data.get("delta", ""))
+                else:
+                    await _dispatch_event(on_event, ev_type, ev_data)
 
         await asyncio.get_event_loop().run_in_executor(None, future.result)
 

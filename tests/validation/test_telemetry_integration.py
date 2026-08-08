@@ -10,6 +10,7 @@ import asyncio
 import sys
 import traceback
 from decimal import Decimal
+from logicore.utils.colors import colored, error, success, warning, info, banner, section, bold
 
 # ── Results collector ──────────────────────────────────────────────────────────
 results = []
@@ -17,10 +18,13 @@ results = []
 def record(name, passed, detail=""):
     status = "PASS" if passed else "FAIL"
     marker = "+" if passed else "x"
-    msg = f"[{marker}] {name}: {status}"
+    if passed:
+        msg = f"{success(f'[{marker}] {name}: {status}')}"
+    else:
+        msg = f"{error(f'[{marker}] {name}: {status}')}"
     if detail:
         msg += f"  ({detail})"
-    results.append(msg)
+    results.append(f"[{marker}] {name}: {status}" + (f"  ({detail})" if detail else ""))
     print(msg)
 
 
@@ -234,12 +238,12 @@ def test_ollama_streaming():
 def main():
     import os
 
-    print("=" * 70)
-    print("  Telemetry Integration Tests")
-    print("=" * 70)
+    print(banner("=" * 70))
+    print(banner("  Telemetry Integration Tests"))
+    print(banner("=" * 70))
 
     # --- Offline tests (always run) ---
-    print("\n--- Offline tests ---")
+    print(f"\n{section('--- Offline tests ---')}")
     try:
         test_canonical_normalize_usage()
     except Exception as e:
@@ -252,7 +256,7 @@ def main():
 
     # --- Groq (requires GROQ_API_KEY) ---
     groq_key = os.environ.get("GROQ_API_KEY", "")
-    print("\n--- Groq provider tests ---")
+    print(f"\n{section('--- Groq provider tests ---')}")
     if not groq_key:
         record("1: Groq non-streaming", False, "SKIPPED — GROQ_API_KEY not set")
         record("2: Groq streaming",      False, "SKIPPED — GROQ_API_KEY not set")
@@ -267,7 +271,7 @@ def main():
             record("2: Groq streaming", False, f"{e}\n{traceback.format_exc()}")
 
     # --- Ollama (requires Ollama running locally) ---
-    print("\n--- Ollama provider tests ---")
+    print(f"\n{section('--- Ollama provider tests ---')}")
     if not _ollama_is_running():
         record("3: Ollama non-streaming", False, "SKIPPED — Ollama not running")
         record("4: Ollama streaming",     False, "SKIPPED — Ollama not running")
@@ -284,9 +288,9 @@ def main():
     # --- Summary ---
     passed = sum(1 for r in results if "PASS" in r)
     failed = sum(1 for r in results if "FAIL" in r)
-    print("\n" + "=" * 70)
-    print(f"  Summary: {passed} passed, {failed} failed, {len(results)} total")
-    print("=" * 70)
+    print("\n" + banner("=" * 70))
+    print(f"  Summary: {success(f'{passed} passed')}, {error(f'{failed} failed')}, {len(results)} total")
+    print(banner("=" * 70))
     for r in results:
         print(f"  {r}")
     print()

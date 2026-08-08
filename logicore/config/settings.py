@@ -16,6 +16,7 @@ from typing import Optional, List, Dict, Any
 # All environment access is owned by logicore.config.env. This module only
 # reads configuration through that single gateway (never os.environ directly).
 from .env import _raw, _expand, resolve, storage_root
+from logicore.utils.colors import colored, banner, info, bold
 
 
 def _get_env(key: str, default: str = None, toml_section: str = None, toml_key: str = None) -> Optional[str]:
@@ -415,12 +416,12 @@ class AgentrySettings:
     
     def print_config(self):
         """Print configuration summary."""
-        print("\n" + "="*60)
-        print("  AGENTRY CONFIGURATION")
-        print("="*60)
+        print("\n" + banner("="*60))
+        print(banner("  AGENTRY CONFIGURATION"))
+        print(banner("="*60))
         for key, value in self.to_dict().items():
-            print(f"  {key:25} = {value}")
-        print("="*60 + "\n")
+            print(f"  {info(key):25} = {value}")
+        print(banner("="*60) + "\n")
 
     def create_storage(self):
         """Create and initialize a StorageManager from current settings."""

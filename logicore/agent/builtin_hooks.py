@@ -195,6 +195,93 @@ async def tool_error_injection_hook(ctx: HookContext) -> HookResult:
     )
 
 
+async def tool_output_validation_hook(ctx: HookContext) -> HookResult:
+    """Validate tool output quality and inject feedback if output seems wrong.
+    
+    This hook runs AFTER_TOOL_EXECUTION and checks:
+    1. If the tool claimed success but output is empty/suspicious
+    2. If the tool output contains obvious error indicators
+    3. If the output matches expected patterns for the tool type
+    
+    Injects validation feedback to help the LLM understand what went wrong.
+    """
+    if ctx.tool_result is None:
+        return HookResult(action=HookAction.CONTINUE)
+    
+    result = ctx.tool_result
+    if not isinstance(result, dict):
+        return HookResult(action=HookAction.CONTINUE)
+    
+    tool_name = ctx.tool_name or "unknown"
+    success = result.get("success", True)
+    content = str(result.get("content", ""))
+    error = str(result.get("error", ""))
+    
+    validation_warnings = []
+    
+    # Check 1: Tool claims success but content is empty
+    if success and not content.strip() and tool_name in ("read_file", "list_files", "search_files", "fast_grep"):
+        validation_warnings.append(
+            f"Tool '{tool_name}' returned success but the content is empty. "
+            f"This may indicate the file is empty, the path is wrong, or the search found nothing."
+        )
+    
+    # Check 2: Tool claims success but output contains error indicators
+    if success and content:
+        error_indicators = ["error:", "traceback", "exception", "failed", "cannot", "unable"]
+        for indicator in error_indicators:
+            if indicator in content.lower()[:500]:  # Check first 500 chars
+                validation_warnings.append(
+                    f"Tool '{tool_name}' returned success but the output contains error indicators. "
+                    f"The tool may have partially succeeded or output includes error messages."
+                )
+                break
+    
+    # Check 3: File operations should have validated output
+    if tool_name == "create_file" and success:
+        # Check if content was actually written
+        file_path = (ctx.tool_args or {}).get("file_path", "")
+        if file_path and "File created" not in content:
+            validation_warnings.append(
+                f"Tool '{tool_name}' claimed success but the result doesn't confirm file creation. "
+                f"Verify the file exists before proceeding."
+            )
+    
+    # Check 4: Code execution should have meaningful output
+    if tool_name in ("code_execute", "execute_command") and success:
+        if content.strip() in ("", "(No output)", "STDOUT:\n(none)"):
+            validation_warnings.append(
+                f"Tool '{tool_name}' returned success but produced no output. "
+                f"This may be normal (e.g., print-free script) or may indicate an issue."
+            )
+    
+    # Check 5: Read operations on non-existent files
+    if tool_name == "read_file" and not success and "not found" in error.lower():
+        validation_warnings.append(
+            f"The file you're trying to read doesn't exist. "
+            f"Use 'list_files' to check what files are available in the directory."
+        )
+    
+    # Inject validation feedback if warnings found
+    if validation_warnings:
+        enhanced_result = dict(result)
+        validation_msg = "\n".join(validation_warnings)
+        
+        # Add to error or content based on success status
+        if success:
+            enhanced_result["_validation_warnings"] = validation_warnings
+            enhanced_result["content"] = content + f"\n\n[Validation Notes]: {validation_msg}"
+        else:
+            enhanced_result["error"] = error + f"\n\n[Validation Notes]: {validation_msg}"
+        
+        return HookResult(
+            action=HookAction.MODIFY,
+            tool_result=enhanced_result,
+        )
+    
+    return HookResult(action=HookAction.CONTINUE)
+
+
 # =============================================================================
 # Hook Registration
 # =============================================================================
@@ -245,6 +332,15 @@ def register_builtin_hooks(hook_system, enabled: Optional[Dict[str, bool]] = Non
         priority=50,
         enabled=enabled.get("tool_error_injection", True),
         description="Enhance tool error messages with recovery guidance",
+    )
+    
+    hook_system.add_hook(
+        name="tool_output_validation",
+        hook_point=HookPoint.AFTER_TOOL_EXECUTION,
+        hook_fn=tool_output_validation_hook,
+        priority=60,
+        enabled=enabled.get("tool_output_validation", True),
+        description="Validate tool output quality and inject feedback",
     )
     
     logger.debug(f"Registered {len(hook_system.get_hooks(HookPoint.AFTER_TURN))} stop hooks")

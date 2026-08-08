@@ -12,6 +12,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Protocol
 
+from logicore.utils.colors import colored, error, warning, info, success, banner, label, CYAN, BLUE
+
 
 NotificationChannelName = str
 
@@ -55,7 +57,7 @@ class ConsoleNotificationChannel:
     name = "console"
 
     def send(self, request: NotificationRequest) -> bool:
-        print(f"[Cron] {request.title}: {request.message}")
+        print(f"{label('Cron', CYAN)} {request.title}: {request.message}")
         return True
 
 
@@ -390,7 +392,7 @@ class CronExecutionLog:
             self._update_summary(job_id, job_name, status)
             
         except Exception as e:
-            print(f"[ERROR] Failed to log execution: {e}")
+            print(f"{error('[ERROR]')} Failed to log execution: {e}")
     
     def _update_summary(self, job_id: str, job_name: str, status: str) -> None:
         """Update execution summary"""
@@ -422,7 +424,7 @@ class CronExecutionLog:
                 json.dump(summary, f, indent=2)
         
         except Exception as e:
-            print(f"[ERROR] Failed to update summary: {e}")
+            print(f"{error('[ERROR]')} Failed to update summary: {e}")
     
     def get_executions(self, job_id: Optional[str] = None, limit: int = 10) -> list:
         """Get recent executions"""
@@ -437,7 +439,7 @@ class CronExecutionLog:
             
             return executions[-limit:]
         except Exception as e:
-            print(f"[ERROR] Failed to read executions: {e}")
+            print(f"{error('[ERROR]')} Failed to read executions: {e}")
             return []
     
     def get_summary(self) -> dict:
@@ -448,7 +450,7 @@ class CronExecutionLog:
                     return json.load(f)
             return {}
         except Exception as e:
-            print(f"[ERROR] Failed to read summary: {e}")
+            print(f"{error('[ERROR]')} Failed to read summary: {e}")
             return {}
     
     def print_summary(self) -> None:
@@ -456,19 +458,20 @@ class CronExecutionLog:
         summary = self.get_summary()
         
         if not summary:
-            print("[INFO] No executions logged yet")
+            print(info("[INFO]") + " No executions logged yet")
             return
         
-        print("\n" + "="*80)
-        print("CRON JOB EXECUTION SUMMARY")
-        print("="*80 + "\n")
+        print("\n" + banner("="*80))
+        print(banner("CRON JOB EXECUTION SUMMARY"))
+        print(banner("="*80) + "\n")
         
         for job_id, stats in summary.items():
-            print(f"Job: {stats['name']} (ID: {job_id})")
+            print(f"Job: {colored(stats['name'], BLUE)} (ID: {job_id})")
             print(f"  Total Runs: {stats['total_runs']}")
-            print(f"  Successful: {stats['successful']} ({stats['successful']/max(stats['total_runs'],1)*100:.1f}%)")
-            print(f"  Failed: {stats['failed']}")
+            success_rate = stats['successful']/max(stats['total_runs'],1)*100
+            print(f"  Successful: {success(str(stats['successful']))} ({success(f'{success_rate:.1f}%')})")
+            print(f"  Failed: {error(str(stats['failed']))}")
             print(f"  Last Run: {stats['last_run']}")
-            print(f"  Status: {stats['last_status']}\n")
+            print(f"  Status: {success(stats['last_status']) if stats['last_status'] == 'success' else error(stats['last_status'])}\n")
         
-        print("="*80)
+        print(banner("="*80))

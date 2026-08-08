@@ -157,6 +157,7 @@ class ResilientGateway(ProviderGateway):
         tools: Optional[List[Dict[str, Any]]] = None,
         on_token: Optional[Callable[[str], None]] = None,
         on_event: Optional[Callable[[Dict[str, Any]], None]] = None,
+        max_tokens: Optional[int] = None,
     ) -> NormalizedMessage:
         from .policies import RetryIterator
 
@@ -191,6 +192,7 @@ class ResilientGateway(ProviderGateway):
                         tools=tools,
                         on_token=capturing_on_token,
                         on_event=capturing_on_event,
+                        max_tokens=max_tokens,
                     )
 
                     if self.availability:

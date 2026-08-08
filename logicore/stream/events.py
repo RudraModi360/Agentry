@@ -18,6 +18,7 @@ RunItemStreamEvent, and Anthropic content-block streaming):
     tool_call_start     # a tool call is dispatched
     tool_call_chunk     # partial tool arguments (where the provider streams them)
     tool_call_end       # tool finished (result preview)
+    tool_output         # intermediate stdout/stderr line from a running tool
     error               # recoverable / terminal error
     usage               # token usage for the turn
     done                # final assembled message
@@ -31,9 +32,29 @@ from __future__ import annotations
 import time
 import json
 import uuid
+import contextvars
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, Optional
+
+# ---------------------------------------------------------------------------
+# Thread-safe / async-safe carrier for the current stream emitter.
+# Tools read this to emit intermediate progress events without requiring
+# the emitter to be threaded through every function signature.
+# ---------------------------------------------------------------------------
+_current_emitter: contextvars.ContextVar[Optional["StreamEmitter"]] = contextvars.ContextVar(
+    "logicore_current_emitter", default=None
+)
+
+
+def get_current_emitter() -> Optional["StreamEmitter"]:
+    """Return the emitter bound to the current context, or None."""
+    return _current_emitter.get()
+
+
+def set_current_emitter(emitter: Optional["StreamEmitter"]) -> contextvars.Token:
+    """Bind an emitter to the current context. Returns a token for reset."""
+    return _current_emitter.set(emitter)
 
 
 class StreamEventType(str, Enum):
@@ -47,6 +68,7 @@ class StreamEventType(str, Enum):
     TOOL_CALL_START = "tool_call_start"
     TOOL_CALL_CHUNK = "tool_call_chunk"
     TOOL_CALL_END = "tool_call_end"
+    TOOL_OUTPUT = "tool_output"
     ERROR = "error"
     USAGE = "usage"
     DONE = "done"

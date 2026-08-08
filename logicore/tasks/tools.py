@@ -186,9 +186,8 @@ class TaskCreateTool(BaseTool):
     name = "task_create"
     description = (
         "MUST USE for any request with 3+ steps. Creates a task to track work. "
-        "For exploration tasks: explore first, then create tasks from findings. "
-        "For implementation tasks: create tasks first, then execute. Use active_form "
-        "for live UI status. Use blocked_by for dependencies."
+        "After creating tasks, call task_next to get AND auto-claim the next task. "
+        "Use active_form for live UI status. Use blocked_by for dependencies."
     )
     args_schema = TaskCreateArgs
     
@@ -235,9 +234,10 @@ class TaskGetTool(BaseTool):
     """Get task details and optionally claim it."""
     name = "task_get"
     description = (
-        "ALWAYS USE after task_create. Get details of a task by ID and claim it "
-        "to start working. Claiming assigns ownership. Use claim=true to take "
-        "ownership of a task before working on it."
+        "Get details of a task by ID. Use claim=true to take ownership. "
+        "Note: task_next already auto-claims tasks, so you usually don't need "
+        "to call task_get with claim=true after task_next. Use task_get with "
+        "claim=true only when you want to claim a specific task by ID."
     )
     args_schema = TaskGetArgs
     
@@ -332,7 +332,10 @@ class TaskUpdateTool(BaseTool):
                     subject=subject,
                     description=description,
                 )
-            return ToolResult(success=True, content=task.to_dict())
+            result = task.to_dict()
+            # Add explicit status summary for agent readability
+            result["_status_summary"] = f"Task #{task_id} is now {task.status.value}"
+            return ToolResult(success=True, content=result)
         except Exception as e:
             return ToolResult(success=False, error=f"Failed to update task: {str(e)}. Check task_id and status.")
 
@@ -390,12 +393,12 @@ class TaskListTool(BaseTool):
 
 
 class TaskNextTool(BaseTool):
-    """Get the next available task."""
+    """Get and claim the next available task."""
     name = "task_next"
     description = (
-        "USE after creating tasks. Returns the next pending, unclaimed, unblocked "
-        "task. After getting the next task, call task_get with claim=true to take "
-        "ownership before working on it."
+        "USE after creating tasks. Returns AND auto-claims the next pending, unclaimed, "
+        "unblocked task. The task is automatically claimed so you can start working on it "
+        "immediately. No need to call task_get separately."
     )
     args_schema = TaskNextArgs
     
@@ -410,26 +413,32 @@ class TaskNextTool(BaseTool):
         self._context = context
     
     def is_read_only(self, args=None) -> bool:
-        """Task next is read-only (just reads data)."""
-        return True
+        """Task next is NOT read-only anymore (it claims the task)."""
+        return False
     
     def is_destructive(self, args=None) -> bool:
         """Task next is NOT destructive."""
         return False
     
     def run(self, **kwargs) -> ToolResult:
-        # Get task manager from context or global state
+        # Get task manager and agent ID from context or global state
         task_manager = self._context.get_task_manager() if self._context else _task_manager
+        agent_id = self._context.get_agent_id() if self._context else get_agent_id()
         if not task_manager:
             return ToolResult(success=False, error="Task manager not initialized. Call task_create first.")
         try:
-            task = task_manager.get_next_task()
+            task = task_manager.get_next_task(agent_id=agent_id)
             if not task:
                 return ToolResult(
                     success=True,
                     content={"message": "No available tasks. All tasks are completed or claimed.", "task": None}
                 )
-            return ToolResult(success=True, content=task.to_dict())
+            # Auto-claim the task so agent can work on it immediately
+            claimed = task_manager.claim_task(task.id, agent_id=agent_id, check_agent_busy=False)
+            result = claimed.to_dict()
+            result["_action"] = f"START WORKING on task #{claimed.id}: {claimed.subject}"
+            result["_active_form"] = claimed.active_form or claimed.subject
+            return ToolResult(success=True, content=result)
         except Exception as e:
             return ToolResult(success=False, error=f"Failed to get next task: {str(e)}")
 

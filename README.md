@@ -1,5 +1,3 @@
-# Logicore AI Framework
-
 <p align="center">
     <img src="./logo/readme-hero.png" alt="Logicore Banner" width="420" style="max-width:60%; height:auto;" />
 </p>
@@ -11,87 +9,221 @@
     <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License" /></a>
 </p>
 
-**Logicore** is an enterprise-grade Python framework for building autonomous, intelligent AI agents that work seamlessly across any LLM provider—local (Ollama), cloud (OpenAI, Gemini, Groq, Azure), or hybrid. 
-
-Build agents **once** → Deploy everywhere. No vendor lock-in. Zero provider-specific code.
-
-> 💡 **New to Logicore?** → Read the [Comprehensive Introduction](./docs/introduction.md) to understand what makes this framework different.
-
----
-
-## 🌟 Key Features
-
-* **Unified Multi-Provider Architecture:** Switch between LLM backends (Ollama, Gemini, OpenAI, Groq) seamlessly. Your agent logic and tool schemas remain completely unchanged.
-* **Native Streaming & Reasoning Extraction:** Advanced streaming support that pulls hidden `<think>` reasoning tokens from local models (like `qwen3.5:0.8b` and DeepSeek series) so your UI updates in real-time before tools execute.
-* **First-Class Tooling:** Turn any Python function into an LLM tool automatically. Logicore parses type hints and docstrings into JSON schemas, supports `**kwargs` for hallucination-resilience, and safely reflects execution errors back to the model.
-* **Built-in Cron Job Scheduler:** Endow your agents with temporal awareness. Agents can natively schedule, manage, and execute automated background tasks without external infrastructure.
-* **Persistent Memory & RAG:** Equip agents with long-term conversational memory and semantic vector search so they never lose context across sessions.
-* **Built-in Skills & Copilot:** Pre-packaged skill sets (Web Research, Code Review, File Manipulation) and a ready-to-use `CopilotAgent` for instant productivity.
+<p align="center">
+    <strong>Enterprise-grade Python framework for building autonomous AI agents</strong><br>
+    Multi-provider support • Native streaming • Persistent memory • Zero vendor lock-in
+</p>
 
 ---
 
-## 🚀 Quickstart
+## What is Logicore?
 
-Get an intelligent, tool-enabled agent running locally in two minutes.
+Logicore is a unified agentic framework that lets you build AI agents **once** and deploy them across any LLM provider—Ollama, OpenAI, Gemini, Groq, or Azure—without rewriting a single line of code.
 
-### 1. Install Logicore
+### The Problem It Solves
+
+| Challenge | Traditional Approach | Logicore Solution |
+|-----------|----------------------|-------------------|
+| Provider Lock-in | Rewrite for each LLM | Single parameter swap |
+| Tool Complexity | Manual JSON schemas | Auto-generate from Python functions |
+| Token Management | DIY streaming | Native streaming + reasoning extraction |
+| Memory Systems | Custom vector DBs | Built-in persistent memory with RAG |
+| Scheduling | External cron/Celery | Native agent-aware scheduler |
+| Approval Workflows | Custom per-app | Declarative approval system |
+
+---
+
+## Quickstart
+
+### 1. Install
+
 ```bash
 pip install logicore
 ```
 
-### 2. Run your first Agent
-Make sure you have [Ollama](https://ollama.com) installed and a model pulled (`ollama run qwen3.5:0.8b`).
+### 2. Run Your First Agent
 
 ```python
 import asyncio
-from logicore.agents.agent import Agent
+from logicore import Agent
 
-# 1. Define a robust custom tool
-def check_weather(location: str, **kwargs) -> str:
-    """Checks the current weather for a specific location."""
-    if "seattle" in location.lower():
-        return "72°F and sunny."
-    return "65°F and cloudy."
+def check_weather(location: str) -> str:
+    """Check weather for a location."""
+    return "72°F and sunny" if "seattle" in location.lower() else "65°F cloudy"
 
 async def main():
-    # 2. Initialize agent with Ollama by provider name
     agent = Agent(
-        llm="ollama",
+        provider="ollama",
+        model="qwen3.5:0.8b",
         role="Weather Assistant",
-        system_message="Use the provided tools to answer user questions accurately.",
-        tools=[check_weather],
-        debug=True
+        tools=[check_weather]
     )
     
-    # 3. Stream the execution live
-    def on_token(token):
-        print(token, end="", flush=True)
+    response = await agent.chat("What's the weather in Seattle?")
+    print(response["content"])
 
-    print("Agent is thinking...\n")
-    response = await agent.chat(
-        "What's the weather like in Seattle today?", 
-        callbacks={"on_token": on_token},
-        stream=True
-    )
-    
-    print("\n\nFinal Output:", response['content'])
-
-if __name__ == "__main__":
-    asyncio.run(main())
+asyncio.run(main())
 ```
 
 ---
 
-## 📚 Documentation
-Comprehensive documentation for Logicore is available via our official site. It includes deep dives into Agents, Providers, Skills, Custom Tool guidelines, and a full API Reference.
+## Key Features
 
-👉 **[Read the Official Documentation here](https://rudramodi360.github.io/Agentry/)**
+| Feature | Description |
+|---------|-------------|
+| **Multi-Provider** | Switch between Ollama, OpenAI, Gemini, Groq, Azure with zero code changes |
+| **Auto-Tool Generation** | Convert any Python function to an LLM tool automatically |
+| **Native Streaming** | Real-time token updates + hidden reasoning extraction |
+| **Persistent Memory** | Agents remember context across sessions with semantic search |
+| **Cron Scheduler** | Agents can schedule and manage background tasks |
+| **Skills System** | Load domain-specific capabilities (web research, code review, etc.) |
+| **MCP Integration** | Connect to Model Context Protocol servers for extended tools |
+| **Approval System** | Granular control over tool execution with auto-approval APIs |
+| **Execution Hooks** | Intercept any pipeline point without modifying agent code |
+| **Provider Failover** | Automatic health tracking and failover chains |
 
 ---
 
-## 🤝 Community & Contributions
-* **Discord:** Join our official server to connect with other developers: [Logicore Discord](https://discord.gg/Yz8yFzgQ)
-* **Contributing:** We welcome all contributions! Please see our [Contributing Guidelines](docs/contributing.md) to get started.
+## Agent Variants
+
+```python
+from logicore import Agent, SmartAgent, CopilotAgent, MCPAgent
+
+# Base Agent - Full control
+agent = Agent(provider="ollama", model="qwen3.5:0.8b")
+
+# SmartAgent - Reasoning-focused with auto-configuration
+agent = SmartAgent(provider="ollama")
+
+# CopilotAgent - Coding-focused with review/write capabilities
+agent = CopilotAgent(provider="openai", model="gpt-4o")
+
+# MCPAgent - Extended tools via Model Context Protocol
+agent = MCPAgent(provider="ollama", mcp_config_path="mcp.json")
+```
 
 ---
-*Built with ❤️ for multi-provider agentic workflows.*
+
+## Skills System
+
+```python
+# Load built-in skills
+agent.load_skill("excel_operations")
+agent.load_skill("pdf_operations")
+
+# List available skills
+skills = agent.list_available_skills()
+
+# Unload a skill
+agent.unload_skill("excel_operations")
+```
+
+---
+
+## Tool Presets
+
+```python
+# Lightweight - Basic filesystem + web tools
+agent = Agent(tools="lightweight")
+
+# Smart - Full agentic toolkit
+agent = Agent(tools="smart")
+
+# Copilot - Code-focused tools
+agent = Agent(tools="copilot")
+
+# Full - All available tools
+agent = Agent(tools="full")
+```
+
+---
+
+## Documentation
+
+| Level | Guide | Description |
+|-------|-------|-------------|
+| **Beginner** | [Installation](./docs/getting-started/installation.md) | Set up your environment |
+| | [Quickstart](./docs/getting-started/quickstart.md) | Build your first agent |
+| | [Basic Concepts](./docs/getting-started/concepts.md) | Core terminology |
+| **Intermediate** | [Agent Guide](./docs/guides/agents.md) | Agent types and configuration |
+| | [Tools Guide](./docs/guides/tools.md) | Custom tools and presets |
+| | [Skills Guide](./docs/guides/skills.md) | Building and using skills |
+| | [Memory Guide](./docs/guides/memory.md) | Persistent context |
+| **Advanced** | [API Reference](./docs/api/agent.md) | Complete API docs |
+| | [Architecture](./docs/guides/architecture.md) | System design |
+| | [Contributing](./docs/contributing.md) | Development guide |
+
+---
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     Your Application                        │
+├─────────────────────────────────────────────────────────────┤
+│                      Agent Layer                            │
+│  ┌─────────┐  ┌──────────┐  ┌──────────┐  ┌─────────────┐ │
+│  │ Session │  │  Tools   │  │  Skills  │  │   Memory    │ │
+│  │ Manager │  │ Registry │  │  Loader  │  │   Manager   │ │
+│  └─────────┘  └──────────┘  └──────────┘  └─────────────┘ │
+├─────────────────────────────────────────────────────────────┤
+│                   Execution Layer                           │
+│  ┌─────────────┐  ┌──────────────┐  ┌──────────────────┐  │
+│  │   Tool      │  │    Chat      │  │     Input        │  │
+│  │  Executor   │  │ Orchestrator │  │    Enricher      │  │
+│  └─────────────┘  └──────────────┘  └──────────────────┘  │
+├─────────────────────────────────────────────────────────────┤
+│                   Context Layer                             │
+│  ┌──────────────┐  ┌───────────────┐  ┌────────────────┐  │
+│  │   Token      │  │   Context     │  │    Prompt       │  │
+│  │  Estimator   │  │   Window Mgr  │  │   Assembler    │  │
+│  └──────────────┘  └───────────────┘  └────────────────┘  │
+├─────────────────────────────────────────────────────────────┤
+│                   Provider Layer                            │
+│  ┌────────┐  ┌────────┐  ┌────────┐  ┌────────┐  ┌──────┐ │
+│  │ Ollama │  │ OpenAI │  │ Gemini │  │  Groq  │  │Azure │ │
+│  └────────┘  └────────┘  └────────┘  └────────┘  └──────┘ │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │           ModelAvailabilityService (Failover)        │  │
+│  └──────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Examples
+
+| Example | Description |
+|---------|-------------|
+| [Basic Chat](./examples/sample_agent.py) | Simple agent with custom tools |
+| [Streaming](./examples/streaming_chatbot.py) | Real-time token streaming |
+| [Smart Agent](./examples/simple_runtime_chatbot.py) | Reasoning-focused agent |
+| [Power Chatbot](./examples/power_chatbot.py) | Full-featured chatbot |
+| [Advanced Runtime](./examples/advanced_runtime_agent.py) | Production runtime setup |
+
+---
+
+## Community
+
+- **Discord**: [Join the server](https://discord.gg/Yz8yFzgQ)
+- **GitHub**: [RudraModi360/Agentry](https://github.com/RudraModi360/Agentry)
+- **PyPI**: [logicore](https://pypi.org/project/logicore/)
+- **Issues**: [Report bugs](https://github.com/RudraModi360/Agentry/issues)
+
+---
+
+## Contributing
+
+See [CONTRIBUTING.md](./docs/contributing.md) for development setup and guidelines.
+
+---
+
+## License
+
+MIT License - see [LICENSE](./LICENSE) for details.
+
+---
+
+<p align="center">
+    Built with ❤️ for multi-provider agentic workflows
+</p>

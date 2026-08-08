@@ -19,6 +19,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspa
 
 from logicore.skills.loader import SkillLoader
 
+from logicore.utils.colors import colored, info, error, success
+
 
 def main():
     if len(sys.argv) > 1:
@@ -28,12 +30,12 @@ def main():
         skills_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "defaults")
     
     if not os.path.exists(skills_dir):
-        print(f"Error: Skills directory not found: {skills_dir}")
+        print(f"{error('Error')}: Skills directory not found: {skills_dir}")
         sys.exit(1)
     
-    print(f"Building SKILL_INDEX.md from: {skills_dir}")
+    print(f"{info('Building')} SKILL_INDEX.md from: {skills_dir}")
     content = SkillLoader.build_skill_index(skills_dir)
-    print(f"Generated SKILL_INDEX.md:")
+    print(f"{success('Generated')} SKILL_INDEX.md:")
     print(content)
 
 

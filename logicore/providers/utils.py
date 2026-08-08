@@ -2,6 +2,8 @@ import base64
 import re
 from typing import List, Dict, Any, Tuple, Optional
 
+from logicore.utils.colors import error
+
 def extract_content(message_content: Any) -> Tuple[str, List[Dict[str, Any]]]:
     """
     Extracts text and media (images/audio) from a message content.
@@ -89,7 +91,7 @@ def parse_media_url(url: str) -> Tuple[Optional[str], Optional[bytes]]:
                 mime_type = response.headers.get("content-type")
                 return mime_type, response.content
         except Exception as e:
-            print(f"Error downloading media from {url}: {e}")
+            print(f"{error('Error')} downloading media from {url}: {e}")
             return None, None
 
     # Check for local file path
@@ -101,7 +103,7 @@ def parse_media_url(url: str) -> Tuple[Optional[str], Optional[bytes]]:
             with open(url, "rb") as f:
                 return mime_type or "application/octet-stream", f.read()
     except Exception as e:
-        print(f"Error reading local file {url}: {e}")
+        print(f"{error('Error')} reading local file {url}: {e}")
 
     return None, None
 

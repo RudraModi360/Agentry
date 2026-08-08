@@ -11,6 +11,7 @@ Uses extracted components:
 import os
 import re
 import json
+import uuid
 import inspect
 import asyncio
 from typing import List, Dict, Any, Callable, Optional, Union, Tuple
@@ -64,6 +65,7 @@ class Agent:
         workspace_root: str = None,
         reasoning_level: str = "medium",
         plan_mode: bool = False,
+        load_plan_tools: bool = False,
         agent_id: str = None,
         approval_timeout: float = 120.0,
         allow_tools: set = None,
@@ -94,6 +96,13 @@ class Agent:
 
         # Gateway
         self.gateway: ProviderGateway = get_gateway_for_provider(self.provider)
+        
+        # Propagate reasoning level to gateway so providers that support it
+        # (e.g. Ollama with `think` parameter) actually generate thinking tokens.
+        _provider_name = getattr(self.provider, "provider_name", "").lower()
+        if _provider_name == "ollama":
+            _think_enabled = reasoning_level not in ("off", "none", "disabled")
+            setattr(self.gateway, "think", _think_enabled)
         
         try:
             setattr(self.provider, "debug", self.debug)
@@ -196,6 +205,14 @@ class Agent:
         self.internal_tools = []
         self.disabled_tools = set()
         self.workspace_root = workspace_root
+
+        # Wire workspace root to filesystem tools for path validation
+        if workspace_root:
+            try:
+                from logicore.tools.filesystem import set_workspace_root
+                set_workspace_root(workspace_root)
+            except ImportError:
+                pass
         
         # Composable components
         # Fall back to env var so child subprocesses (e.g. bash tool running a
@@ -229,31 +246,36 @@ class Agent:
         self.tools_disabled_reason = None
         
         # Handle tools parameter
-        if tools == []:
-            # `tools=[]` disables all internal tools (filesystem, web, code
-            # execution, git, cron, process mgmt, etc.) but keeps the
-            # minimum structural set that every agent needs to decompose
-            # complex work (task management, planning, load_skill) plus
-            # skill metadata so the agent can discover and load skills on
-            # demand.  Pass ``skills=[]`` to also suppress skill loading.
-            self._load_structural_tools(load_skills=(skills != []))
+        if tools is None:
+            # PATH A: Lazy user — load ALL internal tools + skill metadata
+            self.load_default_tools()
+        elif tools == []:
+            # PATH B empty: structural only, respect load_plan_tools flag
+            self._load_structural_tools(
+                load_planning=load_plan_tools,
+                load_skills=(skills is not None and skills != [])
+            )
         elif tool_preset and tool_preset in TOOL_PRESETS:
             self.load_tools_preset(tool_preset)
         elif isinstance(tools, list):
-            for tool in tools:
-                if callable(tool):
-                    self.register_tool_from_function(tool)
-                elif isinstance(tool, dict):
-                    self.internal_tools.append(tool)
-                    tool_name = tool.get("function", {}).get("name")
+            # PATH B explicit: resolve toolset names, load ONLY specified tools
+            resolved = self._resolve_tools(tools)
+            for item in resolved:
+                if callable(item):
+                    self.register_tool_from_function(item)
+                elif isinstance(item, dict):
+                    self.internal_tools.append(item)
+                    tool_name = item.get("function", {}).get("name")
                     if tool_name:
-                        self.tool_executor.register_custom_tool(tool_name, tool)
+                        self.tool_executor.register_custom_tool(tool_name, item)
+                elif isinstance(item, str):
+                    self._register_tool_by_name(item)
             if len(self.internal_tools) > 0:
                 self.supports_tools = True
-            # Always load default skills (instruction-based, no external tools needed)
-            self._load_default_skills()
-            # Auto-discover workspace skills (e.g. ~/.agents/skills/)
-            self._load_workspace_skills()
+            # Optionally add plan tools for complex reasoning
+            if load_plan_tools:
+                self._load_plan_tools_only()
+            # NO auto-skill loading — user passes skills=[...] explicitly
             self._rebuild_system_prompt_with_tools()
         else:
             self.load_default_tools()
@@ -377,6 +399,10 @@ class Agent:
         if level not in valid_levels:
             raise ValueError(f"Invalid reasoning level '{level}'. Must be one of: {valid_levels}")
         self._reasoning_level = level
+        # Propagate to gateway so Ollama `think` parameter stays in sync.
+        _provider_name = getattr(self.provider, "provider_name", "").lower()
+        if _provider_name == "ollama":
+            setattr(self.gateway, "think", True)
         if self._reasoning_controller:
             from logicore.runtime.reasoning import ReasoningLevel
             level_map = {
@@ -557,33 +583,70 @@ Available skills:
                 if skill:
                     self._register_skill_metadata(skill)
 
-    def _load_structural_tools(self, load_skills=True):
-        """Load the minimum tool set that every agent needs: task management,
-        planning, and the load_skill tool.  When *load_skills* is True, skill
-        metadata (index entries) and workspace skills are also registered so
-        the agent can discover and load skills on demand.  This is used when
-        ``tools=[]`` to keep the agent functional while suppressing the full
-        internal tool set.
+    def _resolve_tools(self, tools: list) -> list:
+        """Expand toolset category names (e.g. ``"filesystem"``) to individual
+        tool names.  Strings that are not recognised as category names are
+        passed through as-is (they may be individual tool names or custom
+        tool identifiers).  Callables and dicts are also passed through.
         """
+        from logicore.tools.registry import TOOL_CATEGORIES
+
+        resolved = []
+        for item in tools:
+            if isinstance(item, str) and item in TOOL_CATEGORIES:
+                resolved.extend(TOOL_CATEGORIES[item])
+            else:
+                resolved.append(item)
+        return resolved
+
+    def _register_tool_by_name(self, tool_name: str):
+        """Register a single built-in tool by its name from the global registry."""
+        from logicore.tools.registry import ToolRegistry
+        temp = ToolRegistry(enabled_tools=[tool_name])
+        if temp.schemas:
+            self.internal_tools.extend(temp.schemas)
+            tool = temp.get_tool(tool_name)
+            if tool:
+                self.tool_executor.register_custom_tool(tool_name, tool.run)
+
+    def _load_plan_tools_only(self):
+        """Load plan + task tools without skills or other internals."""
         from logicore.tasks import get_task_tools, get_task_tools_with_context
-        from logicore.tools.registry import ALWAYS_ON_TOOLS, ToolRegistry
+        from logicore.tools.registry import TOOL_CATEGORIES, ToolRegistry
 
         self._ensure_task_manager()
-        # Register task tool executors (the schemas come from ALWAYS_ON_TOOLS below)
         tools = (get_task_tools_with_context(self._task_tool_context)
                  if self._task_tool_context else get_task_tools())
         for tool in tools:
             self.tool_executor.register_custom_tool(tool.name, tool.run)
 
-        # Register only the ALWAYS_ON subset from the full registry (schemas)
-        temp_registry = ToolRegistry(enabled_tools=ALWAYS_ON_TOOLS)
-        self.internal_tools.extend(temp_registry.schemas)
+        plan_names = TOOL_CATEGORIES["task"] + TOOL_CATEGORIES["plan"]
+        # Avoid duplicating schemas already loaded (e.g. from a custom tool list)
+        existing_names = {
+            t.get("function", {}).get("name") for t in self.internal_tools
+            if isinstance(t, dict)
+        }
+        temp = ToolRegistry(enabled_tools=[n for n in plan_names if n not in existing_names])
+        self.internal_tools.extend(temp.schemas)
+        if not self.supports_tools:
+            self.supports_tools = True
+        self._rebuild_system_prompt_with_tools()
 
-        self.supports_tools = True
+    def _load_structural_tools(self, load_planning=False, load_skills=False):
+        """Load the minimum tool set when ``tools=[]``.
+
+        When *load_planning* is True, task management + plan tools are loaded.
+        When *load_skills* is True, skill metadata (index entries) and workspace
+        skills are also registered so the agent can discover and load skills on
+        demand.
+        """
+        if load_planning:
+            self._load_plan_tools_only()
         if load_skills:
             self._load_default_skills()
             self._load_workspace_skills()
-        self._rebuild_system_prompt_with_tools()
+        if not load_planning and not load_skills:
+            self._rebuild_system_prompt_with_tools()
 
     def _load_workspace_skills(self):
         """Auto-discover skills from workspace and home directories."""
@@ -1188,7 +1251,7 @@ Available skills:
         if new_session:
             session_id = self.create_session(tags=session_tags)
         elif session_id is None:
-            session_id = "default"
+            session_id = f"default-{uuid.uuid4().hex[:8]}"
         if session_tags and session_id not in self.sessions:
             session = self.get_session(session_id)
             session.metadata["tags"] = session_tags
@@ -1253,7 +1316,7 @@ Available skills:
         if new_session:
             session_id = self.create_session(tags=session_tags)
         elif session_id is None:
-            session_id = "default"
+            session_id = f"default-{uuid.uuid4().hex[:8]}"
         if session_tags and session_id not in self.sessions:
             session = self.get_session(session_id)
             session.metadata["tags"] = session_tags
@@ -1268,7 +1331,6 @@ Available skills:
         if callbacks:
             active_callbacks.update(callbacks)
 
-        import uuid
         emitter = StreamEmitter(session_id=session_id, run_id=uuid.uuid4().hex)
 
         async def _produce() -> None:
@@ -1282,7 +1344,16 @@ Available skills:
                 )
                 emitter.final = final
             except asyncio.CancelledError:
-                raise
+                # Emit a clean DONE so the consumer sees normal termination
+                # instead of a propagated CancelledError crash.
+                try:
+                    emitter.emit(StreamEvent.create(
+                        StreamEventType.DONE, {"content": emitter.final or "", "cancelled": True}
+                    ))
+                except Exception:
+                    pass
+                if emitter.final is None:
+                    emitter.final = ""
             except Exception as e:  # isolate unexpected producer errors
                 try:
                     emitter.emit(StreamEvent.create(
@@ -1326,6 +1397,7 @@ Available skills:
         user_input: Union[str, List[Dict[str, Any]]],
         session_id: str = "default",
         on_event: Callable = None,
+        on_token: Callable = None,
         **kwargs,
     ) -> str:
         """
@@ -1341,6 +1413,8 @@ Available skills:
             user_input: User message (str or multimodal list).
             session_id: Session identifier.
             on_event: Callable invoked with each ``StreamEvent`` (optional).
+            on_token: Convenience shortcut — called with each text token delta.
+                Equivalent to filtering ``on_event`` for ``TOKEN`` events.
             **kwargs: forwarded to :meth:`stream_run`.
 
         Returns:
@@ -1356,11 +1430,17 @@ Available skills:
                 ),
             )
         """
+        _on_event = on_event
+        if on_token and not _on_event:
+            def _on_event(ev):
+                if ev.type == StreamEventType.TOKEN:
+                    on_token(ev.data.get("delta", ""))
+
         async def _drive():
             run = await self.stream_run(user_input, session_id=session_id, **kwargs)
             async for ev in run.stream_events():
-                if on_event:
-                    on_event(ev)
+                if _on_event:
+                    _on_event(ev)
             return await run
 
         try:

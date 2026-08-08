@@ -41,6 +41,51 @@ TOOL_FAILED_HINT = (
     "Listen carefully to their feedback and try a different approach."
 )
 
+# Tool-specific failure hints with recovery guidance
+TOOL_FAILURE_HINTS = {
+    "code_execute": (
+        "The code execution failed. Common causes:\n"
+        "- Syntax errors: Check the code for typos, missing colons, wrong indentation\n"
+        "- Import errors: Install missing modules with 'pip install module_name'\n"
+        "- Runtime errors: Check variable types, function arguments, and file paths\n"
+        "DO NOT retry the same code. Fix the code first, then execute again."
+    ),
+    "execute_command": (
+        "The command execution failed. Common causes:\n"
+        "- Command not found: Check if the command exists on this system\n"
+        "- Permission denied: Try running with different permissions\n"
+        "- Path not found: Verify the path exists before using it\n"
+        "DO NOT retry the same command. Fix the issue first."
+    ),
+    "create_file": (
+        "File creation failed. Common causes:\n"
+        "- Path invalid: Check if the directory exists\n"
+        "- Permission denied: Use a different location\n"
+        "- File exists: Use overwrite=true to replace\n"
+        "DO NOT retry with the same path without checking."
+    ),
+    "edit_file": (
+        "File editing failed. Common causes:\n"
+        "- File not read first: Use read_file before edit_file\n"
+        "- Old text not found: Copy the EXACT text from read_file\n"
+        "- Path invalid: Verify the file exists\n"
+        "DO NOT retry with the same old_text if it wasn't found."
+    ),
+    "read_file": (
+        "File reading failed. Common causes:\n"
+        "- File not found: Check the path with list_files\n"
+        "- Permission denied: Check file permissions\n"
+        "- File too large: Use start_line/end_line to read portions\n"
+        "DO NOT retry the same path without checking if it exists."
+    ),
+    "list_files": (
+        "Directory listing failed. Common causes:\n"
+        "- Directory not found: Check the path\n"
+        "- Permission denied: Check directory permissions\n"
+        "DO NOT retry the same path without verification."
+    ),
+}
+
 
 @dataclass
 class FeedbackInjection:
@@ -186,13 +231,16 @@ class FeedbackHandler:
         """
         result = FeedbackHandlingResult()
         
-        # Inject tool failed hint
+        # Get tool-specific hint if available
+        tool_hint = TOOL_FAILURE_HINTS.get(tool_name, TOOL_FAILED_HINT)
+        
+        # Inject tool failed hint with specific guidance
         injection = FeedbackInjection(
             hint_type="tool_failed",
             message=(
-                f"{TOOL_FAILED_HINT}\n\n"
+                f"{tool_hint}\n\n"
                 f"Tool that failed: `{tool_name}`\n"
-                f"Error: {error[:200]}"
+                f"Error: {error[:300]}"
             ),
         )
         result.injected_hints.append(injection)

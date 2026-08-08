@@ -33,6 +33,11 @@ from logicore.runtime.context.token_estimator import estimate_tokens
 from logicore.runtime.context.token_budget import TokenBudget
 from logicore.gateway import ProviderGateway
 from logicore.skills import Skill, SkillLoader
+from logicore.stream.events import StreamEventType
+from logicore.utils.colors import (
+    error as _err_color, tool_call as _tc_color, tool_result as _tr_color,
+    DIM, RESET, GRAY,
+)
 
 
 BANNER = """
@@ -114,6 +119,51 @@ Providers:
   Quick setup:
     /provider quick custom mimo-v2.5-free https://opencode.ai/zen/v1 sk-xxx
 """
+
+
+def make_stream_handler():
+    """Returns an on_event callback that prints streaming events nicely."""
+    in_thinking = [False]
+
+    def on_event(ev):
+        if ev.type == StreamEventType.TOKEN:
+            if in_thinking[0]:
+                print(RESET, end="", flush=True)
+                in_thinking[0] = False
+            print(ev.data.get("delta", ""), end="", flush=True)
+        elif ev.type == StreamEventType.REASONING:
+            if not in_thinking[0]:
+                print(GRAY, end="", flush=True)
+                in_thinking[0] = True
+            print(ev.data.get("delta", ""), end="", flush=True)
+        elif ev.type == StreamEventType.TOOL_CALL_START:
+            if in_thinking[0]:
+                print(RESET, end="", flush=True)
+                in_thinking[0] = False
+            name = ev.data.get("name", "?")
+            args = ev.data.get("args", {})
+            print(f"\n{_tc_color(name)}({json.dumps(args)[:100]})", flush=True)
+        elif ev.type == StreamEventType.TOOL_CALL_END:
+            preview = str(ev.data.get("preview", ""))[:120]
+            print(f" {_tr_color(ev.data.get('success'), preview)}", flush=True)
+        elif ev.type == StreamEventType.TOOL_OUTPUT:
+            stream = ev.data.get("stream", "stdout")
+            line = ev.data.get("line", "")
+            if stream == "stderr":
+                print(f"{DIM}[stderr]{RESET} {line}", flush=True)
+            else:
+                print(line, flush=True)
+        elif ev.type == StreamEventType.ERROR:
+            if in_thinking[0]:
+                print(RESET, end="", flush=True)
+                in_thinking[0] = False
+            print(f"\n{_err_color('[error]')} {ev.data.get('message')}", flush=True)
+        elif ev.type == StreamEventType.DONE:
+            if in_thinking[0]:
+                print(RESET, end="", flush=True)
+                in_thinking[0] = False
+
+    return on_event
 
 
 class Sandbox:
@@ -1011,12 +1061,17 @@ class Chatbot:
             prompt_tag = " [sandbox]" if self.sandbox_active else ""
             print(f"\nAgent{prompt_tag}: ", end="", flush=True)
             try:
-                response = await self.agent.chat(
+                _on_event = make_stream_handler()
+                run = await self.agent.stream_run(
                     effective_input,
                     session_id=self.session_id,
-                    stream=True,
-                    streaming_funct=lambda token: print(token, end="", flush=True),
                 )
+                try:
+                    async for ev in run.stream_events():
+                        _on_event(ev)
+                except asyncio.CancelledError:
+                    pass
+                response = await run
                 print()
             except KeyboardInterrupt:
                 # Ctrl+C during agent execution — cancel current interaction

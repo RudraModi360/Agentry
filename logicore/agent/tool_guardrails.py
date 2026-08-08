@@ -103,16 +103,16 @@ class ToolCallGuardrailConfig:
     hard_stop_enabled: bool = True
     
     # --- Exact call repetition (same tool + same args) ---
-    exact_failure_warn_after: int = 2     # Warn after 2 consecutive failures
-    exact_failure_block_after: int = 5    # Block after 5 consecutive failures
+    exact_failure_warn_after: int = 1     # Warn after 1 consecutive failure (first retry)
+    exact_failure_block_after: int = 2    # Block after 2 consecutive failures (force different approach)
     
     # --- Same-tool failures (same tool, any args) ---
-    same_tool_failure_warn_after: int = 3   # Warn after 3 failures
-    same_tool_failure_halt_after: int = 8   # Halt after 8 failures
+    same_tool_failure_warn_after: int = 2   # Warn after 2 failures
+    same_tool_failure_halt_after: int = 4   # Halt after 4 failures (tool is fundamentally broken)
     
     # --- No-progress (idempotent tools returning same result) ---
-    no_progress_warn_after: int = 2     # Warn after 2 identical results
-    no_progress_block_after: int = 5    # Block after 5 identical results
+    no_progress_warn_after: int = 1     # Warn after 1 identical result
+    no_progress_block_after: int = 2    # Block after 2 identical results
     
     # Tool classification
     idempotent_tools: FrozenSet[str] = field(default_factory=lambda: IDEMPOTENT_TOOLS)
@@ -185,8 +185,14 @@ def toolguard_synthetic_result(decision: ToolGuardrailDecision) -> str:
     about why the tool was blocked.
     """
     return json.dumps({
+        "success": False,
         "error": decision.message,
         "guardrail": decision.to_metadata(),
+        "instruction": (
+            "STOP. Do not retry this tool call. "
+            "The system has determined this will fail. "
+            "Use a completely different approach or tool."
+        ),
     }, ensure_ascii=False)
 
 
@@ -209,21 +215,25 @@ def _tool_failure_recovery_hint(tool_name: str) -> str:
     if tool_name in ("bash", "execute_code"):
         return (
             "Try a different command or approach. "
-            "Check for syntax errors, missing dependencies, or permission issues."
+            "Check for syntax errors, missing dependencies, or permission issues. "
+            "DO NOT retry the same command — it will fail again."
         )
     if tool_name in ("read_file", "list_files", "search_files", "fast_grep", "glob"):
         return (
             "Try a different path, pattern, or search query. "
-            "Verify the path exists and is accessible."
+            "Verify the path exists and is accessible. "
+            "DO NOT retry the same path — the result won't change."
         )
     if tool_name in ("write_file", "edit_file"):
         return (
             "Check the file path, permissions, and content format. "
-            "Try reading the file first to understand its current state."
+            "Try reading the file first to understand its current state. "
+            "DO NOT retry the same edit without understanding what went wrong."
         )
     return (
         f"Tool '{tool_name}' is not making progress. "
-        "Try a different approach, different arguments, or a different tool."
+        "Try a different approach, different arguments, or a different tool. "
+        "DO NOT retry the same call — it will fail again."
     )
 
 

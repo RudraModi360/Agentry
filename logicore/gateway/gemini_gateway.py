@@ -16,6 +16,7 @@ from .base import (
     NormalizedMessage,
     _gateway_debug,
     _dispatch_stream_text,
+    _dispatch_stream_reasoning,
     _dispatch_event,
 )
 
@@ -441,7 +442,7 @@ class GeminiGateway(ProviderGateway):
             for part in chunk_parts:
                 # Extended thinking / reasoning blocks (Gemini).
                 if getattr(part, "thought", False) and getattr(part, "text", None):
-                    await _dispatch_event(on_event, "reasoning", {"delta": part.text})
+                    await _dispatch_stream_reasoning(on_token, on_event, part.text)
                     continue
                 if part.function_call:
                     fc = part.function_call

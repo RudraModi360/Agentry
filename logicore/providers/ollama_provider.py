@@ -11,8 +11,11 @@ class OllamaProvider(LLMProvider):
     """
     provider_name = "ollama"
 
-    def __init__(self, model_name: str, api_key: Optional[str] = None, **kwargs):
+    def __init__(self, model_name: str, api_key: Optional[str] = None, endpoint: Optional[str] = None, **kwargs):
         self.model_name = model_name
+        self.endpoint = endpoint
+        if endpoint:
+            kwargs["host"] = endpoint
         self.client = ollama.Client(**kwargs)
 
     def get_model_name(self) -> str:

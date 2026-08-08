@@ -64,15 +64,15 @@ def create_provider(
     # Built-in providers
     if provider_name == "ollama":
         from logicore.providers.ollama_provider import OllamaProvider
-        return OllamaProvider(model_name=model or "gpt-oss:20b-cloud")
+        return OllamaProvider(model_name=model or "gpt-oss:20b-cloud", endpoint=endpoint)
     
     elif provider_name == "groq":
         from logicore.providers.groq_provider import GroqProvider
-        return GroqProvider(model_name=model or "llama-3.3-70b-versatile", api_key=api_key)
+        return GroqProvider(model_name=model or "llama-3.3-70b-versatile", api_key=api_key, endpoint=endpoint)
     
     elif provider_name == "gemini":
         from logicore.providers.gemini_provider import GeminiProvider
-        return GeminiProvider(model_name=model or "gemini-pro", api_key=api_key)
+        return GeminiProvider(model_name=model or "gemini-pro", api_key=api_key, endpoint=endpoint)
     
     elif provider_name == "azure":
         from logicore.providers.azure_provider import AzureProvider
@@ -80,7 +80,7 @@ def create_provider(
     
     elif provider_name == "openai":
         from logicore.providers.openai_provider import OpenAIProvider
-        return OpenAIProvider(model_name=model or "gpt-4", api_key=api_key)
+        return OpenAIProvider(model_name=model or "gpt-4", api_key=api_key, endpoint=endpoint)
     
     elif provider_name == "custom":
         from logicore.providers.custom_provider import CustomProvider

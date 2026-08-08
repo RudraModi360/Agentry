@@ -175,6 +175,19 @@ _FORMAT_ERROR_PATTERNS = (
     "unsupported parameter", "unknown parameter", "unexpected_key",
 )
 
+# Code execution errors — deterministic failures that require different code, not retry
+_CODE_ERROR_PATTERNS = (
+    "syntaxerror", "syntax error", "indentationerror", "indentation error",
+    "typeerror", "type error", "nameerror", "name error",
+    "attributeerror", "attribute error", "moduleNotFoundError", "module not found",
+    "importerror", "import error", "taberror", "tab error",
+    "overflowerror", "overflow error", "zerodivisionerror", "division by zero",
+    "recursionerror", "recursion error", "memoryerror", "memory error",
+    "file not found", "filenotfounderror", "isadirectoryerror",
+    "notadirectoryerror", "permissionerror", "oserror",
+    "traceback", "line ", "in <module>", "exit code",
+)
+
 
 # ---------------------------------------------------------------------------
 # Structured Classification Result
@@ -284,6 +297,8 @@ _400_SUB_CLASSIFIERS: list[Tuple[Tuple[str, ...], ToolFailoverReason, RecoveryAc
     (_CONTENT_POLICY_PATTERNS, ToolFailoverReason.content_policy_blocked, RecoveryAction.ABORT_WITH_MESSAGE),
     # Context overflow
     (_CONTEXT_OVERFLOW_PATTERNS, ToolFailoverReason.context_overflow, RecoveryAction.COMPRESS_CONTEXT),
+    # Code execution errors (non-retryable with same code)
+    (_CODE_ERROR_PATTERNS, ToolFailoverReason.format_error, RecoveryAction.RETRY_DIFFERENT),
     # Format errors (non-retryable)
     (_FORMAT_ERROR_PATTERNS, ToolFailoverReason.format_error, RecoveryAction.RETRY_DIFFERENT),
     # Model not found
@@ -474,6 +489,16 @@ def classify_tool_error(
         return ClassifiedToolError(
             reason=ToolFailoverReason.validation,
             recovery_action=RecoveryAction.INJECT_SIGNAL,
+            message=str(error),
+            tool_name=tool_name,
+            retryable=False,
+            status_code=status_code,
+        )
+
+    if _has_pattern(msg, _CODE_ERROR_PATTERNS):
+        return ClassifiedToolError(
+            reason=ToolFailoverReason.format_error,
+            recovery_action=RecoveryAction.RETRY_DIFFERENT,
             message=str(error),
             tool_name=tool_name,
             retryable=False,

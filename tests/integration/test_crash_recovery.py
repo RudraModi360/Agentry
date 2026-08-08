@@ -13,6 +13,7 @@ import sys
 import tempfile
 import os
 import shutil
+from logicore.utils.colors import colored, error, success, warning, info, banner, step
 
 
 def run_script(script_path: str, timeout: int = 30):
@@ -76,7 +77,7 @@ print("NORMAL_FLOW_PASS")
     try:
         result = run_script(script_path)
         assert "NORMAL_FLOW_PASS" in result.stdout, f"Failed: stderr={result.stderr}"
-        print("[PASS] Normal flow: save -> snapshot -> pending_syncs cleared")
+        print(f"{success('[PASS]')} Normal flow: save -> snapshot -> pending_syncs cleared")
     finally:
         os.unlink(script_path)
         shutil.rmtree(tmpdir)
@@ -115,14 +116,14 @@ print("CRASH_SIMULATED")
     try:
         result = run_script(script_path)
         assert "CRASH_SIMULATED" in result.stdout
-        print("[STEP 1] Session saved, pending_syncs written, process 'crashed'")
+        print(f"{step(1, 'Session saved, pending_syncs written, process')}")
     finally:
         os.unlink(script_path)
 
     # Verify snapshot does NOT exist yet
     snap_file = os.path.join(snap_path, "crash_session", "session.json")
     assert not os.path.exists(snap_file), "Snapshot should NOT exist yet"
-    print("[STEP 2] Confirmed: snapshot does not exist yet")
+    print(f"{step(2, 'Confirmed: snapshot does not exist yet')}")
 
     # Verify pending_syncs is in the DB
     script_check = f'''
@@ -140,7 +141,7 @@ db.close()
     try:
         result = run_script(script_path)
         assert "PENDING:['crash_session']" in result.stdout
-        print("[STEP 3] Confirmed: pending_syncs has crash_session")
+        print(f"{step(3, 'Confirmed: pending_syncs has crash_session')}")
     finally:
         os.unlink(script_path)
 
@@ -185,9 +186,9 @@ print("RECOVERY_PASS")
     try:
         result = run_script(script_path)
         assert "RECOVERY_PASS" in result.stdout, f"Failed: {result.stderr}"
-        print("[STEP 4] Snapshot recovered successfully after simulated crash")
-        print("[STEP 5] pending_syncs cleared after recovery")
-        print("[PASS] Crash recovery flow works end-to-end")
+        print(f"{step(4, 'Snapshot recovered successfully after simulated crash')}")
+        print(f"{step(5, 'pending_syncs cleared after recovery')}")
+        print(f"{success('[PASS]')} Crash recovery flow works end-to-end")
     finally:
         os.unlink(script_path)
         shutil.rmtree(tmpdir)
@@ -240,7 +241,7 @@ print("PARTIAL_CRASH_SIMULATED")
     try:
         result = run_script(script_path)
         assert "PARTIAL_CRASH_SIMULATED" in result.stdout
-        print("[STEP 1] Partial crash simulated: sess_0,1 synced; sess_2 pending")
+        print(f"{step(1, 'Partial crash simulated: sess_0,1 synced; sess_2 pending')}")
     finally:
         os.unlink(script_path)
 
@@ -283,9 +284,9 @@ print("PARTIAL_RECOVERY_PASS")
     try:
         result = run_script(script_path)
         assert "PARTIAL_RECOVERY_PASS" in result.stdout, f"Failed: {result.stderr}"
-        print("[STEP 2] sess_2 recovered after partial crash")
-        print("[STEP 3] All 3 snapshots exist, pending_syncs cleared")
-        print("[PASS] Partial crash recovery works")
+        print(f"{step(2, 'sess_2 recovered after partial crash')}")
+        print(f"{step(3, 'All 3 snapshots exist, pending_syncs cleared')}")
+        print(f"{success('[PASS]')} Partial crash recovery works")
     finally:
         os.unlink(script_path)
         shutil.rmtree(tmpdir)
@@ -321,7 +322,7 @@ print("PROCESS_A_DONE")
     try:
         result = run_script(script_path)
         assert "PROCESS_A_DONE" in result.stdout
-        print("[STEP 1] Process A: saved 5 sessions, all pending")
+        print(f"{step(1, 'Process A: saved 5 sessions, all pending')}")
     finally:
         os.unlink(script_path)
 
@@ -364,18 +365,18 @@ print("PROCESS_B_DONE")
     try:
         result = run_script(script_path)
         assert "PROCESS_B_DONE" in result.stdout, f"Failed: {result.stderr}"
-        print("[STEP 2] Process B: recovered all 5 snapshots")
-        print("[STEP 3] All pending_syncs cleared")
-        print("[PASS] Worker recovery across process instances works")
+        print(f"{step(2, 'Process B: recovered all 5 snapshots')}")
+        print(f"{step(3, 'All pending_syncs cleared')}")
+        print(f"{success('[PASS]')} Worker recovery across process instances works")
     finally:
         os.unlink(script_path)
         shutil.rmtree(tmpdir)
 
 
 if __name__ == "__main__":
-    print("=" * 60)
-    print("CRASH RECOVERY INTEGRATION TESTS")
-    print("=" * 60)
+    print(banner("=" * 60))
+    print(banner("CRASH RECOVERY INTEGRATION TESTS"))
+    print(banner("=" * 60))
     print()
     test_normal_flow()
     print()
@@ -385,6 +386,6 @@ if __name__ == "__main__":
     print()
     test_worker_survives_across_instances()
     print()
-    print("=" * 60)
-    print("ALL CRASH RECOVERY TESTS PASSED")
-    print("=" * 60)
+    print(banner("=" * 60))
+    print(success("ALL CRASH RECOVERY TESTS PASSED"))
+    print(banner("=" * 60))
