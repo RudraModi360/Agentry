@@ -691,7 +691,7 @@ class MCPAgent(Agent):
         create_if_missing: bool = True,
         stream: bool = False,
         streaming_funct: Optional[Callable[[str], None]] = None,
-        generate_walkthrough: bool = False,
+        generate_walkthrough: bool = True,
         **kwargs
     ) -> Optional[str]:
         """

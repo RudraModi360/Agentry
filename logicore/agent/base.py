@@ -1243,7 +1243,7 @@ Available skills:
         callbacks: Dict[str, Callable] = None, 
         stream: bool = False, 
         streaming_funct: Callable = None,
-        generate_walkthrough: bool = False,
+        generate_walkthrough: bool = True,
         new_session: bool = False,
         session_tags: Dict[str, str] = None,
         **kwargs
@@ -1293,7 +1293,7 @@ Available skills:
         user_input: Union[str, List[Dict[str, Any]]],
         session_id: str = None,
         callbacks: Dict[str, Callable] = None,
-        generate_walkthrough: bool = False,
+        generate_walkthrough: bool = True,
         new_session: bool = False,
         session_tags: Dict[str, str] = None,
         **kwargs,
@@ -1538,6 +1538,8 @@ Available skills:
         if not self.execution_log:
             return "No execution steps were recorded."
         summary_parts = ["## Execution Summary", "", f"I completed **{len(self.execution_log)} execution steps**.", ""]
+
+        # Extract tool calls with success/failure status
         tool_calls = [log for log in self.execution_log if "SUCCEEDED" in log or "FAILED" in log]
         if tool_calls:
             summary_parts.append("### Tools Used")
@@ -1545,6 +1547,43 @@ Available skills:
             for entry in tool_calls[-20:]:
                 summary_parts.append(entry)
             summary_parts.append("```")
+
+        # Extract file operations
+        files_created = set()
+        files_modified = set()
+        for log in self.execution_log:
+            log_lower = log.lower()
+            if "create_file" in log_lower or "created file" in log_lower:
+                # Try to extract file path
+                for part in log.split():
+                    if part.endswith(('.py', '.js', '.ts', '.txt', '.md', '.json', '.html', '.css')):
+                        files_created.add(part.rstrip(','))
+            elif "edit_file" in log_lower or "edited file" in log_lower or "modified" in log_lower:
+                for part in log.split():
+                    if part.endswith(('.py', '.js', '.ts', '.txt', '.md', '.json', '.html', '.css')):
+                        files_modified.add(part.rstrip(','))
+
+        if files_created or files_modified:
+            summary_parts.append("### Files Affected")
+            if files_created:
+                summary_parts.append("**Created:**")
+                for f in sorted(files_created):
+                    summary_parts.append(f"- `{f}`")
+            if files_modified:
+                summary_parts.append("**Modified:**")
+                for f in sorted(files_modified):
+                    summary_parts.append(f"- `{f}`")
+            summary_parts.append("")
+
+        # Extract test results
+        test_results = [log for log in self.execution_log if "test" in log.lower() and ("pass" in log.lower() or "fail" in log.lower() or "error" in log.lower())]
+        if test_results:
+            summary_parts.append("### Test Results")
+            summary_parts.append("```")
+            for entry in test_results[-10:]:
+                summary_parts.append(entry)
+            summary_parts.append("```")
+
         return "\n".join(summary_parts)
 
     # === Cleanup ===

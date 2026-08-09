@@ -249,7 +249,7 @@ class ChatOrchestrator:
         callbacks: Optional[Dict[str, Callable]] = None,
         stream: bool = False,
         streaming_funct: Optional[Callable] = None,
-        generate_walkthrough: bool = False,
+        generate_walkthrough: bool = True,
         emitter: Optional["StreamEmitter"] = None,
         **kwargs,
     ) -> str:
@@ -641,6 +641,18 @@ class ChatOrchestrator:
 
             # 3. No tool calls = final response
             if not tool_calls:
+                # Check if we just entered plan mode but LLM stopped without calling submit_plan
+                if last_tool_name == "enter_plan_mode":
+                    hint = (
+                        "You entered plan mode but did not create a plan. "
+                        "Use submit_plan to define the execution steps, then wait for approval."
+                    )
+                    self.agent.context_engine.inject_hint(session.messages, hint)
+                    injected_hints.append(hint)
+                    if self.debug:
+                        logger.debug(f"[ChatOrchestrator] Injected plan continuation hint after enter_plan_mode")
+                    continue
+
                 self._clear_injected_hints(session, injected_hints)
                 
                 # M9: Hallucination check — compare claims vs execution reality
@@ -654,7 +666,8 @@ class ChatOrchestrator:
                 
                 final = await self._finalize_response(
                     content, session, session_id, active_callbacks,
-                    generate_walkthrough, text_for_reminder, successful_tools_this_chat
+                    generate_walkthrough, text_for_reminder, successful_tools_this_chat,
+                    emitter=emitter
                 )
                 if emitter:
                     emitter.emit(StreamEvent.create(StreamEventType.DONE, {"content": final}))
@@ -742,8 +755,9 @@ class ChatOrchestrator:
                     if self.debug:
                         logger.debug(f"[ToolGuardrails] BLOCKED '{name}': {guardrail_decision.code}")
                     
-                    # Record halt decision
-                    if guardrail_decision.should_halt:
+                    # Only halt the entire loop on "halt" action, not "block"
+                    # "block" just skips this tool call and lets the LLM try a different approach
+                    if guardrail_decision.action == "halt":
                         self._tool_guardrail_halt_decision = guardrail_decision
                     
                     continue
@@ -829,8 +843,8 @@ class ChatOrchestrator:
                     if isinstance(result, dict):
                         result["_guardrail_guidance"] = guardrail_decision.message
                 
-                # Record halt decision
-                if guardrail_decision.should_halt:
+                # Only halt the entire loop on "halt" action, not "block"
+                if guardrail_decision.action == "halt":
                     self._tool_guardrail_halt_decision = guardrail_decision
 
                 # Operational memory: record failure patterns and check escalation
@@ -1420,11 +1434,27 @@ class ChatOrchestrator:
                 )
                 session.add_message({"role": "system", "content": signal})
 
-        # Log
+        # Log with details for better execution summary
         if is_error:
-            self.agent.execution_log.append(f"Tool {name} FAILED: {result.get('error', 'Unknown error')}")
+            error_msg = result.get('error', 'Unknown error')
+            self.agent.execution_log.append(f"Tool {name} FAILED: {error_msg}")
         else:
-            self.agent.execution_log.append(f"Tool {name} SUCCEEDED")
+            # Capture key details from tool call for execution summary
+            log_entry = f"Tool {name} SUCCEEDED"
+            # Add file paths for file operations
+            if name in ("create_file", "read_file", "edit_file", "delete_file"):
+                file_path = args.get("file_path", "")
+                if file_path:
+                    log_entry += f" on `{file_path}`"
+            elif name == "execute_command":
+                cmd = args.get("command", "")
+                if cmd:
+                    log_entry += f": `{cmd[:80]}`"
+            elif name == "bash":
+                purpose = args.get("purpose", "")
+                if purpose:
+                    log_entry += f": {purpose}"
+            self.agent.execution_log.append(log_entry)
 
         # After load_skill, dynamically register the skill's tools on the agent
         if name == "load_skill" and not is_error:
@@ -1519,7 +1549,7 @@ class ChatOrchestrator:
 
         return None
 
-    async def _finalize_response(self, content, session, session_id, active_callbacks, generate_walkthrough, text_for_reminder, successful_tools_this_chat):
+    async def _finalize_response(self, content, session, session_id, active_callbacks, generate_walkthrough, text_for_reminder, successful_tools_this_chat, emitter=None):
         """Handle final response (no tool calls)."""
         # === AUTO-COMPLETION SAFETY NET ===
         # Passive cleanup, NOT a routing decision. If there are still tasks left
@@ -1569,11 +1599,15 @@ class ChatOrchestrator:
         if not content or content.strip() == "":
             content = self.agent._generate_execution_summary()
 
-        # Walkthrough
-        if generate_walkthrough:
+        # Walkthrough — auto-generate when tools were used, or when explicitly enabled
+        should_generate_walkthrough = generate_walkthrough or successful_tools_this_chat > 0
+        if should_generate_walkthrough:
             walkthrough = await self.agent._generate_walkthrough_summary(session_id, active_callbacks)
             if walkthrough:
                 content += f"\n\n---\n### Walkthrough Summary\n{walkthrough}"
+                # Emit walkthrough event for streaming consumers
+                if emitter:
+                    emitter.emit(StreamEvent.create(StreamEventType.WALKTHROUGH, {"content": walkthrough}))
 
         self.agent.execution_log.append(f"Task completed. Final response: {content[:200]}...")
 

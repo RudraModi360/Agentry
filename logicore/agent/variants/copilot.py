@@ -57,7 +57,7 @@ class CopilotAgent(Agent):
             storage=storage,
         )
         
-    async def chat(self, user_input: Union[str, List[Dict[str, Any]]], session_id: str = None, stream: bool = False, generate_walkthrough: bool = False, **kwargs) -> str:
+    async def chat(self, user_input: Union[str, List[Dict[str, Any]]], session_id: str = None, stream: bool = False, generate_walkthrough: bool = True, **kwargs) -> str:
         """Coding-optimized chat."""
         return await super().chat(user_input, session_id=session_id, stream=stream, generate_walkthrough=generate_walkthrough, **kwargs)
 

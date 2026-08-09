@@ -71,6 +71,7 @@ class StreamEventType(str, Enum):
     TOOL_OUTPUT = "tool_output"
     ERROR = "error"
     USAGE = "usage"
+    WALKTHROUGH = "walkthrough"
     DONE = "done"
     # Raw, provider-native events forwarded verbatim for advanced UIs.
     RAW = "raw"

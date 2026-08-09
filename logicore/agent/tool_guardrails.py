@@ -31,11 +31,17 @@ logger = logging.getLogger("logicore.agent.tool_guardrails")
 # Tool Classification — Idempotent vs Mutating
 # ---------------------------------------------------------------------------
 
-# Read-only tools: tracked for no-progress detection
+# Truly idempotent tools: same call always returns same result (no external state)
 IDEMPOTENT_TOOLS: FrozenSet[str] = frozenset({
-    "read_file", "list_files", "search_files", "fast_grep",
-    "glob", "web_search", "web_extract", "get_file_info",
+    "read_file", "get_file_info",
+    "web_search", "web_extract",
     "check_command_exists", "get_system_info", "get_user_input",
+})
+
+# State-dependent tools: results depend on external state (filesystem, network)
+# These use result-hash comparison but with more lenient thresholds
+STATE_DEPENDENT_TOOLS: FrozenSet[str] = frozenset({
+    "list_files", "search_files", "fast_grep", "glob",
 })
 
 # Write tools: never tracked for no-progress (they always change state)
@@ -111,11 +117,16 @@ class ToolCallGuardrailConfig:
     same_tool_failure_halt_after: int = 4   # Halt after 4 failures (tool is fundamentally broken)
     
     # --- No-progress (idempotent tools returning same result) ---
-    no_progress_warn_after: int = 1     # Warn after 1 identical result
-    no_progress_block_after: int = 2    # Block after 2 identical results
+    no_progress_warn_after: int = 3     # Warn after 3 identical results
+    no_progress_block_after: int = 5    # Block after 5 identical results
+    
+    # --- State-dependent tools (results depend on external state) ---
+    state_dependent_warn_after: int = 3   # Warn after 3 identical results
+    state_dependent_block_after: int = 6  # Block after 6 identical results
     
     # Tool classification
     idempotent_tools: FrozenSet[str] = field(default_factory=lambda: IDEMPOTENT_TOOLS)
+    state_dependent_tools: FrozenSet[str] = field(default_factory=lambda: STATE_DEPENDENT_TOOLS)
     mutating_tools: FrozenSet[str] = field(default_factory=lambda: MUTATING_TOOLS)
 
     @classmethod
@@ -134,8 +145,10 @@ class ToolCallGuardrailConfig:
             exact_failure_block_after=hard_stop.get("exact_failure", 5),
             same_tool_failure_warn_after=warn.get("same_tool_failure", 3),
             same_tool_failure_halt_after=hard_stop.get("same_tool_failure", 8),
-            no_progress_warn_after=warn.get("idempotent_no_progress", 2),
+            no_progress_warn_after=warn.get("idempotent_no_progress", 3),
             no_progress_block_after=hard_stop.get("idempotent_no_progress", 5),
+            state_dependent_warn_after=warn.get("state_dependent", 3),
+            state_dependent_block_after=hard_stop.get("state_dependent", 6),
         )
 
 
@@ -248,10 +261,11 @@ class ToolCallGuardrailController:
     The conversation loop owns enforcement (checking decisions, injecting
     synthetic results, halting execution).
 
-    Three tracking patterns per turn:
+    Four tracking patterns per turn:
     1. Exact call repetition (SHA-256 hash of tool_name + args)
     2. Same-tool-any-args failures
     3. Idempotent no-progress (same result hash from read-only tools)
+    4. Mutation epoch tracking (detects when resources change between reads)
 
     All counters reset at ``reset_for_turn()``.
     """
@@ -262,6 +276,9 @@ class ToolCallGuardrailController:
         self._same_tool_failure_counts: Dict[str, int] = {}
         self._no_progress: Dict[ToolCallSignature, tuple[str, int]] = {}  # (result_hash, repeat_count)
         self._halt_decision: Optional[ToolGuardrailDecision] = None
+        # Mutation epoch tracking: detects when resources change between reads
+        self._mutation_epochs: Dict[str, int] = {}  # resource_key -> epoch
+        self._last_mutation: Dict[ToolCallSignature, int] = {}  # signature -> epoch at time of last call
 
     def reset_for_turn(self) -> None:
         """Reset all tracking state for a new turn."""
@@ -269,6 +286,8 @@ class ToolCallGuardrailController:
         self._same_tool_failure_counts.clear()
         self._no_progress.clear()
         self._halt_decision = None
+        self._mutation_epochs.clear()
+        self._last_mutation.clear()
 
     # ------------------------------------------------------------------
     # Pre-execution check
@@ -281,8 +300,8 @@ class ToolCallGuardrailController:
 
         Only fires if ``hard_stop_enabled`` is True. Checks:
         1. Exact failure block: has this exact call failed >= threshold?
-        2. Idempotent no-progress block: has this read-only call returned
-           the same result >= threshold?
+        2. Idempotent/state-dependent no-progress block: has this read-only call
+           returned the same result >= threshold (accounting for mutations)?
         """
         signature = ToolCallSignature.from_call(tool_name, args)
 
@@ -308,10 +327,27 @@ class ToolCallGuardrailController:
             self._halt_decision = decision
             return decision
 
-        # Check idempotent no-progress block
-        if self._is_idempotent(tool_name):
+        # Check no-progress block for idempotent and state-dependent tools
+        if self._is_idempotent(tool_name) or self._is_state_dependent(tool_name):
+            # Check if resource was mutated since last call — if so, skip block
+            resource_key = self._extract_resource_key(tool_name, args) if args else None
+            if resource_key:
+                current_epoch = self._mutation_epochs.get(resource_key, 0)
+                stored_epoch = self._last_mutation.get(signature, 0)
+                if current_epoch > stored_epoch:
+                    # Resource was mutated — clear no-progress and allow
+                    self._no_progress.pop(signature, None)
+                    self._last_mutation[signature] = current_epoch
+                    return ToolGuardrailDecision(tool_name=tool_name, signature=signature)
+
+            # Determine thresholds based on tool type
+            if self._is_state_dependent(tool_name):
+                block_threshold = self.config.state_dependent_block_after
+            else:
+                block_threshold = self.config.no_progress_block_after
+
             record = self._no_progress.get(signature)
-            if record is not None and record[1] >= self.config.no_progress_block_after:
+            if record is not None and record[1] >= block_threshold:
                 message = (
                     f"Tool '{tool_name}' has returned the same result "
                     f"{record[1]} times in a row with identical arguments. "
@@ -355,10 +391,16 @@ class ToolCallGuardrailController:
         """
         signature = ToolCallSignature.from_call(tool_name, args)
 
+        # Track mutations: when a mutating tool succeeds, increment resource epoch
+        if not failed and tool_name in self.config.mutating_tools:
+            resource_key = self._extract_resource_key(tool_name, args)
+            if resource_key:
+                self._mutation_epochs[resource_key] = self._mutation_epochs.get(resource_key, 0) + 1
+
         if failed:
             return self._observe_failure(signature, tool_name)
         else:
-            return self._observe_success(signature, tool_name, result)
+            return self._observe_success(signature, tool_name, result, args)
 
     def _observe_failure(
         self, signature: ToolCallSignature, tool_name: str
@@ -434,18 +476,43 @@ class ToolCallGuardrailController:
         signature: ToolCallSignature,
         tool_name: str,
         result: Optional[str],
+        args: Optional[Dict[str, Any]] = None,
     ) -> ToolGuardrailDecision:
         """Handle a successful tool call."""
         # Clear failure counts (success resets the pattern)
         self._exact_failure_counts.pop(signature, None)
         self._same_tool_failure_counts.pop(tool_name, None)
 
-        # If not idempotent, clear no-progress tracking
-        if not self._is_idempotent(tool_name):
+        # For mutating tools, clear no-progress tracking (they always change state)
+        if tool_name in self.config.mutating_tools:
             self._no_progress.pop(signature, None)
             return ToolGuardrailDecision(tool_name=tool_name, signature=signature)
 
-        # Idempotent tool: track result hash for no-progress detection
+        # For non-idempotent, non-state-dependent tools, clear no-progress
+        if not self._is_idempotent(tool_name) and not self._is_state_dependent(tool_name):
+            self._no_progress.pop(signature, None)
+            return ToolGuardrailDecision(tool_name=tool_name, signature=signature)
+
+        # Check if resource was mutated since last call — if so, reset tracking
+        resource_key = self._extract_resource_key(tool_name, args) if args else None
+        if resource_key:
+            current_epoch = self._mutation_epochs.get(resource_key, 0)
+            stored_epoch = self._last_mutation.get(signature, 0)
+            if current_epoch > stored_epoch:
+                # Resource was mutated — this is progress, reset no-progress counter
+                self._no_progress.pop(signature, None)
+                self._last_mutation[signature] = current_epoch
+                return ToolGuardrailDecision(tool_name=tool_name, signature=signature)
+
+        # Determine thresholds based on tool type
+        if self._is_state_dependent(tool_name):
+            warn_threshold = self.config.state_dependent_warn_after
+            block_threshold = self.config.state_dependent_block_after
+        else:
+            warn_threshold = self.config.no_progress_warn_after
+            block_threshold = self.config.no_progress_block_after
+
+        # Track result hash for no-progress detection
         result_hash = _result_hash(result)
         record = self._no_progress.get(signature)
 
@@ -454,7 +521,7 @@ class ToolCallGuardrailController:
             repeat_count = record[1] + 1
             self._no_progress[signature] = (result_hash, repeat_count)
 
-            if repeat_count >= self.config.no_progress_warn_after:
+            if repeat_count >= warn_threshold:
                 message = (
                     f"Tool '{tool_name}' has returned the same result "
                     f"{repeat_count} times in a row with identical arguments. "
@@ -472,6 +539,9 @@ class ToolCallGuardrailController:
         else:
             # New result — reset repeat count
             self._no_progress[signature] = (result_hash, 1)
+            # Record current mutation epoch for future comparison
+            if resource_key:
+                self._last_mutation[signature] = self._mutation_epochs.get(resource_key, 0)
 
         return ToolGuardrailDecision(tool_name=tool_name, signature=signature)
 
@@ -479,14 +549,45 @@ class ToolCallGuardrailController:
     # Helpers
     # ------------------------------------------------------------------
 
+    @staticmethod
+    def _extract_resource_key(tool_name: str, args: Optional[Dict[str, Any]]) -> Optional[str]:
+        """Extract the resource key from tool args for mutation tracking.
+        
+        Returns a string key representing the resource being operated on,
+        or None if the tool doesn't operate on a trackable resource.
+        """
+        if not args:
+            return None
+        if tool_name in ("read_file", "edit_file", "write_file", "delete_file"):
+            path = args.get("file_path") or args.get("path", "")
+            return f"file:{path}" if path else None
+        if tool_name in ("list_files",):
+            path = args.get("path", "")
+            return f"dir:{path}" if path else None
+        if tool_name in ("search_files", "fast_grep", "glob"):
+            path = args.get("path") or args.get("directory", "")
+            return f"search:{path}" if path else None
+        if tool_name in ("move_file", "copy_file"):
+            src = args.get("source") or args.get("from_path", "")
+            dst = args.get("destination") or args.get("to_path", "")
+            return f"move:{src}->{dst}" if src or dst else None
+        if tool_name in ("create_directory",):
+            path = args.get("path", "")
+            return f"dir:{path}" if path else None
+        return None
+
     def _is_idempotent(self, tool_name: str) -> bool:
-        """Check if a tool is idempotent (read-only)."""
+        """Check if a tool is idempotent (read-only, state-independent)."""
         if tool_name in self.config.idempotent_tools:
             return True
         if tool_name in self.config.mutating_tools:
             return False
         # Unknown tools: assume not idempotent (fail-closed)
         return False
+
+    def _is_state_dependent(self, tool_name: str) -> bool:
+        """Check if a tool is state-dependent (results depend on external state)."""
+        return tool_name in self.config.state_dependent_tools
 
     @property
     def halt_decision(self) -> Optional[ToolGuardrailDecision]:
@@ -500,6 +601,8 @@ class ToolCallGuardrailController:
             "same_tool_failures_tracked": len(self._same_tool_failure_counts),
             "no_progress_tracked": len(self._no_progress),
             "halt_decision": self._halt_decision is not None,
+            "mutation_epochs_tracked": len(self._mutation_epochs),
+            "mutationAwareness_tracked": len(self._last_mutation),
         }
 
 
@@ -511,5 +614,6 @@ __all__ = [
     "toolguard_synthetic_result",
     "append_toolguard_guidance",
     "IDEMPOTENT_TOOLS",
+    "STATE_DEPENDENT_TOOLS",
     "MUTATING_TOOLS",
 ]

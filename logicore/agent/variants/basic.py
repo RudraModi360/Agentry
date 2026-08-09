@@ -245,7 +245,7 @@ You are ready to help. Use your tools effectively.
     
     # --- Public API ---
     
-    async def chat(self, message: Union[str, List[Dict[str, Any]]], session_id: str = None, stream: bool = False, generate_walkthrough: bool = False, **kwargs) -> str:
+    async def chat(self, message: Union[str, List[Dict[str, Any]]], session_id: str = None, stream: bool = False, generate_walkthrough: bool = True, **kwargs) -> str:
         """
         Send a message and get a response.
         
@@ -287,7 +287,7 @@ You are ready to help. Use your tools effectively.
         """
         return self._agent.stream_sync(message, session_id=session_id, on_event=on_event, on_token=on_token, **kwargs)
 
-    def chat_sync(self, message: str, session_id: str = None, generate_walkthrough: bool = False) -> str:
+    def chat_sync(self, message: str, session_id: str = None, generate_walkthrough: bool = True) -> str:
         """
         Synchronous version of chat.
         
